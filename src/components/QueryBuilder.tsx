@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Send, Database, Lightbulb, History, Code } from 'lucide-react';
+import { Send, Database, Lightbulb, History, Code, Sparkles } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 interface Message {
@@ -26,7 +26,7 @@ const QueryBuilder = () => {
     {
       id: '1',
       type: 'assistant',
-      content: "Hi! I'm here to help you build SQL queries without needing to know the database structure. What would you like to find out from your data?",
+      content: "👋 Hello there! I'm your friendly data assistant, and I'm excited to help you discover insights from your data! \n\nNo need to worry about SQL or database structures - just tell me what you're curious about, and I'll guide you through it step by step. What would you like to explore today?",
       timestamp: new Date()
     }
   ]);
@@ -35,13 +35,13 @@ const QueryBuilder = () => {
   const [currentQuery, setCurrentQuery] = useState('');
   const [recommendations, setRecommendations] = useState<QueryRecommendation[]>([
     {
-      title: "Add time filters",
-      description: "Consider filtering by date ranges for more relevant results",
+      title: "🕒 Add time filters",
+      description: "Let's narrow down to specific dates for more focused results",
       impact: 'high'
     },
     {
-      title: "Include related metrics",
-      description: "Add related KPIs to get a more complete picture",
+      title: "📊 Include related metrics",
+      description: "I can suggest related data points that might be interesting",
       impact: 'medium'
     }
   ]);
@@ -80,22 +80,22 @@ const QueryBuilder = () => {
     
     if (lowerInput.includes('sales') || lowerInput.includes('revenue')) {
       return {
-        content: "Great! I can help you analyze sales data. To get started, would you like to see:\n\n1. Total sales for a specific time period?\n2. Sales by product category?\n3. Top performing sales representatives?\n4. Sales trends over time?\n\nWhich option interests you most?",
+        content: "🎉 Awesome! Sales data is super interesting to explore. Let me help you find exactly what you're looking for:\n\n💡 Here are some popular questions I can help with:\n• 📅 How did we perform in a specific time period?\n• 🏷️ Which product categories are our stars?\n• 🌟 Who are our top-performing team members?\n• 📈 What trends can we spot over time?\n\nWhich one sparks your curiosity? Or feel free to ask me something completely different!",
         queryPart: "SELECT"
       };
     } else if (lowerInput.includes('customer') || lowerInput.includes('client')) {
       return {
-        content: "Perfect! Customer analysis is very insightful. Let me ask a few questions:\n\n• Are you interested in customer demographics, behavior, or satisfaction?\n• Do you want to focus on new customers, existing customers, or both?\n• Any specific time frame you'd like to analyze?",
+        content: "🤝 Great choice! Customer insights are gold mines for business decisions. Let's dig in together!\n\n🔍 To give you the most helpful information, I'd love to know:\n• 👥 Are you curious about who your customers are, how they behave, or how happy they are?\n• ✨ Should we focus on your newest customers, loyal long-timers, or everyone?\n• 🗓️ Any particular time period you'd like to zoom in on?\n\nDon't worry if you're not sure - we can explore together!",
         queryPart: "SELECT customer_id, customer_name"
       };
     } else if (lowerInput.includes('product') || lowerInput.includes('inventory')) {
       return {
-        content: "Product data analysis coming up! To help you better:\n\n• Are you looking at product performance, inventory levels, or pricing?\n• Do you want to compare products or focus on specific categories?\n• Should we include supplier or cost information?",
+        content: "🛍️ Perfect! Product data can reveal some amazing insights. I'm here to make this super easy for you!\n\n🤔 Let's start with what interests you most:\n• 🎯 Want to see how products are performing?\n• 📦 Curious about what's in stock?\n• 💰 Interested in pricing strategies?\n• 🏆 Looking to compare your product stars?\n\nJust tell me what's on your mind - there's no wrong answer here!",
         queryPart: "SELECT product_name, category"
       };
     } else {
       return {
-        content: "I'd be happy to help! Could you tell me more about what specific information you're looking for? For example:\n\n• Sales or revenue data\n• Customer information\n• Product performance\n• Employee metrics\n• Financial reports\n\nWhat area would you like to explore?",
+        content: "😊 I'd love to help you explore your data! Think of me as your friendly guide who speaks both human and database.\n\n🚀 Here are some popular starting points:\n• 💼 Sales and revenue insights\n• 👥 Customer information and behavior\n• 🛍️ Product performance and inventory\n• 👔 Employee metrics and performance\n• 💰 Financial reports and trends\n\n✨ Or just describe what you're curious about in your own words - I'm great at translating ideas into data insights!",
         queryPart: ""
       };
     }
@@ -109,40 +109,43 @@ const QueryBuilder = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="flex h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Database className="w-6 h-6 text-blue-600" />
+        <div className="bg-white/80 backdrop-blur border-b border-blue-200 p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg">
+              <Sparkles className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">SQL Query Builder</h1>
-              <p className="text-gray-600">Build queries through conversation</p>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Data Explorer
+              </h1>
+              <p className="text-blue-600 text-lg">Your friendly guide to data insights</p>
             </div>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-2xl p-4 rounded-2xl ${
+                className={`max-w-2xl p-5 rounded-3xl shadow-sm ${
                   message.type === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white border border-gray-200 text-gray-900'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                    : 'bg-white/90 backdrop-blur border border-blue-100 text-gray-800'
                 }`}
               >
-                <p className="whitespace-pre-line">{message.content}</p>
+                <p className="whitespace-pre-line leading-relaxed">{message.content}</p>
                 {message.queryPart && (
-                  <div className="mt-3 p-2 bg-gray-100 rounded text-sm font-mono text-gray-700">
-                    Query part: {message.queryPart}
+                  <div className="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-200">
+                    <p className="text-xs text-blue-600 font-medium mb-1">Building your query:</p>
+                    <code className="text-sm text-blue-800 font-mono">{message.queryPart}</code>
                   </div>
                 )}
               </div>
@@ -151,57 +154,61 @@ const QueryBuilder = () => {
         </div>
 
         {/* Input Area */}
-        <div className="bg-white border-t border-gray-200 p-4">
-          <div className="flex gap-3">
+        <div className="bg-white/80 backdrop-blur border-t border-blue-200 p-6">
+          <div className="flex gap-4">
             <Input
               value={currentInput}
               onChange={(e) => setCurrentInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Describe what you want to find in your data..."
-              className="flex-1"
+              placeholder="💭 Tell me what you'd like to discover about your data..."
+              className="flex-1 p-4 text-lg border-blue-200 focus:border-blue-400 rounded-2xl"
             />
             <Button 
               onClick={handleSendMessage}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 px-8 py-4 rounded-2xl shadow-lg"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5" />
             </Button>
           </div>
         </div>
       </div>
 
       {/* Sidebar */}
-      <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
+      <div className="w-96 bg-white/60 backdrop-blur border-l border-blue-200 flex flex-col">
         {/* Current Query */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center gap-2 mb-3">
-            <Code className="w-5 h-5 text-gray-600" />
-            <h3 className="font-semibold text-gray-900">Current Query</h3>
+        <div className="p-6 border-b border-blue-200">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Code className="w-5 h-5 text-green-600" />
+            </div>
+            <h3 className="font-semibold text-gray-800">Your Query in Progress</h3>
           </div>
-          <div className="bg-gray-50 p-3 rounded-lg">
+          <div className="bg-gradient-to-br from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
             <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-              {currentQuery || 'No query built yet...'}
+              {currentQuery || "🌱 We'll build this together as we chat!"}
             </pre>
           </div>
         </div>
 
         {/* Recommendations */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center gap-2 mb-3">
-            <Lightbulb className="w-5 h-5 text-yellow-600" />
-            <h3 className="font-semibold text-gray-900">Recommendations</h3>
+        <div className="p-6 border-b border-blue-200">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              <Lightbulb className="w-5 h-5 text-yellow-600" />
+            </div>
+            <h3 className="font-semibold text-gray-800">Smart Suggestions</h3>
           </div>
           <div className="space-y-3">
             {recommendations.map((rec, index) => (
-              <Card key={index} className="p-3 hover:bg-gray-50 transition-colors cursor-pointer">
-                <div className="flex items-start justify-between gap-2">
+              <Card key={index} className="p-4 hover:bg-blue-50 transition-all duration-200 cursor-pointer border border-blue-100 hover:border-blue-300 hover:shadow-md">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm text-gray-900">{rec.title}</h4>
-                    <p className="text-xs text-gray-600 mt-1">{rec.description}</p>
+                    <h4 className="font-medium text-gray-800 mb-1">{rec.title}</h4>
+                    <p className="text-sm text-gray-600">{rec.description}</p>
                   </div>
                   <Badge 
                     variant={rec.impact === 'high' ? 'default' : 'secondary'}
-                    className="text-xs"
+                    className={`text-xs ${rec.impact === 'high' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}
                   >
                     {rec.impact}
                   </Badge>
@@ -212,32 +219,37 @@ const QueryBuilder = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <History className="w-5 h-5 text-gray-600" />
-            <h3 className="font-semibold text-gray-900">Quick Start</h3>
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <History className="w-5 h-5 text-purple-600" />
+            </div>
+            <h3 className="font-semibold text-gray-800">Quick Starters</h3>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Button 
               variant="outline" 
-              className="w-full justify-start text-sm"
-              onClick={() => setCurrentInput("Show me sales data for this month")}
+              className="w-full justify-start text-sm p-4 h-auto border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+              onClick={() => setCurrentInput("Show me our sales performance this month")}
             >
-              📊 Monthly sales report
+              <span className="text-lg mr-3">📊</span>
+              <span>Monthly sales snapshot</span>
             </Button>
             <Button 
               variant="outline" 
-              className="w-full justify-start text-sm"
-              onClick={() => setCurrentInput("Find top 10 customers by revenue")}
+              className="w-full justify-start text-sm p-4 h-auto border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+              onClick={() => setCurrentInput("Who are our top customers by revenue?")}
             >
-              👥 Top customers
+              <span className="text-lg mr-3">⭐</span>
+              <span>Top customers</span>
             </Button>
             <Button 
               variant="outline" 
-              className="w-full justify-start text-sm"
-              onClick={() => setCurrentInput("Compare product performance")}
+              className="w-full justify-start text-sm p-4 h-auto border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+              onClick={() => setCurrentInput("How are our products performing?")}
             >
-              📈 Product comparison
+              <span className="text-lg mr-3">🚀</span>
+              <span>Product insights</span>
             </Button>
           </div>
         </div>
