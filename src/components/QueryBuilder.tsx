@@ -15,7 +15,7 @@ interface Message {
   queryPart?: string;
 }
 
-interface QueryRecommendation {
+interface DataRecommendation {
   title: string;
   description: string;
   impact: 'high' | 'medium' | 'low';
@@ -26,22 +26,22 @@ const QueryBuilder = () => {
     {
       id: '1',
       type: 'assistant',
-      content: "👋 Hello there! I'm your friendly data assistant, and I'm excited to help you discover insights from your data! \n\nNo need to worry about SQL or database structures - just tell me what you're curious about, and I'll guide you through it step by step. What would you like to explore today?",
+      content: "👋 Hello! I'm here to help you find answers in your data! \n\nThink of me as your personal data detective - I'll help you discover insights whether your information is organized in databases, spreadsheets, files, or anywhere else. Just tell me what you're curious about, and I'll guide you through finding the perfect answer! \n\n✨ What are you trying to answer?",
       timestamp: new Date()
     }
   ]);
   
   const [currentInput, setCurrentInput] = useState('');
   const [currentQuery, setCurrentQuery] = useState('');
-  const [recommendations, setRecommendations] = useState<QueryRecommendation[]>([
+  const [recommendations, setRecommendations] = useState<DataRecommendation[]>([
     {
-      title: "🕒 Add time filters",
-      description: "Let's narrow down to specific dates for more focused results",
+      title: "🔍 Identify data sources",
+      description: "Let's find where your relevant information might be stored",
       impact: 'high'
     },
     {
-      title: "📊 Include related metrics",
-      description: "I can suggest related data points that might be interesting",
+      title: "📋 Clarify your question",
+      description: "I can help make your question more specific for better results",
       impact: 'medium'
     }
   ]);
@@ -56,7 +56,7 @@ const QueryBuilder = () => {
       timestamp: new Date()
     };
 
-    // Simulate AI response based on user input
+    // Generate contextual response based on user input
     const assistantResponse = generateAssistantResponse(currentInput);
     const assistantMessage: Message = {
       id: (Date.now() + 1).toString(),
@@ -69,7 +69,7 @@ const QueryBuilder = () => {
     setMessages(prev => [...prev, userMessage, assistantMessage]);
     setCurrentInput('');
     
-    // Update query if there's a query part
+    // Update query building progress if there's a query part
     if (assistantResponse.queryPart) {
       setCurrentQuery(prev => prev + ' ' + assistantResponse.queryPart);
     }
@@ -78,24 +78,29 @@ const QueryBuilder = () => {
   const generateAssistantResponse = (input: string) => {
     const lowerInput = input.toLowerCase();
     
-    if (lowerInput.includes('sales') || lowerInput.includes('revenue')) {
+    if (lowerInput.includes('sales') || lowerInput.includes('revenue') || lowerInput.includes('money') || lowerInput.includes('profit')) {
       return {
-        content: "🎉 Awesome! Sales data is super interesting to explore. Let me help you find exactly what you're looking for:\n\n💡 Here are some popular questions I can help with:\n• 📅 How did we perform in a specific time period?\n• 🏷️ Which product categories are our stars?\n• 🌟 Who are our top-performing team members?\n• 📈 What trends can we spot over time?\n\nWhich one sparks your curiosity? Or feel free to ask me something completely different!",
-        queryPart: "SELECT"
+        content: "💰 Great question about financial performance! Let me help you find those answers.\n\n🔍 To get you the best insights, I need to understand your data landscape:\n\n• 📊 Do you have sales data in a system like CRM, database, or spreadsheets?\n• 📅 What time period interests you most?\n• 🎯 Are you looking at overall performance or specific products/regions?\n• 💡 Any particular metrics that matter most to your business?\n\nDon't worry if you're not sure where your data lives - I can help you identify the right sources!",
+        queryPart: "Sales Analysis:"
       };
-    } else if (lowerInput.includes('customer') || lowerInput.includes('client')) {
+    } else if (lowerInput.includes('customer') || lowerInput.includes('client') || lowerInput.includes('user')) {
       return {
-        content: "🤝 Great choice! Customer insights are gold mines for business decisions. Let's dig in together!\n\n🔍 To give you the most helpful information, I'd love to know:\n• 👥 Are you curious about who your customers are, how they behave, or how happy they are?\n• ✨ Should we focus on your newest customers, loyal long-timers, or everyone?\n• 🗓️ Any particular time period you'd like to zoom in on?\n\nDon't worry if you're not sure - we can explore together!",
-        queryPart: "SELECT customer_id, customer_name"
+        content: "👥 Excellent! Customer insights can really transform how you understand your business.\n\n🤔 Let's explore what you want to learn:\n\n• 🔍 Are you curious about customer behavior, satisfaction, demographics, or something else?\n• 📋 Do you have customer information in a CRM, database, surveys, or other sources?\n• 🎯 Are you focusing on specific customer segments or everyone?\n• ⏰ Any particular timeframe you're interested in?\n\nIf you're not sure where your customer data is stored, I can help you identify potential sources!",
+        queryPart: "Customer Analysis:"
       };
-    } else if (lowerInput.includes('product') || lowerInput.includes('inventory')) {
+    } else if (lowerInput.includes('product') || lowerInput.includes('inventory') || lowerInput.includes('item')) {
       return {
-        content: "🛍️ Perfect! Product data can reveal some amazing insights. I'm here to make this super easy for you!\n\n🤔 Let's start with what interests you most:\n• 🎯 Want to see how products are performing?\n• 📦 Curious about what's in stock?\n• 💰 Interested in pricing strategies?\n• 🏆 Looking to compare your product stars?\n\nJust tell me what's on your mind - there's no wrong answer here!",
-        queryPart: "SELECT product_name, category"
+        content: "🛍️ Product insights can unlock so many opportunities! Let's dive in.\n\n💭 To point you in the right direction:\n\n• 📈 What aspect of your products interests you? (performance, popularity, inventory, etc.)\n• 📁 Where might this information live? (inventory systems, sales records, databases, spreadsheets?)\n• 🎯 Specific products or categories you're most curious about?\n• 📊 Any particular metrics you want to track?\n\nNo worries if you're unsure about data sources - I'll help you figure out where to look!",
+        queryPart: "Product Analysis:"
+      };
+    } else if (lowerInput.includes('where') || lowerInput.includes('find') || lowerInput.includes('data') || lowerInput.includes('source')) {
+      return {
+        content: "🕵️ Perfect! Let's be data detectives together and find your information sources.\n\n🔍 Here's how we can identify where your answers might be hiding:\n\n• 💾 **Databases & Systems**: CRM, ERP, accounting software, etc.\n• 📊 **Spreadsheets**: Excel, Google Sheets, CSV files\n• 📁 **Files & Documents**: Reports, logs, text files\n• 🌐 **Online Sources**: Web analytics, social media, APIs\n• 📋 **Surveys & Forms**: Customer feedback, internal data collection\n\nTell me more about your question, and I'll help you brainstorm where that information might be stored!",
+        queryPart: "Data Discovery:"
       };
     } else {
       return {
-        content: "😊 I'd love to help you explore your data! Think of me as your friendly guide who speaks both human and database.\n\n🚀 Here are some popular starting points:\n• 💼 Sales and revenue insights\n• 👥 Customer information and behavior\n• 🛍️ Product performance and inventory\n• 👔 Employee metrics and performance\n• 💰 Financial reports and trends\n\n✨ Or just describe what you're curious about in your own words - I'm great at translating ideas into data insights!",
+        content: "✨ I love your curiosity! Let's work together to find the perfect answer.\n\n🤝 Here's how I can help you:\n\n• 🎯 **Clarify your question**: Make it more specific for better results\n• 🔍 **Find data sources**: Identify where your information might be stored\n• 🛠️ **Build the right approach**: Whether it's databases, files, or other sources\n• 💡 **Suggest better questions**: Sometimes a slight tweak reveals amazing insights\n\nCan you tell me more about what you're hoping to discover? Even a general idea is perfect to start with!",
         queryPart: ""
       };
     }
@@ -120,9 +125,9 @@ const QueryBuilder = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Data Explorer
+                Data Detective
               </h1>
-              <p className="text-blue-600 text-lg">Your friendly guide to data insights</p>
+              <p className="text-blue-600 text-lg">Your friendly guide to finding answers in any data</p>
             </div>
           </div>
         </div>
@@ -144,7 +149,7 @@ const QueryBuilder = () => {
                 <p className="whitespace-pre-line leading-relaxed">{message.content}</p>
                 {message.queryPart && (
                   <div className="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-200">
-                    <p className="text-xs text-blue-600 font-medium mb-1">Building your query:</p>
+                    <p className="text-xs text-blue-600 font-medium mb-1">Building your search:</p>
                     <code className="text-sm text-blue-800 font-mono">{message.queryPart}</code>
                   </div>
                 )}
@@ -160,7 +165,7 @@ const QueryBuilder = () => {
               value={currentInput}
               onChange={(e) => setCurrentInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="💭 Tell me what you'd like to discover about your data..."
+              placeholder="💭 What are you trying to answer?"
               className="flex-1 p-4 text-lg border-blue-200 focus:border-blue-400 rounded-2xl"
             />
             <Button 
@@ -175,17 +180,17 @@ const QueryBuilder = () => {
 
       {/* Sidebar */}
       <div className="w-96 bg-white/60 backdrop-blur border-l border-blue-200 flex flex-col">
-        {/* Current Query */}
+        {/* Current Progress */}
         <div className="p-6 border-b border-blue-200">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-green-100 rounded-lg">
               <Code className="w-5 h-5 text-green-600" />
             </div>
-            <h3 className="font-semibold text-gray-800">Your Query in Progress</h3>
+            <h3 className="font-semibold text-gray-800">Your Search Progress</h3>
           </div>
           <div className="bg-gradient-to-br from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
             <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-              {currentQuery || "🌱 We'll build this together as we chat!"}
+              {currentQuery || "🌱 We'll build your perfect search together!"}
             </pre>
           </div>
         </div>
@@ -196,7 +201,7 @@ const QueryBuilder = () => {
             <div className="p-2 bg-yellow-100 rounded-lg">
               <Lightbulb className="w-5 h-5 text-yellow-600" />
             </div>
-            <h3 className="font-semibold text-gray-800">Smart Suggestions</h3>
+            <h3 className="font-semibold text-gray-800">Helpful Suggestions</h3>
           </div>
           <div className="space-y-3">
             {recommendations.map((rec, index) => (
@@ -218,38 +223,38 @@ const QueryBuilder = () => {
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Starters */}
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-purple-100 rounded-lg">
               <History className="w-5 h-5 text-purple-600" />
             </div>
-            <h3 className="font-semibold text-gray-800">Quick Starters</h3>
+            <h3 className="font-semibold text-gray-800">Popular Questions</h3>
           </div>
           <div className="space-y-3">
             <Button 
               variant="outline" 
               className="w-full justify-start text-sm p-4 h-auto border-blue-200 hover:bg-blue-50 hover:border-blue-300"
-              onClick={() => setCurrentInput("Show me our sales performance this month")}
+              onClick={() => setCurrentInput("How is our business performing this month?")}
             >
-              <span className="text-lg mr-3">📊</span>
-              <span>Monthly sales snapshot</span>
+              <span className="text-lg mr-3">📈</span>
+              <span>Business performance</span>
             </Button>
             <Button 
               variant="outline" 
               className="w-full justify-start text-sm p-4 h-auto border-blue-200 hover:bg-blue-50 hover:border-blue-300"
-              onClick={() => setCurrentInput("Who are our top customers by revenue?")}
+              onClick={() => setCurrentInput("Who are our most valuable customers?")}
             >
               <span className="text-lg mr-3">⭐</span>
-              <span>Top customers</span>
+              <span>Customer insights</span>
             </Button>
             <Button 
               variant="outline" 
               className="w-full justify-start text-sm p-4 h-auto border-blue-200 hover:bg-blue-50 hover:border-blue-300"
-              onClick={() => setCurrentInput("How are our products performing?")}
+              onClick={() => setCurrentInput("What trends should I be aware of?")}
             >
-              <span className="text-lg mr-3">🚀</span>
-              <span>Product insights</span>
+              <span className="text-lg mr-3">🔍</span>
+              <span>Trend analysis</span>
             </Button>
           </div>
         </div>
