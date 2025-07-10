@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { usePrivacyModal } from '@/hooks/usePrivacyModal';
@@ -6,7 +7,9 @@ import RealTimeDataStreaming from './RealTimeDataStreaming';
 import AnalyzingIcon from './AnalyzingIcon';
 import PrivacySecurityModal from './PrivacySecurityModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, Zap, Database } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Upload, Zap, Database, CheckCircle, Plus, File, X } from 'lucide-react';
 
 interface DataSource {
   id: string;
@@ -14,6 +17,14 @@ interface DataSource {
   type: 'file' | 'database' | 'api' | 'warehouse' | 'amplitude';
   status: 'connected' | 'disconnected' | 'error';
   lastSync?: Date;
+}
+
+interface UploadedFile {
+  id: string;
+  name: string;
+  size: number;
+  uploadedAt: Date;
+  status: 'success' | 'processing' | 'error';
 }
 
 interface DataSourceManagerProps {
@@ -26,6 +37,7 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
   const [analyzing, setAnalyzing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const { toast } = useToast();
   const { isOpen, modalConfig, showModal, handleAccept, handleDecline } = usePrivacyModal();
 
@@ -61,10 +73,67 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
   };
 
   const handleFileUploadWithPrivacy = async (file: File) => {
-    const uploadAction = () => onFileUpload(file);
+    const uploadAction = async () => {
+      try {
+        // Add file to processing state
+        const newFile: UploadedFile = {
+          id: Date.now().toString(),
+          name: file.name,
+          size: file.size,
+          uploadedAt: new Date(),
+          status: 'processing'
+        };
+        
+        setUploadedFiles(prev => [...prev, newFile]);
+        
+        await onFileUpload(file);
+        
+        // Update status to success
+        setUploadedFiles(prev => 
+          prev.map(f => 
+            f.id === newFile.id 
+              ? { ...f, status: 'success' as const }
+              : f
+          )
+        );
+        
+        toast({
+          title: "File Uploaded Successfully!",
+          description: `${file.name} has been processed and is ready for analysis.`,
+        });
+        
+      } catch (error) {
+        // Update status to error
+        setUploadedFiles(prev => 
+          prev.map(f => 
+            f.name === file.name 
+              ? { ...f, status: 'error' as const }
+              : f
+          )
+        );
+        
+        toast({
+          title: "Upload Failed",
+          description: `Failed to upload ${file.name}. Please try again.`,
+          variant: "destructive",
+        });
+      }
+    };
     
     // Show privacy modal before uploading
     showModal(uploadAction, 'upload');
+  };
+
+  const removeUploadedFile = (fileId: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
@@ -76,6 +145,53 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
         dataType={modalConfig.dataType}
         sourceName={modalConfig.sourceName}
       />
+
+      {/* Uploaded Files Section */}
+      {uploadedFiles.length > 0 && (
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            <File className="w-5 h-5" />
+            Uploaded Files ({uploadedFiles.length})
+          </h3>
+          <div className="space-y-2">
+            {uploadedFiles.map((file) => (
+              <div key={file.id} className="flex items-center justify-between bg-white rounded-md p-3 border">
+                <div className="flex items-center gap-3">
+                  {file.status === 'success' && (
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  )}
+                  {file.status === 'processing' && (
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {file.status === 'error' && (
+                    <X className="w-5 h-5 text-red-600" />
+                  )}
+                  <div>
+                    <p className="font-medium text-sm">{file.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {formatFileSize(file.size)} • {file.uploadedAt.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    variant={file.status === 'success' ? 'default' : file.status === 'error' ? 'destructive' : 'secondary'}
+                  >
+                    {file.status === 'success' ? 'Ready' : file.status === 'processing' ? 'Processing' : 'Failed'}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeUploadedFile(file.id)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Tabs defaultValue="connect" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
@@ -98,6 +214,31 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
             onDataSourceConnect={handleDataSourceConnect}
             onFileUpload={handleFileUploadWithPrivacy}
           />
+          
+          {/* Upload More Button */}
+          <div className="text-center">
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Trigger file input click
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = '.csv,.json,.txt,.xlsx';
+                fileInput.onchange = (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  if (file) {
+                    handleFileUploadWithPrivacy(file);
+                  }
+                };
+                fileInput.click();
+              }}
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Upload Another File
+            </Button>
+          </div>
+          
           {analyzing && (
             <div className="text-center">
               <AnalyzingIcon isAnalyzing={analyzing} />
