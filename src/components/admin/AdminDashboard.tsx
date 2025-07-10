@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Settings, TestTube } from 'lucide-react';
 import QARunner from '../QARunner';
+import AutoRefactorPrompts from '../AutoRefactorPrompts';
 import LoadTestRunner from '../LoadTestRunner';
 
 const AdminDashboard: React.FC = () => {
@@ -42,6 +43,10 @@ const AdminDashboard: React.FC = () => {
           </Tabs>
         </CardContent>
       </Card>
+      
+      {/* Include QA Runner and Auto Refactor Prompts only in admin context */}
+      <QARunner />
+      <AutoRefactorPrompts />
     </div>
   );
 };

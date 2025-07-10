@@ -11,7 +11,13 @@ const QARunner: React.FC = () => {
   const { toast } = useToast();
   const [hasRunInitialQA, setHasRunInitialQA] = useState(false);
 
+  // Check if we're in admin context
+  const isAdminContext = window.location.pathname === '/admin';
+
   useEffect(() => {
+    // Only run in admin context
+    if (!isAdminContext) return;
+
     // Listen for auto-refactoring suggestions from QA system
     const handleAutoRefactorSuggestions = (event: CustomEvent<{ suggestions: RefactoringSuggestion[] }>) => {
       const { suggestions } = event.detail;
@@ -33,6 +39,7 @@ const QARunner: React.FC = () => {
               window.dispatchEvent(messageEvent);
             });
             
+            // Only show toast in admin context
             toast({
               title: "Auto-Refactoring Applied",
               description: `Automatically refactored ${autoExecuteMessages.length} files to improve code quality`,
@@ -59,13 +66,11 @@ const QARunner: React.FC = () => {
     return () => {
       window.removeEventListener('qa-auto-refactor-suggestions', handleAutoRefactorSuggestions as EventListener);
     };
-  }, [generateRefactoringMessages, autoRefactorEnabled, toast]);
+  }, [generateRefactoringMessages, autoRefactorEnabled, toast, isAdminContext]);
 
   useEffect(() => {
-    // Only run QA in admin context, not for regular users
-    const isAdminPath = window.location.pathname === '/admin';
-    
-    if (!hasRunInitialQA && isAdminPath) {
+    // Only run QA in admin context
+    if (!hasRunInitialQA && isAdminContext) {
       const runInitialQA = async () => {
         console.log('🔍 Running comprehensive QA analysis with auto-fix and auto-refactoring...');
         
@@ -83,7 +88,7 @@ const QARunner: React.FC = () => {
             autoRefactorEnabled: autoRefactorEnabled ? 'Enabled' : 'Disabled'
           });
 
-          // Only show success toast if all tests pass
+          // Only show success toast if all tests pass and we're in admin context
           if (report.failed === 0) {
             toast({
               title: "QA Analysis Complete",
@@ -109,9 +114,13 @@ const QARunner: React.FC = () => {
       const timer = setTimeout(runInitialQA, 2000);
       return () => clearTimeout(timer);
     }
-  }, [runManualQA, toast, hasRunInitialQA, autoRefactorEnabled]);
+  }, [runManualQA, toast, hasRunInitialQA, autoRefactorEnabled, isAdminContext]);
 
-  // Don't render anything - this is now just a background service
+  // Don't render anything - this is a background service that only runs in admin context
+  if (!isAdminContext) {
+    return null;
+  }
+
   return null;
 };
 

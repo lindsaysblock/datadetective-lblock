@@ -12,19 +12,13 @@ import NewProject from "../pages/NewProject";
 import NotFound from "../pages/NotFound";
 import QueryHistory from "../pages/QueryHistory";
 import BehavioralAnalysisDemo from "../pages/BehavioralAnalysisDemo";
-import QARunner from "./QARunner";
-import AutoRefactorPrompts from "./AutoRefactorPrompts";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
-    // Run initial QA analysis after app loads
-    const timer = setTimeout(() => {
-      console.log('🔍 App loaded, QA Runner will initialize comprehensive analysis...');
-    }, 1000);
-    
-    return () => clearTimeout(timer);
+    // App loaded successfully
+    console.log('📱 Main app loaded successfully');
   }, []);
 
   return (
@@ -44,8 +38,6 @@ const App = () => {
               <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>
-            <QARunner />
-            <AutoRefactorPrompts />
           </div>
         </BrowserRouter>
       </TooltipProvider>
