@@ -31,12 +31,14 @@ interface DataSourceConfigProps {
   onDataSourceConnect: (source: DataSource) => void;
   onFileUpload: (file: File) => Promise<void>;
   uploadComplete?: boolean;
+  onUploadMore?: () => void;
 }
 
 const DataSourceConfig: React.FC<DataSourceConfigProps> = ({
   onDataSourceConnect,
   onFileUpload,
-  uploadComplete = false
+  uploadComplete = false,
+  onUploadMore
 }) => {
   const [connectionForm, setConnectionForm] = useState({
     host: '',
@@ -80,18 +82,22 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({
     }
   };
 
-  const handleUploadMore = () => {
-    // Trigger file input click
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = '.csv,.json,.txt,.xlsx';
-    fileInput.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        onFileUpload(file);
-      }
-    };
-    fileInput.click();
+  const handleUploadMoreClick = () => {
+    if (onUploadMore) {
+      onUploadMore();
+    } else {
+      // Fallback trigger file input click
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.csv,.json,.txt,.xlsx';
+      fileInput.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          onFileUpload(file);
+        }
+      };
+      fileInput.click();
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -149,7 +155,7 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({
                 <CheckCircle className="w-6 h-6 text-green-600" />
                 <span className="text-green-700 font-medium">File uploaded successfully!</span>
               </div>
-              <Button onClick={handleUploadMore} className="flex items-center gap-2">
+              <Button onClick={handleUploadMoreClick} className="flex items-center gap-2">
                 <Plus className="w-4 h-4" />
                 Upload Another File
               </Button>
@@ -193,7 +199,7 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({
         ))}
       </div>
 
-      {/* Database Connection Form */}
+      {/* Custom Database Connection Form */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">

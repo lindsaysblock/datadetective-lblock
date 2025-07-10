@@ -171,8 +171,8 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
         sourceName={modalConfig.sourceName}
       />
 
-      {/* Success Indicator - This should show when uploadComplete is true */}
-      {uploadComplete && (
+      {/* Success Indicator - Show when files are uploaded successfully */}
+      {uploadComplete && uploadedFiles.some(f => f.status === 'success') && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center gap-3">
             <CheckCircle className="w-6 h-6 text-green-600" />
@@ -258,6 +258,7 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
             onDataSourceConnect={handleDataSourceConnect}
             onFileUpload={handleFileUploadWithPrivacy}
             uploadComplete={uploadComplete}
+            onUploadMore={handleUploadMore}
           />
           
           {analyzing && (
