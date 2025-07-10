@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 import FileUploadSection from './upload/FileUploadSection';
@@ -6,6 +5,7 @@ import ResearchQuestionSection from './upload/ResearchQuestionSection';
 import AdditionalContextSection from './upload/AdditionalContextSection';
 import AnalysisActionSection from './upload/AnalysisActionSection';
 import ProjectNamingDialog from './upload/ProjectNamingDialog';
+import { Plus } from 'lucide-react';
 
 interface DataUploadFlowProps {
   file: File | null;
@@ -110,14 +110,14 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
         onResearchQuestionChange={onResearchQuestionChange}
       />
 
-      {/* Step 2: File Upload */}
+      {/* Step 2: Connect Your Data */}
       <Separator />
       <div className="space-y-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
-            2
+            <Plus className="w-4 h-4" />
           </div>
-          <h3 className="text-lg font-semibold">Upload Your Data</h3>
+          <h3 className="text-lg font-semibold">Connect Your Data</h3>
         </div>
         <FileUploadSection
           file={file}
