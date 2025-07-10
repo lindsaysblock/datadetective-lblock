@@ -12,11 +12,11 @@ interface DataUploadTabProps {
   uploading: boolean;
   uploadProgress: number;
   uploadStatus: 'uploading' | 'processing' | 'complete' | 'error';
-  uploadFilename: string | null;
+  uploadFilename: string;
   uploadError: string | null;
-  estimatedTime: number | null;
+  estimatedTime: number;
   user: any;
-  onSaveToAccount?: () => void;
+  onSaveToAccount: () => void;
 }
 
 const DataUploadTab: React.FC<DataUploadTabProps> = ({

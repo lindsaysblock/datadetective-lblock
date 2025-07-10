@@ -159,9 +159,9 @@ export const useQueryBuilderState = () => {
     loading,
     uploading,
     uploadProgress,
-    uploadStatus: uploadStatus as 'uploading' | 'processing' | 'complete' | 'error',
+    uploadStatus,
     uploadError,
-    uploadFilename,
+    uploadFilename: uploadFilename || '',
     estimatedTime,
     
     // Actions

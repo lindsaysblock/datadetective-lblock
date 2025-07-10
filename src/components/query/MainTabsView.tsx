@@ -15,7 +15,7 @@ interface MainTabsViewProps {
   setActiveTab: (tab: string) => void;
   uploading: boolean;
   uploadProgress: number;
-  uploadStatus: string;
+  uploadStatus: 'uploading' | 'processing' | 'complete' | 'error';
   uploadFilename: string;
   uploadError: string | null;
   estimatedTime: number;
@@ -26,7 +26,7 @@ interface MainTabsViewProps {
   handleResumeProject: () => void;
   handleFileProcessed: (file: File) => void;
   handleGenerateMockData: () => void;
-  handleSaveToAccount: (filename: string) => void;
+  handleSaveToAccount: () => void;
   handleDatasetSelect: (dataset: any) => void;
 }
 
