@@ -9,6 +9,8 @@ import DataSourceConfig from './DataSourceConfig';
 import { parseFile, generateDataInsights, ParsedData, parseRawText } from '../utils/dataParser';
 import DataVisualization from './DataVisualization';
 import { generateVisualizationRecommendations } from '../utils/visualizationGenerator';
+import BusinessInsights from './BusinessInsights';
+import VisualizationFindings from './VisualizationFindings';
 
 interface Message {
   id: string;
@@ -61,6 +63,7 @@ const QueryBuilder = () => {
 
   const [showVisualization, setShowVisualization] = useState(false);
   const [visualizationData, setVisualizationData] = useState<any[]>([]);
+  const [visualizationFindings, setVisualizationFindings] = useState<any[]>([]);
 
   const handleDataSourceConnect = (source: DataSource) => {
     console.log('Connected to data source:', source);
@@ -223,6 +226,41 @@ const QueryBuilder = () => {
     setMessages(prev => [...prev, vizMessage]);
   };
 
+  const handleExportFinding = (finding: any) => {
+    console.log('Exporting finding:', finding);
+    // Here you would implement export functionality
+    const assistantMessage: Message = {
+      id: Date.now().toString(),
+      type: 'assistant',
+      content: `📊 Great! I've prepared the "${finding.title}" finding for export. You can download it as a PDF report or share the visualization directly with your team. This insight can help drive data-driven decisions in your organization.`,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, assistantMessage]);
+  };
+
+  const handleShareFinding = (finding: any) => {
+    console.log('Sharing finding:', finding);
+    // Here you would implement sharing functionality
+    const assistantMessage: Message = {
+      id: Date.now().toString(),
+      type: 'assistant',
+      content: `🔗 Perfect! I've generated a shareable link for "${finding.title}". You can send this to stakeholders, add it to presentations, or include it in reports. The link includes both the visualization and the key insights.`,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, assistantMessage]);
+  };
+
+  const handleUpdateHypothesis = (hypothesis: any) => {
+    console.log('Updated hypothesis:', hypothesis);
+    const assistantMessage: Message = {
+      id: Date.now().toString(),
+      type: 'assistant',
+      content: `🎯 Excellent! I've saved your business hypothesis: "${hypothesis.hypothesis}". Now I can help you find data that confirms or challenges this hypothesis. What specific data points would help validate this theory?`,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, assistantMessage]);
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -316,6 +354,24 @@ const QueryBuilder = () => {
               </div>
             </div>
           )}
+
+          {/* Business Insights Section */}
+          <div className="flex justify-start">
+            <div className="max-w-4xl">
+              <BusinessInsights onUpdateHypothesis={handleUpdateHypothesis} />
+            </div>
+          </div>
+
+          {/* Visualization Findings Section */}
+          <div className="flex justify-start">
+            <div className="max-w-4xl">
+              <VisualizationFindings 
+                findings={visualizationFindings}
+                onExportFinding={handleExportFinding}
+                onShareFinding={handleShareFinding}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Input Area */}
