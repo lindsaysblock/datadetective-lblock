@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Lightbulb, BarChart3, Database, Upload, TestTube } from 'lucide-react';
@@ -10,11 +10,22 @@ import DataTestingPanel from './DataTestingPanel';
 import SQLQueryBuilder from './SQLQueryBuilder';
 import UnifiedProgress from './UnifiedProgress';
 import AnalyzingIcon from './AnalyzingIcon';
+import OnboardingFlow from './OnboardingFlow';
+import UndoRedoControls from './UndoRedoControls';
 import { useAuthState } from '../hooks/useAuthState';
 import { useDataUpload } from '../hooks/useDataUpload';
+import { useUndoRedo } from '../hooks/useUndoRedo';
+
+interface AppState {
+  activeTab: string;
+  showOnboarding: boolean;
+  lastAction: string;
+}
 
 const QueryBuilder = () => {
   const [activeTab, setActiveTab] = useState('connect');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
   const { user, loading, handleUserChange } = useAuthState();
   const {
     uploading,
@@ -29,11 +40,79 @@ const QueryBuilder = () => {
     handleFileUpload
   } = useDataUpload();
 
+  // Initialize undo/redo for app state
+  const {
+    current: appState,
+    canUndo,
+    canRedo,
+    undo,
+    redo,
+    push: pushState,
+    reset: resetState
+  } = useUndoRedo<AppState>({
+    activeTab: 'connect',
+    showOnboarding: false,
+    lastAction: 'initial'
+  });
+
+  // Check if user is new (first time visiting)
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('data-detective-visited');
+    if (!hasVisited && !loading) {
+      setShowOnboarding(true);
+      localStorage.setItem('data-detective-visited', 'true');
+    }
+  }, [loading]);
+
+  // Update app state when activeTab changes
+  useEffect(() => {
+    if (activeTab !== appState.activeTab) {
+      pushState({
+        activeTab,
+        showOnboarding,
+        lastAction: `switched to ${activeTab} tab`
+      });
+    }
+  }, [activeTab, showOnboarding, appState.activeTab, pushState]);
+
+  // Apply state changes from undo/redo
+  useEffect(() => {
+    if (appState.activeTab !== activeTab) {
+      setActiveTab(appState.activeTab);
+    }
+    if (appState.showOnboarding !== showOnboarding) {
+      setShowOnboarding(appState.showOnboarding);
+    }
+  }, [appState]);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey) {
+        if (event.key === 'z' && !event.shiftKey) {
+          event.preventDefault();
+          undo();
+        } else if ((event.key === 'y') || (event.key === 'z' && event.shiftKey)) {
+          event.preventDefault();
+          redo();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
+
   const onFileUploadWrapper = async (file: File) => {
     try {
       await handleFileUpload(file);
       setTimeout(() => {
         setActiveTab('insights');
+        pushState({
+          activeTab: 'insights',
+          showOnboarding: false,
+          lastAction: 'uploaded file and switched to insights'
+        });
       }, 1500);
     } catch (error) {
       console.error('File upload failed:', error);
@@ -42,8 +121,38 @@ const QueryBuilder = () => {
 
   const handleExecuteQuery = (query: string) => {
     console.log('Executing SQL query:', query);
-    // Here you would integrate with your actual database execution logic
-    // For now, we'll just log the query
+    pushState({
+      activeTab,
+      showOnboarding: false,
+      lastAction: `executed SQL query`
+    });
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    pushState({
+      activeTab,
+      showOnboarding: false,
+      lastAction: 'completed onboarding'
+    });
+  };
+
+  const handleOnboardingSkip = () => {
+    setShowOnboarding(false);
+    pushState({
+      activeTab,
+      showOnboarding: false,
+      lastAction: 'skipped onboarding'
+    });
+  };
+
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    pushState({
+      activeTab: newTab,
+      showOnboarding: false,
+      lastAction: `switched to ${newTab} tab`
+    });
   };
 
   if (loading) {
@@ -100,13 +209,39 @@ const QueryBuilder = () => {
   // Main landing page
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {showOnboarding && (
+        <OnboardingFlow
+          onComplete={handleOnboardingComplete}
+          onSkip={handleOnboardingSkip}
+        />
+      )}
+
       <Header user={user} onUserChange={handleUserChange} />
+      
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Your AI-powered business intelligence companion. Connect your data, ask questions in natural language, 
-            and get instant insights with beautiful visualizations.
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1" />
+            <div className="flex-1 text-center">
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Your AI-powered business intelligence companion. Connect your data, ask questions in natural language, 
+                and get instant insights with beautiful visualizations.
+              </p>
+            </div>
+            <div className="flex-1 flex justify-end">
+              <UndoRedoControls
+                canUndo={canUndo}
+                canRedo={canRedo}
+                onUndo={undo}
+                onRedo={redo}
+                onReset={() => resetState({
+                  activeTab: 'connect',
+                  showOnboarding: false,
+                  lastAction: 'reset'
+                })}
+              />
+            </div>
+          </div>
           
           {!user && (
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg max-w-2xl mx-auto">
@@ -118,7 +253,7 @@ const QueryBuilder = () => {
           )}
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-8">
             <TabsTrigger value="connect" className="flex items-center gap-2">
               <Upload className="w-4 h-4" />
