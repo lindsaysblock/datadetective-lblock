@@ -104,7 +104,7 @@ const NewProject = () => {
           <div className="flex items-center justify-between">
             <div className={`flex items-center gap-2 ${step > 1 ? 'text-blue-600' : 'text-gray-400'}`}>
               {step > 1 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
-              Research Question
+              Question
             </div>
             <div className={`flex items-center gap-2 ${step > 2 ? 'text-blue-600' : 'text-gray-400'}`}>
               {step > 2 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
@@ -122,7 +122,7 @@ const NewProject = () => {
           <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mt-2" style={{ width: `${((step - 1) / 3) * 100}%` }}></div>
         </div>
 
-        {/* Step 1: Research Question */}
+        {/* Step 1: Question */}
         {step === 1 && (
           <Card>
             <CardContent className="p-6">
