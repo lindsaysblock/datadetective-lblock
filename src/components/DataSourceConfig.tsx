@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, Database, Globe, FileText, Settings, BarChart3, Code, Cloud, Server } from 'lucide-react';
+import { Upload, Database, Globe, FileText, Settings, BarChart3, Code, Cloud, Server, Wrench } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { parseRawText } from '../utils/dataParser';
 import AmplitudeIntegration from './AmplitudeIntegration';
@@ -14,7 +14,7 @@ import IntegrationProgress from './IntegrationProgress';
 interface DataSource {
   id: string;
   name: string;
-  type: 'file' | 'database' | 'api' | 'warehouse' | 'amplitude' | 'tableau' | 'powerbi' | 'looker' | 'python' | 'r' | 'matlab' | 'cloud' | 'programming';
+  type: 'file' | 'database' | 'api' | 'warehouse' | 'amplitude' | 'tableau' | 'powerbi' | 'looker' | 'python' | 'r' | 'matlab' | 'cloud' | 'programming' | 'dbtools';
   status: 'connected' | 'disconnected' | 'error';
   lastSync?: Date;
 }
@@ -229,6 +229,21 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
     onDataSourceConnect(newSource);
   };
 
+  const connectDBTool = async (toolName: string) => {
+    const estimatedTime = 8000; // DB tools typically connect faster
+    await simulateIntegrationProgress(toolName, estimatedTime);
+    
+    const newSource: DataSource = {
+      id: Date.now().toString(),
+      name: toolName,
+      type: 'dbtools',
+      status: 'connected',
+      lastSync: new Date()
+    };
+    setConnectedSources(prev => [...prev, newSource]);
+    onDataSourceConnect(newSource);
+  };
+
   if (integrationProgress) {
     return (
       <div className="space-y-6">
@@ -255,7 +270,7 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
       </div>
 
       <Tabs defaultValue="files" className="w-full">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="files" className="flex items-center gap-1 text-xs">
             <Upload className="w-3 h-3" />
             Files
@@ -267,6 +282,10 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
           <TabsTrigger value="database" className="flex items-center gap-1 text-xs">
             <Database className="w-3 h-3" />
             SQL
+          </TabsTrigger>
+          <TabsTrigger value="dbtools" className="flex items-center gap-1 text-xs">
+            <Wrench className="w-3 h-3" />
+            DBTools
           </TabsTrigger>
           <TabsTrigger value="code" className="flex items-center gap-1 text-xs">
             <Code className="w-3 h-3" />
@@ -371,6 +390,141 @@ Examples:
             <div className="mt-4 text-sm text-gray-600">
               <p>🗄️ Supports: PostgreSQL, MySQL, SQLite, SQL Server</p>
               <p>🔐 Read-only access recommended for safety</p>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="dbtools" className="space-y-4">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Database Management Tools</h3>
+            <p className="text-gray-600 mb-6">Connect to popular database administration and development tools</p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+              <Button 
+                variant="outline" 
+                className="h-24 flex flex-col items-center gap-2 hover:bg-blue-50 border-blue-200"
+                onClick={() => connectDBTool('DBeaver')}
+              >
+                <Database className="w-8 h-8 text-blue-600" />
+                <div className="text-center">
+                  <div className="font-medium">DBeaver</div>
+                  <div className="text-xs text-gray-500">Universal DB tool</div>
+                </div>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-24 flex flex-col items-center gap-2 hover:bg-green-50 border-green-200"
+                onClick={() => connectDBTool('TablePlus')}
+              >
+                <Database className="w-8 h-8 text-green-600" />
+                <div className="text-center">
+                  <div className="font-medium">TablePlus</div>
+                  <div className="text-xs text-gray-500">Modern DB client</div>
+                </div>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-24 flex flex-col items-center gap-2 hover:bg-purple-50 border-purple-200"
+                onClick={() => connectDBTool('DataGrip')}
+              >
+                <Database className="w-8 h-8 text-purple-600" />
+                <div className="text-center">
+                  <div className="font-medium">DataGrip</div>
+                  <div className="text-xs text-gray-500">JetBrains IDE</div>
+                </div>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-24 flex flex-col items-center gap-2 hover:bg-red-50 border-red-200"
+                onClick={() => connectDBTool('phpMyAdmin')}
+              >
+                <Database className="w-8 h-8 text-red-600" />
+                <div className="text-center">
+                  <div className="font-medium">phpMyAdmin</div>
+                  <div className="text-xs text-gray-500">MySQL web admin</div>
+                </div>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-24 flex flex-col items-center gap-2 hover:bg-indigo-50 border-indigo-200"
+                onClick={() => connectDBTool('pgAdmin')}
+              >
+                <Database className="w-8 h-8 text-indigo-600" />
+                <div className="text-center">
+                  <div className="font-medium">pgAdmin</div>
+                  <div className="text-xs text-gray-500">PostgreSQL admin</div>
+                </div>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-24 flex flex-col items-center gap-2 hover:bg-orange-50 border-orange-200"
+                onClick={() => connectDBTool('MySQL Workbench')}
+              >
+                <Database className="w-8 h-8 text-orange-600" />
+                <div className="text-center">
+                  <div className="font-medium">MySQL Workbench</div>
+                  <div className="text-xs text-gray-500">Visual DB design</div>
+                </div>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center gap-2"
+                onClick={() => connectDBTool('Adminer')}
+              >
+                <Wrench className="w-5 h-5" />
+                <span className="text-sm">Adminer</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center gap-2"
+                onClick={() => connectDBTool('Sequel Pro')}
+              >
+                <Wrench className="w-5 h-5" />
+                <span className="text-sm">Sequel Pro</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center gap-2"
+                onClick={() => connectDBTool('HeidiSQL')}
+              >
+                <Wrench className="w-5 h-5" />
+                <span className="text-sm">HeidiSQL</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center gap-2"
+                onClick={() => connectDBTool('Navicat')}
+              >
+                <Wrench className="w-5 h-5" />
+                <span className="text-sm">Navicat</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center gap-2"
+                onClick={() => connectDBTool('SQLiteStudio')}
+              >
+                <Wrench className="w-5 h-5" />
+                <span className="text-sm">SQLiteStudio</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center gap-2"
+                onClick={() => connectDBTool('MongoDB Compass')}
+              >
+                <Wrench className="w-5 h-5" />
+                <span className="text-sm">MongoDB Compass</span>
+              </Button>
+            </div>
+            
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800 font-medium mb-2">🛠️ Database Tools Integration</p>
+              <p className="text-sm text-blue-700">
+                Connect to your favorite database management tools. Import schemas, query results, 
+                and database metadata for comprehensive data analysis and visualization.
+              </p>
             </div>
           </Card>
         </TabsContent>
@@ -705,6 +859,7 @@ Examples:
                     {(source.type === 'tableau' || source.type === 'powerbi' || source.type === 'looker') && <BarChart3 className="w-4 h-4 text-green-600" />}
                     {source.type === 'programming' && <Code className="w-4 h-4 text-green-600" />}
                     {(source.type === 'cloud' || source.type === 'warehouse') && <Server className="w-4 h-4 text-green-600" />}
+                    {source.type === 'dbtools' && <Wrench className="w-4 h-4 text-green-600" />}
                   </div>
                   <div>
                     <p className="font-medium text-gray-800">{source.name}</p>
