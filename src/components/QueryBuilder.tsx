@@ -16,6 +16,8 @@ import { generateVisualizationRecommendations } from '../utils/visualizationGene
 import BusinessInsights from './BusinessInsights';
 import VisualizationFindings from './VisualizationFindings';
 import HypothesisTracker from './HypothesisTracker';
+import AnalyzingIcon from './AnalyzingIcon';
+import UploadProgress from './UploadProgress';
 
 interface Message {
   id: string;
@@ -75,6 +77,15 @@ const QueryBuilder = () => {
   const [visualizationData, setVisualizationData] = useState<any[]>([]);
   const [visualizationFindings, setVisualizationFindings] = useState<any[]>([]);
 
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({
+    isUploading: false,
+    progress: 0,
+    status: 'uploading' as 'uploading' | 'processing' | 'complete' | 'error',
+    filename: '',
+    error: ''
+  });
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
@@ -122,7 +133,35 @@ const QueryBuilder = () => {
   };
 
   const handleFileUpload = async (file: File) => {
+    setUploadProgress({
+      isUploading: true,
+      progress: 0,
+      status: 'uploading',
+      filename: file.name,
+      error: ''
+    });
+
     try {
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev.progress < 60) {
+            return { ...prev, progress: prev.progress + 10 };
+          }
+          return prev;
+        });
+      }, 200);
+
+      // Switch to processing after upload
+      setTimeout(() => {
+        clearInterval(progressInterval);
+        setUploadProgress(prev => ({
+          ...prev,
+          progress: 70,
+          status: 'processing'
+        }));
+      }, 1200);
+
       let parsedData: ParsedData;
       
       if (file.name === 'pasted-data.txt') {
@@ -131,6 +170,19 @@ const QueryBuilder = () => {
       } else {
         parsedData = await parseFile(file);
       }
+      
+      // Complete the progress
+      setUploadProgress(prev => ({ ...prev, progress: 100, status: 'complete' }));
+      
+      setTimeout(() => {
+        setUploadProgress({
+          isUploading: false,
+          progress: 0,
+          status: 'uploading',
+          filename: '',
+          error: ''
+        });
+      }, 2000);
       
       setConnectedData(parsedData);
       
@@ -147,6 +199,14 @@ const QueryBuilder = () => {
       setShowDataConfig(false);
     } catch (error) {
       console.error('Error parsing data:', error);
+      setUploadProgress({
+        isUploading: false,
+        progress: 0,
+        status: 'error',
+        filename: file.name,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      
       const errorMessage: Message = {
         id: Date.now().toString(),
         type: 'assistant',
@@ -250,21 +310,32 @@ const QueryBuilder = () => {
       timestamp: new Date()
     };
 
-    const assistantResponse = generateAssistantResponse(currentInput);
-    const assistantMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      type: 'assistant',
-      content: assistantResponse.content,
-      timestamp: new Date(),
-      queryPart: assistantResponse.queryPart
-    };
+    // Start analyzing animation
+    setIsAnalyzing(true);
 
-    setMessages(prev => [...prev, userMessage, assistantMessage]);
+    // Add user message immediately
+    setMessages(prev => [...prev, userMessage]);
+
+    // Simulate analysis time
+    setTimeout(() => {
+      const assistantResponse = generateAssistantResponse(currentInput);
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: assistantResponse.content,
+        timestamp: new Date(),
+        queryPart: assistantResponse.queryPart
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+      setIsAnalyzing(false);
+      
+      if (assistantResponse.queryPart) {
+        setCurrentQuery(prev => prev + ' ' + assistantResponse.queryPart);
+      }
+    }, 1500); // 1.5 seconds of analysis animation
+
     setCurrentInput('');
-    
-    if (assistantResponse.queryPart) {
-      setCurrentQuery(prev => prev + ' ' + assistantResponse.queryPart);
-    }
   };
 
   const handleSelectVisualization = (type: string, data: any[]) => {
@@ -455,6 +526,18 @@ const QueryBuilder = () => {
               </div>
             </div>
           ))}
+          
+          {/* Analyzing Animation */}
+          <AnalyzingIcon isAnalyzing={isAnalyzing} />
+          
+          {/* Upload Progress */}
+          <UploadProgress 
+            isUploading={uploadProgress.isUploading}
+            progress={uploadProgress.progress}
+            status={uploadProgress.status}
+            filename={uploadProgress.filename}
+            error={uploadProgress.error}
+          />
           
           {/* Visualization Recommendations */}
           {showVisualization && visualizationData.length > 0 && (
