@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { Upload, Database, Globe, FileText, Settings, BarChart3, Code, Cloud, Se
 import { Textarea } from '@/components/ui/textarea';
 import { parseRawText } from '../utils/dataParser';
 import AmplitudeIntegration from './AmplitudeIntegration';
+import IntegrationProgress from './IntegrationProgress';
 
 interface DataSource {
   id: string;
@@ -29,6 +29,13 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
   const [apiKey, setApiKey] = useState('');
   const [databaseUrl, setDatabaseUrl] = useState('');
   const [rawDataText, setRawDataText] = useState('');
+  const [integrationProgress, setIntegrationProgress] = useState<{
+    isConnecting: boolean;
+    progress: number;
+    status: 'connecting' | 'authenticating' | 'syncing' | 'complete' | 'error';
+    serviceName: string;
+    estimatedTime: number;
+  } | null>(null);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -90,13 +97,63 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
     onDataSourceConnect(newSource);
   };
 
-  const connectAnalytics = () => {
+  const simulateIntegrationProgress = async (serviceName: string, baseTime: number = 10000) => {
+    setIntegrationProgress({
+      isConnecting: true,
+      progress: 0,
+      status: 'connecting',
+      serviceName,
+      estimatedTime: baseTime
+    });
+
+    // Connecting phase (20%)
+    await new Promise(resolve => setTimeout(resolve, baseTime * 0.2));
+    setIntegrationProgress(prev => prev ? {
+      ...prev,
+      progress: 20,
+      status: 'authenticating',
+      estimatedTime: baseTime * 0.8
+    } : null);
+
+    // Authentication phase (40%)
+    await new Promise(resolve => setTimeout(resolve, baseTime * 0.2));
+    setIntegrationProgress(prev => prev ? {
+      ...prev,
+      progress: 40,
+      status: 'syncing',
+      estimatedTime: baseTime * 0.6
+    } : null);
+
+    // Syncing phase (100%)
+    for (let i = 40; i <= 100; i += 20) {
+      await new Promise(resolve => setTimeout(resolve, baseTime * 0.15));
+      setIntegrationProgress(prev => prev ? {
+        ...prev,
+        progress: i,
+        estimatedTime: baseTime * ((100 - i) / 100)
+      } : null);
+    }
+
+    setIntegrationProgress(prev => prev ? {
+      ...prev,
+      progress: 100,
+      status: 'complete',
+      estimatedTime: 0
+    } : null);
+
+    setTimeout(() => {
+      setIntegrationProgress(null);
+    }, 2000);
+  };
+
+  const connectAnalytics = async () => {
     if (!apiKey.trim()) {
       console.log('No API key provided for analytics connection');
       return;
     }
     
-    console.log('Connecting to analytics platform with API key');
+    await simulateIntegrationProgress('Analytics Platform', 8000);
+    
     const newSource: DataSource = {
       id: Date.now().toString(),
       name: 'Analytics Platform',
@@ -109,13 +166,14 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
     setApiKey('');
   };
 
-  const connectDatabase = () => {
+  const connectDatabase = async () => {
     if (!databaseUrl.trim()) {
       console.log('No database URL provided');
       return;
     }
     
-    console.log('Connecting to database:', databaseUrl.substring(0, 20) + '...');
+    await simulateIntegrationProgress('Database Connection', 12000);
+    
     const newSource: DataSource = {
       id: Date.now().toString(),
       name: 'Database Connection',
@@ -128,8 +186,9 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
     setDatabaseUrl('');
   };
 
-  const connectProgrammingEnv = (envName: 'python' | 'r' | 'matlab') => {
-    console.log('Connecting to programming environment:', envName);
+  const connectProgrammingEnv = async (envName: 'python' | 'r' | 'matlab') => {
+    await simulateIntegrationProgress(`${envName.toUpperCase()} Environment`, 15000);
+    
     const newSource: DataSource = {
       id: Date.now().toString(),
       name: `${envName.toUpperCase()} Environment`,
@@ -141,8 +200,10 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
     onDataSourceConnect(newSource);
   };
 
-  const connectCloudPlatform = (platformName: string, type: 'cloud' | 'warehouse') => {
-    console.log('Connecting to cloud platform:', platformName);
+  const connectCloudPlatform = async (platformName: string, type: 'cloud' | 'warehouse') => {
+    const estimatedTime = type === 'warehouse' ? 20000 : 12000; // Warehouses take longer
+    await simulateIntegrationProgress(platformName, estimatedTime);
+    
     const newSource: DataSource = {
       id: Date.now().toString(),
       name: platformName,
@@ -154,8 +215,9 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
     onDataSourceConnect(newSource);
   };
 
-  const connectBITool = (toolName: 'tableau' | 'powerbi' | 'looker') => {
-    console.log('Connecting to BI tool:', toolName);
+  const connectBITool = async (toolName: 'tableau' | 'powerbi' | 'looker') => {
+    await simulateIntegrationProgress(`${toolName.charAt(0).toUpperCase() + toolName.slice(1)} Integration`, 10000);
+    
     const newSource: DataSource = {
       id: Date.now().toString(),
       name: `${toolName.charAt(0).toUpperCase() + toolName.slice(1)} Integration`,
@@ -166,6 +228,24 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
     setConnectedSources(prev => [...prev, newSource]);
     onDataSourceConnect(newSource);
   };
+
+  if (integrationProgress) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Connecting to Data Source</h2>
+          <p className="text-gray-600">Please wait while we establish the connection...</p>
+        </div>
+        <IntegrationProgress
+          isConnecting={integrationProgress.isConnecting}
+          progress={integrationProgress.progress}
+          status={integrationProgress.status}
+          serviceName={integrationProgress.serviceName}
+          estimatedTime={integrationProgress.estimatedTime}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

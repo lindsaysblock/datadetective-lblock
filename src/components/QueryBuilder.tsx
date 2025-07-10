@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,6 +37,8 @@ const QueryBuilder = () => {
   const [user, setUser] = useState<any>(null);
   const [findings, setFindings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [estimatedTime, setEstimatedTime] = useState<number>(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -68,8 +69,26 @@ const QueryBuilder = () => {
     setUser(newUser);
   };
 
-  const handleDataSourceConnect = (source: DataSource) => {
+  const handleDataSourceConnect = async (source: DataSource) => {
     console.log('Data source connected:', source);
+    setAnalyzing(true);
+    
+    // Simulate connection and analysis process with progress updates
+    const totalSteps = 5;
+    const estimatedTotalTime = 15000; // 15 seconds
+    setEstimatedTime(estimatedTotalTime);
+    
+    for (let step = 1; step <= totalSteps; step++) {
+      await new Promise(resolve => setTimeout(resolve, estimatedTotalTime / totalSteps));
+      const progress = (step / totalSteps) * 100;
+      setUploadProgress(progress);
+      setEstimatedTime(estimatedTotalTime - (step * (estimatedTotalTime / totalSteps)));
+    }
+    
+    setAnalyzing(false);
+    setUploadProgress(0);
+    setEstimatedTime(0);
+    
     toast({
       title: "Data Source Connected!",
       description: `Successfully connected to ${source.name}.`,
@@ -83,35 +102,48 @@ const QueryBuilder = () => {
     setUploadStatus('uploading');
     setUploadError(null);
     setFilename(file.name);
+    setAnalyzing(true);
+
+    // Calculate estimated time based on file size (rough estimate: 1MB per 2 seconds)
+    const fileSizeInMB = file.size / (1024 * 1024);
+    const baseTime = Math.max(5000, fileSizeInMB * 2000); // Minimum 5 seconds
+    setEstimatedTime(baseTime);
 
     try {
-      // Simulate upload progress
-      setUploadProgress(20);
-      console.log('Parsing file...');
+      // Upload phase (30% of progress)
+      setUploadProgress(10);
+      await new Promise(resolve => setTimeout(resolve, baseTime * 0.2));
+      setUploadProgress(30);
+      setEstimatedTime(baseTime * 0.7);
       
+      console.log('Parsing file...');
       const parsed = await parseFile(file);
       console.log('File parsed successfully:', parsed.summary);
       setParsedData(parsed);
+      
+      // Processing phase (50% of progress)
       setUploadProgress(50);
       setUploadStatus('processing');
-
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setEstimatedTime(baseTime * 0.5);
+      
+      await new Promise(resolve => setTimeout(resolve, baseTime * 0.3));
       setUploadProgress(80);
+      setEstimatedTime(baseTime * 0.2);
 
       const generatedInsights = generateDataInsights(parsed);
       setInsights(generatedInsights);
       console.log('Generated insights:', generatedInsights.length);
       
-      // Generate findings based on the data
       const mockFindings = generateMockFindings(parsed);
       setFindings(mockFindings);
       console.log('Generated findings:', mockFindings.length);
       
+      // Final phase
+      await new Promise(resolve => setTimeout(resolve, baseTime * 0.2));
       setUploadStatus('complete');
       setUploadProgress(100);
+      setEstimatedTime(0);
 
-      // Auto-switch to insights tab after successful upload
       setTimeout(() => {
         setActiveTab('insights');
       }, 1500);
@@ -124,6 +156,7 @@ const QueryBuilder = () => {
       console.error("File upload error:", error);
       setUploadStatus('error');
       setUploadError(error.message || 'Failed to process file');
+      setEstimatedTime(0);
       toast({
         title: "Upload Failed",
         description: `Failed to process ${file.name}: ${error.message || 'Unknown error'}`,
@@ -131,6 +164,7 @@ const QueryBuilder = () => {
       });
     } finally {
       setUploading(false);
+      setAnalyzing(false);
     }
   };
 
@@ -247,7 +281,6 @@ const QueryBuilder = () => {
     }
   };
 
-  // Generate mock recommendations from parsed data
   const generateRecommendations = (data: ParsedData) => {
     const numericColumns = data.columns.filter(col => col.type === 'number');
     const recommendations = [];
@@ -321,25 +354,31 @@ const QueryBuilder = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <Header user={user} onUserChange={handleUserChange} />
         <div className="container mx-auto px-4 py-8 flex items-center justify-center">
-          <AnalyzingIcon />
+          <AnalyzingIcon isAnalyzing={true} />
         </div>
       </div>
     );
   }
 
-  // Show upload progress screen
-  if (uploading || uploadStatus === 'complete' || uploadStatus === 'error') {
+  // Show upload progress screen with enhanced progress bar
+  if (uploading || uploadStatus === 'complete' || uploadStatus === 'error' || analyzing) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <Header user={user} onUserChange={handleUserChange} />
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 space-y-6">
           <UploadProgress
-            isUploading={uploading}
+            isUploading={uploading || analyzing}
             progress={uploadProgress}
             status={uploadStatus}
             filename={filename}
             error={uploadError}
+            estimatedTime={estimatedTime}
           />
+          {analyzing && (
+            <div className="text-center">
+              <AnalyzingIcon isAnalyzing={analyzing} />
+            </div>
+          )}
         </div>
       </div>
     );

@@ -1,26 +1,26 @@
 
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Upload, Database, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Globe, Database, CheckCircle, AlertCircle, Clock, Wifi } from 'lucide-react';
 
-interface UploadProgressProps {
-  isUploading: boolean;
+interface IntegrationProgressProps {
+  isConnecting: boolean;
   progress: number;
-  status: 'uploading' | 'processing' | 'complete' | 'error';
-  filename?: string;
+  status: 'connecting' | 'authenticating' | 'syncing' | 'complete' | 'error';
+  serviceName: string;
   error?: string;
   estimatedTime?: number;
 }
 
-const UploadProgress: React.FC<UploadProgressProps> = ({ 
-  isUploading, 
+const IntegrationProgress: React.FC<IntegrationProgressProps> = ({ 
+  isConnecting, 
   progress, 
   status, 
-  filename,
+  serviceName,
   error,
   estimatedTime = 0
 }) => {
-  if (!isUploading && status !== 'complete' && status !== 'error') return null;
+  if (!isConnecting && status !== 'complete' && status !== 'error') return null;
 
   const formatTime = (seconds: number): string => {
     if (seconds < 60) {
@@ -33,39 +33,45 @@ const UploadProgress: React.FC<UploadProgressProps> = ({
 
   const getStatusIcon = () => {
     switch (status) {
-      case 'uploading':
-        return <Upload className="w-5 h-5 text-blue-600 animate-bounce" />;
-      case 'processing':
-        return <Database className="w-5 h-5 text-purple-600 animate-spin" />;
+      case 'connecting':
+        return <Wifi className="w-5 h-5 text-blue-600 animate-pulse" />;
+      case 'authenticating':
+        return <Globe className="w-5 h-5 text-orange-600 animate-spin" />;
+      case 'syncing':
+        return <Database className="w-5 h-5 text-purple-600 animate-bounce" />;
       case 'complete':
         return <CheckCircle className="w-5 h-5 text-green-600" />;
       case 'error':
         return <AlertCircle className="w-5 h-5 text-red-600" />;
       default:
-        return <Upload className="w-5 h-5 text-blue-600" />;
+        return <Globe className="w-5 h-5 text-gray-600" />;
     }
   };
 
   const getStatusText = () => {
     switch (status) {
-      case 'uploading':
-        return 'Uploading and parsing file...';
-      case 'processing':
-        return 'Processing and analyzing data...';
+      case 'connecting':
+        return `Connecting to ${serviceName}...`;
+      case 'authenticating':
+        return `Authenticating with ${serviceName}...`;
+      case 'syncing':
+        return `Syncing data from ${serviceName}...`;
       case 'complete':
-        return 'Upload complete!';
+        return `Connected to ${serviceName}!`;
       case 'error':
-        return 'Upload failed';
+        return `Failed to connect to ${serviceName}`;
       default:
-        return 'Preparing upload...';
+        return 'Preparing connection...';
     }
   };
 
   const getStatusColor = () => {
     switch (status) {
-      case 'uploading':
-        return 'from-blue-50 to-indigo-50 border-blue-200';
-      case 'processing':
+      case 'connecting':
+        return 'from-blue-50 to-cyan-50 border-blue-200';
+      case 'authenticating':
+        return 'from-orange-50 to-yellow-50 border-orange-200';
+      case 'syncing':
         return 'from-purple-50 to-blue-50 border-purple-200';
       case 'complete':
         return 'from-green-50 to-emerald-50 border-green-200';
@@ -93,9 +99,6 @@ const UploadProgress: React.FC<UploadProgressProps> = ({
               )}
             </div>
           </div>
-          {filename && (
-            <p className="text-sm text-gray-600 truncate">{filename}</p>
-          )}
           {error && (
             <p className="text-sm text-red-600 mt-1">{error}</p>
           )}
@@ -107,27 +110,27 @@ const UploadProgress: React.FC<UploadProgressProps> = ({
         className="h-2"
       />
       
-      {status === 'processing' && (
+      {status === 'syncing' && (
         <div className="mt-3 flex items-center gap-2 text-sm text-purple-600">
           <div className="flex gap-1">
             <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
             <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '200ms' }}></div>
             <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '400ms' }}></div>
           </div>
-          <span>Structuring data for analysis</span>
+          <span>Downloading and processing data</span>
           {estimatedTime > 0 && (
             <span className="ml-2 text-purple-500">• {formatTime(estimatedTime / 1000)} remaining</span>
           )}
         </div>
       )}
       
-      {(status === 'uploading' || status === 'processing') && estimatedTime > 0 && (
+      {(status === 'connecting' || status === 'authenticating' || status === 'syncing') && estimatedTime > 0 && (
         <div className="mt-2 text-xs text-gray-500">
-          Please don't navigate away - analysis in progress
+          Please keep this tab open during the integration process
         </div>
       )}
     </div>
   );
 };
 
-export default UploadProgress;
+export default IntegrationProgress;
