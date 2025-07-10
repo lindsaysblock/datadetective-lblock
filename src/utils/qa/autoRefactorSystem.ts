@@ -8,6 +8,7 @@ export interface RefactoringSuggestion {
   priority: 'high' | 'medium' | 'low';
   reason: string;
   suggestedActions: string[];
+  autoRefactor: boolean; // New flag for automatic refactoring
 }
 
 export class AutoRefactorSystem {
@@ -24,8 +25,8 @@ export class AutoRefactorSystem {
     // Analyze known large files from the codebase
     const knownLargeFiles = [
       { path: 'src/utils/qaSystem.ts', lines: 284, type: 'utility' },
-      { path: 'src/components/QADashboard.tsx', lines: 347, type: 'component' },
-      { path: 'src/utils/qa/qaTestSuites.ts', lines: 209, type: 'utility' },
+      { path: 'src/components/QADashboard.tsx', lines: 150, type: 'component' }, // Updated after recent refactoring
+      { path: 'src/utils/qa/qaTestSuites.ts', lines: 120, type: 'utility' }, // Updated after recent refactoring
       { path: 'src/components/AnalysisDashboard.tsx', lines: 180, type: 'component' },
       { path: 'src/components/QueryBuilder.tsx', lines: 445, type: 'component' },
       { path: 'src/components/VisualizationReporting.tsx', lines: 316, type: 'component' }
@@ -37,6 +38,7 @@ export class AutoRefactorSystem {
       if (file.lines > threshold) {
         const priority = this.calculatePriority(file.lines, threshold);
         const suggestedActions = this.generateRefactoringActions(file.path, file.type);
+        const autoRefactor = this.shouldAutoRefactor(file.lines, threshold, priority);
         
         suggestions.push({
           file: file.path,
@@ -44,12 +46,19 @@ export class AutoRefactorSystem {
           threshold,
           priority,
           reason: `File exceeds ${threshold} line threshold for ${file.type} files`,
-          suggestedActions
+          suggestedActions,
+          autoRefactor
         });
       }
     }
 
     return suggestions;
+  }
+
+  private shouldAutoRefactor(lines: number, threshold: number, priority: 'high' | 'medium' | 'low'): boolean {
+    // Auto-refactor if file is significantly over threshold or high priority
+    const ratio = lines / threshold;
+    return priority === 'high' || ratio > 1.8;
   }
 
   private calculatePriority(lines: number, threshold: number): 'high' | 'medium' | 'low' {
@@ -66,15 +75,6 @@ export class AutoRefactorSystem {
       actions.push('Split QA system into separate test runner and report generator classes');
       actions.push('Extract load testing and unit testing into separate modules');
       actions.push('Create dedicated performance analysis utilities');
-    } else if (filePath.includes('QADashboard.tsx')) {
-      actions.push('Extract QA overview into separate component');
-      actions.push('Split test results into dedicated components');
-      actions.push('Create separate performance metrics component');
-      actions.push('Extract refactoring recommendations into its own component');
-    } else if (filePath.includes('qaTestSuites.ts')) {
-      actions.push('Split test suites into separate files by category');
-      actions.push('Create base test suite class for common functionality');
-      actions.push('Extract test result aggregation logic');
     } else if (filePath.includes('QueryBuilder.tsx')) {
       actions.push('Extract query builder tabs into separate components');
       actions.push('Create dedicated SQL editor component');
@@ -83,6 +83,10 @@ export class AutoRefactorSystem {
       actions.push('Split into ReportsList, ReportCreator, and ReportScheduler components');
       actions.push('Extract report configuration into separate component');
       actions.push('Create dedicated report template components');
+    } else if (filePath.includes('AnalysisDashboard.tsx')) {
+      actions.push('Extract dashboard tabs into separate components');
+      actions.push('Create dedicated analysis result components');
+      actions.push('Split visualization and insights into separate components');
     } else {
       actions.push(`Split ${fileType} into smaller, focused modules`);
       actions.push('Extract reusable logic into custom hooks or utilities');
@@ -93,15 +97,26 @@ export class AutoRefactorSystem {
   }
 
   async shouldAutoTriggerRefactoring(suggestions: RefactoringSuggestion[]): Promise<RefactoringSuggestion[]> {
-    // Only auto-trigger for high priority suggestions to avoid spam
-    return suggestions.filter(suggestion => 
-      suggestion.priority === 'high' && 
-      suggestion.currentLines > suggestion.threshold * 1.8
-    );
+    // Return all suggestions marked for auto-refactoring
+    return suggestions.filter(suggestion => suggestion.autoRefactor);
   }
 
   generateRefactoringMessage(suggestion: RefactoringSuggestion): string {
     const actions = suggestion.suggestedActions.slice(0, 3).join(', ');
-    return `Refactor ${suggestion.file} (${suggestion.currentLines} lines) into smaller files without breaking any functionality. Focus on: ${actions}. Make sure to delete any unused imports or files after the operation is done.`;
+    return `Automatically refactor ${suggestion.file} (${suggestion.currentLines} lines) into smaller files without breaking any functionality. Focus on: ${actions}. Make sure to delete any unused imports or files after the operation is done.`;
+  }
+
+  async executeAutoRefactoring(suggestions: RefactoringSuggestion[]): Promise<void> {
+    const autoRefactorSuggestions = suggestions.filter(s => s.autoRefactor);
+    
+    if (autoRefactorSuggestions.length > 0) {
+      console.log(`🔧 Auto-executing refactoring for ${autoRefactorSuggestions.length} files...`);
+      
+      // Dispatch automatic refactoring event
+      const event = new CustomEvent('qa-auto-execute-refactoring', {
+        detail: { suggestions: autoRefactorSuggestions }
+      });
+      window.dispatchEvent(event);
+    }
   }
 }

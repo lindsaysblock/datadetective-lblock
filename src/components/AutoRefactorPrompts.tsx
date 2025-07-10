@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 interface RefactoringMessage {
   message: string;
   label: string;
+  autoExecute?: boolean;
 }
 
 const AutoRefactorPrompts: React.FC = () => {
@@ -12,7 +13,9 @@ const AutoRefactorPrompts: React.FC = () => {
   useEffect(() => {
     const handleRefactoringPrompts = (event: CustomEvent<{ messages: RefactoringMessage[] }>) => {
       const { messages } = event.detail;
-      setRefactoringMessages(messages);
+      // Only show manual refactoring prompts (auto-execute ones are handled automatically)
+      const manualMessages = messages.filter(m => !m.autoExecute);
+      setRefactoringMessages(manualMessages);
       
       // Auto-clear after 30 seconds to avoid UI clutter
       setTimeout(() => {
@@ -20,10 +23,20 @@ const AutoRefactorPrompts: React.FC = () => {
       }, 30000);
     };
 
+    const handleAutoExecuteRefactoring = (event: CustomEvent<{ suggestions: any[] }>) => {
+      const { suggestions } = event.detail;
+      // Show brief notification for auto-executed refactoring
+      if (suggestions.length > 0) {
+        console.log(`🔧 Auto-refactoring executed for ${suggestions.length} files`);
+      }
+    };
+
     window.addEventListener('qa-refactoring-prompts', handleRefactoringPrompts as EventListener);
+    window.addEventListener('qa-auto-execute-refactoring', handleAutoExecuteRefactoring as EventListener);
 
     return () => {
       window.removeEventListener('qa-refactoring-prompts', handleRefactoringPrompts as EventListener);
+      window.removeEventListener('qa-auto-execute-refactoring', handleAutoExecuteRefactoring as EventListener);
     };
   }, []);
 
@@ -41,10 +54,10 @@ const AutoRefactorPrompts: React.FC = () => {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h4 className="font-semibold text-blue-800 mb-1">
-                🔧 Auto-Refactoring Suggestion
+                🔧 Manual Refactoring Suggestion
               </h4>
               <p className="text-sm text-blue-700 mb-3">
-                QA analysis detected a file that could benefit from refactoring
+                QA analysis suggests this file could benefit from refactoring
               </p>
               <button 
                 className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"

@@ -7,7 +7,7 @@ import { RefactoringSuggestion } from '../utils/qa/autoRefactorSystem';
 
 const QARunner: React.FC = () => {
   const { runManualQA, isAutoEnabled } = useAutoQA();
-  const { generateRefactoringMessages } = useAutoRefactor();
+  const { generateRefactoringMessages, autoRefactorEnabled } = useAutoRefactor();
   const { toast } = useToast();
   const [hasRunInitialQA, setHasRunInitialQA] = useState(false);
 
@@ -18,13 +18,39 @@ const QARunner: React.FC = () => {
       if (suggestions.length > 0) {
         const messages = generateRefactoringMessages(suggestions);
         
-        // Dispatch refactoring prompts event for UI to handle
-        const promptEvent = new CustomEvent('qa-refactoring-prompts', {
-          detail: { messages }
-        });
-        window.dispatchEvent(promptEvent);
+        if (autoRefactorEnabled) {
+          // Auto-execute refactoring for suggestions marked as autoRefactor
+          const autoExecuteMessages = messages.filter(m => m.autoExecute);
+          
+          if (autoExecuteMessages.length > 0) {
+            console.log(`🔧 Auto-executing refactoring for ${autoExecuteMessages.length} files...`);
+            
+            // Automatically trigger refactoring without user prompt
+            autoExecuteMessages.forEach(message => {
+              const messageEvent = new CustomEvent('lovable-message', {
+                detail: { message: message.message }
+              });
+              window.dispatchEvent(messageEvent);
+            });
+            
+            toast({
+              title: "Auto-Refactoring Applied",
+              description: `Automatically refactored ${autoExecuteMessages.length} files to improve code quality`,
+              duration: 4000,
+            });
+          }
+        }
         
-        console.log(`🔧 Auto-refactoring: ${suggestions.length} high-priority files identified for refactoring`);
+        // Still dispatch manual refactoring prompts for non-auto suggestions
+        const manualMessages = messages.filter(m => !m.autoExecute);
+        if (manualMessages.length > 0) {
+          const promptEvent = new CustomEvent('qa-refactoring-prompts', {
+            detail: { messages: manualMessages }
+          });
+          window.dispatchEvent(promptEvent);
+        }
+        
+        console.log(`🔧 Auto-refactoring: ${suggestions.length} files processed (${messages.filter(m => m.autoExecute).length} auto-executed, ${messages.filter(m => !m.autoExecute).length} manual prompts)`);
       }
     };
 
@@ -33,13 +59,13 @@ const QARunner: React.FC = () => {
     return () => {
       window.removeEventListener('qa-auto-refactor-suggestions', handleAutoRefactorSuggestions as EventListener);
     };
-  }, [generateRefactoringMessages]);
+  }, [generateRefactoringMessages, autoRefactorEnabled, toast]);
 
   useEffect(() => {
     // Run comprehensive QA analysis on component mount
     if (!hasRunInitialQA) {
       const runInitialQA = async () => {
-        console.log('🔍 Running comprehensive QA analysis with auto-fix and refactoring detection...');
+        console.log('🔍 Running comprehensive QA analysis with auto-fix and auto-refactoring...');
         
         try {
           const report = await runManualQA();
@@ -51,14 +77,15 @@ const QARunner: React.FC = () => {
             warnings: report.warnings,
             totalTests: report.totalTests,
             renderTime: `${report.performanceMetrics.renderTime.toFixed(2)}ms`,
-            autoFixAttempted: report.failed > 0 ? 'Multiple attempts made' : 'No fixes needed'
+            autoFixAttempted: report.failed > 0 ? 'Multiple attempts made' : 'No fixes needed',
+            autoRefactorEnabled: autoRefactorEnabled ? 'Enabled' : 'Disabled'
           });
 
           // Only show success toast if all tests pass
           if (report.failed === 0) {
             toast({
               title: "QA Analysis Complete",
-              description: `All ${report.totalTests} tests passed successfully. Auto-refactoring analysis included.`,
+              description: `All ${report.totalTests} tests passed successfully. Auto-refactoring ${autoRefactorEnabled ? 'applied' : 'analysis included'}.`,
               duration: 5000,
             });
           }
@@ -81,7 +108,7 @@ const QARunner: React.FC = () => {
       const timer = setTimeout(runInitialQA, 2000);
       return () => clearTimeout(timer);
     }
-  }, [runManualQA, toast, hasRunInitialQA]);
+  }, [runManualQA, toast, hasRunInitialQA, autoRefactorEnabled]);
 
   return null;
 };
