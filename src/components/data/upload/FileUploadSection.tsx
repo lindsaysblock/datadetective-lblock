@@ -3,7 +3,8 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, File, FileText, Database } from 'lucide-react';
+import { Upload, FileText, Database } from 'lucide-react';
+import { File as FileIcon } from 'lucide-react';
 
 interface FileUploadSectionProps {
   file: File | null;
@@ -24,7 +25,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
     const textData = prompt('Paste your data here (CSV format):');
     if (textData) {
       const textBlob = new Blob([textData], { type: 'text/plain' });
-      const textFile = new globalThis.File([textBlob], 'pasted-data.csv', { type: 'text/csv' });
+      const textFile = new window.File([textBlob], 'pasted-data.csv', { type: 'text/csv' });
       
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(textFile);
@@ -37,7 +38,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
         currentTarget: {} as HTMLInputElement,
         preventDefault: () => {},
         stopPropagation: () => {},
-        nativeEvent: {} as Event,
+        nativeEvent: new Event('change'),
         isDefaultPrevented: () => false,
         isPropagationStopped: () => false,
         persist: () => {},
@@ -111,7 +112,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
       ) : (
         <div className="flex items-center gap-4 flex-1">
           <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-md py-2 px-3">
-            <File className="w-4 h-4" />
+            <FileIcon className="w-4 h-4" />
             <span className="truncate max-w-xs">{file.name}</span>
           </div>
           <Button 
