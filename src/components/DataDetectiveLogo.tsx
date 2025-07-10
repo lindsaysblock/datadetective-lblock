@@ -62,7 +62,7 @@ const DataDetectiveLogo: React.FC<DataDetectiveLogoProps> = ({
           </h1>
           {size !== 'sm' && (
             <p className="text-xs text-muted-foreground font-medium tracking-wide">
-              🔍 Uncover insights in your data
+              🔍 Turn data mysteries into clear insights
             </p>
           )}
         </div>

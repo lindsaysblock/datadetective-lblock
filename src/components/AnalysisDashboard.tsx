@@ -10,6 +10,8 @@ import DataManagementPanel from './DataManagementPanel';
 import AdvancedAnalytics from './AdvancedAnalytics';
 import VisualizationReporting from './VisualizationReporting';
 import { type ParsedData } from '../utils/dataParser';
+import AuditLogsPanel from './AuditLogsPanel';
+import DataGovernancePanel from './DataGovernancePanel';
 
 interface AnalysisDashboardProps {
   parsedData: ParsedData;
@@ -262,12 +264,9 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
         </TabsContent>
 
         <TabsContent value="audit">
-          <div className="text-center py-12">
-            <Shield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">Audit Logs & Data Governance</h3>
-            <p className="text-gray-500">
-              Track data access, changes, and compliance - Coming next!
-            </p>
+          <div className="space-y-6">
+            <AuditLogsPanel />
+            <DataGovernancePanel />
           </div>
         </TabsContent>
 
