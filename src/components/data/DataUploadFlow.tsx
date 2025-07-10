@@ -121,42 +121,30 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
         />
       </div>
 
-      {/* Step 2: Research Question - Show after file is uploaded and parsed */}
-      {parsedData && (
-        <>
-          <Separator />
-          <ResearchQuestionSection
-            researchQuestion={researchQuestion}
-            onResearchQuestionChange={onResearchQuestionChange}
-          />
-        </>
-      )}
+      {/* Step 2: Research Question - Always show */}
+      <Separator />
+      <ResearchQuestionSection
+        researchQuestion={researchQuestion}
+        onResearchQuestionChange={onResearchQuestionChange}
+      />
 
-      {/* Step 3: Additional Context - Show after research question section is visible */}
-      {parsedData && (
-        <>
-          <Separator />
-          <AdditionalContextSection
-            additionalContext={additionalContext}
-            onAdditionalContextChange={setAdditionalContext}
-          />
-        </>
-      )}
+      {/* Step 3: Additional Context - Always show */}
+      <Separator />
+      <AdditionalContextSection
+        additionalContext={additionalContext}
+        onAdditionalContextChange={setAdditionalContext}
+      />
 
-      {/* Step 4: Analysis Action - Show when data is parsed */}
-      {parsedData && (
-        <>
-          <Separator />
-          <AnalysisActionSection
-            isReadyToAnalyze={isReadyToAnalyze}
-            parsedData={parsedData}
-            onStartAnalysis={handleStartAnalysisClick}
-            onSaveDataset={onSaveDataset}
-            teachModeEnabled={teachModeEnabled}
-            onTeachModeToggle={setTeachModeEnabled}
-          />
-        </>
-      )}
+      {/* Step 4: Analysis Action - Always show */}
+      <Separator />
+      <AnalysisActionSection
+        isReadyToAnalyze={isReadyToAnalyze}
+        parsedData={parsedData}
+        onStartAnalysis={handleStartAnalysisClick}
+        onSaveDataset={onSaveDataset}
+        teachModeEnabled={teachModeEnabled}
+        onTeachModeToggle={setTeachModeEnabled}
+      />
 
       <ProjectNamingDialog
         open={showProjectDialog}
