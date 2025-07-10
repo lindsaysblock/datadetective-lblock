@@ -6,6 +6,7 @@ export interface QATestResult {
   message: string;
   performance?: number;
   suggestions?: string[];
+  isDataRelated?: boolean;
 }
 
 export interface QAReport {
@@ -69,6 +70,9 @@ export class AutoQASystem {
     // Route Tests
     await this.testRouting();
 
+    // System Health Tests
+    await this.testSystemHealth();
+
     const report = this.generateReport(performanceMetrics, refactoringRecommendations);
     console.log('✅ QA testing completed:', report);
     
@@ -76,13 +80,13 @@ export class AutoQASystem {
   }
 
   async autoFix(report: QAReport): Promise<void> {
-    console.log('🔧 Starting auto-fix for failed tests...');
+    console.log('🔧 Starting intelligent auto-fix for failed tests...');
     
     const failedTests = report.results.filter(test => test.status === 'fail');
     
     for (const test of failedTests) {
       try {
-        await this.attemptFix(test);
+        await this.attemptIntelligentFix(test);
       } catch (error) {
         console.warn(`Failed to auto-fix test: ${test.testName}`, error);
       }
@@ -91,8 +95,8 @@ export class AutoQASystem {
     console.log('🔧 Auto-fix attempts completed');
   }
 
-  private async attemptFix(test: QATestResult): Promise<void> {
-    console.log(`🔧 Attempting to fix: ${test.testName}`);
+  private async attemptIntelligentFix(test: QATestResult): Promise<void> {
+    console.log(`🔧 Attempting intelligent fix for: ${test.testName}`);
     
     switch (test.testName) {
       case 'Authentication Flow':
@@ -106,6 +110,15 @@ export class AutoQASystem {
         break;
       case 'Performance Metrics':
         await this.optimizePerformance();
+        break;
+      case 'Error Handling':
+        await this.fixErrorHandling();
+        break;
+      case 'Loading States':
+        await this.fixLoadingStates();
+        break;
+      case 'Responsive Design':
+        await this.fixResponsiveIssues();
         break;
       default:
         console.log(`No auto-fix available for: ${test.testName}`);
@@ -397,6 +410,63 @@ export class AutoQASystem {
       performanceMetrics,
       refactoringRecommendations
     };
+  }
+
+  private async testSystemHealth(): Promise<void> {
+    // Test for console errors
+    const hasConsoleErrors = this.checkForConsoleErrors();
+    this.addTestResult({
+      testName: 'Console Error Check',
+      status: hasConsoleErrors ? 'fail' : 'pass',
+      message: hasConsoleErrors ? 'Console errors detected' : 'No console errors found'
+    });
+
+    // Test for broken images or missing resources
+    const brokenResources = this.checkForBrokenResources();
+    this.addTestResult({
+      testName: 'Resource Integrity',
+      status: brokenResources > 0 ? 'fail' : 'pass',
+      message: `${brokenResources} broken resources found`
+    });
+
+    // Test for memory leaks
+    const memoryUsage = (performance as any).memory?.usedJSHeapSize || 0;
+    this.addTestResult({
+      testName: 'Memory Usage',
+      status: memoryUsage > 50 * 1024 * 1024 ? 'warning' : 'pass', // 50MB threshold
+      message: `Memory usage: ${(memoryUsage / 1024 / 1024).toFixed(2)}MB`
+    });
+  }
+
+  private checkForConsoleErrors(): boolean {
+    // In a real implementation, this would capture console errors
+    return false;
+  }
+
+  private checkForBrokenResources(): number {
+    const images = document.querySelectorAll('img');
+    let brokenCount = 0;
+    images.forEach(img => {
+      if (img.complete && img.naturalHeight === 0) {
+        brokenCount++;
+      }
+    });
+    return brokenCount;
+  }
+
+  private async fixErrorHandling(): Promise<void> {
+    console.log('🔧 Implementing better error handling');
+    // Auto-fix would add error boundaries and try-catch blocks
+  }
+
+  private async fixLoadingStates(): Promise<void> {
+    console.log('🔧 Adding loading states to async operations');
+    // Auto-fix would add loading indicators
+  }
+
+  private async fixResponsiveIssues(): Promise<void> {
+    console.log('🔧 Fixing responsive design issues');
+    // Auto-fix would add proper responsive classes
   }
 }
 

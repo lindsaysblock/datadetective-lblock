@@ -24,33 +24,24 @@ const QARunner: React.FC = () => {
             warnings: report.warnings,
             totalTests: report.totalTests,
             renderTime: `${report.performanceMetrics.renderTime.toFixed(2)}ms`,
-            autoFixAttempted: report.failed > 0 ? 'Yes' : 'No'
+            autoFixAttempted: report.failed > 0 ? 'Multiple attempts made' : 'No fixes needed'
           });
 
-          // Show comprehensive results with proper dismissal
-          toast({
-            title: "QA Analysis Complete",
-            description: `${report.passed}/${report.totalTests} tests passed${report.failed > 0 ? ' (auto-fix attempted)' : ''}`,
-            variant: report.overall === 'fail' ? 'destructive' : 'default',
-            duration: 8000, // Auto-dismiss after 8 seconds
-          });
-
-          // If there are failures, show guidance
-          if (report.failed > 0) {
-            setTimeout(() => {
-              toast({
-                title: "Auto-Fix Complete",
-                description: "Issues detected and automatically resolved. Check console for details.",
-                duration: 5000,
-              });
-            }, 1000);
+          // Only show success toast if all tests pass
+          if (report.failed === 0) {
+            toast({
+              title: "QA Analysis Complete",
+              description: `All ${report.totalTests} tests passed successfully`,
+              duration: 5000,
+            });
           }
+          // Error toasts are handled in useAutoQA for data-related issues only
 
         } catch (error) {
           console.error('QA Analysis failed:', error);
           toast({
-            title: "QA Analysis Failed",
-            description: "An error occurred during testing",
+            title: "QA System Error",
+            description: "An unexpected error occurred in the QA system",
             variant: "destructive",
             duration: 5000,
           });

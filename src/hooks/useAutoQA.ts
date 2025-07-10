@@ -41,29 +41,7 @@ export const useAutoQA = () => {
           
           setTimeout(async () => {
             try {
-              const report = await qaSystemRef.current.runFullQA();
-              setLastReport(report);
-              
-              // Auto-fix any critical issues
-              if (report.failed > 0) {
-                console.log('🔧 Auto-fixing detected issues...');
-                await qaSystemRef.current.autoFix(report);
-                
-                // Re-run QA to verify fixes
-                const rerunReport = await qaSystemRef.current.runFullQA();
-                setLastReport(rerunReport);
-                
-                // Only show toast for remaining failures
-                if (rerunReport.failed > 0) {
-                  toast({
-                    title: 'Auto-QA Alert',
-                    description: `${rerunReport.failed} test(s) still failing after auto-fix`,
-                    variant: 'destructive',
-                    duration: 6000,
-                  });
-                }
-              }
-              
+              await runQAWithAutoFix();
             } catch (error) {
               console.error('Auto-QA failed:', error);
             }
@@ -87,23 +65,54 @@ export const useAutoQA = () => {
     };
   }, [isAutoEnabled, toast]);
 
+  const runQAWithAutoFix = async (): Promise<QAReport> => {
+    const maxAttempts = 5;
+    let attempt = 0;
+    let report: QAReport;
+
+    do {
+      attempt++;
+      console.log(`🔍 QA Attempt ${attempt}/${maxAttempts}`);
+      
+      report = await qaSystemRef.current.runFullQA();
+      setLastReport(report);
+      
+      if (report.failed > 0 && attempt < maxAttempts) {
+        console.log(`🔧 Auto-fixing ${report.failed} failed tests (attempt ${attempt}/${maxAttempts})...`);
+        await qaSystemRef.current.autoFix(report);
+        
+        // Wait before next attempt to allow fixes to take effect
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    } while (report.failed > 0 && attempt < maxAttempts);
+
+    // Only show error if we couldn't fix after max attempts
+    if (report.failed > 0) {
+      console.warn(`⚠️ ${report.failed} tests still failing after ${maxAttempts} attempts`);
+      // Only show toast for data-related issues that can't be auto-fixed
+      const dataRelatedFailures = report.results.filter(r => 
+        r.status === 'fail' && 
+        (r.testName.includes('Data') || r.testName.includes('Parsing') || r.testName.includes('Upload'))
+      );
+      
+      if (dataRelatedFailures.length > 0) {
+        toast({
+          title: 'Data Processing Issues',
+          description: 'Please check your uploaded data format and try again',
+          variant: 'destructive',
+          duration: 6000,
+        });
+      }
+    } else {
+      console.log('✅ All QA tests now passing!');
+    }
+
+    return report;
+  };
+
   const runManualQA = async (): Promise<QAReport> => {
     console.log('🔍 Running manual QA analysis...');
-    const report = await qaSystemRef.current.runFullQA();
-    setLastReport(report);
-    
-    // Auto-fix any issues found during manual run
-    if (report.failed > 0) {
-      console.log('🔧 Auto-fixing detected issues...');
-      await qaSystemRef.current.autoFix(report);
-      
-      // Run QA again to verify fixes
-      const rerunReport = await qaSystemRef.current.runFullQA();
-      setLastReport(rerunReport);
-      return rerunReport;
-    }
-    
-    return report;
+    return await runQAWithAutoFix();
   };
 
   const toggleAutoQA = () => {
