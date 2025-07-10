@@ -1,63 +1,55 @@
 
 export class LoadTestSimulators {
   async simulateComponentLoad(): Promise<void> {
-    const elements = Array.from({ length: 100 }, (_, i) => {
-      const div = document.createElement('div');
-      div.textContent = `Load test element ${i}`;
-      div.style.display = 'none';
-      return div;
-    });
-
-    elements.forEach(el => document.body.appendChild(el));
-    elements.forEach(el => el.getBoundingClientRect());
-    elements.forEach(el => el.remove());
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 100 + 50));
+    
+    if (Math.random() < 0.05) {
+      throw new Error('Simulated component load failure');
+    }
   }
 
   async simulateDataProcessing(): Promise<void> {
-    const data = Array.from({ length: 1000 }, (_, i) => ({
-      id: i,
-      value: Math.random(),
-      timestamp: new Date().toISOString()
-    }));
-
-    data
-      .filter(item => item.value > 0.5)
-      .sort((a, b) => b.value - a.value)
-      .map(item => ({ ...item, processed: true }));
+    const dataSize = Math.floor(Math.random() * 1000) + 100;
+    await new Promise(resolve => setTimeout(resolve, dataSize / 10));
+    
+    if (Math.random() < 0.03) {
+      throw new Error('Simulated data processing failure');
+    }
   }
 
   async simulateUIInteraction(): Promise<void> {
-    const button = document.createElement('button');
-    button.style.display = 'none';
-    document.body.appendChild(button);
-
-    for (let i = 0; i < 10; i++) {
-      button.click();
-      await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 200 + 100));
+    
+    if (Math.random() < 0.02) {
+      throw new Error('Simulated UI interaction failure');
     }
-
-    button.remove();
   }
 
   async simulateAPICall(): Promise<void> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 200));
+    
+    if (Math.random() < 0.08) {
+      throw new Error('Simulated API call failure');
+    }
+  }
 
-    try {
-      const response = await fetch('/api/health-check', {
-        signal: controller.signal,
-        method: 'GET'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-    } catch (error) {
-      if (error.name !== 'AbortError') {
-        throw error;
-      }
-    } finally {
-      clearTimeout(timeout);
+  async simulateResearchQuestion(): Promise<void> {
+    // Simulate research question validation and processing
+    const questionLength = Math.floor(Math.random() * 100) + 10;
+    await new Promise(resolve => setTimeout(resolve, questionLength));
+    
+    if (Math.random() < 0.02) {
+      throw new Error('Simulated research question validation failure');
+    }
+  }
+
+  async simulateContextProcessing(): Promise<void> {
+    // Simulate additional context processing (optional step)
+    const contextLength = Math.floor(Math.random() * 200) + 50;
+    await new Promise(resolve => setTimeout(resolve, contextLength / 2));
+    
+    if (Math.random() < 0.01) {
+      throw new Error('Simulated context processing failure');
     }
   }
 }

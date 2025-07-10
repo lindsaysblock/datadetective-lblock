@@ -119,6 +119,12 @@ export class LoadTestingSystem {
           case 'api':
             await this.simulators.simulateAPICall();
             break;
+          case 'research-question':
+            await this.simulators.simulateResearchQuestion();
+            break;
+          case 'context-processing':
+            await this.simulators.simulateContextProcessing();
+            break;
         }
 
         const responseTime = performance.now() - requestStart;

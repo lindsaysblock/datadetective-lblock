@@ -1,9 +1,8 @@
-
 export interface LoadTestConfig {
   concurrentUsers: number;
   duration: number;
   rampUpTime: number;
-  testType: 'component' | 'data-processing' | 'ui-interaction' | 'api';
+  testType: 'component' | 'data-processing' | 'ui-interaction' | 'api' | 'research-question' | 'context-processing';
 }
 
 export interface LoadTestResult {
