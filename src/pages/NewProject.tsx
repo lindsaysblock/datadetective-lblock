@@ -12,37 +12,38 @@ import {
   Database,
   FileText,
   Lightbulb,
-  CheckCircle
+  CheckCircle,
+  HelpCircle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const NewProject = () => {
   const navigate = useNavigate();
   const [projectName, setProjectName] = useState('');
-  const [initialQuestion, setInitialQuestion] = useState('');
+  const [researchQuestion, setResearchQuestion] = useState('');
   const [step, setStep] = useState(1);
 
   const handleCreateProject = () => {
     // In a real app, this would create the project in your database/state
-    console.log('Creating project:', { projectName, initialQuestion });
+    console.log('Creating project:', { projectName, researchQuestion });
     
     // Navigate to main explorer with the new project
-    navigate(`/?new-project=true&name=${encodeURIComponent(projectName)}&question=${encodeURIComponent(initialQuestion)}`);
+    navigate(`/?new-project=true&name=${encodeURIComponent(projectName)}&question=${encodeURIComponent(researchQuestion)}`);
   };
 
   const sampleQuestions = [
-    "What are the most common user behaviors on our platform?",
-    "How has our sales performance changed over time?",
-    "Which customer segments are most valuable?",
-    "What factors influence customer churn?",
-    "How do users engage with our new features?",
-    "What are the trends in our support ticket data?"
+    "What factors are driving customer churn in our business?",
+    "How effective are our marketing campaigns across different channels?", 
+    "Which product features correlate with higher user engagement?",
+    "What are the patterns in our sales performance over time?",
+    "How do different customer segments behave on our platform?",
+    "What operational inefficiencies can we identify in our processes?"
   ];
 
   if (step === 1) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <Link to="/history">
@@ -53,82 +54,80 @@ const NewProject = () => {
             </Link>
             <div className="flex items-center gap-3">
               <div className="p-3 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl shadow-lg">
-                <Plus className="w-7 h-7 text-white" />
+                <HelpCircle className="w-7 h-7 text-white" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                  Start New Project
+                  What Are You Trying to Answer?
                 </h1>
-                <p className="text-blue-600 text-lg">Begin your data exploration journey</p>
+                <p className="text-blue-600 text-lg">Start with your research question</p>
               </div>
             </div>
           </div>
 
-          {/* Project Setup */}
+          {/* Main Content */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Main Form */}
+            {/* Research Question Form */}
             <div className="space-y-6">
-              <Card className="border-blue-200">
+              <Card className="border-green-200 bg-gradient-to-br from-green-50 to-blue-50">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-3">
-                    <Target className="w-5 h-5 text-green-600" />
-                    Project Details
+                  <CardTitle className="flex items-center gap-3 text-green-800">
+                    <Target className="w-6 h-6" />
+                    Your Research Question
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-800 mb-3">
+                      What question are you trying to answer with data? *
+                    </label>
+                    <Textarea
+                      placeholder="e.g., What factors are causing our customer retention to decline, and which segments are most at risk?"
+                      value={researchQuestion}
+                      onChange={(e) => setResearchQuestion(e.target.value)}
+                      className="border-green-200 focus:border-green-400 min-h-[120px] text-base"
+                    />
+                    <p className="text-sm text-green-700 mt-2 font-medium">
+                      💡 Tip: Be specific about what you want to discover or validate
+                    </p>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Project Name *
                     </label>
                     <Input
-                      placeholder="e.g., User Behavior Analysis Q1 2024"
+                      placeholder="Give your research a memorable name"
                       value={projectName}
                       onChange={(e) => setProjectName(e.target.value)}
-                      className="border-blue-200 focus:border-blue-400"
+                      className="border-green-200 focus:border-green-400"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Give your project a descriptive name to find it easily later
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Initial Question *
-                    </label>
-                    <Textarea
-                      placeholder="What are you trying to discover or validate with your data?"
-                      value={initialQuestion}
-                      onChange={(e) => setInitialQuestion(e.target.value)}
-                      className="border-blue-200 focus:border-blue-400 min-h-[100px]"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Describe the main question or hypothesis you want to explore
-                    </p>
                   </div>
 
                   <Button 
                     onClick={() => setStep(2)}
-                    disabled={!projectName.trim() || !initialQuestion.trim()}
-                    className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+                    disabled={!projectName.trim() || !researchQuestion.trim()}
+                    className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-lg py-6"
+                    size="lg"
                   >
-                    Continue to Data Connection
+                    Continue to Data Setup
                   </Button>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Sample Questions */}
+            {/* Guidance and Examples */}
             <div className="space-y-6">
               <Card className="border-purple-200">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3">
                     <Lightbulb className="w-5 h-5 text-yellow-600" />
-                    Example Questions
+                    Example Research Questions
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600 mb-4">
-                    Not sure where to start? Here are some common data exploration questions:
+                    Click any example to use it as a starting point:
                   </p>
                   <div className="space-y-3">
                     {sampleQuestions.map((question, index) => (
@@ -136,7 +135,7 @@ const NewProject = () => {
                         key={index}
                         variant="outline"
                         className="w-full text-left justify-start h-auto p-4 border-purple-200 hover:bg-purple-50 hover:border-purple-300"
-                        onClick={() => setInitialQuestion(question)}
+                        onClick={() => setResearchQuestion(question)}
                       >
                         <span className="text-sm leading-relaxed">{question}</span>
                       </Button>
@@ -145,31 +144,31 @@ const NewProject = () => {
                 </CardContent>
               </Card>
 
-              {/* Quick Tips */}
+              {/* Best Practices */}
               <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3 text-blue-800">
                     <Sparkles className="w-5 h-5" />
-                    Pro Tips
+                    Question Guidelines
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex gap-3">
                     <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                     <p className="text-sm text-blue-800">
-                      Start with a specific, measurable question rather than a broad topic
+                      <strong>Be specific:</strong> Instead of "analyze sales," ask "what drives sales differences between regions?"
                     </p>
                   </div>
                   <div className="flex gap-3">
                     <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                     <p className="text-sm text-blue-800">
-                      Think about the business impact of your question
+                      <strong>Focus on decisions:</strong> What action will you take based on the answer?
                     </p>
                   </div>
                   <div className="flex gap-3">
                     <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                     <p className="text-sm text-blue-800">
-                      Consider what data you'll need to answer your question
+                      <strong>Include context:</strong> Consider timeframes, segments, or conditions that matter
                     </p>
                   </div>
                 </CardContent>
@@ -192,7 +191,7 @@ const NewProject = () => {
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Project Details
+            Back to Research Question
           </Button>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl shadow-lg">
@@ -207,11 +206,11 @@ const NewProject = () => {
           </div>
         </div>
 
-        {/* Project Summary */}
+        {/* Research Question Summary */}
         <Card className="mb-8 border-green-200 bg-gradient-to-br from-green-50 to-blue-50">
           <CardContent className="p-6">
-            <h3 className="font-semibold text-green-800 mb-2">Project: {projectName}</h3>
-            <p className="text-green-700">{initialQuestion}</p>
+            <h3 className="font-semibold text-green-800 mb-2">Research Question: {projectName}</h3>
+            <p className="text-green-700 italic">"{researchQuestion}"</p>
           </CardContent>
         </Card>
 
