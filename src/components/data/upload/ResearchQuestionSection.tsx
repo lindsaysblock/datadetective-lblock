@@ -21,7 +21,7 @@ const ResearchQuestionSection: React.FC<ResearchQuestionSectionProps> = ({
             1
           </div>
           <HelpCircle className="w-5 h-5 text-purple-600" />
-          <h3 className="text-lg font-semibold">Step 1: Research Question</h3>
+          <h3 className="text-lg font-semibold">What's your question?</h3>
         </div>
         <p className="text-gray-600 mb-4">
           What do you want to know?
