@@ -1,14 +1,18 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ArrowLeft, FileText, MessageSquare, Database, ChevronDown, ChevronUp, Lightbulb, TrendingUp } from 'lucide-react';
+import { FileText, MessageSquare, Database, ChevronDown, ChevronUp, Lightbulb, TrendingUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import AnalysisHeader from './analysis/AnalysisHeader';
 import AnalysisActionBar from './analysis/AnalysisActionBar';
+import AnalysisExportBar from './analysis/AnalysisExportBar';
 import AskMoreQuestionsModal from './analysis/AskMoreQuestionsModal';
 import AIRecommendationsModal from './analysis/AIRecommendationsModal';
 import CreateVisualsModal from './analysis/CreateVisualsModal';
+import { useAnalysisModals } from '@/hooks/useAnalysisModals';
+import { useAnalysisActions } from '@/hooks/useAnalysisActions';
 
 interface ProjectAnalysisViewProps {
   projectName: string;
@@ -27,46 +31,32 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
   additionalContext,
   dataSource
 }) => {
+  const navigate = useNavigate();
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
-  const [showQuestionsModal, setShowQuestionsModal] = useState(false);
-  const [showRecommendationsModal, setShowRecommendationsModal] = useState(false);
-  const [showVisualsModal, setShowVisualsModal] = useState(false);
+  
+  const { modals, actions } = useAnalysisModals();
+  const analysisActions = useAnalysisActions(analysisResults);
 
-  const handleSubmitQuestion = (question: string) => {
-    console.log('New question submitted:', question);
-    // TODO: Implement question analysis logic
+  const handleNewProject = () => {
+    navigate('/new-project');
   };
 
-  const handleImplementRecommendation = (recommendation: any) => {
-    console.log('Implementing recommendation:', recommendation);
-    // TODO: Implement recommendation logic
-  };
-
-  const handleSelectVisualization = (type: string, data: any[]) => {
-    console.log('Creating visualization:', type, data);
-    // TODO: Implement visualization creation logic
+  const handleProjectHistory = () => {
+    navigate('/query-history');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <Button variant="outline" onClick={onBackToProject} className="flex items-center gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back to New Project
-          </Button>
-          <div className="text-center flex-1 mx-8">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              {projectName}
-            </h1>
-            <p className="text-blue-600 text-lg">Analysis Results</p>
-          </div>
-          <div className="w-32"></div>
-        </div>
+      <AnalysisHeader
+        projectName={projectName}
+        onBackToProject={onBackToProject}
+        onNewProject={handleNewProject}
+        onProjectHistory={handleProjectHistory}
+      />
 
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Collapsible Project Overview */}
-        <Card className="mb-8">
+        <Card className="mb-6">
           <Collapsible open={isOverviewOpen} onOpenChange={setIsOverviewOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
@@ -126,11 +116,18 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
           </Collapsible>
         </Card>
 
+        {/* Export and Share Bar */}
+        <AnalysisExportBar
+          onExportFindings={analysisActions.handleExportFindings}
+          onExportVisuals={analysisActions.handleExportVisuals}
+          onCreateRecurringReport={analysisActions.handleCreateRecurringReport}
+        />
+
         {/* Analysis Action Bar */}
         <AnalysisActionBar
-          onAskMoreQuestions={() => setShowQuestionsModal(true)}
-          onShowAIRecommendations={() => setShowRecommendationsModal(true)}
-          onCreateVisuals={() => setShowVisualsModal(true)}
+          onAskMoreQuestions={actions.openQuestionsModal}
+          onShowAIRecommendations={actions.openRecommendationsModal}
+          onCreateVisuals={actions.openVisualsModal}
         />
 
         {/* Analysis Results */}
@@ -174,25 +171,25 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
 
         {/* Modals */}
         <AskMoreQuestionsModal
-          open={showQuestionsModal}
-          onOpenChange={setShowQuestionsModal}
+          open={modals.showQuestionsModal}
+          onOpenChange={actions.closeQuestionsModal}
           currentAnalysis={analysisResults}
-          onSubmitQuestion={handleSubmitQuestion}
+          onSubmitQuestion={analysisActions.handleSubmitQuestion}
         />
 
         <AIRecommendationsModal
-          open={showRecommendationsModal}
-          onOpenChange={setShowRecommendationsModal}
+          open={modals.showRecommendationsModal}
+          onOpenChange={actions.closeRecommendationsModal}
           analysisResults={analysisResults}
-          onImplementRecommendation={handleImplementRecommendation}
+          onImplementRecommendation={analysisActions.handleImplementRecommendation}
         />
 
         <CreateVisualsModal
-          open={showVisualsModal}
-          onOpenChange={setShowVisualsModal}
+          open={modals.showVisualsModal}
+          onOpenChange={actions.closeVisualsModal}
           analysisResults={analysisResults}
           researchQuestion={researchQuestion}
-          onSelectVisualization={handleSelectVisualization}
+          onSelectVisualization={analysisActions.handleSelectVisualization}
         />
       </div>
     </div>
