@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, ArrowRight, HelpCircle, Plus, FileSearch, Upload, Database, FileText } from 'lucide-react';
+import { ArrowLeft, ArrowRight, HelpCircle } from 'lucide-react';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import ProjectNamingDialog from '@/components/data/upload/ProjectNamingDialog';
@@ -69,50 +69,39 @@ const NewProject = () => {
   }
 
   const renderStepIndicator = () => (
-    <div className="mb-12">
-      <div className="flex items-center justify-center gap-8">
-        {[
-          { label: 'Question', step: 1 },
-          { label: 'Data Source', step: 2 },
-          { label: 'Business Context', step: 3 },
-          { label: 'Analysis', step: 4 }
-        ].map((item, index) => (
-          <div key={item.step} className="flex items-center">
-            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-              step >= item.step 
-                ? 'bg-blue-600 border-blue-600 text-white' 
-                : 'border-gray-300 text-gray-400'
-            }`}>
-              {item.step}
-            </div>
-            <span className={`ml-2 text-sm ${
-              step >= item.step ? 'text-blue-600 font-medium' : 'text-gray-400'
-            }`}>
-              {item.label}
-            </span>
-            {index < 3 && (
-              <div className={`w-16 h-px mx-4 ${
-                step > item.step ? 'bg-blue-600' : 'bg-gray-300'
-              }`} />
-            )}
+    <div className="flex items-center justify-center gap-8 mb-12">
+      {[
+        { label: 'Question', step: 1 },
+        { label: 'Data Source', step: 2 },
+        { label: 'Business Context', step: 3 },
+        { label: 'Analysis', step: 4 }
+      ].map((item, index) => (
+        <div key={item.step} className="flex items-center">
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
+            step >= item.step 
+              ? 'bg-blue-500 text-white' 
+              : 'border border-gray-300 text-gray-400 bg-white'
+          }`}>
+            {step > item.step ? '✓' : item.step}
           </div>
-        ))}
-      </div>
+          <span className={`ml-2 text-sm ${
+            step >= item.step ? 'text-gray-700' : 'text-gray-400'
+          }`}>
+            {item.label}
+          </span>
+          {index < 3 && (
+            <div className={`w-12 h-px mx-4 ${
+              step > item.step ? 'bg-blue-500' : 'bg-gray-300'
+            }`} />
+          )}
+        </div>
+      ))}
     </div>
   );
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <Header />
-      
-      {/* Page Title Section - Below Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-8 py-6">
-          <h1 className="text-3xl font-bold text-purple-600 mb-2">Start New Project</h1>
-          <p className="text-blue-600">Let's explore your data together</p>
-        </div>
-      </div>
       
       <FormRecoveryDialog
         open={showRecoveryDialog}
@@ -133,10 +122,20 @@ const NewProject = () => {
         onSignUp={handleSignUp}
       />
       
-      <div className="container mx-auto px-8 py-12 max-w-4xl">
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
+        {/* Page Header */}
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
+          <h1 className="text-4xl font-bold text-purple-600 mb-2">Start New Project</h1>
+          <p className="text-lg text-blue-600">Let's explore your data together</p>
+        </div>
+        
         {renderStepIndicator()}
         
-        {/* Analysis Progress - Show above cards */}
+        {/* Analysis Progress */}
         {isProcessingAnalysis && (
           <div className="mb-8">
             <AnalyzingIcon isAnalyzing={true} />
@@ -145,15 +144,18 @@ const NewProject = () => {
         
         <div className="space-y-8">
           {/* Step 1: What's your question? */}
-          <Card className="w-full">
+          <Card className="w-full shadow-sm">
             <CardContent className="p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-semibold">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
                   1
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900">What's your question?</h3>
-                  <p className="text-gray-600">Tell us what you want to discover from your data</p>
+                <div className="flex items-center gap-2">
+                  <HelpCircle className="w-5 h-5 text-purple-500" />
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">What's your question?</h3>
+                    <p className="text-gray-500 text-sm mt-1">What do you want to answer?</p>
+                  </div>
                 </div>
               </div>
               
@@ -161,17 +163,17 @@ const NewProject = () => {
                 placeholder="e.g., What are the main trends in customer behavior over time?"
                 value={researchQuestion}
                 onChange={(e) => setResearchQuestion(e.target.value)}
-                className="min-h-[120px] resize-none text-base border-gray-300"
+                className="min-h-[120px] resize-none text-base border-gray-300 mb-6"
               />
               
               {step === 1 && (
-                <div className="flex justify-end mt-6">
+                <div className="flex justify-end">
                   <Button 
                     onClick={nextStep}
                     disabled={!researchQuestion.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                    className="bg-gray-900 hover:bg-gray-800 text-white px-6 flex items-center gap-2"
                   >
-                    Next <ArrowRight className="w-4 h-4 ml-2" />
+                    Next <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
               )}
@@ -180,15 +182,15 @@ const NewProject = () => {
 
           {/* Step 2: Connect Your Data */}
           {step >= 2 && (
-            <Card className="w-full">
+            <Card className="w-full shadow-sm">
               <CardContent className="p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-semibold">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
                     2
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900">Connect Your Data</h3>
-                    <p className="text-gray-600">Upload a file or connect to your data source</p>
+                    <p className="text-gray-500 text-sm mt-1">Upload a file or connect to your data source</p>
                   </div>
                 </div>
 
@@ -202,16 +204,16 @@ const NewProject = () => {
 
                 {step === 2 && (
                   <div className="flex justify-between mt-6">
-                    <Button variant="outline" onClick={prevStep}>
-                      <ArrowLeft className="w-4 h-4 mr-2" />
+                    <Button variant="outline" onClick={prevStep} className="flex items-center gap-2">
+                      <ArrowLeft className="w-4 h-4" />
                       Previous
                     </Button>
                     <Button 
                       onClick={nextStep}
                       disabled={!file}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                      className="bg-gray-900 hover:bg-gray-800 text-white px-6 flex items-center gap-2"
                     >
-                      Next <ArrowRight className="w-4 h-4 ml-2" />
+                      Next <ArrowRight className="w-4 h-4" />
                     </Button>
                   </div>
                 )}
@@ -219,17 +221,17 @@ const NewProject = () => {
             </Card>
           )}
 
-          {/* Step 3: Additional Context */}
+          {/* Step 3: Business Context */}
           {step >= 3 && (
-            <Card className="w-full">
+            <Card className="w-full shadow-sm">
               <CardContent className="p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-semibold">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
                     3
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900">Additional Context</h3>
-                    <p className="text-gray-600">Help us understand your data better (optional)</p>
+                    <h3 className="text-xl font-semibold text-gray-900">Business Context</h3>
+                    <p className="text-gray-500 text-sm mt-1">Help us understand your data better (optional)</p>
                   </div>
                 </div>
                 
@@ -237,20 +239,20 @@ const NewProject = () => {
                   placeholder="e.g., This data comes from our e-commerce platform and includes customer purchase history from the last 6 months..."
                   value={additionalContext}
                   onChange={(e) => setAdditionalContext(e.target.value)}
-                  className="min-h-[120px] resize-none text-base border-gray-300"
+                  className="min-h-[120px] resize-none text-base border-gray-300 mb-6"
                 />
                 
                 {step === 3 && (
-                  <div className="flex justify-between mt-6">
-                    <Button variant="outline" onClick={prevStep}>
-                      <ArrowLeft className="w-4 h-4 mr-2" />
+                  <div className="flex justify-between">
+                    <Button variant="outline" onClick={prevStep} className="flex items-center gap-2">
+                      <ArrowLeft className="w-4 h-4" />
                       Previous
                     </Button>
                     <Button 
                       onClick={nextStep}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                      className="bg-gray-900 hover:bg-gray-800 text-white px-6 flex items-center gap-2"
                     >
-                      Next <ArrowRight className="w-4 h-4 ml-2" />
+                      Next <ArrowRight className="w-4 h-4" />
                     </Button>
                   </div>
                 )}
@@ -260,15 +262,15 @@ const NewProject = () => {
 
           {/* Step 4: Start Analysis */}
           {step >= 4 && (
-            <Card className="w-full">
+            <Card className="w-full shadow-sm">
               <CardContent className="p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-semibold">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
                     4
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900">Ready to Start Analysis</h3>
-                    <p className="text-gray-600">Review your inputs and begin the analysis</p>
+                    <h3 className="text-xl font-semibold text-gray-900">Analysis</h3>
+                    <p className="text-gray-500 text-sm mt-1">Review your inputs and begin the analysis</p>
                   </div>
                 </div>
 
@@ -284,14 +286,14 @@ const NewProject = () => {
                 </div>
 
                 <div className="flex justify-between">
-                  <Button variant="outline" onClick={prevStep} disabled={isProcessingAnalysis}>
-                    <ArrowLeft className="w-4 h-4 mr-2" />
+                  <Button variant="outline" onClick={prevStep} disabled={isProcessingAnalysis} className="flex items-center gap-2">
+                    <ArrowLeft className="w-4 h-4" />
                     Previous
                   </Button>
                   <Button 
                     onClick={handleStartAnalysisClick}
                     disabled={!researchQuestion || !file || isProcessingAnalysis}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
+                    className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 text-lg"
                   >
                     {isProcessingAnalysis ? 'Starting Analysis...' : 'Start Analysis'}
                   </Button>
