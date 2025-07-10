@@ -13,6 +13,7 @@ export interface AnalysisResult {
   data: any;
   confidence: 'low' | 'medium' | 'high' | null;
   created_at: string;
+  updated_at: string;
 }
 
 export const useAnalysisResults = (datasetId?: string) => {
@@ -33,7 +34,6 @@ export const useAnalysisResults = (datasetId?: string) => {
 
       if (error) throw error;
       
-      // Type assertion to ensure compatibility
       setResults(data as AnalysisResult[]);
     } catch (error: any) {
       console.error('Error fetching analysis results:', error);
@@ -47,7 +47,7 @@ export const useAnalysisResults = (datasetId?: string) => {
     }
   };
 
-  const saveResult = async (result: Omit<AnalysisResult, 'id' | 'created_at' | 'user_id'>) => {
+  const saveResult = async (result: Omit<AnalysisResult, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
