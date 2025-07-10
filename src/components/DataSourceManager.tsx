@@ -38,7 +38,6 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [uploadComplete, setUploadComplete] = useState(false);
   const { toast } = useToast();
   const { isOpen, modalConfig, showModal, handleAccept, handleDecline } = usePrivacyModal();
 
@@ -62,7 +61,6 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
       setAnalyzing(false);
       setUploadProgress(0);
       setEstimatedTime(0);
-      setUploadComplete(true);
       
       toast({
         title: "Data Source Connected!",
@@ -100,9 +98,6 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
           )
         );
         
-        // Set upload complete to true to trigger the success UI
-        console.log('Setting uploadComplete to true after successful upload');
-        setUploadComplete(true);
         console.log('File upload completed successfully:', file.name);
         
         toast({
@@ -135,13 +130,10 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
 
   const removeUploadedFile = (fileId: string) => {
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
-    if (uploadedFiles.length === 1) {
-      setUploadComplete(false);
-    }
   };
 
   const handleUploadMore = () => {
-    console.log('Upload more clicked, keeping uploadComplete state');
+    console.log('Upload more clicked');
     
     // Trigger file input click
     const fileInput = document.createElement('input');
@@ -167,7 +159,7 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
   // Check if we have any successfully uploaded files
   const hasSuccessfulUploads = uploadedFiles.some(f => f.status === 'success');
 
-  console.log('DataSourceManager render - uploadComplete:', uploadComplete, 'hasSuccessfulUploads:', hasSuccessfulUploads);
+  console.log('DataSourceManager render - hasSuccessfulUploads:', hasSuccessfulUploads, 'uploadedFiles:', uploadedFiles);
 
   return (
     <div className="space-y-6">
