@@ -10,21 +10,34 @@ import {
   BarChart3, 
   Download, 
   ArrowLeft,
-  Sparkles
+  Sparkles,
+  Edit3,
+  Database,
+  FileText
 } from 'lucide-react';
 
 interface ProjectAnalysisViewProps {
   projectName: string;
   analysisResults: any;
   onBackToProject: () => void;
+  researchQuestion: string;
+  additionalContext?: string;
+  dataSource: string;
 }
 
 const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
   projectName,
   analysisResults,
-  onBackToProject
+  onBackToProject,
+  researchQuestion,
+  additionalContext,
+  dataSource
 }) => {
   const [followUpQuestion, setFollowUpQuestion] = useState('');
+  const [editingContext, setEditingContext] = useState(false);
+  const [editedContext, setEditedContext] = useState(additionalContext || '');
+  const [editingQuestion, setEditingQuestion] = useState(false);
+  const [editedQuestion, setEditedQuestion] = useState(researchQuestion);
 
   const handleAskFollowUp = () => {
     if (followUpQuestion.trim()) {
@@ -45,6 +58,16 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
     console.log('Exporting findings...');
   };
 
+  const handleSaveContext = () => {
+    setEditingContext(false);
+    console.log('Updated context:', editedContext);
+  };
+
+  const handleSaveQuestion = () => {
+    setEditingQuestion(false);
+    console.log('Updated question:', editedQuestion);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex">
       {/* Left Half - Project Data */}
@@ -63,14 +86,88 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Badge variant="outline">{projectName}</Badge>
-                <span className="text-lg">Project Data</span>
+                <span className="text-lg">Project Overview</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-sm text-gray-600">
-                <p>Your uploaded data and context information is displayed here.</p>
-                <p className="mt-2">Dataset preview, column information, and data summary would be shown in this section.</p>
+            <CardContent className="space-y-4">
+              {/* Research Question */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Research Question
+                  </h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditingQuestion(!editingQuestion)}
+                  >
+                    <Edit3 className="w-3 h-3" />
+                  </Button>
+                </div>
+                {editingQuestion ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={editedQuestion}
+                      onChange={(e) => setEditedQuestion(e.target.value)}
+                      className="min-h-[80px]"
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleSaveQuestion}>Save</Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingQuestion(false)}>Cancel</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-700 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    {editedQuestion}
+                  </p>
+                )}
               </div>
+
+              {/* Data Source */}
+              <div className="space-y-2">
+                <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                  <Database className="w-4 h-4" />
+                  Data Source
+                </h4>
+                <p className="text-gray-700 p-3 bg-green-50 rounded-lg border border-green-200">
+                  {dataSource.includes('.') ? `File uploaded: ${dataSource}` : 'Database connection established'}
+                </p>
+              </div>
+
+              {/* Business Context */}
+              {(additionalContext || editedContext) && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-gray-800">Business Context</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditingContext(!editingContext)}
+                    >
+                      <Edit3 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                  {editingContext ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={editedContext}
+                        onChange={(e) => setEditedContext(e.target.value)}
+                        className="min-h-[80px]"
+                        placeholder="Add business context..."
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={handleSaveContext}>Save</Button>
+                        <Button size="sm" variant="outline" onClick={() => setEditingContext(false)}>Cancel</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-700 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                      {editedContext}
+                    </p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -93,8 +190,7 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
                 </p>
                 <div className="bg-white p-4 rounded-lg border border-green-200">
                   <p className="text-gray-700">
-                    Analysis results would appear here. This includes answers to your research question,
-                    statistical findings, patterns identified, and data-driven insights.
+                    {analysisResults?.insights || "Analysis results would appear here. This includes answers to your research question, statistical findings, patterns identified, and data-driven insights."}
                   </p>
                 </div>
               </div>

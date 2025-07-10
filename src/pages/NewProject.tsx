@@ -13,6 +13,7 @@ import { AnalysisActionSection } from '@/components/data/upload/AnalysisActionSe
 import FileUploadSection from '@/components/data/upload/FileUploadSection';
 import ProjectNamingDialog from '@/components/data/upload/ProjectNamingDialog';
 import FormRecoveryDialog from '@/components/data/upload/FormRecoveryDialog';
+import ProjectAnalysisView from '@/components/ProjectAnalysisView';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useToast } from '@/hooks/use-toast';
 
@@ -32,6 +33,9 @@ const NewProject = () => {
   const [isProcessingAnalysis, setIsProcessingAnalysis] = useState(false);
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
   const [lastSaved, setLastSaved] = useState('');
+  const [analysisResults, setAnalysisResults] = useState<any>(null);
+  const [currentProjectName, setCurrentProjectName] = useState('');
+  const [showAnalysisView, setShowAnalysisView] = useState(false);
 
   // Check for saved data on component mount
   useEffect(() => {
@@ -58,7 +62,7 @@ const NewProject = () => {
           parsedData,
           currentStep: step
         });
-      }, 1000); // Debounce saves by 1 second
+      }, 1000);
 
       return () => clearTimeout(timeoutId);
     }
@@ -72,9 +76,7 @@ const NewProject = () => {
       setParsedData(savedData.parsedData);
       setStep(savedData.currentStep || 1);
       
-      // Note: We can't restore the actual File object, but we keep parsedData
       if (savedData.file && savedData.parsedData) {
-        // Create a mock file object for display purposes
         const mockFile = new File([''], savedData.file.name, {
           type: savedData.file.type,
           lastModified: savedData.file.lastModified
@@ -147,17 +149,44 @@ const NewProject = () => {
     console.log('Research question:', researchQuestion);
     console.log('Additional context:', additionalContext);
     
+    setCurrentProjectName(projectName);
     setIsProcessingAnalysis(true);
     
     // Clear saved data when project is completed
     clearFormData();
     
-    // Simulate processing time
+    // Simulate processing time and show results
     setTimeout(() => {
       setIsProcessingAnalysis(false);
       setShowProjectDialog(false);
-    }, 2000);
+      
+      // Mock analysis results
+      setAnalysisResults({
+        insights: "Based on your research question and data analysis, here are the key findings...",
+        confidence: "high",
+        recommendations: ["Consider implementing A/B testing", "Focus on user engagement metrics"]
+      });
+      
+      setShowAnalysisView(true);
+    }, 3000);
   };
+
+  const handleBackToProject = () => {
+    setShowAnalysisView(false);
+  };
+
+  if (showAnalysisView) {
+    return (
+      <ProjectAnalysisView
+        projectName={currentProjectName}
+        analysisResults={analysisResults}
+        onBackToProject={handleBackToProject}
+        researchQuestion={researchQuestion}
+        additionalContext={additionalContext}
+        dataSource={file ? file.name : 'Database Connection'}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -283,14 +312,21 @@ const NewProject = () => {
                 <h3 className="text-lg font-semibold">Business Context</h3>
                 <span className="text-sm text-gray-500">(Optional)</span>
               </div>
+              
+              {/* Show the research question from step 1 */}
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-600 font-medium mb-1">Your Research Question:</p>
+                <p className="text-gray-700">{researchQuestion || 'No question specified yet'}</p>
+              </div>
+              
               <p className="text-gray-600 mb-4">
                 Provide any business context or background information about your data
               </p>
               <Textarea
-                placeholder="e.g., This data comes from our e-commerce platform and includes customer purchase history from the last 6 months..."
+                placeholder="e.g., This data comes from our e-commerce platform and includes customer purchase history from the last 6 months. I am building a business case for a bundling product feature to increase average order value and customer retention."
                 value={additionalContext}
                 onChange={(e) => setAdditionalContext(e.target.value)}
-                className="min-h-[80px] resize-none"
+                className="min-h-[100px] resize-none"
               />
               <div className="flex justify-between mt-8">
                 <Button variant="outline" onClick={prevStep}>
@@ -305,18 +341,42 @@ const NewProject = () => {
           </Card>
         )}
 
-        {/* Step 4: Analysis */}
+        {/* Step 4: Analysis Summary */}
         {step === 4 && (
           <Card>
             <CardHeader>
-              <CardTitle>Analysis</CardTitle>
+              <CardTitle>Analysis Summary</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
+              {/* Summary Section */}
+              <div className="space-y-4">
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                  <h4 className="font-semibold text-green-800 mb-2">1. Research Question</h4>
+                  <p className="text-green-700">{researchQuestion}</p>
+                </div>
+                
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-semibold text-blue-800 mb-2">2. Data Source</h4>
+                  <p className="text-blue-700">
+                    {file ? `File uploaded: ${file.name}` : 'Database connection established'}
+                  </p>
+                </div>
+                
+                {additionalContext && (
+                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <h4 className="font-semibold text-purple-800 mb-2">3. Business Context</h4>
+                    <p className="text-purple-700">{additionalContext}</p>
+                  </div>
+                )}
+              </div>
+
               <AnalysisActionSection
                 researchQuestion={researchQuestion}
                 setResearchQuestion={setResearchQuestion}
                 parsedData={parsedData}
                 onStartAnalysis={handleStartAnalysisClick}
+                buttonText="Start the Case"
+                showProgress={isProcessingAnalysis}
               />
 
               <div className="flex justify-between mt-8">

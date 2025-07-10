@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,19 +7,24 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { SignInModal } from '@/components/auth/SignInModal';
 import { useAuthState } from '@/hooks/useAuthState';
+import AnalyzingIcon from '@/components/AnalyzingIcon';
 
 interface AnalysisActionSectionProps {
   researchQuestion: string;
   setResearchQuestion: (question: string) => void;
   parsedData: any;
   onStartAnalysis: () => void;
+  buttonText?: string;
+  showProgress?: boolean;
 }
 
 export const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
   researchQuestion,
   setResearchQuestion,
   parsedData,
-  onStartAnalysis
+  onStartAnalysis,
+  buttonText = "Start Detective Analysis",
+  showProgress = false
 }) => {
   const { user } = useAuthState();
   const [showSignInModal, setShowSignInModal] = useState(false);
@@ -88,7 +92,6 @@ export const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
           description: "You have been signed in successfully.",
         });
         setShowSignInModal(false);
-        // Automatically start analysis after sign in
         setTimeout(() => handleAnalyzeClick(), 100);
       }
     } catch (error) {
@@ -153,11 +156,11 @@ export const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
       
       <Button 
         onClick={handleAnalyzeClick}
-        disabled={analyzing}
+        disabled={analyzing || showProgress}
         className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
         size="lg"
       >
-        {analyzing ? (
+        {analyzing || showProgress ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             Analyzing Data...
@@ -165,10 +168,16 @@ export const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
         ) : (
           <>
             <Sparkles className="w-4 h-4 mr-2" />
-            Start Detective Analysis
+            {buttonText}
           </>
         )}
       </Button>
+
+      {showProgress && (
+        <div className="mt-6">
+          <AnalyzingIcon isAnalyzing={true} />
+        </div>
+      )}
 
       <SignInModal
         open={showSignInModal}
