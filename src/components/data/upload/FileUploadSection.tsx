@@ -24,7 +24,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
     const textData = prompt('Paste your data here (CSV format):');
     if (textData) {
       const textBlob = new Blob([textData], { type: 'text/plain' });
-      const textFile = new File([textBlob], 'pasted-data.csv', { type: 'text/csv' });
+      const textFile = new globalThis.File([textBlob], 'pasted-data.csv', { type: 'text/csv' });
       
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(textFile);
