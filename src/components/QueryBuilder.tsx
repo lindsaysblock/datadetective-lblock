@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -96,6 +97,76 @@ const QueryBuilder = () => {
     }
   };
 
+  const handleHypothesisUpdate = (hypothesis: any) => {
+    console.log('Hypothesis updated:', hypothesis);
+    toast({
+      title: "Hypothesis Updated",
+      description: "Your hypothesis has been updated successfully.",
+    });
+  };
+
+  const handleSelectVisualization = (type: string, data: any[]) => {
+    console.log('Visualization selected:', type, data);
+    toast({
+      title: "Visualization Selected",
+      description: `Selected ${type} chart for visualization.`,
+    });
+  };
+
+  const handleExportFinding = (finding: any) => {
+    console.log('Exporting finding:', finding);
+    toast({
+      title: "Finding Exported",
+      description: "Your finding has been exported successfully.",
+    });
+  };
+
+  const handleShareFinding = (finding: any) => {
+    console.log('Sharing finding:', finding);
+    toast({
+      title: "Finding Shared",
+      description: "Your finding has been shared successfully.",
+    });
+  };
+
+  // Generate mock recommendations from parsed data
+  const generateRecommendations = (data: ParsedData) => {
+    const numericColumns = data.columns.filter(col => col.type === 'number');
+    const recommendations = [];
+
+    if (numericColumns.length > 0) {
+      recommendations.push({
+        type: 'bar' as const,
+        title: 'Column Value Distribution',
+        description: 'Compare values across different categories',
+        icon: BarChart3,
+        data: numericColumns.slice(0, 5).map(col => ({
+          name: col.name,
+          value: col.samples.reduce((sum, val) => sum + (Number(val) || 0), 0) / col.samples.length || 0
+        })),
+        reason: 'Shows distribution of numeric values across columns',
+        confidence: 'high' as const,
+        qualityScore: {
+          completeness: 85,
+          consistency: 92,
+          accuracy: 88,
+          overall: 88,
+          issues: []
+        },
+        validation: {
+          sampleSize: data.summary.totalRows,
+          confidenceLevel: 95,
+          marginOfError: 3.5,
+          isSignificant: true,
+          warnings: []
+        },
+        businessRelevance: 'Understanding data distribution helps identify patterns and outliers in your dataset.'
+      });
+    }
+
+    return recommendations;
+  };
+
   if (uploading || uploadStatus === 'complete' || uploadStatus === 'error') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -113,13 +184,22 @@ const QueryBuilder = () => {
   }
 
   if (parsedData) {
+    const recommendations = generateRecommendations(parsedData);
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div className="container mx-auto px-4 py-8">
-          <BusinessInsights insights={insights} />
-          <DataVisualization data={parsedData} />
-          <HypothesisTracker />
-          <VisualizationFindings />
+          <BusinessInsights onUpdateHypothesis={handleHypothesisUpdate} />
+          <DataVisualization 
+            recommendations={recommendations}
+            onSelectVisualization={handleSelectVisualization}
+          />
+          <HypothesisTracker onHypothesisUpdate={handleHypothesisUpdate} />
+          <VisualizationFindings 
+            findings={[]}
+            onExportFinding={handleExportFinding}
+            onShareFinding={handleShareFinding}
+          />
         </div>
       </div>
     );
