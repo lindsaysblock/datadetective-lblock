@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
 import { useFileUpload } from '@/hooks/useFileUpload';
+import { useFormPersistence } from '@/hooks/useFormPersistence';
 
 export const useIndexPageState = () => {
   const { user, loading, handleUserChange } = useAuthState();
@@ -14,6 +15,7 @@ export const useIndexPageState = () => {
   const { datasets, saveDataset, loading: datasetsLoading, refreshDatasets } = useDatasetPersistence();
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('project');
+  const { hasStoredData } = useFormPersistence();
 
   const {
     file,
@@ -32,6 +34,20 @@ export const useIndexPageState = () => {
       });
     }
   }, [projectId, toast]);
+
+  // Check for incomplete form data and notify user
+  useEffect(() => {
+    if (!loading && user && hasStoredData()) {
+      toast({
+        title: "Incomplete Project Detected",
+        description: "You have an unfinished project. Visit 'New Project' to continue where you left off.",
+        action: {
+          altText: "Continue Project",
+          onClick: () => window.location.href = '/new-project'
+        }
+      });
+    }
+  }, [loading, user, hasStoredData, toast]);
 
   const handleSaveDataset = async () => {
     if (!parsedData || !file) {
@@ -103,6 +119,7 @@ export const useIndexPageState = () => {
     handleFileUpload,
     handleSaveDataset,
     handleStartAnalysis,
-    toast
+    toast,
+    hasIncompleteProject: hasStoredData()
   };
 };

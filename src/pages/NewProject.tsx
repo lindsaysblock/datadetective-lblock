@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,19 +12,16 @@ import { useAuthState } from '@/hooks/useAuthState';
 import { AnalysisActionSection } from '@/components/data/upload/AnalysisActionSection';
 import FileUploadSection from '@/components/data/upload/FileUploadSection';
 import ProjectNamingDialog from '@/components/data/upload/ProjectNamingDialog';
-
-interface Dataset {
-  name: string;
-  type: 'file' | 'database' | 'api';
-  file?: File | null;
-  url?: string;
-}
+import FormRecoveryDialog from '@/components/data/upload/FormRecoveryDialog';
+import { useFormPersistence } from '@/hooks/useFormPersistence';
+import { useToast } from '@/hooks/use-toast';
 
 const NewProject = () => {
   const { user, handleUserChange } = useAuthState();
+  const { saveFormData, getFormData, clearFormData, hasStoredData, isLoading } = useFormPersistence();
+  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
-  const [projectName, setProjectName] = useState('');
-  const [projectDescription, setProjectDescription] = useState('');
   const [researchQuestion, setResearchQuestion] = useState('');
   const [additionalContext, setAdditionalContext] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -34,6 +30,89 @@ const NewProject = () => {
   const [parsedData, setParsedData] = useState<any>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [isProcessingAnalysis, setIsProcessingAnalysis] = useState(false);
+  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
+  const [lastSaved, setLastSaved] = useState('');
+
+  // Check for saved data on component mount
+  useEffect(() => {
+    if (!isLoading && hasStoredData()) {
+      const savedData = getFormData();
+      setLastSaved(savedData.lastSaved);
+      setShowRecoveryDialog(true);
+    }
+  }, [isLoading, hasStoredData, getFormData]);
+
+  // Auto-save form data when values change
+  useEffect(() => {
+    if (!isLoading && !showRecoveryDialog) {
+      const timeoutId = setTimeout(() => {
+        saveFormData({
+          researchQuestion,
+          additionalContext,
+          file: file ? {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            lastModified: file.lastModified
+          } : null,
+          parsedData,
+          currentStep: step
+        });
+      }, 1000); // Debounce saves by 1 second
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [researchQuestion, additionalContext, file, parsedData, step, isLoading, showRecoveryDialog, saveFormData]);
+
+  const handleRestoreData = () => {
+    try {
+      const savedData = getFormData();
+      setResearchQuestion(savedData.researchQuestion || '');
+      setAdditionalContext(savedData.additionalContext || '');
+      setParsedData(savedData.parsedData);
+      setStep(savedData.currentStep || 1);
+      
+      // Note: We can't restore the actual File object, but we keep parsedData
+      if (savedData.file && savedData.parsedData) {
+        // Create a mock file object for display purposes
+        const mockFile = new File([''], savedData.file.name, {
+          type: savedData.file.type,
+          lastModified: savedData.file.lastModified
+        });
+        setFile(mockFile);
+      }
+      
+      setShowRecoveryDialog(false);
+      
+      toast({
+        title: "Progress Restored",
+        description: "Your previous work has been restored successfully.",
+      });
+    } catch (error) {
+      console.error('Error restoring data:', error);
+      toast({
+        title: "Restoration Failed",
+        description: "Unable to restore previous progress. Starting fresh.",
+        variant: "destructive",
+      });
+      handleStartFresh();
+    }
+  };
+
+  const handleStartFresh = () => {
+    clearFormData();
+    setResearchQuestion('');
+    setAdditionalContext('');
+    setFile(null);
+    setParsedData(null);
+    setStep(1);
+    setShowRecoveryDialog(false);
+    
+    toast({
+      title: "Starting Fresh",
+      description: "Previous progress cleared. Starting with a clean slate.",
+    });
+  };
 
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
@@ -70,6 +149,9 @@ const NewProject = () => {
     
     setIsProcessingAnalysis(true);
     
+    // Clear saved data when project is completed
+    clearFormData();
+    
     // Simulate processing time
     setTimeout(() => {
       setIsProcessingAnalysis(false);
@@ -80,6 +162,13 @@ const NewProject = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Header user={user} onUserChange={handleUserChange} />
+      
+      <FormRecoveryDialog
+        open={showRecoveryDialog}
+        onRestore={handleRestoreData}
+        onStartFresh={handleStartFresh}
+        lastSaved={lastSaved}
+      />
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
