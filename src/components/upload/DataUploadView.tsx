@@ -3,7 +3,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, BarChart3, ArrowLeft, HelpCircle } from 'lucide-react';
+import { Upload, FileText, BarChart3, ArrowLeft, HelpCircle, Plus, History } from 'lucide-react';
+import DataDetectiveLogo from '../DataDetectiveLogo';
+import HelpMenu from '../HelpMenu';
 import FeatureCard from './FeatureCard';
 import ErrorDisplay from './ErrorDisplay';
 import SuccessDisplay from './SuccessDisplay';
@@ -28,12 +30,18 @@ const DataUploadView: React.FC<DataUploadViewProps> = ({
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link to="/">
-              <Button variant="outline" className="flex items-center gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Back to Dashboard
-              </Button>
-            </Link>
+            <div className="flex items-center gap-6">
+              <Link to="/" className="flex items-center gap-2">
+                <DataDetectiveLogo size="sm" showText={true} />
+              </Link>
+              
+              <Link to="/">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Dashboard
+                </Button>
+              </Link>
+            </div>
             
             <div className="text-center flex-1 mx-8">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
@@ -43,10 +51,22 @@ const DataUploadView: React.FC<DataUploadViewProps> = ({
             </div>
             
             <div className="flex items-center gap-3">
-              <Button variant="outline" className="flex items-center gap-2">
-                <HelpCircle className="w-4 h-4" />
-                Help
-              </Button>
+              <Link to="/new-project">
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  New Project
+                </Button>
+              </Link>
+              
+              <Link to="/query-history">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <History className="w-4 h-4" />
+                  Projects
+                </Button>
+              </Link>
+              
+              <HelpMenu />
+              
               <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
                 Sign In / Sign Up
               </Button>

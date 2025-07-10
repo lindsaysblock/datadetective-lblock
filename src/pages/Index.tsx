@@ -2,11 +2,13 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Plus, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
+import DataDetectiveLogo from '@/components/DataDetectiveLogo';
+import HelpMenu from '@/components/HelpMenu';
 import DatasetsGrid from '@/components/data/DatasetsGrid';
 import { useIndexPageState } from '@/hooks/useIndexPageState';
 import { SignInModal } from '@/components/auth/SignInModal';
@@ -107,7 +109,41 @@ const Index = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <Header user={user} onUserChange={handleUserChange} onShowSignIn={() => setShowSignInModal(true)} />
+        {/* Updated Header */}
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <Link to="/" className="flex items-center gap-2">
+                  <DataDetectiveLogo size="sm" showText={true} />
+                </Link>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Link to="/new-project">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    New Project
+                  </Button>
+                </Link>
+                
+                <Link to="/query-history">
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <History className="w-4 h-4" />
+                    Projects
+                  </Button>
+                </Link>
+
+                <HelpMenu />
+                
+                <Button onClick={() => setShowSignInModal(true)}>
+                  Sign In / Sign Up
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
@@ -120,11 +156,43 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <Header 
-        user={user} 
-        onUserChange={handleUserChange} 
-        onShowSignIn={() => setShowSignInModal(true)} 
-      />
+      {/* Updated Header */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <Link to="/" className="flex items-center gap-2">
+                <DataDetectiveLogo size="sm" showText={true} />
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Link to="/new-project">
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  New Project
+                </Button>
+              </Link>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="flex items-center gap-2"
+                onClick={handleContinueExistingProject}
+              >
+                <History className="w-4 h-4" />
+                Projects
+              </Button>
+
+              <HelpMenu />
+              
+              <Button onClick={() => setShowSignInModal(true)}>
+                Sign In / Sign Up
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-8">

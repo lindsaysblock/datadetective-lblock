@@ -1,10 +1,12 @@
 
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, History } from 'lucide-react';
 import { useAuthState } from '@/hooks/useAuthState';
 import DataDetectiveLogo from '@/components/DataDetectiveLogo';
+import HelpMenu from '@/components/HelpMenu';
 import { BarChart3, Brain, Database, FileText } from 'lucide-react';
 
 const Home = () => {
@@ -30,6 +32,44 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <Link to="/" className="flex items-center gap-2">
+                <DataDetectiveLogo size="sm" showText={true} />
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Link to="/new-project">
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  New Project
+                </Button>
+              </Link>
+              
+              <Link to="/query-history">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <History className="w-4 h-4" />
+                  Projects
+                </Button>
+              </Link>
+
+              <HelpMenu />
+              
+              <Button 
+                onClick={() => navigate('/auth')}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+              >
+                Sign In / Sign Up
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-12">
