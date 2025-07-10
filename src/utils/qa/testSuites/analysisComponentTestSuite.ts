@@ -17,16 +17,14 @@ export const runAnalysisComponentTests = (): QATestResult[] => {
       results.push({
         testName: 'Analysis Modals Hook State Management',
         status: 'pass',
-        message: 'Modal states are properly typed as boolean',
-        category: 'hooks'
+        message: 'Modal states are properly typed as boolean'
       });
     }
   } catch (error) {
     results.push({
       testName: 'Analysis Modals Hook State Management',
       status: 'fail',
-      message: `Modal hook test failed: ${error}`,
-      category: 'hooks'
+      message: `Modal hook test failed: ${error}`
     });
   }
 
@@ -43,16 +41,14 @@ export const runAnalysisComponentTests = (): QATestResult[] => {
       results.push({
         testName: 'Analysis Actions Hook Data Structure',
         status: 'pass',
-        message: 'Analysis results structure is valid for export operations',
-        category: 'hooks'
+        message: 'Analysis results structure is valid for export operations'
       });
     }
   } catch (error) {
     results.push({
       testName: 'Analysis Actions Hook Data Structure',
       status: 'fail',
-      message: `Analysis actions test failed: ${error}`,
-      category: 'hooks'
+      message: `Analysis actions test failed: ${error}`
     });
   }
 
@@ -72,16 +68,14 @@ export const runAnalysisComponentTests = (): QATestResult[] => {
       results.push({
         testName: 'Analysis Header Component Props',
         status: 'pass',
-        message: 'All required header props are present',
-        category: 'components'
+        message: 'All required header props are present'
       });
     }
   } catch (error) {
     results.push({
       testName: 'Analysis Header Component Props',
       status: 'fail',
-      message: `Header component test failed: ${error}`,
-      category: 'components'
+      message: `Header component test failed: ${error}`
     });
   }
 
@@ -103,16 +97,14 @@ export const runAnalysisComponentTests = (): QATestResult[] => {
       results.push({
         testName: 'Analysis Export Data Structure',
         status: 'pass',
-        message: 'Export data structure is properly formatted',
-        category: 'functionality'
+        message: 'Export data structure is properly formatted'
       });
     }
   } catch (error) {
     results.push({
       testName: 'Analysis Export Data Structure',
       status: 'fail',
-      message: `Export functionality test failed: ${error}`,
-      category: 'functionality'
+      message: `Export functionality test failed: ${error}`
     });
   }
 
@@ -131,16 +123,14 @@ export const runAnalysisComponentTests = (): QATestResult[] => {
       results.push({
         testName: 'Analysis Page Component Integration',
         status: 'pass',
-        message: 'All analysis components are properly integrated',
-        category: 'integration'
+        message: 'All analysis components are properly integrated'
       });
     }
   } catch (error) {
     results.push({
       testName: 'Analysis Page Component Integration',
       status: 'fail',
-      message: `Component integration test failed: ${error}`,
-      category: 'integration'
+      message: `Component integration test failed: ${error}`
     });
   }
 

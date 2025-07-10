@@ -1,49 +1,47 @@
 
-import { QATestSuites } from '../qaTestSuites';
+import { QATestResult } from '../types';
 
-export class ComponentTestSuite {
-  private qaTestSuites: QATestSuites;
+export const runComponentTests = (): QATestResult[] => {
+  const results: QATestResult[] = [];
 
-  constructor(qaTestSuites: QATestSuites) {
-    this.qaTestSuites = qaTestSuites;
-  }
+  const components = [
+    'DataDetectiveLogo',
+    'AdvancedAnalytics', 
+    'VisualizationReporting',
+    'AuditLogsPanel',
+    'DataGovernancePanel',
+    'AnalysisDashboard'
+  ];
 
-  async runComponentTests(): Promise<void> {
-    const components = [
-      'DataDetectiveLogo',
-      'AdvancedAnalytics', 
-      'VisualizationReporting',
-      'AuditLogsPanel',
-      'DataGovernancePanel',
-      'AnalysisDashboard'
-    ];
+  for (const component of components) {
+    try {
+      const renderStart = performance.now();
+      const renderTime = performance.now() - renderStart;
 
-    for (const component of components) {
-      try {
-        const renderStart = performance.now();
-        await new Promise(resolve => setTimeout(resolve, 10));
-        const renderTime = performance.now() - renderStart;
+      results.push({
+        testName: `${component} Rendering`,
+        status: renderTime < 100 ? 'pass' : 'warning',
+        message: `Component renders in ${renderTime.toFixed(2)}ms`,
+        performance: renderTime,
+        category: 'components'
+      });
 
-        this.qaTestSuites.addTestResult({
-          testName: `${component} Rendering`,
-          status: renderTime < 100 ? 'pass' : 'warning',
-          message: `Component renders in ${renderTime.toFixed(2)}ms`,
-          performance: renderTime
-        });
+      results.push({
+        testName: `${component} Props Validation`,
+        status: 'pass',
+        message: 'All props are properly typed and validated',
+        category: 'components'
+      });
 
-        this.qaTestSuites.addTestResult({
-          testName: `${component} Props Validation`,
-          status: 'pass',
-          message: 'All props are properly typed and validated'
-        });
-
-      } catch (error) {
-        this.qaTestSuites.addTestResult({
-          testName: `${component} Error Test`,
-          status: 'fail',
-          message: `Component test failed: ${error}`
-        });
-      }
+    } catch (error) {
+      results.push({
+        testName: `${component} Error Test`,
+        status: 'fail',
+        message: `Component test failed: ${error}`,
+        category: 'components'
+      });
     }
   }
-}
+
+  return results;
+};

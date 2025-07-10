@@ -6,6 +6,7 @@ export interface QATestResult {
   performance?: number;
   suggestions?: string[];
   isDataRelated?: boolean;
+  category?: string;
 }
 
 export interface QAReport {
@@ -34,6 +35,7 @@ export interface PerformanceMetrics {
   refactoringReadiness?: number;
   dynamicAnalysisEnabled?: boolean;
   enhancedMode?: boolean;
+  duration?: number;
 }
 
 export interface RefactoringRecommendation {
