@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 import Index from './pages/Index';
 import Auth from './pages/Auth';
 import Admin from './pages/Admin';
+import NewProject from './pages/NewProject';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import BehavioralAnalysisDemo from "./pages/BehavioralAnalysisDemo";
 import QARunner from './components/QARunner';
@@ -22,6 +23,7 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/new-project" element={<NewProject />} />
             <Route path="/demo" element={<BehavioralAnalysisDemo />} />
           </Routes>
         </div>
