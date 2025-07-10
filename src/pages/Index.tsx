@@ -70,7 +70,7 @@ const Index = () => {
               </div>
               <CardDescription className="text-gray-600">
                 {activeTab === 'dataExploration'
-                  ? 'Upload your data and ask questions to discover insights.'
+                  ? 'Add your data or connect your data and ask questions to discover insights.'
                   : 'View and manage your uploaded datasets.'}
               </CardDescription>
             </CardHeader>
