@@ -1,4 +1,3 @@
-
 export interface DataColumn {
   name: string;
   type: 'string' | 'number' | 'date' | 'boolean';
@@ -17,6 +16,8 @@ export interface ParsedData {
   };
 }
 
+import { parseUnstructuredData } from './unstructuredDataParser';
+
 export const parseFile = async (file: File): Promise<ParsedData> => {
   const extension = file.name.split('.').pop()?.toLowerCase();
   
@@ -25,9 +26,24 @@ export const parseFile = async (file: File): Promise<ParsedData> => {
       return await parseCSV(file);
     case 'json':
       return await parseJSON(file);
+    case 'txt':
+      return await parseTextFile(file);
     default:
-      throw new Error(`Unsupported file type: ${extension}`);
+      // Try to parse as text for unknown extensions
+      return await parseTextFile(file);
   }
+};
+
+export const parseRawText = (text: string): ParsedData => {
+  const result = parseUnstructuredData(text);
+  
+  if (!result.success || !result.data) {
+    throw new Error(result.error || 'Failed to parse data');
+  }
+
+  // Convert unstructured result to ParsedData format
+  const headers = result.data.length > 0 ? Object.keys(result.data[0]) : [];
+  return analyzeData(headers, result.data);
 };
 
 const parseCSV = async (file: File): Promise<ParsedData> => {
@@ -65,6 +81,11 @@ const parseJSON = async (file: File): Promise<ParsedData> => {
   
   const headers = Object.keys(data[0]);
   return analyzeData(headers, data);
+};
+
+const parseTextFile = async (file: File): Promise<ParsedData> => {
+  const text = await file.text();
+  return parseRawText(text);
 };
 
 const analyzeData = (headers: string[], rows: Record<string, any>[]): ParsedData => {

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Send, Database, Lightbulb, History, Code, Sparkles, Settings, Upload } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import DataSourceConfig from './DataSourceConfig';
-import { parseFile, generateDataInsights, ParsedData } from '../utils/dataParser';
+import { parseFile, generateDataInsights, ParsedData, parseRawText } from '../utils/dataParser';
 import DataVisualization from './DataVisualization';
 import { generateVisualizationRecommendations } from '../utils/visualizationGenerator';
 
@@ -71,14 +71,23 @@ const QueryBuilder = () => {
 
   const handleFileUpload = async (file: File) => {
     try {
-      const parsedData = await parseFile(file);
+      let parsedData: ParsedData;
+      
+      // Handle different file types or raw text
+      if (file.name === 'pasted-data.txt') {
+        const text = await file.text();
+        parsedData = parseRawText(text);
+      } else {
+        parsedData = await parseFile(file);
+      }
+      
       setConnectedData(parsedData);
       
       const insights = generateDataInsights(parsedData);
       const assistantMessage: Message = {
         id: Date.now().toString(),
         type: 'assistant',
-        content: `🎉 Great! I've analyzed your data file "${file.name}" and here's what I found:\n\n${insights.join('\n')}\n\nNow I can help you explore user behaviors in this dataset! What would you like to discover? For example:\n• "Show me user activity patterns"\n• "What are the most common user actions?"\n• "How do users behave over time?"`,
+        content: `🎉 Great! I've analyzed your data and here's what I found:\n\n${insights.join('\n')}\n\nI automatically detected and structured your data for analysis! Now I can help you explore user behaviors and patterns. What would you like to discover?\n\n💡 Try asking:\n• "Show me user activity patterns"\n• "What are the most common behaviors?"\n• "How do users engage over time?"`,
         timestamp: new Date()
       };
       
@@ -86,11 +95,11 @@ const QueryBuilder = () => {
       updateRecommendationsAfterConnection();
       setShowDataConfig(false);
     } catch (error) {
-      console.error('Error parsing file:', error);
+      console.error('Error parsing data:', error);
       const errorMessage: Message = {
         id: Date.now().toString(),
         type: 'assistant',
-        content: `❌ I had trouble reading that file. Please make sure it's a valid CSV or JSON file with user behavior data. The error was: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        content: `❌ I had trouble reading that data. Don't worry - I can handle many formats! The error was: ${error instanceof Error ? error.message : 'Unknown error'}\n\n💡 Try:\n• Checking your data format\n• Using the paste option for raw text\n• Uploading a different file format`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);

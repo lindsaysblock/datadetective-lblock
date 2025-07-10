@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Upload, Database, Globe, FileText, Settings } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { parseRawText } from '../utils/dataParser';
 
 interface DataSource {
   id: string;
@@ -25,6 +26,7 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
   const [connectedSources, setConnectedSources] = useState<DataSource[]>([]);
   const [apiKey, setApiKey] = useState('');
   const [databaseUrl, setDatabaseUrl] = useState('');
+  const [rawDataText, setRawDataText] = useState('');
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -38,6 +40,27 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
         lastSync: new Date()
       };
       setConnectedSources(prev => [...prev, newSource]);
+    }
+  };
+
+  const handleRawDataPaste = () => {
+    if (!rawDataText.trim()) return;
+    
+    try {
+      const parsedData = parseRawText(rawDataText);
+      onFileUpload(new File([rawDataText], 'pasted-data.txt', { type: 'text/plain' }));
+      
+      const newSource: DataSource = {
+        id: Date.now().toString(),
+        name: 'Pasted Data',
+        type: 'file',
+        status: 'connected',
+        lastSync: new Date()
+      };
+      setConnectedSources(prev => [...prev, newSource]);
+      setRawDataText('');
+    } catch (error) {
+      console.error('Error parsing pasted data:', error);
     }
   };
 
@@ -75,11 +98,15 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Connect Your Data</h2>
-        <p className="text-gray-600">Connect to your data sources to start exploring user behaviors</p>
+        <p className="text-gray-600">Upload files, paste data directly, or connect to your data sources</p>
       </div>
 
-      <Tabs defaultValue="file" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="paste" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="paste" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Paste
+          </TabsTrigger>
           <TabsTrigger value="file" className="flex items-center gap-2">
             <Upload className="w-4 h-4" />
             Files
@@ -97,6 +124,42 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
             Warehouse
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="paste" className="space-y-4">
+          <Card className="p-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Paste Your Data</h3>
+              <p className="text-gray-600 mb-4">
+                Copy and paste your data in any format - CSV, JSON, lists, or even unstructured text. 
+                I'll automatically detect the format and structure it for analysis.
+              </p>
+              <div className="space-y-4">
+                <Textarea
+                  placeholder="Paste your data here... 
+
+Examples:
+• CSV: name,age,city
+       John,25,NYC
+• JSON: [{"name":"John","age":25}]
+• Lists: Item 1
+        Item 2
+• Key-value: name: John
+           age: 25"
+                  value={rawDataText}
+                  onChange={(e) => setRawDataText(e.target.value)}
+                  className="min-h-[200px] font-mono text-sm"
+                />
+                <Button onClick={handleRawDataPaste} className="w-full" disabled={!rawDataText.trim()}>
+                  Parse and Connect Data
+                </Button>
+              </div>
+              <div className="mt-4 text-sm text-gray-600">
+                <p>✨ Supports: CSV, JSON, TSV, pipe-delimited, key-value pairs, and simple lists</p>
+                <p>🔍 Automatic format detection - just paste and I'll figure it out!</p>
+              </div>
+            </div>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="file" className="space-y-4">
           <Card className="p-6">
