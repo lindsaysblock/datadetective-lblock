@@ -225,5 +225,3 @@ export type QARunner = {
   runQATests: () => Promise<QAReport>;
   runEnhancedQATests: () => Promise<QAReport>;
 };
-
-export { QATestSuites };
