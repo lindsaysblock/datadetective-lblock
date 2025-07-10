@@ -50,20 +50,29 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
     const textBlob = new Blob([textData], { type: 'text/plain' });
     const textFile = new File([textBlob], 'pasted-data.txt', { type: 'text/plain' });
     
-    // Create a simple input element and trigger the change event
-    const input = document.createElement('input');
-    input.type = 'file';
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(textFile);
-    input.files = dataTransfer.files;
+    // Create a proper ChangeEvent mock
+    const mockEvent = {
+      target: {
+        files: [textFile] as FileList,
+        value: '',
+      } as HTMLInputElement,
+      currentTarget: {} as HTMLInputElement,
+      nativeEvent: new Event('change'),
+      bubbles: true,
+      cancelable: true,
+      defaultPrevented: false,
+      eventPhase: 2,
+      isTrusted: true,
+      preventDefault: () => {},
+      isDefaultPrevented: () => false,
+      stopPropagation: () => {},
+      isPropagationStopped: () => false,
+      persist: () => {},
+      timeStamp: Date.now(),
+      type: 'change'
+    } as React.ChangeEvent<HTMLInputElement>;
     
-    const event = new Event('change', { bubbles: true });
-    Object.defineProperty(event, 'target', {
-      writable: false,
-      value: input
-    });
-    
-    onFileChange(event as React.ChangeEvent<HTMLInputElement>);
+    onFileChange(mockEvent);
   };
 
   const isReadyToAnalyze = parsedData && researchQuestion.trim();
@@ -179,7 +188,7 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
           additionalContext={additionalContext}
           onSaveDataset={onSaveDataset}
           onStartAnalysis={() => onStartAnalysis()}
-          isReadyToAnalyze={isReadyToAnalyze}
+          isReadyToAnalyze={!!isReadyToAnalyze}
         />
       )}
     </div>
