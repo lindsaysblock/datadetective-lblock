@@ -1,9 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAutoQA } from '../hooks/useAutoQA';
 import { useAutoRefactor } from '../hooks/useAutoRefactor';
 import { useToast } from '@/hooks/use-toast';
 import { RefactoringSuggestion } from '../utils/qa/autoRefactorSystem';
-import LoadTestRunner from './LoadTestRunner';
 
 const QARunner: React.FC = () => {
   const { runManualQA, isAutoEnabled } = useAutoQA();
@@ -62,8 +62,10 @@ const QARunner: React.FC = () => {
   }, [generateRefactoringMessages, autoRefactorEnabled, toast]);
 
   useEffect(() => {
-    // Run comprehensive QA analysis on component mount
-    if (!hasRunInitialQA) {
+    // Only run QA in admin context, not for regular users
+    const isAdminPath = window.location.pathname === '/admin';
+    
+    if (!hasRunInitialQA && isAdminPath) {
       const runInitialQA = async () => {
         console.log('🔍 Running comprehensive QA analysis with auto-fix and auto-refactoring...');
         
@@ -89,7 +91,6 @@ const QARunner: React.FC = () => {
               duration: 5000,
             });
           }
-          // Error toasts are handled in useAutoQA for data-related issues only
 
         } catch (error) {
           console.error('QA Analysis failed:', error);
@@ -110,11 +111,8 @@ const QARunner: React.FC = () => {
     }
   }, [runManualQA, toast, hasRunInitialQA, autoRefactorEnabled]);
 
-  return (
-    <div className="space-y-6">
-      <LoadTestRunner />
-    </div>
-  );
+  // Don't render anything - this is now just a background service
+  return null;
 };
 
 export default QARunner;
