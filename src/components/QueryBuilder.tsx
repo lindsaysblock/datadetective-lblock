@@ -25,6 +25,7 @@ const QueryBuilder: React.FC = () => {
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [currentFilename, setCurrentFilename] = useState<string | null>(null);
   const [findings, setFindings] = useState<any[]>([]);
+  const [showOnboarding, setShowOnboarding] = useState(true);
   const { user, loading, handleUserChange } = useAuthState();
   const { toast } = useToast();
 
@@ -72,6 +73,7 @@ const QueryBuilder: React.FC = () => {
   };
 
   const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
     toast({
       title: "Welcome to Data Detective!",
       description: "You're all set to start analyzing your data.",
@@ -79,6 +81,7 @@ const QueryBuilder: React.FC = () => {
   };
 
   const handleOnboardingSkip = () => {
+    setShowOnboarding(false);
     toast({
       title: "Onboarding Skipped",
       description: "You can always access help from the menu.",
@@ -109,10 +112,12 @@ const QueryBuilder: React.FC = () => {
 
           {!analysisData ? (
             <div className="space-y-8">
-              <OnboardingFlow 
-                onComplete={handleOnboardingComplete} 
-                onSkip={handleOnboardingSkip} 
-              />
+              {showOnboarding && (
+                <OnboardingFlow 
+                  onComplete={handleOnboardingComplete} 
+                  onSkip={handleOnboardingSkip} 
+                />
+              )}
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <Card className="p-6 bg-white/80 backdrop-blur-sm border-purple-200">
