@@ -1,4 +1,6 @@
 import { type ParsedData } from './dataParser';
+import { LoadTestingSystem, type LoadTestResult, type LoadTestConfig } from './loadTesting';
+import { UnitTestingSystem, type UnitTestReport } from './unitTesting';
 
 export interface QATestResult {
   testName: string;
@@ -40,59 +42,145 @@ export interface RefactoringRecommendation {
 export class AutoQASystem {
   private testResults: QATestResult[] = [];
   private startTime: number = 0;
+  private loadTestingSystem = new LoadTestingSystem();
+  private unitTestingSystem = new UnitTestingSystem();
 
   async runFullQA(): Promise<QAReport> {
-    console.log('🔍 Starting comprehensive QA testing...');
+    console.log('🔍 Starting comprehensive QA testing with load and unit tests...');
     this.startTime = performance.now();
     this.testResults = [];
 
-    // Component Tests
+    // Existing tests
     await this.testComponents();
-    
-    // Integration Tests
     await this.testDataFlow();
+    await this.testUserExperience();
+    await this.testDataIntegrity();
+    await this.testAuthentication();
+    await this.testRouting();
+    await this.testSystemHealth();
+
+    // New comprehensive testing
+    await this.runLoadTests();
+    await this.runUnitTests();
     
     // Performance Tests
     const performanceMetrics = await this.testPerformance();
     
     // Refactoring Analysis
     const refactoringRecommendations = await this.analyzeRefactoringNeeds();
-    
-    // UI/UX Tests
-    await this.testUserExperience();
-    
-    // Data Integrity Tests
-    await this.testDataIntegrity();
-
-    // Authentication Tests
-    await this.testAuthentication();
-
-    // Route Tests
-    await this.testRouting();
-
-    // System Health Tests
-    await this.testSystemHealth();
 
     const report = this.generateReport(performanceMetrics, refactoringRecommendations);
-    console.log('✅ QA testing completed:', report);
+    console.log('✅ QA testing completed with enhanced coverage:', report);
     
     return report;
   }
 
-  async autoFix(report: QAReport): Promise<void> {
-    console.log('🔧 Starting intelligent auto-fix for failed tests...');
+  private async runLoadTests(): Promise<void> {
+    console.log('🚀 Running load testing suite...');
     
-    const failedTests = report.results.filter(test => test.status === 'fail');
-    
-    for (const test of failedTests) {
+    const loadTestConfigs: LoadTestConfig[] = [
+      {
+        concurrentUsers: 5,
+        duration: 10,
+        rampUpTime: 2,
+        testType: 'component'
+      },
+      {
+        concurrentUsers: 3,
+        duration: 15,
+        rampUpTime: 3,
+        testType: 'data-processing'
+      },
+      {
+        concurrentUsers: 8,
+        duration: 8,
+        rampUpTime: 2,
+        testType: 'ui-interaction'
+      }
+    ];
+
+    for (const config of loadTestConfigs) {
       try {
-        await this.attemptIntelligentFix(test);
+        const result = await this.loadTestingSystem.runLoadTest(config);
+        
+        this.addTestResult({
+          testName: `Load Test - ${config.testType}`,
+          status: result.errorRate < 5 ? 'pass' : result.errorRate < 15 ? 'warning' : 'fail',
+          message: `${config.concurrentUsers} users, ${result.errorRate.toFixed(1)}% error rate, ${result.averageResponseTime.toFixed(0)}ms avg response`,
+          performance: result.averageResponseTime,
+          suggestions: result.errorRate > 10 ? ['Consider optimizing component rendering', 'Review memory usage patterns'] : undefined
+        });
+
+        // Memory usage test
+        this.addTestResult({
+          testName: `Memory Usage - ${config.testType}`,
+          status: result.memoryUsage.peak < 100 ? 'pass' : result.memoryUsage.peak < 200 ? 'warning' : 'fail',
+          message: `Peak memory: ${result.memoryUsage.peak.toFixed(1)}MB, Growth: ${(result.memoryUsage.final - result.memoryUsage.initial).toFixed(1)}MB`,
+          suggestions: result.memoryUsage.peak > 150 ? ['Monitor for memory leaks', 'Consider component cleanup'] : undefined
+        });
+
       } catch (error) {
-        console.warn(`Failed to auto-fix test: ${test.testName}`, error);
+        this.addTestResult({
+          testName: `Load Test - ${config.testType}`,
+          status: 'fail',
+          message: `Load test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        });
       }
     }
+  }
+
+  private async runUnitTests(): Promise<void> {
+    console.log('🧪 Running unit test suite...');
     
-    console.log('🔧 Auto-fix attempts completed');
+    try {
+      const unitTestReport = await this.unitTestingSystem.runAllTests();
+      
+      // Overall unit test results
+      this.addTestResult({
+        testName: 'Unit Test Suite',
+        status: unitTestReport.failedTests === 0 ? 'pass' : unitTestReport.failedTests < 3 ? 'warning' : 'fail',
+        message: `${unitTestReport.passedTests}/${unitTestReport.totalTests} tests passed, ${unitTestReport.failedTests} failed`,
+        suggestions: unitTestReport.failedTests > 0 ? [
+          'Review failed unit tests and fix underlying issues',
+          'Ensure all critical functionality is covered by tests'
+        ] : undefined
+      });
+
+      // Code coverage analysis
+      const avgCoverage = (
+        unitTestReport.coverage.statements + 
+        unitTestReport.coverage.branches + 
+        unitTestReport.coverage.functions + 
+        unitTestReport.coverage.lines
+      ) / 4;
+
+      this.addTestResult({
+        testName: 'Code Coverage',
+        status: avgCoverage > 80 ? 'pass' : avgCoverage > 60 ? 'warning' : 'fail',
+        message: `${avgCoverage.toFixed(1)}% average coverage (Statements: ${unitTestReport.coverage.statements.toFixed(1)}%, Functions: ${unitTestReport.coverage.functions.toFixed(1)}%)`,
+        suggestions: avgCoverage < 70 ? [
+          'Increase test coverage for critical functions',
+          'Add integration tests for complex workflows'
+        ] : undefined
+      });
+
+      // Individual test suite results
+      unitTestReport.testSuites.forEach(suite => {
+        const failedTests = suite.tests.filter(test => test.status === 'fail').length;
+        this.addTestResult({
+          testName: `${suite.suiteName} Suite`,
+          status: failedTests === 0 ? 'pass' : failedTests < 2 ? 'warning' : 'fail',
+          message: `${suite.tests.length - failedTests}/${suite.tests.length} tests passed in ${suite.totalDuration.toFixed(0)}ms`
+        });
+      });
+
+    } catch (error) {
+      this.addTestResult({
+        testName: 'Unit Test Suite',
+        status: 'fail',
+        message: `Unit test execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+    }
   }
 
   private async attemptIntelligentFix(test: QATestResult): Promise<void> {
@@ -467,6 +555,28 @@ export class AutoQASystem {
   private async fixResponsiveIssues(): Promise<void> {
     console.log('🔧 Fixing responsive design issues');
     // Auto-fix would add proper responsive classes
+  }
+
+  async autoFix(report: QAReport): Promise<void> {
+    console.log('🔧 Starting intelligent auto-fix for failed tests...');
+    
+    const failedTests = report.results.filter(test => test.status === 'fail');
+    
+    for (const test of failedTests) {
+      try {
+        // Skip load test and unit test failures from auto-fix as they need manual intervention
+        if (test.testName.includes('Load Test') || test.testName.includes('Unit Test')) {
+          console.log(`⚠️ Skipping auto-fix for: ${test.testName} (requires manual intervention)`);
+          continue;
+        }
+        
+        await this.attemptIntelligentFix(test);
+      } catch (error) {
+        console.warn(`Failed to auto-fix test: ${test.testName}`, error);
+      }
+    }
+    
+    console.log('🔧 Auto-fix attempts completed');
   }
 }
 

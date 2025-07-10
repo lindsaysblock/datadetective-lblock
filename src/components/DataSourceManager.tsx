@@ -1,9 +1,10 @@
-
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { usePrivacyModal } from '@/hooks/usePrivacyModal';
 import DataSourceConfig from './DataSourceConfig';
 import RealTimeDataStreaming from './RealTimeDataStreaming';
 import AnalyzingIcon from './AnalyzingIcon';
+import PrivacySecurityModal from './PrivacySecurityModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Upload, Zap, Database } from 'lucide-react';
 
@@ -26,35 +27,56 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
   const { toast } = useToast();
+  const { isOpen, modalConfig, showModal, handleAccept, handleDecline } = usePrivacyModal();
 
   const handleDataSourceConnect = async (source: DataSource) => {
-    console.log('Data source connected:', source);
-    setAnalyzing(true);
+    const connectAction = async () => {
+      console.log('Data source connected:', source);
+      setAnalyzing(true);
+      
+      // Simulate connection and analysis process with progress updates
+      const totalSteps = 5;
+      const estimatedTotalTime = 15000; // 15 seconds
+      setEstimatedTime(estimatedTotalTime);
+      
+      for (let step = 1; step <= totalSteps; step++) {
+        await new Promise(resolve => setTimeout(resolve, estimatedTotalTime / totalSteps));
+        const progress = (step / totalSteps) * 100;
+        setUploadProgress(progress);
+        setEstimatedTime(estimatedTotalTime - (step * (estimatedTotalTime / totalSteps)));
+      }
+      
+      setAnalyzing(false);
+      setUploadProgress(0);
+      setEstimatedTime(0);
+      
+      toast({
+        title: "Data Source Connected!",
+        description: `Successfully connected to ${source.name}.`,
+      });
+    };
+
+    // Show privacy modal before connecting
+    showModal(connectAction, 'connection', source.name);
+  };
+
+  const handleFileUploadWithPrivacy = async (file: File) => {
+    const uploadAction = () => onFileUpload(file);
     
-    // Simulate connection and analysis process with progress updates
-    const totalSteps = 5;
-    const estimatedTotalTime = 15000; // 15 seconds
-    setEstimatedTime(estimatedTotalTime);
-    
-    for (let step = 1; step <= totalSteps; step++) {
-      await new Promise(resolve => setTimeout(resolve, estimatedTotalTime / totalSteps));
-      const progress = (step / totalSteps) * 100;
-      setUploadProgress(progress);
-      setEstimatedTime(estimatedTotalTime - (step * (estimatedTotalTime / totalSteps)));
-    }
-    
-    setAnalyzing(false);
-    setUploadProgress(0);
-    setEstimatedTime(0);
-    
-    toast({
-      title: "Data Source Connected!",
-      description: `Successfully connected to ${source.name}.`,
-    });
+    // Show privacy modal before uploading
+    showModal(uploadAction, 'upload');
   };
 
   return (
     <div className="space-y-6">
+      <PrivacySecurityModal
+        isOpen={isOpen}
+        onAccept={handleAccept}
+        onDecline={handleDecline}
+        dataType={modalConfig.dataType}
+        sourceName={modalConfig.sourceName}
+      />
+
       <Tabs defaultValue="connect" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="connect" className="flex items-center gap-2">
@@ -74,7 +96,7 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
         <TabsContent value="connect" className="space-y-6">
           <DataSourceConfig 
             onDataSourceConnect={handleDataSourceConnect}
-            onFileUpload={onFileUpload}
+            onFileUpload={handleFileUploadWithPrivacy}
           />
           {analyzing && (
             <div className="text-center">
