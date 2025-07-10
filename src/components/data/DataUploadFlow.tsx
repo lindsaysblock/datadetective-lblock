@@ -115,8 +115,9 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
       <div className="space-y-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
-            <Plus className="w-4 h-4" />
+            2
           </div>
+          <Plus className="w-5 h-5 text-blue-600" />
           <h3 className="text-lg font-semibold">Connect Your Data</h3>
         </div>
         <FileUploadSection

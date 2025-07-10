@@ -24,7 +24,7 @@ const ResearchQuestionSection: React.FC<ResearchQuestionSectionProps> = ({
           <h3 className="text-lg font-semibold">What's your question?</h3>
         </div>
         <p className="text-gray-600 mb-4">
-          What do you want to know?
+          What do you want to answer?
         </p>
         <Textarea
           placeholder="e.g., What are the main trends in customer behavior over time?"
