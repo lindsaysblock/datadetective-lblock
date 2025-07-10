@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload } from 'lucide-react';
+import { Upload, File } from 'lucide-react';
 
 interface FileUploadSectionProps {
   file: File | null;
@@ -28,17 +28,33 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
           id="upload"
           className="hidden"
           onChange={onFileChange}
+          accept=".csv,.json,.txt"
         />
-        <Label 
-          htmlFor="upload" 
-          className="cursor-pointer bg-blue-100 text-blue-700 rounded-md py-2 px-4 hover:bg-blue-200 transition-colors duration-200"
-        >
-          <Upload className="w-4 h-4 mr-2 inline-block" />
-          {file ? file.name : 'Upload a file'}
-        </Label>
-        <Button onClick={onFileUpload} disabled={uploading || parsing}>
-          {uploading ? 'Uploading...' : 'Upload'}
-        </Button>
+        
+        {!file ? (
+          <Label 
+            htmlFor="upload" 
+            className="cursor-pointer bg-blue-100 text-blue-700 rounded-md py-3 px-6 hover:bg-blue-200 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
+          >
+            <Upload className="w-4 h-4" />
+            Choose File
+          </Label>
+        ) : (
+          <div className="flex items-center gap-4 flex-1">
+            <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-md py-2 px-3">
+              <File className="w-4 h-4" />
+              <span className="truncate max-w-xs">{file.name}</span>
+            </div>
+            <Button 
+              onClick={onFileUpload} 
+              disabled={uploading || parsing}
+              className="flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              {uploading || parsing ? 'Processing...' : 'Upload'}
+            </Button>
+          </div>
+        )}
       </div>
 
       {parsing && (
