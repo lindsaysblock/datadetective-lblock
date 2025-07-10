@@ -130,6 +130,11 @@ const QueryBuilder = () => {
         title: "📈 Validate hypothesis",
         description: "Test your business assumptions with data-driven insights",
         impact: 'high'
+      },
+      {
+        title: "📅 Set up recurring reports",
+        description: "Automate regular insights delivery with scheduled reports",
+        impact: 'high'
       }
     ]);
   };
@@ -529,6 +534,14 @@ const QueryBuilder = () => {
             >
               <span className="text-lg mr-3">🎯</span>
               <span>Feature engagement</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-sm p-4 h-auto border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+              onClick={() => setCurrentInput("Set up automated recurring reports for my team")}
+            >
+              <span className="text-lg mr-3">📅</span>
+              <span>Recurring reports</span>
             </Button>
           </div>
         </div>
