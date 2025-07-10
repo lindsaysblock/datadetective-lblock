@@ -5,6 +5,7 @@ import FileUploadSection from './upload/FileUploadSection';
 import ResearchQuestionSection from './upload/ResearchQuestionSection';
 import AdditionalContextSection from './upload/AdditionalContextSection';
 import AnalysisActionSection from './upload/AnalysisActionSection';
+import ProjectNamingDialog from './upload/ProjectNamingDialog';
 
 interface DataUploadFlowProps {
   file: File | null;
@@ -32,6 +33,9 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
   onSaveDataset
 }) => {
   const [additionalContext, setAdditionalContext] = useState('');
+  const [teachModeEnabled, setTeachModeEnabled] = useState(false);
+  const [showProjectDialog, setShowProjectDialog] = useState(false);
+  const [isProcessingAnalysis, setIsProcessingAnalysis] = useState(false);
 
   const handleFileChangeWithTextSupport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -74,6 +78,26 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
     }
   };
 
+  const handleStartAnalysisClick = () => {
+    setShowProjectDialog(true);
+  };
+
+  const handleProjectConfirm = (projectName: string) => {
+    console.log('Starting analysis with project name:', projectName);
+    console.log('Teaching mode enabled:', teachModeEnabled);
+    console.log('Research question:', researchQuestion);
+    console.log('Additional context:', additionalContext);
+    
+    setIsProcessingAnalysis(true);
+    
+    // Simulate processing time
+    setTimeout(() => {
+      setIsProcessingAnalysis(false);
+      setShowProjectDialog(false);
+      onStartAnalysis();
+    }, 2000);
+  };
+
   const isReadyToAnalyze = Boolean(parsedData && researchQuestion.trim());
 
   return (
@@ -111,11 +135,20 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
           <AnalysisActionSection
             isReadyToAnalyze={isReadyToAnalyze}
             parsedData={parsedData}
-            onStartAnalysis={onStartAnalysis}
+            onStartAnalysis={handleStartAnalysisClick}
             onSaveDataset={onSaveDataset}
+            teachModeEnabled={teachModeEnabled}
+            onTeachModeToggle={setTeachModeEnabled}
           />
         </>
       )}
+
+      <ProjectNamingDialog
+        open={showProjectDialog}
+        onOpenChange={setShowProjectDialog}
+        onConfirm={handleProjectConfirm}
+        isProcessing={isProcessingAnalysis}
+      />
     </div>
   );
 };
