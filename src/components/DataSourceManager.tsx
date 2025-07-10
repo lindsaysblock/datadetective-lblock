@@ -100,7 +100,7 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
           )
         );
         
-        // Set upload complete to true to show the success indicator
+        // Set upload complete to true AFTER updating the file status
         setUploadComplete(true);
         console.log('File upload completed successfully:', file.name);
         
@@ -140,6 +140,9 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
   };
 
   const handleUploadMore = () => {
+    // Reset upload complete state to show the file input again
+    setUploadComplete(false);
+    
     // Trigger file input click
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -161,6 +164,9 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // Check if we have any successfully uploaded files
+  const hasSuccessfulUploads = uploadedFiles.some(f => f.status === 'success');
+
   return (
     <div className="space-y-6">
       <PrivacySecurityModal
@@ -172,7 +178,7 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
       />
 
       {/* Success Indicator - Show when files are uploaded successfully */}
-      {uploadComplete && uploadedFiles.some(f => f.status === 'success') && (
+      {uploadComplete && hasSuccessfulUploads && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center gap-3">
             <CheckCircle className="w-6 h-6 text-green-600" />
