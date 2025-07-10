@@ -5,6 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ArrowLeft, FileText, MessageSquare, Database, ChevronDown, ChevronUp, Lightbulb, TrendingUp } from 'lucide-react';
+import AnalysisActionBar from './analysis/AnalysisActionBar';
+import AskMoreQuestionsModal from './analysis/AskMoreQuestionsModal';
+import AIRecommendationsModal from './analysis/AIRecommendationsModal';
+import CreateVisualsModal from './analysis/CreateVisualsModal';
 
 interface ProjectAnalysisViewProps {
   projectName: string;
@@ -24,6 +28,24 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
   dataSource
 }) => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
+  const [showQuestionsModal, setShowQuestionsModal] = useState(false);
+  const [showRecommendationsModal, setShowRecommendationsModal] = useState(false);
+  const [showVisualsModal, setShowVisualsModal] = useState(false);
+
+  const handleSubmitQuestion = (question: string) => {
+    console.log('New question submitted:', question);
+    // TODO: Implement question analysis logic
+  };
+
+  const handleImplementRecommendation = (recommendation: any) => {
+    console.log('Implementing recommendation:', recommendation);
+    // TODO: Implement recommendation logic
+  };
+
+  const handleSelectVisualization = (type: string, data: any[]) => {
+    console.log('Creating visualization:', type, data);
+    // TODO: Implement visualization creation logic
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -104,6 +126,13 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
           </Collapsible>
         </Card>
 
+        {/* Analysis Action Bar */}
+        <AnalysisActionBar
+          onAskMoreQuestions={() => setShowQuestionsModal(true)}
+          onShowAIRecommendations={() => setShowRecommendationsModal(true)}
+          onCreateVisuals={() => setShowVisualsModal(true)}
+        />
+
         {/* Analysis Results */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Key Insights */}
@@ -142,6 +171,29 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
             </CardContent>
           </Card>
         </div>
+
+        {/* Modals */}
+        <AskMoreQuestionsModal
+          open={showQuestionsModal}
+          onOpenChange={setShowQuestionsModal}
+          currentAnalysis={analysisResults}
+          onSubmitQuestion={handleSubmitQuestion}
+        />
+
+        <AIRecommendationsModal
+          open={showRecommendationsModal}
+          onOpenChange={setShowRecommendationsModal}
+          analysisResults={analysisResults}
+          onImplementRecommendation={handleImplementRecommendation}
+        />
+
+        <CreateVisualsModal
+          open={showVisualsModal}
+          onOpenChange={setShowVisualsModal}
+          analysisResults={analysisResults}
+          researchQuestion={researchQuestion}
+          onSelectVisualization={handleSelectVisualization}
+        />
       </div>
     </div>
   );
