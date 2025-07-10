@@ -104,7 +104,15 @@ const NewProject = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <Header onShowSignIn={() => setShowSignInModal(true)} />
+      <Header />
+      
+      {/* Page Title Section - Below Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-8 py-6">
+          <h1 className="text-3xl font-bold text-purple-600 mb-2">Start New Project</h1>
+          <p className="text-blue-600">Let's explore your data together</p>
+        </div>
+      </div>
       
       <FormRecoveryDialog
         open={showRecoveryDialog}
@@ -125,17 +133,7 @@ const NewProject = () => {
         onSignUp={handleSignUp}
       />
       
-      <div className="container mx-auto px-6 py-12 max-w-4xl">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Turn your data into insights
-          </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Upload your data and get AI-powered analysis in minutes
-          </p>
-        </div>
-
+      <div className="container mx-auto px-8 py-12 max-w-4xl">
         {renderStepIndicator()}
         
         {/* Analysis Progress - Show above cards */}
