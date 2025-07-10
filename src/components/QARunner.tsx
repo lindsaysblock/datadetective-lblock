@@ -69,8 +69,8 @@ const QARunner: React.FC = () => {
   }, [generateRefactoringMessages, autoRefactorEnabled, toast, isAdminContext]);
 
   useEffect(() => {
-    // Only run QA in admin context
-    if (!hasRunInitialQA && isAdminContext) {
+    // Always run QA analysis when component mounts, regardless of context
+    if (!hasRunInitialQA) {
       const runInitialQA = async () => {
         console.log('🔍 Running comprehensive QA analysis with auto-fix and auto-refactoring...');
         
@@ -88,12 +88,19 @@ const QARunner: React.FC = () => {
             autoRefactorEnabled: autoRefactorEnabled ? 'Enabled' : 'Disabled'
           });
 
-          // Only show success toast if all tests pass and we're in admin context
+          // Show success toast if all tests pass
           if (report.failed === 0) {
             toast({
               title: "QA Analysis Complete",
               description: `All ${report.totalTests} tests passed successfully. Auto-refactoring ${autoRefactorEnabled ? 'applied' : 'analysis included'}.`,
               duration: 5000,
+            });
+          } else if (report.failed > 0) {
+            toast({
+              title: "QA Issues Detected",
+              description: `${report.failed} tests failed out of ${report.totalTests}. Auto-fix attempts were made.`,
+              variant: "destructive",
+              duration: 6000,
             });
           }
 
@@ -111,16 +118,12 @@ const QARunner: React.FC = () => {
       };
 
       // Delay initial run to allow page to fully load
-      const timer = setTimeout(runInitialQA, 2000);
+      const timer = setTimeout(runInitialQA, 1000);
       return () => clearTimeout(timer);
     }
-  }, [runManualQA, toast, hasRunInitialQA, autoRefactorEnabled, isAdminContext]);
+  }, [runManualQA, toast, hasRunInitialQA, autoRefactorEnabled]);
 
-  // Don't render anything - this is a background service that only runs in admin context
-  if (!isAdminContext) {
-    return null;
-  }
-
+  // Don't render anything visible - this is a background service
   return null;
 };
 

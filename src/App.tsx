@@ -7,6 +7,7 @@ import Auth from './pages/Auth';
 import Admin from './pages/Admin';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import BehavioralAnalysisDemo from "./pages/BehavioralAnalysisDemo";
+import QARunner from './components/QARunner';
 
 const queryClient = new QueryClient();
 
@@ -16,6 +17,7 @@ function App() {
       <BrowserRouter>
         <div className="min-h-screen bg-background font-sans antialiased">
           <Toaster />
+          <QARunner />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
