@@ -34,10 +34,10 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
         {!file ? (
           <Label 
             htmlFor="upload" 
-            className="cursor-pointer bg-blue-100 text-blue-700 rounded-md py-3 px-6 hover:bg-blue-200 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
+            className="cursor-pointer bg-blue-100 text-blue-700 rounded-md py-3 px-6 hover:bg-blue-200 transition-colors duration-200 flex items-center gap-2 text-sm font-medium w-full justify-center border-2 border-dashed border-blue-300"
           >
             <Upload className="w-4 h-4" />
-            Choose File
+            Choose File (CSV, JSON, or TXT)
           </Label>
         ) : (
           <div className="flex items-center gap-4 flex-1">
