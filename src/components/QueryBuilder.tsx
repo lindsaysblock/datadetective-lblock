@@ -12,6 +12,7 @@ import { generateVisualizationRecommendations } from '../utils/visualizationGene
 import BusinessInsights from './BusinessInsights';
 import VisualizationFindings from './VisualizationFindings';
 import HypothesisTracker from './HypothesisTracker';
+import { Link } from 'react-router-dom';
 
 interface Message {
   id: string;
@@ -303,13 +304,24 @@ const QueryBuilder = () => {
                 <p className="text-blue-600 text-lg">Discover validated insights from your user behavior data</p>
               </div>
             </div>
-            <Button 
-              onClick={() => setShowDataConfig(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
-            >
-              <Upload className="w-4 h-4" />
-              Connect Data
-            </Button>
+            <div className="flex items-center gap-3">
+              <Link to="/history">
+                <Button 
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <History className="w-4 h-4" />
+                  History
+                </Button>
+              </Link>
+              <Button 
+                onClick={() => setShowDataConfig(true)}
+                className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+              >
+                <Upload className="w-4 h-4" />
+                Connect Data
+              </Button>
+            </div>
           </div>
         </div>
 
