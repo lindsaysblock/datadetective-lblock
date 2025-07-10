@@ -20,9 +20,21 @@ const CreateVisualsModal: React.FC<CreateVisualsModalProps> = ({
   onSelectVisualization
 }) => {
   // Generate visualization recommendations based on the analysis results
+  const mockParsedData = {
+    columns: [],
+    rows: [],
+    summary: {
+      totalRows: 0,
+      totalColumns: 0,
+      possibleUserIdColumns: [],
+      possibleEventColumns: [],
+      possibleTimestampColumns: []
+    }
+  };
+
   const recommendations = generateVisualizationRecommendations(
     researchQuestion,
-    { summary: { possibleTimestampColumns: [], columns: [] }, data: [] }, // Mock parsed data structure
+    mockParsedData,
     analysisResults?.businessContext
   );
 
