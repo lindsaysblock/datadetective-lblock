@@ -87,6 +87,7 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
         };
         
         setUploadedFiles(prev => [...prev, newFile]);
+        console.log('Starting file upload for:', file.name);
         
         await onFileUpload(file);
         
@@ -99,7 +100,9 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
           )
         );
         
+        // Set upload complete to true to show the success indicator
         setUploadComplete(true);
+        console.log('File upload completed successfully:', file.name);
         
         toast({
           title: "File Uploaded Successfully!",
@@ -107,6 +110,7 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
         });
         
       } catch (error) {
+        console.error('File upload error:', error);
         // Update status to error
         setUploadedFiles(prev => 
           prev.map(f => 
@@ -167,7 +171,7 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
         sourceName={modalConfig.sourceName}
       />
 
-      {/* Success Indicator */}
+      {/* Success Indicator - This should show when uploadComplete is true */}
       {uploadComplete && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center gap-3">
