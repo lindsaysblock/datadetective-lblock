@@ -5,60 +5,58 @@ import { useToast } from '@/hooks/use-toast';
 
 export const useAutoQA = () => {
   const [lastReport, setLastReport] = useState<QAReport | null>(null);
-  const [isAutoEnabled, setIsAutoEnabled] = useState(true);
+  const [isAutoEnabled, setIsAutoEnabled] = useState(false); // Changed to false by default
   const qaSystemRef = useRef(new AutoQASystem());
   const { toast } = useToast();
+  const lastRunRef = useRef<number>(0);
 
   useEffect(() => {
     if (!isAutoEnabled) return;
 
     let featureObserver: MutationObserver;
     
-    // Watch for DOM changes that might indicate new features
     const startWatching = () => {
       featureObserver = new MutationObserver(async (mutations) => {
-        const hasNewComponents = mutations.some(mutation => {
+        // Throttle QA runs to prevent excessive triggering
+        const now = Date.now();
+        if (now - lastRunRef.current < 10000) { // 10 second minimum between runs
+          return;
+        }
+
+        const hasSignificantChanges = mutations.some(mutation => {
           if (mutation.type === 'childList') {
             const addedNodes = Array.from(mutation.addedNodes);
             return addedNodes.some(node => 
               node.nodeType === Node.ELEMENT_NODE && 
-              (node as Element).querySelector('[data-testid], [data-feature], .lovable-component')
+              (node as Element).querySelector('[data-testid], [data-feature]') &&
+              !(node as Element).closest('.qa-runner, .toast')
             );
           }
           return false;
         });
 
-        if (hasNewComponents) {
-          console.log('🔍 Detected new components, running auto-QA...');
+        if (hasSignificantChanges) {
+          console.log('🔍 Detected significant changes, running auto-QA...');
+          lastRunRef.current = now;
           
-          // Debounce the QA run
           setTimeout(async () => {
             try {
               const report = await qaSystemRef.current.runFullQA();
               setLastReport(report);
               
-              // Only show toast for failures or first run
-              if (report.overall === 'fail' || !lastReport) {
+              // Only show toast for failures
+              if (report.overall === 'fail') {
                 toast({
-                  title: 'Auto-QA Complete',
-                  description: `${report.passed}/${report.totalTests} tests passed`,
-                  variant: report.overall === 'fail' ? 'destructive' : 'default'
+                  title: 'Auto-QA Alert',
+                  description: `${report.failed} test(s) failed`,
+                  variant: 'destructive'
                 });
-              }
-              
-              // Log performance warnings
-              if (report.performanceMetrics.renderTime > 200) {
-                console.warn('⚠️ Performance warning: Slow render time detected');
-              }
-              
-              if (report.refactoringRecommendations.length > 0) {
-                console.info('📝 Refactoring recommendations available');
               }
               
             } catch (error) {
               console.error('Auto-QA failed:', error);
             }
-          }, 2000); // 2 second debounce
+          }, 3000); // 3 second debounce
         }
       });
 
@@ -76,7 +74,7 @@ export const useAutoQA = () => {
         featureObserver.disconnect();
       }
     };
-  }, [isAutoEnabled, lastReport, toast]);
+  }, [isAutoEnabled, toast]);
 
   const runManualQA = async (): Promise<QAReport> => {
     const report = await qaSystemRef.current.runFullQA();
@@ -89,7 +87,7 @@ export const useAutoQA = () => {
     toast({
       title: `Auto-QA ${!isAutoEnabled ? 'Enabled' : 'Disabled'}`,
       description: !isAutoEnabled 
-        ? 'QA will now run automatically when new features are detected'
+        ? 'QA will now run automatically when significant changes are detected'
         : 'Auto-QA has been disabled'
     });
   };
