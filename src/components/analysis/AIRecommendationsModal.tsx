@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +31,7 @@ const AIRecommendationsModal: React.FC<AIRecommendationsModalProps> = ({
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  const recommendations: MetricRecommendation[] = [
+  const recommendations: MetricRecommendation[] = useMemo(() => [
     {
       title: "Track User Engagement Score",
       description: "Create a composite metric combining session duration, feature usage, and return frequency",
@@ -77,39 +77,43 @@ const AIRecommendationsModal: React.FC<AIRecommendationsModalProps> = ({
       difficulty: 'easy',
       category: 'data-quality'
     }
-  ];
+  ], []);
 
   const getImpactColor = (impact: string) => {
-    switch (impact) {
-      case 'high': return 'bg-red-100 text-red-700';
-      case 'medium': return 'bg-orange-100 text-orange-700';
-      case 'low': return 'bg-blue-100 text-blue-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
+    const colors = {
+      high: 'bg-red-100 text-red-700',
+      medium: 'bg-orange-100 text-orange-700',
+      low: 'bg-blue-100 text-blue-700'
+    };
+    return colors[impact as keyof typeof colors] || 'bg-gray-100 text-gray-700';
   };
 
   const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return 'bg-green-100 text-green-700';
-      case 'medium': return 'bg-yellow-100 text-yellow-700';
-      case 'hard': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
+    const colors = {
+      easy: 'bg-green-100 text-green-700',
+      medium: 'bg-yellow-100 text-yellow-700',
+      hard: 'bg-red-100 text-red-700'
+    };
+    return colors[difficulty as keyof typeof colors] || 'bg-gray-100 text-gray-700';
   };
 
   const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'metrics': return <TrendingUp className="w-4 h-4" />;
-      case 'questions': return <Target className="w-4 h-4" />;
-      case 'data-quality': return <CheckCircle className="w-4 h-4" />;
-      case 'analysis': return <Brain className="w-4 h-4" />;
-      default: return <Zap className="w-4 h-4" />;
-    }
+    const icons = {
+      metrics: TrendingUp,
+      questions: Target,
+      'data-quality': CheckCircle,
+      analysis: Brain
+    };
+    const IconComponent = icons[category as keyof typeof icons] || Zap;
+    return <IconComponent className="w-4 h-4" />;
   };
 
-  const filteredRecommendations = selectedCategory === 'all' 
-    ? recommendations 
-    : recommendations.filter(r => r.category === selectedCategory);
+  const filteredRecommendations = useMemo(() => 
+    selectedCategory === 'all' 
+      ? recommendations 
+      : recommendations.filter(r => r.category === selectedCategory),
+    [recommendations, selectedCategory]
+  );
 
   const categories = [
     { key: 'all', label: 'All Recommendations' },
@@ -130,7 +134,6 @@ const AIRecommendationsModal: React.FC<AIRecommendationsModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Category Filter */}
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => (
               <Button
@@ -145,7 +148,6 @@ const AIRecommendationsModal: React.FC<AIRecommendationsModalProps> = ({
             ))}
           </div>
 
-          {/* Recommendations Grid */}
           <div className="grid gap-6">
             {filteredRecommendations.map((recommendation, index) => (
               <Card key={index} className="hover:shadow-lg transition-shadow border border-green-100">

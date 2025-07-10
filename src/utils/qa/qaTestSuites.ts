@@ -1,5 +1,5 @@
 
-import { QATestResult, QAReport } from './types';
+import { QAReport, QATestResult } from './types';
 import { runComponentTests } from './testSuites/componentTestSuite';
 import { runUtilityTests } from './testSuites/utilityTestSuite';
 import { runSystemTests } from './testSuites/systemTestSuite';
@@ -46,7 +46,6 @@ export class QATestSuites {
   }
 
   async testAuthentication(): Promise<void> {
-    // Mock auth test
     this.results.push({
       testName: 'Authentication Flow',
       status: 'pass',
@@ -56,7 +55,6 @@ export class QATestSuites {
   }
 
   async testRouting(): Promise<void> {
-    // Mock routing test
     this.results.push({
       testName: 'Route Navigation',
       status: 'pass',
@@ -78,17 +76,14 @@ export const runQATests = async (): Promise<QAReport> => {
   const startTime = performance.now();
   
   try {
-    // Run component tests
     console.log('🔬 Testing Components...');
     const componentResults = runComponentTests();
     allResults.push(...componentResults);
 
-    // Run utility function tests
     console.log('🧪 Testing Utility Functions...');
     const utilityResults = runUtilityTests();
     allResults.push(...utilityResults);
 
-    // Run system tests
     console.log('⚙️ Testing System...');
     const systemResults = runSystemTests();
     allResults.push(...systemResults);
@@ -148,50 +143,24 @@ export const runEnhancedQATests = async (): Promise<QAReport> => {
   const startTime = performance.now();
   
   try {
-    // Run component tests
-    console.log('🔬 Testing Components...');
-    const componentResults = runComponentTests();
-    allResults.push(...componentResults);
+    // Run all test suites
+    const testSuites = [
+      { name: '🔬 Testing Components...', runner: runComponentTests },
+      { name: '🧪 Testing Utility Functions...', runner: runUtilityTests },
+      { name: '⚙️ Testing System...', runner: runSystemTests },
+      { name: '⏱️ Testing Performance...', runner: runPerformanceTests },
+      { name: '🛡️ Testing Security...', runner: runSecurityTests },
+      { name: '♿ Testing Accessibility...', runner: runAccessibilityTests },
+      { name: '🗂️ Testing Data Handling...', runner: runDataHandlingTests },
+      { name: '🔎 Testing Query Builder...', runner: runQueryBuilderTests },
+      { name: '🔬 Testing Analysis Components...', runner: runAnalysisComponentTests }
+    ];
 
-    // Run utility function tests
-    console.log('🧪 Testing Utility Functions...');
-    const utilityResults = runUtilityTests();
-    allResults.push(...utilityResults);
-
-    // Run system tests
-    console.log('⚙️ Testing System...');
-    const systemResults = runSystemTests();
-    allResults.push(...systemResults);
-
-    // Run performance tests
-    console.log('⏱️ Testing Performance...');
-    const performanceResults = await runPerformanceTests();
-    allResults.push(...performanceResults);
-
-    // Run security tests
-    console.log('🛡️ Testing Security...');
-    const securityResults = await runSecurityTests();
-    allResults.push(...securityResults);
-
-    // Run accessibility tests
-    console.log('♿ Testing Accessibility...');
-    const accessibilityResults = await runAccessibilityTests();
-    allResults.push(...accessibilityResults);
-
-    // Run data handling tests
-    console.log('🗂️ Testing Data Handling...');
-    const dataHandlingResults = runDataHandlingTests();
-    allResults.push(...dataHandlingResults);
-
-    // Run query builder tests
-    console.log('🔎 Testing Query Builder...');
-    const queryBuilderResults = runQueryBuilderTests();
-    allResults.push(...queryBuilderResults);
-    
-    // Add analysis component tests
-    console.log('🔬 Testing Analysis Components...');
-    const analysisResults = runAnalysisComponentTests();
-    allResults.push(...analysisResults);
+    for (const suite of testSuites) {
+      console.log(suite.name);
+      const results = await suite.runner();
+      allResults.push(...results);
+    }
     
   } catch (error) {
     console.error('❌ QA Test Suite failed:', error);
@@ -256,3 +225,5 @@ export type QARunner = {
   runQATests: () => Promise<QAReport>;
   runEnhancedQATests: () => Promise<QAReport>;
 };
+
+export { QATestSuites };

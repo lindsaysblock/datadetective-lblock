@@ -47,6 +47,7 @@ export class EnhancedAutoRefactor {
   private generateSmartSuggestions(files: FileAnalysis[], components: ComponentAnalysis[]): RefactoringSuggestion[] {
     const suggestions: RefactoringSuggestion[] = [];
     
+    // Analyze files for refactoring opportunities
     for (const file of files) {
       const suggestion = this.analyzeFileForRefactoring(file);
       if (suggestion) {
@@ -54,7 +55,7 @@ export class EnhancedAutoRefactor {
       }
     }
     
-    // Add component-specific suggestions
+    // Analyze components for refactoring opportunities
     for (const component of components) {
       if (component.isLargeComponent) {
         const componentSuggestion = this.analyzeComponentForRefactoring(component, files);
@@ -111,7 +112,7 @@ export class EnhancedAutoRefactor {
     
     const urgencyScore = this.calculateComponentUrgencyScore(component);
     
-    if (urgencyScore < 50) return null; // Not urgent enough
+    if (urgencyScore < 50) return null;
     
     return {
       file: component.file,
@@ -132,18 +133,12 @@ export class EnhancedAutoRefactor {
   private calculateUrgencyScore(file: FileAnalysis): number {
     let score = 0;
     
-    // Size factor (0-30 points)
     const threshold = this.getThresholdForType(file.fileType);
     const sizeRatio = file.lines / threshold;
     score += Math.min(sizeRatio * 20, 30);
     
-    // Complexity factor (0-25 points)
     score += Math.min(file.complexity * 1.25, 25);
-    
-    // Maintainability factor (0-25 points)
     score += Math.max(0, (100 - file.maintainabilityIndex) * 0.25);
-    
-    // Issues factor (0-20 points)
     score += file.issues.length * 5;
     
     return Math.min(score, 100);
@@ -152,19 +147,11 @@ export class EnhancedAutoRefactor {
   private calculateComponentUrgencyScore(component: ComponentAnalysis): number {
     let score = 0;
     
-    // Render complexity (0-30 points)
     score += Math.min(component.renderComplexity * 1.5, 30);
-    
-    // State management complexity (0-25 points)
     score += Math.min(component.stateVariables * 5, 25);
-    
-    // Props complexity (0-20 points)
     score += Math.min(component.propsCount * 2, 20);
-    
-    // Effects complexity (0-15 points)
     score += Math.min(component.effectsCount * 3, 15);
     
-    // Error boundary bonus (0-10 points)
     if (!component.hasErrorBoundary) score += 10;
     
     return Math.min(score, 100);
@@ -175,7 +162,6 @@ export class EnhancedAutoRefactor {
     const criticalSuggestions = suggestions.filter(s => s.priority === 'critical');
     const highUrgencySuggestions = suggestions.filter(s => s.urgencyScore > 75);
     
-    // Decision logic
     let shouldExecute = false;
     let reason = '';
     let confidence = 0;
@@ -198,19 +184,18 @@ export class EnhancedAutoRefactor {
       confidence = 65;
     } else {
       reason = 'No files meet auto-refactoring criteria';
-      confidence = 90; // High confidence in NOT refactoring
+      confidence = 90;
     }
     
     return {
       shouldExecute,
       reason,
-      suggestions: shouldExecute ? autoExecutableSuggestions.slice(0, 3) : [], // Limit to 3 to prevent overload
+      suggestions: shouldExecute ? autoExecutableSuggestions.slice(0, 3) : [],
       confidence
     };
   }
 
   private shouldAutoRefactor(file: FileAnalysis, priority: string, urgencyScore: number): boolean {
-    // More nuanced auto-refactor decision
     if (priority === 'critical') return true;
     if (priority === 'high' && urgencyScore > 75) return true;
     if (file.issues.length >= 3) return true;
@@ -240,7 +225,6 @@ export class EnhancedAutoRefactor {
   private generateContextualActions(file: FileAnalysis): string[] {
     const actions: string[] = [];
     
-    // File-specific actions based on actual analysis
     if (file.path.includes('NewProject.tsx')) {
       actions.push('Extract step components (ResearchQuestionStep, DataSourceStep, etc.)');
       actions.push('Create useNewProjectForm custom hook for state management');
@@ -254,7 +238,6 @@ export class EnhancedAutoRefactor {
       actions.push('Extract test utilities and helpers');
       actions.push('Create modular test orchestration system');
     } else {
-      // Generic actions based on file type and issues
       if (file.fileType === 'component') {
         actions.push(`Split ${file.exports[0]} into smaller focused components`);
         if (file.hookCount > 3) {
@@ -266,7 +249,6 @@ export class EnhancedAutoRefactor {
       }
     }
     
-    // Issue-specific actions
     if (file.issues.includes('High cyclomatic complexity detected')) {
       actions.push('Simplify conditional logic using strategy pattern');
     }
@@ -274,7 +256,7 @@ export class EnhancedAutoRefactor {
       actions.push('Create custom hooks for related state and effects');
     }
     
-    return actions.slice(0, 4); // Limit to most important
+    return actions.slice(0, 4);
   }
 
   private generateComponentActions(component: ComponentAnalysis): string[] {

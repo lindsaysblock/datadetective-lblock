@@ -1,4 +1,3 @@
-
 export interface FileAnalysis {
   path: string;
   lines: number;
@@ -43,54 +42,21 @@ export class DynamicCodebaseAnalyzer {
     
     const files = await this.discoverFiles();
     const components = await this.analyzeComponents(files);
-    
-    const totalFiles = files.length;
-    const totalComponents = components.length;
-    const avgFileSize = files.reduce((sum, f) => sum + f.lines, 0) / totalFiles;
-    const largeFiles = files.filter(f => f.lines > this.getThresholdForType(f.fileType));
-    const complexFiles = files.filter(f => f.complexity > 20);
+    const globalMetrics = this.calculateGlobalMetrics(files, components);
 
-    console.log(`📊 Analysis complete: ${totalFiles} files, ${totalComponents} components`);
-    console.log(`📈 Metrics: avg ${avgFileSize.toFixed(0)} lines, ${largeFiles.length} large files, ${complexFiles.length} complex files`);
+    console.log(`📊 Analysis complete: ${files.length} files, ${components.length} components`);
+    console.log(`📈 Metrics: avg ${globalMetrics.avgFileSize.toFixed(0)} lines, ${globalMetrics.largeFiles.length} large files, ${globalMetrics.complexFiles.length} complex files`);
 
-    return {
-      files,
-      components,
-      globalMetrics: {
-        totalFiles,
-        totalComponents,
-        avgFileSize,
-        largeFiles,
-        complexFiles
-      }
-    };
+    return { files, components, globalMetrics };
   }
 
   private async discoverFiles(): Promise<FileAnalysis[]> {
     const files: FileAnalysis[] = [];
     
-    // Analyze actual DOM to discover loaded modules
-    const scripts = Array.from(document.querySelectorAll('script[type="module"]'));
-    const moduleUrls = scripts.map(s => s.getAttribute('src')).filter(Boolean);
-    
-    // Get component elements to infer file structure
-    const components = Array.from(document.querySelectorAll('[data-component], [class*="Component"]'));
+    const knownFiles = this.getKnownFileList();
     const reactFiberNodes = this.findReactFiberNodes();
     
-    // Known file patterns from the codebase
-    const knownFiles = [
-      { path: 'src/pages/NewProject.tsx', type: 'page' as const },
-      { path: 'src/components/QueryBuilder.tsx', type: 'component' as const },
-      { path: 'src/components/VisualizationReporting.tsx', type: 'component' as const },
-      { path: 'src/components/AnalysisDashboard.tsx', type: 'component' as const },
-      { path: 'src/utils/qaSystem.ts', type: 'utility' as const },
-      { path: 'src/utils/qa/qaTestSuites.ts', type: 'utility' as const },
-      { path: 'src/hooks/useAutoQA.ts', type: 'hook' as const },
-      { path: 'src/hooks/useAutoRefactor.ts', type: 'hook' as const },
-      { path: 'src/components/QARunner.tsx', type: 'component' as const },
-      { path: 'src/components/data/DataUploadFlow.tsx', type: 'component' as const }
-    ];
-
+    // Analyze known files
     for (const file of knownFiles) {
       const analysis = await this.analyzeFile(file.path, file.type);
       if (analysis) {
@@ -105,10 +71,40 @@ export class DynamicCodebaseAnalyzer {
     return files;
   }
 
+  private getKnownFileList() {
+    return [
+      { path: 'src/pages/NewProject.tsx', type: 'page' as const },
+      { path: 'src/components/QueryBuilder.tsx', type: 'component' as const },
+      { path: 'src/components/VisualizationReporting.tsx', type: 'component' as const },
+      { path: 'src/components/AnalysisDashboard.tsx', type: 'component' as const },
+      { path: 'src/utils/qaSystem.ts', type: 'utility' as const },
+      { path: 'src/utils/qa/qaTestSuites.ts', type: 'utility' as const },
+      { path: 'src/hooks/useAutoQA.ts', type: 'hook' as const },
+      { path: 'src/hooks/useAutoRefactor.ts', type: 'hook' as const },
+      { path: 'src/components/QARunner.tsx', type: 'component' as const },
+      { path: 'src/components/data/DataUploadFlow.tsx', type: 'component' as const }
+    ];
+  }
+
+  private calculateGlobalMetrics(files: FileAnalysis[], components: ComponentAnalysis[]) {
+    const totalFiles = files.length;
+    const totalComponents = components.length;
+    const avgFileSize = files.reduce((sum, f) => sum + f.lines, 0) / totalFiles;
+    const largeFiles = files.filter(f => f.lines > this.getThresholdForType(f.fileType));
+    const complexFiles = files.filter(f => f.complexity > 20);
+
+    return {
+      totalFiles,
+      totalComponents,
+      avgFileSize,
+      largeFiles,
+      complexFiles
+    };
+  }
+
   private findReactFiberNodes(): any[] {
     const nodes: any[] = [];
     
-    // Try to find React Fiber nodes in the DOM
     const reactElements = Array.from(document.querySelectorAll('*')).slice(0, 50);
     
     for (const element of reactElements) {
@@ -133,7 +129,6 @@ export class DynamicCodebaseAnalyzer {
       if (fiber?.type?.name && !processedTypes.has(fiber.type.name)) {
         processedTypes.add(fiber.type.name);
         
-        // Infer file path from component name
         const componentName = fiber.type.name;
         const inferredPath = this.inferFilePath(componentName);
         
@@ -150,7 +145,6 @@ export class DynamicCodebaseAnalyzer {
   }
 
   private inferFilePath(componentName: string): string | null {
-    // Common patterns for React component file paths
     if (componentName.includes('Page')) {
       return `src/pages/${componentName}.tsx`;
     }
@@ -165,14 +159,12 @@ export class DynamicCodebaseAnalyzer {
 
   private createAnalysisFromFiber(path: string, fiber: any): FileAnalysis | null {
     try {
-      // Estimate complexity from fiber structure
       const childCount = this.countFiberChildren(fiber);
       const hasHooks = fiber.memoizedState !== null;
-      const hasEffects = fiber.flags !== null;
       
       return {
         path,
-        lines: Math.min(50 + childCount * 10, 500), // Estimate based on complexity
+        lines: Math.min(50 + childCount * 10, 500),
         complexity: Math.min(5 + childCount, 25),
         maintainabilityIndex: Math.max(100 - childCount * 3, 20),
         componentCount: 1,
@@ -199,12 +191,11 @@ export class DynamicCodebaseAnalyzer {
       count += this.countFiberChildren(fiber.sibling, depth + 1);
     }
     
-    return Math.min(count, 20); // Cap to prevent infinite loops
+    return Math.min(count, 20);
   }
 
   private async analyzeFile(path: string, fileType: 'component' | 'hook' | 'utility' | 'page' | 'type'): Promise<FileAnalysis | null> {
     try {
-      // Since we can't read files directly, estimate based on known patterns
       const estimatedMetrics = this.getEstimatedMetrics(path, fileType);
       
       return {
@@ -227,7 +218,6 @@ export class DynamicCodebaseAnalyzer {
   }
 
   private getEstimatedMetrics(path: string, fileType: string) {
-    // Real-world estimates based on common file patterns
     const estimates: Record<string, any> = {
       'src/pages/NewProject.tsx': { lines: 404, complexity: 25, componentCount: 1, hookCount: 3 },
       'src/components/QueryBuilder.tsx': { lines: 445, complexity: 35, componentCount: 1, hookCount: 4 },
@@ -249,7 +239,6 @@ export class DynamicCodebaseAnalyzer {
       };
     }
 
-    // Default estimates based on file type
     const defaults = {
       component: { lines: 150, complexity: 15, componentCount: 1, hookCount: 2 },
       page: { lines: 200, complexity: 18, componentCount: 1, hookCount: 3 },
@@ -309,7 +298,6 @@ export class DynamicCodebaseAnalyzer {
   private async analyzeComponents(files: FileAnalysis[]): Promise<ComponentAnalysis[]> {
     const components: ComponentAnalysis[] = [];
     
-    // Analyze actual DOM elements for component insights
     const reactElements = Array.from(document.querySelectorAll('[data-component], [class*="Component"]'));
     
     for (const file of files.filter(f => f.fileType === 'component' || f.fileType === 'page')) {
@@ -335,14 +323,12 @@ export class DynamicCodebaseAnalyzer {
   }
 
   private estimatePropsCount(file: FileAnalysis): number {
-    // Estimate based on file complexity
     return Math.min(Math.floor(file.complexity / 3), 10);
   }
 
   private hasErrorBoundary(element: Element | null): boolean {
     if (!element) return false;
     
-    // Check if element has error boundary indicators
     return element.closest('[data-error-boundary]') !== null ||
            element.className.includes('error-boundary');
   }
