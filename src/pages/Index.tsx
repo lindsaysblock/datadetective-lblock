@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useNavigate } from 'react-router-dom';
+import { Plus, History } from 'lucide-react';
 import Header from '@/components/Header';
 import DashboardTabNavigation from '@/components/dashboard/DashboardTabNavigation';
 import DataPreviewGrid from '@/components/data/DataPreviewGrid';
@@ -62,46 +63,63 @@ const Index = () => {
             </div>
           </div>
         ) : (
-          <Card className="mb-8 border-blue-300">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl font-bold">Data Detective</CardTitle>
-                <DashboardTabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
-              </div>
-              <CardDescription className="text-gray-600">
-                {activeTab === 'dataExploration'
-                  ? 'Add your data or connect your data and ask questions to discover insights.'
-                  : 'View and manage your uploaded datasets.'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {activeTab === 'dataExploration' ? (
-                <div className="space-y-6">
-                  <DataUploadFlow
-                    file={file}
-                    uploading={uploading}
-                    parsing={parsing}
-                    parsedData={parsedData}
-                    researchQuestion={researchQuestion}
-                    onFileChange={handleFileChange}
-                    onFileUpload={handleFileUpload}
-                    onResearchQuestionChange={setResearchQuestion}
-                    onStartAnalysis={handleStartAnalysis}
-                    onSaveDataset={handleSaveDataset}
-                  />
+          <div className="space-y-8">
+            {/* Dashboard Options for Existing Users */}
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back, Detective!</h1>
+              <p className="text-gray-600">What would you like to investigate today?</p>
+            </div>
 
-                  {parsedData && (
-                    <div className="space-y-4">
-                      <Separator />
-                      <DataPreviewGrid parsedData={parsedData} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              <Card 
+                className="p-8 bg-gradient-to-br from-green-50 to-blue-50 border-green-200 hover:shadow-lg transition-all cursor-pointer group"
+                onClick={() => navigate('/new-project')}
+              >
+                <div className="text-center">
+                  <div className="p-4 bg-green-500 rounded-full w-16 h-16 mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <Plus className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="font-semibold text-xl text-gray-800 mb-2">Start New Project</h3>
+                  <p className="text-gray-600">Upload fresh data and begin a new investigation</p>
+                </div>
+              </Card>
+
+              <Card 
+                className="p-8 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 hover:shadow-lg transition-all cursor-pointer group"
+                onClick={() => navigate('/query-history')}
+              >
+                <div className="text-center">
+                  <div className="p-4 bg-purple-500 rounded-full w-16 h-16 mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <History className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="font-semibold text-xl text-gray-800 mb-2">Continue Existing Project</h3>
+                  <p className="text-gray-600">Resume analysis on your saved datasets</p>
+                </div>
+              </Card>
+            </div>
+
+            {/* Recent Activity Section */}
+            <div className="max-w-6xl mx-auto">
+              <Card className="border-blue-300">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">Recent Projects</CardTitle>
+                  <CardDescription className="text-gray-600">
+                    Quick access to your latest investigations
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <DatasetsGrid datasets={datasets?.slice(0, 3) || []} loading={datasetsLoading} />
+                  {datasets && datasets.length > 3 && (
+                    <div className="text-center mt-4">
+                      <Button variant="outline" onClick={() => navigate('/query-history')}>
+                        View All Projects
+                      </Button>
                     </div>
                   )}
-                </div>
-              ) : (
-                <DatasetsGrid datasets={datasets} loading={datasetsLoading} />
-              )}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         )}
       </div>
     </div>

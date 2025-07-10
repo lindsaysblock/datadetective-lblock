@@ -19,11 +19,38 @@ const Auth = () => {
   const { user, loading: authLoading } = useAuthState();
 
   useEffect(() => {
-    // Redirect to dashboard if user is already logged in
+    // Redirect authenticated users based on their status
     if (!authLoading && user) {
-      navigate('/dashboard');
+      checkUserStatus();
     }
   }, [user, authLoading, navigate]);
+
+  const checkUserStatus = async () => {
+    try {
+      // Check if user has any datasets (existing user) or is new
+      const { data: datasets, error } = await supabase
+        .from('datasets')
+        .select('id')
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking user status:', error);
+        navigate('/');
+        return;
+      }
+
+      // If user has datasets, they're existing - go to dashboard with project options
+      // If no datasets, they're new - go to new project page
+      if (datasets && datasets.length > 0) {
+        navigate('/');
+      } else {
+        navigate('/new-project');
+      }
+    } catch (error) {
+      console.error('Error in checkUserStatus:', error);
+      navigate('/');
+    }
+  };
 
   const signInWithEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +93,7 @@ const Auth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`
+          emailRedirectTo: `${window.location.origin}/new-project`
         }
       });
 

@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Search, Save, Sparkles, GraduationCap } from 'lucide-react';
+import AnalyzingIcon from '@/components/AnalyzingIcon';
 
 interface AnalysisActionSectionProps {
   isReadyToAnalyze: boolean;
@@ -23,6 +24,28 @@ const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
   teachModeEnabled = false,
   onTeachModeToggle
 }) => {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleStartAnalysis = () => {
+    setIsAnalyzing(true);
+    onStartAnalysis();
+    
+    // Simulate analysis duration
+    setTimeout(() => {
+      setIsAnalyzing(false);
+    }, 5000);
+  };
+
+  if (isAnalyzing) {
+    return (
+      <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
+        <CardContent className="p-8">
+          <AnalyzingIcon isAnalyzing={true} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
       <CardContent className="p-6">
@@ -77,7 +100,7 @@ const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
             )}
             
             <Button 
-              onClick={onStartAnalysis}
+              onClick={handleStartAnalysis}
               disabled={!isReadyToAnalyze}
               className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-6"
             >

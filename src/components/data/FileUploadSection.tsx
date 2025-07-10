@@ -47,7 +47,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             </div>
             <Button 
               onClick={onFileUpload} 
-              disabled={uploading || parsing}
+              disabled={!file || uploading || parsing}
               className="flex items-center gap-2"
             >
               <Upload className="w-4 h-4" />

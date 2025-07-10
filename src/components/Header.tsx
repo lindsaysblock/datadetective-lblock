@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import HelpMenu from './HelpMenu';
+import DataDetectiveLogo from './DataDetectiveLogo';
 
 interface HeaderProps {
   user: any;
@@ -51,9 +52,7 @@ const Header: React.FC<HeaderProps> = ({ user, onUserChange }) => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-6">
             <Link to="/" className="flex items-center gap-2">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Data Detective
-              </h1>
+              <DataDetectiveLogo size="sm" showText={true} />
             </Link>
             
             {user && (
