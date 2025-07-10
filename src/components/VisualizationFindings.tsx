@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChartBar, Eye, Download, Share2, BookOpen } from 'lucide-react';
+import { ChartBar, Eye, Download, Share2, BookOpen, FileText } from 'lucide-react';
 
 interface Finding {
   id: string;
@@ -36,6 +36,37 @@ const VisualizationFindings: React.FC<VisualizationFindingsProps> = ({
     }
   };
 
+  const exportAllFindings = () => {
+    const exportData = {
+      title: 'Data Analysis Findings Report',
+      exportDate: new Date().toISOString(),
+      totalFindings: allFindings.length,
+      findings: allFindings.map(finding => ({
+        title: finding.title,
+        description: finding.description,
+        chartType: finding.chartType,
+        insight: finding.insight,
+        confidence: finding.confidence,
+        timestamp: finding.timestamp.toISOString()
+      })),
+      summary: {
+        highConfidenceFindings: allFindings.filter(f => f.confidence === 'high').length,
+        mediumConfidenceFindings: allFindings.filter(f => f.confidence === 'medium').length,
+        lowConfidenceFindings: allFindings.filter(f => f.confidence === 'low').length
+      }
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `findings-report-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const mockFindings: Finding[] = [
     {
       id: '1',
@@ -61,11 +92,23 @@ const VisualizationFindings: React.FC<VisualizationFindingsProps> = ({
 
   return (
     <Card className="p-6 bg-gradient-to-br from-green-50 to-blue-50 border-green-200">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 bg-green-100 rounded-lg">
-          <Eye className="w-5 h-5 text-green-600" />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-green-100 rounded-lg">
+            <Eye className="w-5 h-5 text-green-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800">📊 Visualize My Findings</h3>
         </div>
-        <h3 className="text-lg font-semibold text-gray-800">📊 Visualize My Findings</h3>
+        
+        {allFindings.length > 0 && (
+          <Button 
+            onClick={exportAllFindings}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <FileText className="w-4 h-4" />
+            Export My Findings
+          </Button>
+        )}
       </div>
 
       <p className="text-sm text-gray-600 mb-6">
