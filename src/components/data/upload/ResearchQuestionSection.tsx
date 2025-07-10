@@ -18,10 +18,10 @@ const ResearchQuestionSection: React.FC<ResearchQuestionSectionProps> = ({
       <CardContent className="p-6">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-semibold">
-            2
+            1
           </div>
           <HelpCircle className="w-5 h-5 text-purple-600" />
-          <h3 className="text-lg font-semibold">Step 2: Research Question</h3>
+          <h3 className="text-lg font-semibold">Step 1: Research Question</h3>
         </div>
         <p className="text-gray-600 mb-4">
           What specific question would you like to explore with this data?
