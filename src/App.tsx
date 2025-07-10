@@ -9,7 +9,6 @@ import QueryBuilder from './components/QueryBuilder';
 import QueryHistory from './pages/QueryHistory';
 import DashboardTabsWrapper from './components/DashboardTabsWrapper';
 import AdminDashboard from './components/admin/AdminDashboard';
-import FinalQA from './pages/FinalQA';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,7 +31,6 @@ function App() {
             <Route path="/query-history" element={<QueryHistory />} />
             <Route path="/dashboard" element={<DashboardTabsWrapper />} />
             <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/final-qa" element={<FinalQA />} />
             <Route path="*" element={<Navigate to="/new-project" replace />} />
           </Routes>
         </BrowserRouter>
