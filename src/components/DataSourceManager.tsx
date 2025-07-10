@@ -100,7 +100,8 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
           )
         );
         
-        // Set upload complete to true AFTER updating the file status
+        // IMPORTANT: Set upload complete to true to trigger the success UI
+        console.log('Setting uploadComplete to true after successful upload');
         setUploadComplete(true);
         console.log('File upload completed successfully:', file.name);
         
@@ -140,8 +141,8 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
   };
 
   const handleUploadMore = () => {
-    // Reset upload complete state to show the file input again
-    setUploadComplete(false);
+    console.log('Upload more clicked, resetting uploadComplete to false');
+    // Don't reset upload complete - just add more files
     
     // Trigger file input click
     const fileInput = document.createElement('input');
@@ -166,6 +167,8 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
 
   // Check if we have any successfully uploaded files
   const hasSuccessfulUploads = uploadedFiles.some(f => f.status === 'success');
+
+  console.log('DataSourceManager render - uploadComplete:', uploadComplete, 'hasSuccessfulUploads:', hasSuccessfulUploads);
 
   return (
     <div className="space-y-6">
