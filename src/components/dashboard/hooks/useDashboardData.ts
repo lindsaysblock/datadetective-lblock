@@ -8,10 +8,10 @@ export const useDashboardData = (data?: ParsedData) => {
     
     return {
       columns: [
-        { name: 'user_id', type: 'string', samples: ['user_1', 'user_2'] },
-        { name: 'event_name', type: 'string', samples: ['login', 'purchase'] },
-        { name: 'timestamp', type: 'date', samples: ['2024-01-01T10:00:00Z', '2024-01-01T11:00:00Z'] },
-        { name: 'value', type: 'number', samples: [1, 99.99] }
+        { name: 'user_id', type: 'string' as const, samples: ['user_1', 'user_2'] },
+        { name: 'event_name', type: 'string' as const, samples: ['login', 'purchase'] },
+        { name: 'timestamp', type: 'date' as const, samples: ['2024-01-01T10:00:00Z', '2024-01-01T11:00:00Z'] },
+        { name: 'value', type: 'number' as const, samples: [1, 99.99] }
       ],
       rows: [
         { user_id: 'user_1', event_name: 'login', timestamp: '2024-01-01T10:00:00Z', value: 1 },

@@ -46,7 +46,7 @@ const TabContentRenderer: React.FC<TabContentRendererProps> = ({
       
       <TabsContent value="hypothesis">
         <HypothesisTab 
-          onHypothesesUpdate={(hypotheses) => console.log('Hypotheses updated:', hypotheses)}
+          onHypothesisUpdate={(hypotheses) => console.log('Hypotheses updated:', hypotheses)}
         />
       </TabsContent>
       
