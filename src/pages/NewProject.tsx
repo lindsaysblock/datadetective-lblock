@@ -1,179 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, ArrowRight, Upload, Database, Globe, FileText, CheckCircle2, HelpCircle, Plus, FileSearch } from 'lucide-react';
+
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Header from '@/components/Header';
 import { useAuthState } from '@/hooks/useAuthState';
-import { AnalysisActionSection } from '@/components/data/upload/AnalysisActionSection';
-import FileUploadSection from '@/components/data/upload/FileUploadSection';
+import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import ProjectNamingDialog from '@/components/data/upload/ProjectNamingDialog';
 import FormRecoveryDialog from '@/components/data/upload/FormRecoveryDialog';
 import ProjectAnalysisView from '@/components/ProjectAnalysisView';
-import { useFormPersistence } from '@/hooks/useFormPersistence';
-import { useToast } from '@/hooks/use-toast';
+import ResearchQuestionStep from '@/components/project/ResearchQuestionStep';
+import DataSourceStep from '@/components/project/DataSourceStep';
+import BusinessContextStep from '@/components/project/BusinessContextStep';
+import AnalysisSummaryStep from '@/components/project/AnalysisSummaryStep';
 
 const NewProject = () => {
   const { user, handleUserChange } = useAuthState();
-  const { saveFormData, getFormData, clearFormData, hasStoredData, isLoading } = useFormPersistence();
-  const { toast } = useToast();
-  
-  const [step, setStep] = useState(1);
-  const [researchQuestion, setResearchQuestion] = useState('');
-  const [additionalContext, setAdditionalContext] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [parsing, setParsing] = useState(false);
-  const [parsedData, setParsedData] = useState<any>(null);
-  const [showProjectDialog, setShowProjectDialog] = useState(false);
-  const [isProcessingAnalysis, setIsProcessingAnalysis] = useState(false);
-  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
-  const [lastSaved, setLastSaved] = useState('');
-  const [analysisResults, setAnalysisResults] = useState<any>(null);
-  const [currentProjectName, setCurrentProjectName] = useState('');
-  const [showAnalysisView, setShowAnalysisView] = useState(false);
-
-  // Check for saved data on component mount
-  useEffect(() => {
-    if (!isLoading && hasStoredData()) {
-      const savedData = getFormData();
-      setLastSaved(savedData.lastSaved);
-      setShowRecoveryDialog(true);
-    }
-  }, [isLoading, hasStoredData, getFormData]);
-
-  // Auto-save form data when values change
-  useEffect(() => {
-    if (!isLoading && !showRecoveryDialog) {
-      const timeoutId = setTimeout(() => {
-        saveFormData({
-          researchQuestion,
-          additionalContext,
-          file: file ? {
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            lastModified: file.lastModified
-          } : null,
-          parsedData,
-          currentStep: step
-        });
-      }, 1000);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [researchQuestion, additionalContext, file, parsedData, step, isLoading, showRecoveryDialog, saveFormData]);
-
-  const handleRestoreData = () => {
-    try {
-      const savedData = getFormData();
-      setResearchQuestion(savedData.researchQuestion || '');
-      setAdditionalContext(savedData.additionalContext || '');
-      setParsedData(savedData.parsedData);
-      setStep(savedData.currentStep || 1);
-      
-      if (savedData.file && savedData.parsedData) {
-        const mockFile = new File([''], savedData.file.name, {
-          type: savedData.file.type,
-          lastModified: savedData.file.lastModified
-        });
-        setFile(mockFile);
-      }
-      
-      setShowRecoveryDialog(false);
-      
-      toast({
-        title: "Progress Restored",
-        description: "Your previous work has been restored successfully.",
-      });
-    } catch (error) {
-      console.error('Error restoring data:', error);
-      toast({
-        title: "Restoration Failed",
-        description: "Unable to restore previous progress. Starting fresh.",
-        variant: "destructive",
-      });
-      handleStartFresh();
-    }
-  };
-
-  const handleStartFresh = () => {
-    clearFormData();
-    setResearchQuestion('');
-    setAdditionalContext('');
-    setFile(null);
-    setParsedData(null);
-    setStep(1);
-    setShowRecoveryDialog(false);
-    
-    toast({
-      title: "Starting Fresh",
-      description: "Previous progress cleared. Starting with a clean slate.",
-    });
-  };
-
-  const nextStep = () => setStep(prev => prev + 1);
-  const prevStep = () => setStep(prev => prev - 1);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      // Simulate parsing the file
-      setParsedData({ rows: 100, columns: 10, preview: [] });
-    }
-  };
-
-  const handleFileUpload = () => {
-    if (!file) return;
-    setUploading(true);
-    setParsing(true);
-    
-    // Simulate upload/parsing
-    setTimeout(() => {
-      setUploading(false);
-      setParsing(false);
-    }, 2000);
-  };
-
-  const handleStartAnalysisClick = () => {
-    setShowProjectDialog(true);
-  };
-
-  const handleProjectConfirm = (projectName: string) => {
-    console.log('Starting analysis with project name:', projectName);
-    console.log('Research question:', researchQuestion);
-    console.log('Additional context:', additionalContext);
-    
-    setCurrentProjectName(projectName);
-    setIsProcessingAnalysis(true);
-    
-    // Clear saved data when project is completed
-    clearFormData();
-    
-    // Simulate processing time and show results
-    setTimeout(() => {
-      setIsProcessingAnalysis(false);
-      setShowProjectDialog(false);
-      
-      // Mock analysis results
-      setAnalysisResults({
-        insights: "Based on your research question and data analysis, here are the key findings...",
-        confidence: "high",
-        recommendations: ["Consider implementing A/B testing", "Focus on user engagement metrics"]
-      });
-      
-      setShowAnalysisView(true);
-    }, 3000);
-  };
-
-  const handleBackToProject = () => {
-    setShowAnalysisView(false);
-  };
+  const {
+    step,
+    researchQuestion,
+    additionalContext,
+    file,
+    uploading,
+    parsing,
+    parsedData,
+    showProjectDialog,
+    isProcessingAnalysis,
+    showRecoveryDialog,
+    lastSaved,
+    analysisResults,
+    currentProjectName,
+    showAnalysisView,
+    setResearchQuestion,
+    setAdditionalContext,
+    nextStep,
+    prevStep,
+    handleFileChange,
+    handleFileUpload,
+    handleStartAnalysisClick,
+    handleProjectConfirm,
+    handleBackToProject,
+    handleRestoreData,
+    handleStartFresh
+  } = useNewProjectForm();
 
   if (showAnalysisView) {
     return (
@@ -188,6 +57,80 @@ const NewProject = () => {
     );
   }
 
+  const renderStepIndicator = () => (
+    <div className="mb-8">
+      <div className="flex items-center justify-between">
+        <div className={`flex items-center gap-2 ${step > 1 ? 'text-blue-600' : 'text-gray-400'}`}>
+          {step > 1 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
+          Question
+        </div>
+        <div className={`flex items-center gap-2 ${step > 2 ? 'text-blue-600' : 'text-gray-400'}`}>
+          {step > 2 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
+          Data Source
+        </div>
+        <div className={`flex items-center gap-2 ${step > 3 ? 'text-blue-600' : 'text-gray-400'}`}>
+          {step > 3 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
+          Business Context
+        </div>
+        <div className={`flex items-center gap-2 ${step > 4 ? 'text-blue-600' : 'text-gray-400'}`}>
+          {step > 4 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
+          Analysis
+        </div>
+      </div>
+      <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mt-2" style={{ width: `${((step - 1) / 3) * 100}%` }}></div>
+    </div>
+  );
+
+  const renderCurrentStep = () => {
+    switch (step) {
+      case 1:
+        return (
+          <ResearchQuestionStep
+            researchQuestion={researchQuestion}
+            onResearchQuestionChange={setResearchQuestion}
+            onNext={nextStep}
+          />
+        );
+      case 2:
+        return (
+          <DataSourceStep
+            file={file}
+            uploading={uploading}
+            parsing={parsing}
+            onFileChange={handleFileChange}
+            onFileUpload={handleFileUpload}
+            onPrevious={prevStep}
+            onNext={nextStep}
+          />
+        );
+      case 3:
+        return (
+          <BusinessContextStep
+            researchQuestion={researchQuestion}
+            additionalContext={additionalContext}
+            onAdditionalContextChange={setAdditionalContext}
+            onPrevious={prevStep}
+            onNext={nextStep}
+          />
+        );
+      case 4:
+        return (
+          <AnalysisSummaryStep
+            researchQuestion={researchQuestion}
+            additionalContext={additionalContext}
+            file={file}
+            parsedData={parsedData}
+            isProcessingAnalysis={isProcessingAnalysis}
+            onResearchQuestionChange={setResearchQuestion}
+            onStartAnalysis={handleStartAnalysisClick}
+            onPrevious={prevStep}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Header user={user} onUserChange={handleUserChange} />
@@ -200,7 +143,6 @@ const NewProject = () => {
       />
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <Link to="/">
             <Button variant="outline" className="flex items-center gap-2">
@@ -217,181 +159,12 @@ const NewProject = () => {
           <div className="w-24"></div>
         </div>
 
-        {/* Stepper */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className={`flex items-center gap-2 ${step > 1 ? 'text-blue-600' : 'text-gray-400'}`}>
-              {step > 1 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
-              Question
-            </div>
-            <div className={`flex items-center gap-2 ${step > 2 ? 'text-blue-600' : 'text-gray-400'}`}>
-              {step > 2 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
-              Data Source
-            </div>
-            <div className={`flex items-center gap-2 ${step > 3 ? 'text-blue-600' : 'text-gray-400'}`}>
-              {step > 3 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
-              Business Context
-            </div>
-            <div className={`flex items-center gap-2 ${step > 4 ? 'text-blue-600' : 'text-gray-400'}`}>
-              {step > 4 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
-              Analysis
-            </div>
-          </div>
-          <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mt-2" style={{ width: `${((step - 1) / 3) * 100}%` }}></div>
-        </div>
-
-        {/* Step 1: Question */}
-        {step === 1 && (
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-semibold">
-                  1
-                </div>
-                <HelpCircle className="w-5 h-5 text-purple-600" />
-                <h3 className="text-lg font-semibold">What's your question?</h3>
-              </div>
-              <p className="text-gray-600 mb-4">
-                What do you want to answer?
-              </p>
-              <Textarea
-                placeholder="e.g., What are the main trends in customer behavior over time?"
-                value={researchQuestion}
-                onChange={(e) => setResearchQuestion(e.target.value)}
-                className="min-h-[100px] resize-none"
-              />
-              <div className="flex justify-end mt-4">
-                <Button onClick={nextStep}>
-                  Next <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Step 2: Data Source */}
-        {step === 2 && (
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
-                  2
-                </div>
-                <Plus className="w-5 h-5 text-blue-600" />
-                <h3 className="text-lg font-semibold">Data Source</h3>
-              </div>
-              <FileUploadSection
-                file={file}
-                uploading={uploading}
-                parsing={parsing}
-                onFileChange={handleFileChange}
-                onFileUpload={handleFileUpload}
-              />
-              <div className="flex justify-between mt-8">
-                <Button variant="outline" onClick={prevStep}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Previous
-                </Button>
-                <Button onClick={nextStep}>
-                  Next <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Step 3: Business Context */}
-        {step === 3 && (
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center text-sm font-semibold">
-                  3
-                </div>
-                <FileSearch className="w-5 h-5 text-orange-600" />
-                <h3 className="text-lg font-semibold">Business Context</h3>
-                <span className="text-sm text-gray-500">(Optional)</span>
-              </div>
-              
-              {/* Show the research question from step 1 */}
-              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-600 font-medium mb-1">Your Research Question:</p>
-                <p className="text-gray-700">{researchQuestion || 'No question specified yet'}</p>
-              </div>
-              
-              <p className="text-gray-600 mb-4">
-                Provide any business context or background information about your data
-              </p>
-              <Textarea
-                placeholder="e.g., This data comes from our e-commerce platform and includes customer purchase history from the last 6 months. I am building a business case for a bundling product feature to increase average order value and customer retention."
-                value={additionalContext}
-                onChange={(e) => setAdditionalContext(e.target.value)}
-                className="min-h-[100px] resize-none"
-              />
-              <div className="flex justify-between mt-8">
-                <Button variant="outline" onClick={prevStep}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Previous
-                </Button>
-                <Button onClick={nextStep}>
-                  Next <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Step 4: Analysis Summary */}
-        {step === 4 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Analysis Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Summary Section */}
-              <div className="space-y-4">
-                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                  <h4 className="font-semibold text-green-800 mb-2">1. Research Question</h4>
-                  <p className="text-green-700">{researchQuestion}</p>
-                </div>
-                
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="font-semibold text-blue-800 mb-2">2. Data Source</h4>
-                  <p className="text-blue-700">
-                    {file ? `File uploaded: ${file.name}` : 'Database connection established'}
-                  </p>
-                </div>
-                
-                {additionalContext && (
-                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                    <h4 className="font-semibold text-purple-800 mb-2">3. Business Context</h4>
-                    <p className="text-purple-700">{additionalContext}</p>
-                  </div>
-                )}
-              </div>
-
-              <AnalysisActionSection
-                researchQuestion={researchQuestion}
-                setResearchQuestion={setResearchQuestion}
-                parsedData={parsedData}
-                onStartAnalysis={handleStartAnalysisClick}
-                buttonText="Start the Case"
-                showProgress={isProcessingAnalysis}
-              />
-
-              <div className="flex justify-between mt-8">
-                <Button variant="outline" onClick={prevStep}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Previous
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {renderStepIndicator()}
+        {renderCurrentStep()}
 
         <ProjectNamingDialog
           open={showProjectDialog}
-          onOpenChange={setShowProjectDialog}
+          onOpenChange={(open) => {}}
           onConfirm={handleProjectConfirm}
           isProcessing={isProcessingAnalysis}
         />

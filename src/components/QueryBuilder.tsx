@@ -8,11 +8,13 @@ import QueryBuilderHeader from './query/QueryBuilderHeader';
 import AnalysisView from './query/AnalysisView';
 import MainTabsView from './query/MainTabsView';
 import { useQueryBuilderState } from '@/hooks/useQueryBuilderState';
+import { useQueryBuilderActions } from '@/hooks/useQueryBuilderActions';
 
 const QueryBuilder: React.FC = () => {
   const {
     analysisData,
     currentFilename,
+    currentDatasetId,
     findings,
     showOnboarding,
     activeTab,
@@ -25,17 +27,35 @@ const QueryBuilder: React.FC = () => {
     uploadFilename,
     estimatedTime,
     setAnalysisData,
+    setCurrentFilename,
+    setCurrentDatasetId,
+    setFindings,
     setShowOnboarding,
     setActiveTab,
     handleUserChange,
+    resetUpload,
+    handleFileUpload
+  } = useQueryBuilderState();
+
+  const {
     handleFileProcessed,
-    handleSaveToAccount,
+    handleSaveToAccount: handleSaveToAccountAction,
     handleDataSourceLoaded,
     handleDatasetSelect,
     handleGenerateMockData,
     handleStartNewProject,
     handleResumeProject
-  } = useQueryBuilderState();
+  } = useQueryBuilderActions({
+    setAnalysisData,
+    setCurrentFilename,
+    setCurrentDatasetId,
+    setFindings,
+    setActiveTab,
+    resetUpload,
+    handleFileUpload
+  });
+
+  const handleSaveToAccount = () => handleSaveToAccountAction(analysisData, currentFilename);
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
