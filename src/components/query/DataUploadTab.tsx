@@ -11,7 +11,7 @@ interface DataUploadTabProps {
   onGenerateMockData: () => void;
   uploading: boolean;
   uploadProgress: number;
-  uploadStatus: string;
+  uploadStatus: 'uploading' | 'processing' | 'complete' | 'error';
   uploadFilename: string | null;
   uploadError: string | null;
   estimatedTime: number | null;

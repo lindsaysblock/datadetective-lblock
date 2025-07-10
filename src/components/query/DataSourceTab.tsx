@@ -9,6 +9,10 @@ interface DataSourceTabProps {
 }
 
 const DataSourceTab: React.FC<DataSourceTabProps> = ({ onFileUpload }) => {
+  const handleFileUpload = async (file: File) => {
+    onFileUpload(file);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -20,7 +24,7 @@ const DataSourceTab: React.FC<DataSourceTabProps> = ({ onFileUpload }) => {
           <Database className="w-6 h-6 text-blue-600" />
           <h2 className="text-xl font-semibold">External Data Sources</h2>
         </div>
-        <DataSourceManager onFileUpload={onFileUpload} />
+        <DataSourceManager onFileUpload={handleFileUpload} />
       </Card>
     </div>
   );
