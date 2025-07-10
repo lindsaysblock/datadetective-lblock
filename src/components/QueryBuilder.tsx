@@ -1,11 +1,14 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Send, Database, Lightbulb, History, Code, Sparkles, Settings, Upload, FolderOpen } from 'lucide-react';
+import { Send, Database, Lightbulb, History, Code, Sparkles, Settings, Upload, FolderOpen, LogOut, User } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import DataSourceConfig from './DataSourceConfig';
 import { parseFile, generateDataInsights, ParsedData, parseRawText } from '../utils/dataParser';
 import DataVisualization from './DataVisualization';
@@ -13,7 +16,6 @@ import { generateVisualizationRecommendations } from '../utils/visualizationGene
 import BusinessInsights from './BusinessInsights';
 import VisualizationFindings from './VisualizationFindings';
 import HypothesisTracker from './HypothesisTracker';
-import { Link } from 'react-router-dom';
 
 interface Message {
   id: string;
@@ -38,6 +40,11 @@ interface DataSource {
 }
 
 const QueryBuilder = () => {
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -67,6 +74,47 @@ const QueryBuilder = () => {
   const [showVisualization, setShowVisualization] = useState(false);
   const [visualizationData, setVisualizationData] = useState<any[]>([]);
   const [visualizationFindings, setVisualizationFindings] = useState<any[]>([]);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (!session) {
+        navigate('/auth');
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (!session) {
+        navigate('/auth');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleDataSourceConnect = (source: DataSource) => {
     console.log('Connected to data source:', source);
@@ -270,6 +318,17 @@ const QueryBuilder = () => {
     }
   };
 
+  if (user === null && session === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-blue-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (showDataConfig) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
@@ -311,6 +370,20 @@ const QueryBuilder = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {user && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-white/60 rounded-lg">
+                  <User className="w-4 h-4" />
+                  <span className="text-sm text-gray-700">{user.email}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={signOut}
+                    className="ml-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
               <Link to="/history">
                 <Button 
                   variant="outline"
