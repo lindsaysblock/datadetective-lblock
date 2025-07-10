@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   ChartContainer, 
   ChartTooltip, 
@@ -23,13 +23,29 @@ import {
   CartesianGrid,
   ResponsiveContainer
 } from 'recharts';
-import { BarChart3, LineChart as LineChartIcon, PieChart as PieChartIcon, TrendingUp } from 'lucide-react';
+import { BarChart3, LineChart as LineChartIcon, PieChart as PieChartIcon, TrendingUp, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 
 interface DataPoint {
   name: string;
   value: number;
   percentage?: number;
   color?: string;
+}
+
+interface DataQualityScore {
+  completeness: number;
+  consistency: number;
+  accuracy: number;
+  overall: number;
+  issues: string[];
+}
+
+interface StatisticalValidation {
+  sampleSize: number;
+  confidenceLevel: number;
+  marginOfError: number;
+  isSignificant: boolean;
+  warnings: string[];
 }
 
 interface VisualizationRecommendation {
@@ -39,6 +55,10 @@ interface VisualizationRecommendation {
   icon: React.ComponentType<any>;
   data: DataPoint[];
   reason: string;
+  confidence: 'high' | 'medium' | 'low';
+  qualityScore: DataQualityScore;
+  validation: StatisticalValidation;
+  businessRelevance: string;
 }
 
 interface DataVisualizationProps {
@@ -58,6 +78,21 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({
   recommendations,
   onSelectVisualization
 }) => {
+  const getConfidenceColor = (confidence: string) => {
+    switch (confidence) {
+      case 'high': return 'bg-green-100 text-green-700';
+      case 'medium': return 'bg-yellow-100 text-yellow-700';
+      case 'low': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const getQualityIcon = (score: number) => {
+    if (score >= 80) return <CheckCircle className="w-4 h-4 text-green-600" />;
+    if (score >= 60) return <Info className="w-4 h-4 text-yellow-600" />;
+    return <AlertTriangle className="w-4 h-4 text-red-600" />;
+  };
+
   const renderChart = (rec: VisualizationRecommendation) => {
     const config = rec.data.reduce((acc, item, index) => {
       acc[item.name] = {
@@ -151,13 +186,65 @@ const DataVisualization: React.FC<DataVisualizationProps> = ({
                   <p className="text-sm text-gray-600">{rec.description}</p>
                 </div>
               </div>
-              <Badge variant="secondary" className="text-xs">
-                {rec.type}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-xs">
+                  {rec.type}
+                </Badge>
+                <Badge className={`text-xs ${getConfidenceColor(rec.confidence)}`}>
+                  {rec.confidence} confidence
+                </Badge>
+              </div>
+            </div>
+
+            {/* Data Quality Indicator */}
+            <div className="mb-4 bg-white p-3 rounded-lg border border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  {getQualityIcon(rec.qualityScore.overall)}
+                  <span className="text-sm font-medium">Data Quality: {rec.qualityScore.overall}%</span>
+                </div>
+                <div className="text-xs text-gray-500">
+                  Sample: {rec.validation.sampleSize} rows, {rec.validation.confidenceLevel}% confidence
+                </div>
+              </div>
+              
+              {rec.qualityScore.issues.length > 0 && (
+                <Alert className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    <strong>Data Quality Issues:</strong>
+                    <ul className="list-disc list-inside mt-1">
+                      {rec.qualityScore.issues.map((issue, idx) => (
+                        <li key={idx}>{issue}</li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {rec.validation.warnings.length > 0 && (
+                <Alert className="mt-2">
+                  <Info className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    <strong>Statistical Warnings:</strong>
+                    <ul className="list-disc list-inside mt-1">
+                      {rec.validation.warnings.map((warning, idx) => (
+                        <li key={idx}>{warning}</li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
             
             <div className="mb-4">
               {renderChart(rec)}
+            </div>
+
+            {/* Business Relevance */}
+            <div className="mb-4 bg-gradient-to-r from-green-50 to-blue-50 p-3 rounded-lg">
+              <h5 className="text-sm font-medium text-gray-800 mb-1">🎯 Business Impact:</h5>
+              <p className="text-xs text-gray-700">{rec.businessRelevance}</p>
             </div>
             
             <div className="flex items-center justify-between">

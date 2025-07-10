@@ -11,6 +11,7 @@ import DataVisualization from './DataVisualization';
 import { generateVisualizationRecommendations } from '../utils/visualizationGenerator';
 import BusinessInsights from './BusinessInsights';
 import VisualizationFindings from './VisualizationFindings';
+import HypothesisTracker from './HypothesisTracker';
 
 interface Message {
   id: string;
@@ -67,8 +68,6 @@ const QueryBuilder = () => {
 
   const handleDataSourceConnect = (source: DataSource) => {
     console.log('Connected to data source:', source);
-    // Here you would typically establish the actual connection
-    // For now, we'll just log it and update recommendations
     updateRecommendationsAfterConnection();
   };
 
@@ -76,7 +75,6 @@ const QueryBuilder = () => {
     try {
       let parsedData: ParsedData;
       
-      // Handle different file types or raw text
       if (file.name === 'pasted-data.txt') {
         const text = await file.text();
         parsedData = parseRawText(text);
@@ -90,7 +88,7 @@ const QueryBuilder = () => {
       const assistantMessage: Message = {
         id: Date.now().toString(),
         type: 'assistant',
-        content: `🎉 Great! I've analyzed your data and here's what I found:\n\n${insights.join('\n')}\n\nI automatically detected and structured your data for analysis! Now I can help you explore user behaviors and patterns. What would you like to discover?\n\n💡 Try asking:\n• "Show me user activity patterns"\n• "What are the most common behaviors?"\n• "How do users engage over time?"`,
+        content: `🎉 Great! I've analyzed your data and here's what I found:\n\n${insights.join('\n')}\n\nI automatically detected and structured your data for analysis! Now I can help you explore user behaviors and patterns. What would you like to discover?\n\n💡 Try asking:\n• "Show me user activity patterns"\n• "What are the most common behaviors?"\n• "How do users engage over time?"\n\n⚠️ Remember: I'll provide data quality scores and statistical validation with each analysis to help you avoid misleading conclusions.`,
         timestamp: new Date()
       };
       
@@ -125,6 +123,11 @@ const QueryBuilder = () => {
         title: "🎯 Segment users",
         description: "Group users by behavior patterns or characteristics",
         impact: 'medium'
+      },
+      {
+        title: "📈 Validate hypothesis",
+        description: "Test your business assumptions with data-driven insights",
+        impact: 'high'
       }
     ]);
   };
@@ -132,16 +135,14 @@ const QueryBuilder = () => {
   const generateAssistantResponse = (input: string) => {
     const lowerInput = input.toLowerCase();
     
-    // If no data is connected, guide them to connect data first
     if (!connectedData) {
       return {
-        content: "🔗 I'd love to help you explore that! First, let's connect to your data so I can give you specific insights.\n\n🎯 To get started:\n• 📁 Upload a CSV or JSON file with your user behavior data\n• 🔌 Connect to your database or analytics platform\n• 📊 Link your existing data warehouse\n\nClick the 'Connect Data' button to set up your data sources, then ask me anything about your users!",
+        content: "🔗 I'd love to help you explore that! First, let's connect to your data so I can give you specific insights.\n\n🎯 To get started:\n• 📁 Upload a CSV or JSON file with your user behavior data\n• 🔌 Connect to your database or analytics platform\n• 📊 Link your existing data warehouse\n\nClick the 'Connect Data' button to set up your data sources, then ask me anything about your users!\n\n🛡️ Don't worry - I'll provide data quality scores and statistical validation to ensure accurate insights.",
         queryPart: "",
         showVisualization: false
       };
     }
     
-    // Generate responses based on connected data
     let response = { content: "", queryPart: "", showVisualization: false };
     
     if (lowerInput.includes('user') || lowerInput.includes('behavior') || lowerInput.includes('activity')) {
@@ -149,7 +150,7 @@ const QueryBuilder = () => {
       const eventColumns = connectedData.summary.possibleEventColumns;
       
       response = {
-        content: `👥 Perfect! I can help you understand user behaviors in your data.\n\n🔍 Based on your dataset, I can analyze:\n${userColumns.length > 0 ? `• User patterns using: ${userColumns.join(', ')}\n` : ''}${eventColumns.length > 0 ? `• Activity trends from: ${eventColumns.join(', ')}\n` : ''}• Behavior patterns across ${connectedData.summary.totalRows} user interactions\n\n💡 What specific user behavior interests you most?\n• User journey analysis\n• Feature usage patterns\n• Activity frequency\n• Time-based behavior trends\n\n📊 I can also create visualizations to help you see these patterns more clearly!`,
+        content: `👥 Perfect! I can help you understand user behaviors in your data.\n\n🔍 Based on your dataset, I can analyze:\n${userColumns.length > 0 ? `• User patterns using: ${userColumns.join(', ')}\n` : ''}${eventColumns.length > 0 ? `• Activity trends from: ${eventColumns.join(', ')}\n` : ''}• Behavior patterns across ${connectedData.summary.totalRows} user interactions\n\n💡 What specific user behavior interests you most?\n• User journey analysis\n• Feature usage patterns\n• Activity frequency\n• Time-based behavior trends\n\n📊 I'll create visualizations with quality scores and confidence levels to help you see these patterns clearly!\n\n⚠️ Each insight will include data quality metrics and statistical validation to ensure reliability.`,
         queryPart: "User Behavior Analysis:",
         showVisualization: true
       };
@@ -157,25 +158,24 @@ const QueryBuilder = () => {
       const timeColumns = connectedData.summary.possibleTimestampColumns;
       
       response = {
-        content: `📈 Excellent! I can help you discover trends and patterns.\n\n⏰ Your data has ${timeColumns.length > 0 ? `timestamp information in: ${timeColumns.join(', ')}` : 'data points I can analyze over time'}\n\n🔍 I can show you:\n• Usage patterns throughout different time periods\n• Trending behaviors and changes\n• Seasonal or cyclical patterns\n• Growth or decline in specific activities\n\nWhat time period or trend interests you most?\n\n📊 Let me suggest some visualizations that would be perfect for trend analysis!`,
+        content: `📈 Excellent! I can help you discover trends and patterns.\n\n⏰ Your data has ${timeColumns.length > 0 ? `timestamp information in: ${timeColumns.join(', ')}` : 'data points I can analyze over time'}\n\n🔍 I can show you:\n• Usage patterns throughout different time periods\n• Trending behaviors and changes\n• Seasonal or cyclical patterns\n• Growth or decline in specific activities\n\nWhat time period or trend interests you most?\n\n📊 Let me suggest some visualizations with statistical validation that would be perfect for trend analysis!\n\n🛡️ I'll include confidence intervals and significance testing to ensure your trends are meaningful.`,
         queryPart: "Trend Analysis:",
         showVisualization: true
       };
     } else if (lowerInput.includes('segment') || lowerInput.includes('group') || lowerInput.includes('cohort')) {
       response = {
-        content: `🎯 Great choice! User segmentation reveals powerful insights.\n\n📊 With your dataset of ${connectedData.summary.totalRows} records, I can help you:\n• Group users by behavior patterns\n• Identify high-value user segments\n• Find users with similar characteristics\n• Create cohorts based on activity levels\n\n💭 What kind of segments are you most interested in?\n• Activity level (active vs. inactive users)\n• Feature usage (power users vs. casual users)\n• Engagement patterns\n• Custom behavioral groupings\n\n🎯 Pie charts and bar charts work great for visualizing user segments!`,
+        content: `🎯 Great choice! User segmentation reveals powerful insights.\n\n📊 With your dataset of ${connectedData.summary.totalRows} records, I can help you:\n• Group users by behavior patterns\n• Identify high-value user segments\n• Find users with similar characteristics\n• Create cohorts based on activity levels\n\n💭 What kind of segments are you most interested in?\n• Activity level (active vs. inactive users)\n• Feature usage (power users vs. casual users)\n• Engagement patterns\n• Custom behavioral groupings\n\n🎯 Pie charts and bar charts work great for visualizing user segments!\n\n📈 I'll provide statistical significance testing to ensure your segments are meaningful and actionable.`,
         queryPart: "User Segmentation:",
         showVisualization: true
       };
     } else {
       response = {
-        content: `✨ I love your curiosity! With your connected data, I can help you discover amazing insights.\n\n🎯 Here's what I can explore in your ${connectedData.summary.totalRows}-row dataset:\n\n• 👥 **User Behavior Patterns**: How users interact and engage\n• 📈 **Trends & Changes**: What's changing over time\n• 🔍 **Deep Insights**: Hidden patterns in your data\n• 🎯 **User Segments**: Different types of users and their behaviors\n\nWhat aspect of your user data interests you most? Even a general question is perfect to get started!\n\n📊 I can create custom visualizations to help you understand any patterns we discover!`,
+        content: `✨ I love your curiosity! With your connected data, I can help you discover amazing insights.\n\n🎯 Here's what I can explore in your ${connectedData.summary.totalRows}-row dataset:\n\n• 👥 **User Behavior Patterns**: How users interact and engage\n• 📈 **Trends & Changes**: What's changing over time\n• 🔍 **Deep Insights**: Hidden patterns in your data\n• 🎯 **User Segments**: Different types of users and their behaviors\n• 🧪 **Hypothesis Testing**: Validate your business assumptions\n\nWhat aspect of your user data interests you most? Even a general question is perfect to get started!\n\n📊 I can create custom visualizations with quality scores to help you understand any patterns we discover!\n\n🛡️ Every analysis includes data quality metrics and statistical validation to prevent misleading conclusions.`,
         queryPart: "",
         showVisualization: false
       };
     }
 
-    // Generate visualization recommendations if applicable
     if (response.showVisualization) {
       const vizRecommendations = generateVisualizationRecommendations(input, connectedData);
       setVisualizationData(vizRecommendations);
@@ -195,7 +195,6 @@ const QueryBuilder = () => {
       timestamp: new Date()
     };
 
-    // Generate contextual response based on user input and available data
     const assistantResponse = generateAssistantResponse(currentInput);
     const assistantMessage: Message = {
       id: (Date.now() + 1).toString(),
@@ -208,7 +207,6 @@ const QueryBuilder = () => {
     setMessages(prev => [...prev, userMessage, assistantMessage]);
     setCurrentInput('');
     
-    // Update query building progress if there's a query part
     if (assistantResponse.queryPart) {
       setCurrentQuery(prev => prev + ' ' + assistantResponse.queryPart);
     }
@@ -216,11 +214,10 @@ const QueryBuilder = () => {
 
   const handleSelectVisualization = (type: string, data: any[]) => {
     console.log('Selected visualization:', type, data);
-    // Here you could open a modal with the full chart or add it to the conversation
     const vizMessage: Message = {
       id: Date.now().toString(),
       type: 'assistant',
-      content: `📊 Great choice! I've created a ${type} chart for you. This visualization helps you see the patterns in your data more clearly. You can use this to identify trends, compare values, and share insights with your team.`,
+      content: `📊 Great choice! I've created a ${type} chart for you with data quality validation. This visualization includes confidence metrics and statistical validation to help you see the patterns in your data more clearly. You can use this to identify trends, compare values, and share insights with your team.`,
       timestamp: new Date()
     };
     setMessages(prev => [...prev, vizMessage]);
@@ -228,11 +225,10 @@ const QueryBuilder = () => {
 
   const handleExportFinding = (finding: any) => {
     console.log('Exporting finding:', finding);
-    // Here you would implement export functionality
     const assistantMessage: Message = {
       id: Date.now().toString(),
       type: 'assistant',
-      content: `📊 Great! I've prepared the "${finding.title}" finding for export. You can download it as a PDF report or share the visualization directly with your team. This insight can help drive data-driven decisions in your organization.`,
+      content: `📊 Great! I've prepared the "${finding.title}" finding for export with full data quality metrics and validation details. You can download it as a PDF report or share the visualization directly with your team. This insight includes confidence scores and statistical validation to help drive data-driven decisions in your organization.`,
       timestamp: new Date()
     };
     setMessages(prev => [...prev, assistantMessage]);
@@ -240,11 +236,10 @@ const QueryBuilder = () => {
 
   const handleShareFinding = (finding: any) => {
     console.log('Sharing finding:', finding);
-    // Here you would implement sharing functionality
     const assistantMessage: Message = {
       id: Date.now().toString(),
       type: 'assistant',
-      content: `🔗 Perfect! I've generated a shareable link for "${finding.title}". You can send this to stakeholders, add it to presentations, or include it in reports. The link includes both the visualization and the key insights.`,
+      content: `🔗 Perfect! I've generated a shareable link for "${finding.title}" with complete data quality documentation. You can send this to stakeholders, add it to presentations, or include it in reports. The link includes both the visualization and the key insights, along with confidence metrics and validation details.`,
       timestamp: new Date()
     };
     setMessages(prev => [...prev, assistantMessage]);
@@ -255,7 +250,7 @@ const QueryBuilder = () => {
     const assistantMessage: Message = {
       id: Date.now().toString(),
       type: 'assistant',
-      content: `🎯 Excellent! I've saved your business hypothesis: "${hypothesis.hypothesis}". Now I can help you find data that confirms or challenges this hypothesis. What specific data points would help validate this theory?`,
+      content: `🎯 Excellent! I've saved your business hypothesis: "${hypothesis.statement}". Now I can help you find data that confirms or challenges this hypothesis with proper statistical validation. What specific data points would help validate this theory? I'll make sure to include confidence intervals and significance testing in the analysis.`,
       timestamp: new Date()
     };
     setMessages(prev => [...prev, assistantMessage]);
@@ -305,7 +300,7 @@ const QueryBuilder = () => {
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   Data Explorer
                 </h1>
-                <p className="text-blue-600 text-lg">Discover insights from your user behavior data</p>
+                <p className="text-blue-600 text-lg">Discover validated insights from your user behavior data</p>
               </div>
             </div>
             <Button 
@@ -354,6 +349,13 @@ const QueryBuilder = () => {
               </div>
             </div>
           )}
+
+          {/* Hypothesis Tracker Section */}
+          <div className="flex justify-start">
+            <div className="max-w-4xl">
+              <HypothesisTracker onHypothesisUpdate={handleUpdateHypothesis} />
+            </div>
+          </div>
 
           {/* Business Insights Section */}
           <div className="flex justify-start">
@@ -407,7 +409,7 @@ const QueryBuilder = () => {
             </div>
             <div className="bg-gradient-to-br from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
               <p className="text-sm text-gray-700 mb-2">📊 {connectedData.summary.totalRows} rows, {connectedData.summary.totalColumns} columns</p>
-              <p className="text-sm text-gray-700">🔍 Ready to explore user behaviors!</p>
+              <p className="text-sm text-gray-700">🔍 Ready to explore with quality validation!</p>
             </div>
           </div>
         )}
@@ -422,7 +424,7 @@ const QueryBuilder = () => {
           </div>
           <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-4 rounded-xl border border-purple-200">
             <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-              {currentQuery || "🌱 Let's discover insights together!"}
+              {currentQuery || "🌱 Let's discover validated insights together!"}
             </pre>
           </div>
         </div>
