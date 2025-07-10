@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,9 @@ import {
   ArrowLeft,
   Plus,
   FileText,
-  Clock
+  Clock,
+  Check,
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
@@ -33,13 +34,15 @@ interface Project {
   lastUsed: Date;
   datasets: Dataset[];
   queryCount: number;
-  status: 'active' | 'completed' | 'paused';
+  status: string;
 }
 
 const QueryHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingProject, setEditingProject] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [editingStatus, setEditingStatus] = useState<string | null>(null);
+  const [editStatusValue, setEditStatusValue] = useState('');
 
   // Mock data - in real app this would come from a database/state management
   const [projects, setProjects] = useState<Project[]>([
@@ -98,6 +101,14 @@ const QueryHistory = () => {
     setEditName('');
   };
 
+  const handleStatusUpdate = (projectId: string, newStatus: string) => {
+    setProjects(prev => prev.map(project => 
+      project.id === projectId ? { ...project, status: newStatus } : project
+    ));
+    setEditingStatus(null);
+    setEditStatusValue('');
+  };
+
   const handleDelete = (projectId: string) => {
     setProjects(prev => prev.filter(project => project.id !== projectId));
   };
@@ -107,8 +118,13 @@ const QueryHistory = () => {
     setEditName(project.name);
   };
 
+  const startEditingStatus = (project: Project) => {
+    setEditingStatus(project.id);
+    setEditStatusValue(project.status);
+  };
+
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'active': return 'bg-green-100 text-green-700';
       case 'completed': return 'bg-blue-100 text-blue-700';
       case 'paused': return 'bg-yellow-100 text-yellow-700';
@@ -237,9 +253,43 @@ const QueryHistory = () => {
                       <p className="text-gray-600 text-base leading-relaxed">{project.initialQuestion}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className={getStatusColor(project.status)}>
-                        {project.status}
-                      </Badge>
+                      {editingStatus === project.id ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            value={editStatusValue}
+                            onChange={(e) => setEditStatusValue(e.target.value)}
+                            className="h-6 text-xs w-20"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleStatusUpdate(project.id, editStatusValue);
+                              }
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleStatusUpdate(project.id, editStatusValue)}
+                            className="p-1 h-6"
+                          >
+                            <Check className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setEditingStatus(null)}
+                            className="p-1 h-6"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Badge 
+                          className={`${getStatusColor(project.status)} cursor-pointer hover:opacity-80`}
+                          onClick={() => startEditingStatus(project)}
+                        >
+                          {project.status}
+                        </Badge>
+                      )}
                       <Button
                         size="sm"
                         variant="ghost"
