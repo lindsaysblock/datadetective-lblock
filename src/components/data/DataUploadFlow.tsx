@@ -122,8 +122,8 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
         </>
       )}
 
-      {/* Step 3: Additional Context - Show after research question is entered */}
-      {parsedData && researchQuestion && (
+      {/* Step 3: Additional Context - Show after research question section is visible */}
+      {parsedData && (
         <>
           <Separator />
           <AdditionalContextSection
