@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Lightbulb, BarChart3, Database, Upload, TestTube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Header from './Header';
 import DataSourceConfig from './DataSourceConfig';
 import UploadProgress from './UploadProgress';
 import DataVisualization from './DataVisualization';
@@ -303,6 +303,7 @@ const QueryBuilder = () => {
   if (uploading || uploadStatus === 'complete' || uploadStatus === 'error') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <Header user={user} onUserChange={setUser} />
         <div className="container mx-auto px-4 py-8">
           <UploadProgress
             isUploading={uploading}
@@ -322,6 +323,7 @@ const QueryBuilder = () => {
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <Header user={user} onUserChange={setUser} />
         <div className="container mx-auto px-4 py-8">
           <div className="mb-6 text-center">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -383,16 +385,9 @@ const QueryBuilder = () => {
   // Main landing page
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <Header user={user} onUserChange={setUser} />
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl">
-              <BarChart3 className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Data Detective
-            </h1>
-          </div>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Your AI-powered business intelligence companion. Connect your data, ask questions in natural language, 
             and get instant insights with beautiful visualizations.
@@ -402,21 +397,14 @@ const QueryBuilder = () => {
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg max-w-2xl mx-auto">
               <p className="text-blue-800">
                 👋 Welcome! You can explore the dashboard and connect data sources. 
-                <Button 
-                  variant="link" 
-                  onClick={() => setActiveTab('auth')} 
-                  className="text-blue-600 underline p-0 ml-1"
-                >
-                  Sign in
-                </Button> 
-                to save your work and access advanced features.
+                Sign in using the Account tab above to save your work and access advanced features.
               </p>
             </div>
           )}
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-8">
+          <TabsList className="grid w-full grid-cols-5 mb-8">
             <TabsTrigger value="connect" className="flex items-center gap-2">
               <Upload className="w-4 h-4" />
               Connect
@@ -436,9 +424,6 @@ const QueryBuilder = () => {
             <TabsTrigger value="insights" className="flex items-center gap-2">
               <Lightbulb className="w-4 h-4" />
               Insights
-            </TabsTrigger>
-            <TabsTrigger value="auth" className="flex items-center gap-2">
-              {user ? '👤 Account' : '🔐 Sign In'}
             </TabsTrigger>
           </TabsList>
 
@@ -483,37 +468,6 @@ const QueryBuilder = () => {
                 <h3 className="text-lg font-semibold text-gray-600 mb-2">Business Insights</h3>
                 <p className="text-gray-500">Connect your data to start generating insights!</p>
               </div>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="auth" className="space-y-6">
-            <Card className="p-6">
-              {user ? (
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold mb-4">Your Account</h3>
-                  <div className="bg-green-50 p-4 rounded-lg mb-4">
-                    <p className="text-green-800">✅ Signed in as: {user.email}</p>
-                  </div>
-                  <Button 
-                    onClick={() => supabase.auth.signOut()} 
-                    variant="destructive"
-                    className="w-full"
-                  >
-                    Sign Out
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold mb-4">Sign In to Data Detective</h3>
-                  <p className="text-gray-600 mb-6">Access advanced features, save your work, and collaborate with your team.</p>
-                  <Button 
-                    onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })}
-                    className="w-full"
-                  >
-                    🔐 Sign In with Google
-                  </Button>
-                </div>
-              )}
             </Card>
           </TabsContent>
         </Tabs>
