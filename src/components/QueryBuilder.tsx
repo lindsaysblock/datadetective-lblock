@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,8 @@ import { Send, Database, Lightbulb, History, Code, Sparkles, Settings, Upload } 
 import { Separator } from '@/components/ui/separator';
 import DataSourceConfig from './DataSourceConfig';
 import { parseFile, generateDataInsights, ParsedData } from '../utils/dataParser';
+import DataVisualization from './DataVisualization';
+import { generateVisualizationRecommendations } from '../utils/visualizationGenerator';
 
 interface Message {
   id: string;
@@ -57,6 +58,9 @@ const QueryBuilder = () => {
       impact: 'medium'
     }
   ]);
+
+  const [showVisualization, setShowVisualization] = useState(false);
+  const [visualizationData, setVisualizationData] = useState<any[]>([]);
 
   const handleDataSourceConnect = (source: DataSource) => {
     console.log('Connected to data source:', source);
@@ -113,6 +117,62 @@ const QueryBuilder = () => {
     ]);
   };
 
+  const generateAssistantResponse = (input: string) => {
+    const lowerInput = input.toLowerCase();
+    
+    // If no data is connected, guide them to connect data first
+    if (!connectedData) {
+      return {
+        content: "🔗 I'd love to help you explore that! First, let's connect to your data so I can give you specific insights.\n\n🎯 To get started:\n• 📁 Upload a CSV or JSON file with your user behavior data\n• 🔌 Connect to your database or analytics platform\n• 📊 Link your existing data warehouse\n\nClick the 'Connect Data' button to set up your data sources, then ask me anything about your users!",
+        queryPart: "",
+        showVisualization: false
+      };
+    }
+    
+    // Generate responses based on connected data
+    let response = { content: "", queryPart: "", showVisualization: false };
+    
+    if (lowerInput.includes('user') || lowerInput.includes('behavior') || lowerInput.includes('activity')) {
+      const userColumns = connectedData.summary.possibleUserIdColumns;
+      const eventColumns = connectedData.summary.possibleEventColumns;
+      
+      response = {
+        content: `👥 Perfect! I can help you understand user behaviors in your data.\n\n🔍 Based on your dataset, I can analyze:\n${userColumns.length > 0 ? `• User patterns using: ${userColumns.join(', ')}\n` : ''}${eventColumns.length > 0 ? `• Activity trends from: ${eventColumns.join(', ')}\n` : ''}• Behavior patterns across ${connectedData.summary.totalRows} user interactions\n\n💡 What specific user behavior interests you most?\n• User journey analysis\n• Feature usage patterns\n• Activity frequency\n• Time-based behavior trends\n\n📊 I can also create visualizations to help you see these patterns more clearly!`,
+        queryPart: "User Behavior Analysis:",
+        showVisualization: true
+      };
+    } else if (lowerInput.includes('trend') || lowerInput.includes('time') || lowerInput.includes('pattern')) {
+      const timeColumns = connectedData.summary.possibleTimestampColumns;
+      
+      response = {
+        content: `📈 Excellent! I can help you discover trends and patterns.\n\n⏰ Your data has ${timeColumns.length > 0 ? `timestamp information in: ${timeColumns.join(', ')}` : 'data points I can analyze over time'}\n\n🔍 I can show you:\n• Usage patterns throughout different time periods\n• Trending behaviors and changes\n• Seasonal or cyclical patterns\n• Growth or decline in specific activities\n\nWhat time period or trend interests you most?\n\n📊 Let me suggest some visualizations that would be perfect for trend analysis!`,
+        queryPart: "Trend Analysis:",
+        showVisualization: true
+      };
+    } else if (lowerInput.includes('segment') || lowerInput.includes('group') || lowerInput.includes('cohort')) {
+      response = {
+        content: `🎯 Great choice! User segmentation reveals powerful insights.\n\n📊 With your dataset of ${connectedData.summary.totalRows} records, I can help you:\n• Group users by behavior patterns\n• Identify high-value user segments\n• Find users with similar characteristics\n• Create cohorts based on activity levels\n\n💭 What kind of segments are you most interested in?\n• Activity level (active vs. inactive users)\n• Feature usage (power users vs. casual users)\n• Engagement patterns\n• Custom behavioral groupings\n\n🎯 Pie charts and bar charts work great for visualizing user segments!`,
+        queryPart: "User Segmentation:",
+        showVisualization: true
+      };
+    } else {
+      response = {
+        content: `✨ I love your curiosity! With your connected data, I can help you discover amazing insights.\n\n🎯 Here's what I can explore in your ${connectedData.summary.totalRows}-row dataset:\n\n• 👥 **User Behavior Patterns**: How users interact and engage\n• 📈 **Trends & Changes**: What's changing over time\n• 🔍 **Deep Insights**: Hidden patterns in your data\n• 🎯 **User Segments**: Different types of users and their behaviors\n\nWhat aspect of your user data interests you most? Even a general question is perfect to get started!\n\n📊 I can create custom visualizations to help you understand any patterns we discover!`,
+        queryPart: "",
+        showVisualization: false
+      };
+    }
+
+    // Generate visualization recommendations if applicable
+    if (response.showVisualization) {
+      const vizRecommendations = generateVisualizationRecommendations(input, connectedData);
+      setVisualizationData(vizRecommendations);
+      setShowVisualization(true);
+    }
+
+    return response;
+  };
+
   const handleSendMessage = () => {
     if (!currentInput.trim()) return;
 
@@ -142,44 +202,16 @@ const QueryBuilder = () => {
     }
   };
 
-  const generateAssistantResponse = (input: string) => {
-    const lowerInput = input.toLowerCase();
-    
-    // If no data is connected, guide them to connect data first
-    if (!connectedData) {
-      return {
-        content: "🔗 I'd love to help you explore that! First, let's connect to your data so I can give you specific insights.\n\n🎯 To get started:\n• 📁 Upload a CSV or JSON file with your user behavior data\n• 🔌 Connect to your database or analytics platform\n• 📊 Link your existing data warehouse\n\nClick the 'Connect Data' button to set up your data sources, then ask me anything about your users!",
-        queryPart: ""
-      };
-    }
-    
-    // Generate responses based on connected data
-    if (lowerInput.includes('user') || lowerInput.includes('behavior') || lowerInput.includes('activity')) {
-      const userColumns = connectedData.summary.possibleUserIdColumns;
-      const eventColumns = connectedData.summary.possibleEventColumns;
-      
-      return {
-        content: `👥 Perfect! I can help you understand user behaviors in your data.\n\n🔍 Based on your dataset, I can analyze:\n${userColumns.length > 0 ? `• User patterns using: ${userColumns.join(', ')}\n` : ''}${eventColumns.length > 0 ? `• Activity trends from: ${eventColumns.join(', ')}\n` : ''}• Behavior patterns across ${connectedData.summary.totalRows} user interactions\n\n💡 What specific user behavior interests you most?\n• User journey analysis\n• Feature usage patterns\n• Activity frequency\n• Time-based behavior trends`,
-        queryPart: "User Behavior Analysis:"
-      };
-    } else if (lowerInput.includes('trend') || lowerInput.includes('time') || lowerInput.includes('pattern')) {
-      const timeColumns = connectedData.summary.possibleTimestampColumns;
-      
-      return {
-        content: `📈 Excellent! I can help you discover trends and patterns.\n\n⏰ Your data has ${timeColumns.length > 0 ? `timestamp information in: ${timeColumns.join(', ')}` : 'data points I can analyze over time'}\n\n🔍 I can show you:\n• Usage patterns throughout different time periods\n• Trending behaviors and changes\n• Seasonal or cyclical patterns\n• Growth or decline in specific activities\n\nWhat time period or trend interests you most?`,
-        queryPart: "Trend Analysis:"
-      };
-    } else if (lowerInput.includes('segment') || lowerInput.includes('group') || lowerInput.includes('cohort')) {
-      return {
-        content: `🎯 Great choice! User segmentation reveals powerful insights.\n\n📊 With your dataset of ${connectedData.summary.totalRows} records, I can help you:\n• Group users by behavior patterns\n• Identify high-value user segments\n• Find users with similar characteristics\n• Create cohorts based on activity levels\n\n💭 What kind of segments are you most interested in?\n• Activity level (active vs. inactive users)\n• Feature usage (power users vs. casual users)\n• Engagement patterns\n• Custom behavioral groupings`,
-        queryPart: "User Segmentation:"
-      };
-    } else {
-      return {
-        content: `✨ I love your curiosity! With your connected data, I can help you discover amazing insights.\n\n🎯 Here's what I can explore in your ${connectedData.summary.totalRows}-row dataset:\n\n• 👥 **User Behavior Patterns**: How users interact and engage\n• 📈 **Trends & Changes**: What's changing over time\n• 🔍 **Deep Insights**: Hidden patterns in your data\n• 🎯 **User Segments**: Different types of users and their behaviors\n\nWhat aspect of your user data interests you most? Even a general question is perfect to get started!`,
-        queryPart: ""
-      };
-    }
+  const handleSelectVisualization = (type: string, data: any[]) => {
+    console.log('Selected visualization:', type, data);
+    // Here you could open a modal with the full chart or add it to the conversation
+    const vizMessage: Message = {
+      id: Date.now().toString(),
+      type: 'assistant',
+      content: `📊 Great choice! I've created a ${type} chart for you. This visualization helps you see the patterns in your data more clearly. You can use this to identify trends, compare values, and share insights with your team.`,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, vizMessage]);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -263,6 +295,18 @@ const QueryBuilder = () => {
               </div>
             </div>
           ))}
+          
+          {/* Visualization Recommendations */}
+          {showVisualization && visualizationData.length > 0 && (
+            <div className="flex justify-start">
+              <div className="max-w-4xl">
+                <DataVisualization 
+                  recommendations={visualizationData}
+                  onSelectVisualization={handleSelectVisualization}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Input Area */}
