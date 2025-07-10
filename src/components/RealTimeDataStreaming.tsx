@@ -22,7 +22,8 @@ import {
   AlertCircle,
   CheckCircle,
   TrendingUp,
-  Calendar
+  Calendar,
+  Plus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
