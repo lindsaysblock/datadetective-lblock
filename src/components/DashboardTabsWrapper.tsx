@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import DashboardTabs from './dashboard/DashboardTabs';
@@ -20,7 +19,13 @@ const DashboardTabsWrapper: React.FC = () => {
   const mockData: ParsedData = {
     columns: [],
     rows: [],
-    summary: { totalRows: 0, totalColumns: 0 }
+    summary: { 
+      totalRows: 0, 
+      totalColumns: 0,
+      possibleUserIdColumns: [],
+      possibleEventColumns: [],
+      possibleTimestampColumns: []
+    }
   };
   
   const mockFindings: any[] = [];
