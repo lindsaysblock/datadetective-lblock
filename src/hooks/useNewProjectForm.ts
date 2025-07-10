@@ -2,10 +2,13 @@
 import { useState, useEffect } from 'react';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthState } from '@/hooks/useAuthState';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useNewProjectForm = () => {
   const { saveFormData, getFormData, clearFormData, hasStoredData, isLoading } = useFormPersistence();
   const { toast } = useToast();
+  const { user } = useAuthState();
   
   const [step, setStep] = useState(1);
   const [researchQuestion, setResearchQuestion] = useState('');
@@ -21,6 +24,11 @@ export const useNewProjectForm = () => {
   const [analysisResults, setAnalysisResults] = useState<any>(null);
   const [currentProjectName, setCurrentProjectName] = useState('');
   const [showAnalysisView, setShowAnalysisView] = useState(false);
+  const [showSignInModal, setShowSignInModal] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [analysisCompleted, setAnalysisCompleted] = useState(false);
 
   // Check for saved data on component mount
   useEffect(() => {
@@ -124,34 +132,138 @@ export const useNewProjectForm = () => {
   };
 
   const handleStartAnalysisClick = () => {
-    setShowProjectDialog(true);
-  };
+    // Check if user is authenticated before starting analysis
+    if (!user) {
+      setShowSignInModal(true);
+      return;
+    }
 
-  const handleProjectConfirm = (projectName: string) => {
-    console.log('Starting analysis with project name:', projectName);
+    console.log('Starting analysis with user authenticated');
     console.log('Research question:', researchQuestion);
     console.log('Additional context:', additionalContext);
     
-    setCurrentProjectName(projectName);
+    // Start processing analysis immediately
     setIsProcessingAnalysis(true);
-    clearFormData();
     
+    // Simulate analysis time
     setTimeout(() => {
-      setIsProcessingAnalysis(false);
-      setShowProjectDialog(false);
-      
+      setAnalysisCompleted(true);
       setAnalysisResults({
         insights: "Based on your research question and data analysis, here are the key findings...",
         confidence: "high",
         recommendations: ["Consider implementing A/B testing", "Focus on user engagement metrics"]
       });
       
-      setShowAnalysisView(true);
+      // If project name dialog is not open, show results
+      if (!showProjectDialog) {
+        setShowAnalysisView(true);
+        setIsProcessingAnalysis(false);
+      }
     }, 3000);
+    
+    // Show project naming dialog
+    setShowProjectDialog(true);
+  };
+
+  const handleProjectConfirm = (projectName: string) => {
+    console.log('Project named:', projectName);
+    setCurrentProjectName(projectName);
+    clearFormData();
+    
+    // If analysis is completed, show results immediately
+    if (analysisCompleted) {
+      setIsProcessingAnalysis(false);
+      setShowProjectDialog(false);
+      setShowAnalysisView(true);
+    } else {
+      // Wait for analysis to complete
+      const checkAnalysis = setInterval(() => {
+        if (analysisCompleted) {
+          setIsProcessingAnalysis(false);
+          setShowProjectDialog(false);
+          setShowAnalysisView(true);
+          clearInterval(checkAnalysis);
+        }
+      }, 500);
+    }
   };
 
   const handleBackToProject = () => {
     setShowAnalysisView(false);
+    setAnalysisCompleted(false);
+    setAnalysisResults(null);
+    setCurrentProjectName('');
+  };
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setAuthLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "You have been signed in successfully.",
+        });
+        setShowSignInModal(false);
+        // Proceed with analysis after successful sign in
+        setTimeout(() => handleStartAnalysisClick(), 100);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setAuthLoading(true);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/new-project`
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Check your email for the confirmation link!",
+        });
+        setShowSignInModal(false);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   return {
@@ -170,10 +282,17 @@ export const useNewProjectForm = () => {
     analysisResults,
     currentProjectName,
     showAnalysisView,
+    showSignInModal,
+    authLoading,
+    email,
+    password,
     
     // Actions
     setResearchQuestion,
     setAdditionalContext,
+    setEmail,
+    setPassword,
+    setShowSignInModal,
     nextStep,
     prevStep,
     handleFileChange,
@@ -182,6 +301,8 @@ export const useNewProjectForm = () => {
     handleProjectConfirm,
     handleBackToProject,
     handleRestoreData,
-    handleStartFresh
+    handleStartFresh,
+    handleSignIn,
+    handleSignUp
   };
 };

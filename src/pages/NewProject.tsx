@@ -13,6 +13,8 @@ import ResearchQuestionStep from '@/components/project/ResearchQuestionStep';
 import DataSourceStep from '@/components/project/DataSourceStep';
 import BusinessContextStep from '@/components/project/BusinessContextStep';
 import AnalysisSummaryStep from '@/components/project/AnalysisSummaryStep';
+import AnalyzingIcon from '@/components/AnalyzingIcon';
+import { SignInModal } from '@/components/auth/SignInModal';
 
 const NewProject = () => {
   const { user, handleUserChange } = useAuthState();
@@ -31,6 +33,12 @@ const NewProject = () => {
     analysisResults,
     currentProjectName,
     showAnalysisView,
+    showSignInModal,
+    authLoading,
+    email,
+    password,
+    setEmail,
+    setPassword,
     setResearchQuestion,
     setAdditionalContext,
     nextStep,
@@ -41,7 +49,10 @@ const NewProject = () => {
     handleProjectConfirm,
     handleBackToProject,
     handleRestoreData,
-    handleStartFresh
+    handleStartFresh,
+    handleSignIn,
+    handleSignUp,
+    setShowSignInModal
   } = useNewProjectForm();
 
   if (showAnalysisView) {
@@ -141,6 +152,18 @@ const NewProject = () => {
         onStartFresh={handleStartFresh}
         lastSaved={lastSaved}
       />
+
+      <SignInModal
+        open={showSignInModal}
+        onOpenChange={setShowSignInModal}
+        email={email}
+        password={password}
+        loading={authLoading}
+        setEmail={setEmail}
+        setPassword={setPassword}
+        onSignIn={handleSignIn}
+        onSignUp={handleSignUp}
+      />
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex items-center justify-between mb-8">
@@ -160,6 +183,14 @@ const NewProject = () => {
         </div>
 
         {renderStepIndicator()}
+        
+        {/* Analysis Progress - Show above project dialog */}
+        {isProcessingAnalysis && (
+          <div className="mb-8">
+            <AnalyzingIcon isAnalyzing={true} />
+          </div>
+        )}
+        
         {renderCurrentStep()}
 
         <ProjectNamingDialog

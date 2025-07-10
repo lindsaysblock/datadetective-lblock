@@ -1,20 +1,10 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  MessageSquare, 
-  Lightbulb, 
-  BarChart3, 
-  Download, 
-  ArrowLeft,
-  Sparkles,
-  Edit3,
-  Database,
-  FileText
-} from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ArrowLeft, FileText, MessageSquare, Database, ChevronDown, ChevronUp, Lightbulb, TrendingUp } from 'lucide-react';
 
 interface ProjectAnalysisViewProps {
   projectName: string;
@@ -33,229 +23,122 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
   additionalContext,
   dataSource
 }) => {
-  const [followUpQuestion, setFollowUpQuestion] = useState('');
-  const [editingContext, setEditingContext] = useState(false);
-  const [editedContext, setEditedContext] = useState(additionalContext || '');
-  const [editingQuestion, setEditingQuestion] = useState(false);
-  const [editedQuestion, setEditedQuestion] = useState(researchQuestion);
-
-  const handleAskFollowUp = () => {
-    if (followUpQuestion.trim()) {
-      console.log('Follow-up question:', followUpQuestion);
-      setFollowUpQuestion('');
-    }
-  };
-
-  const handleGetRecommendations = () => {
-    console.log('Getting recommendations...');
-  };
-
-  const handleVisualize = () => {
-    console.log('Creating visualization...');
-  };
-
-  const handleExport = () => {
-    console.log('Exporting findings...');
-  };
-
-  const handleSaveContext = () => {
-    setEditingContext(false);
-    console.log('Updated context:', editedContext);
-  };
-
-  const handleSaveQuestion = () => {
-    setEditingQuestion(false);
-    console.log('Updated question:', editedQuestion);
-  };
+  const [isOverviewOpen, setIsOverviewOpen] = useState(true);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex">
-      {/* Left Half - Project Data */}
-      <div className="w-1/2 p-6 border-r border-gray-200">
-        <div className="space-y-4">
-          <Button 
-            variant="outline" 
-            onClick={onBackToProject}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Project
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <Button variant="outline" onClick={onBackToProject} className="flex items-center gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Back to New Project
           </Button>
-          
+          <div className="text-center flex-1 mx-8">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              {projectName}
+            </h1>
+            <p className="text-blue-600 text-lg">Analysis Results</p>
+          </div>
+          <div className="w-32"></div>
+        </div>
+
+        {/* Collapsible Project Overview */}
+        <Card className="mb-8">
+          <Collapsible open={isOverviewOpen} onOpenChange={setIsOverviewOpen}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    Project Overview
+                  </CardTitle>
+                  {isOverviewOpen ? (
+                    <ChevronUp className="w-5 h-5 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-500" />
+                  )}
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Research Question */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-purple-600" />
+                      <span className="font-medium text-sm">Research Question</span>
+                    </div>
+                    <p className="text-gray-700 bg-gray-50 p-3 rounded-md">{researchQuestion}</p>
+                  </div>
+
+                  {/* Data Source */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Database className="w-4 h-4 text-blue-600" />
+                      <span className="font-medium text-sm">Data Source</span>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <span className="text-gray-700">{dataSource}</span>
+                      <Badge variant="outline" className="ml-2">
+                        CSV File
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Business Context */}
+                  {additionalContext && (
+                    <div className="space-y-2 md:col-span-2">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-green-600" />
+                        <span className="font-medium text-sm">Business Context</span>
+                      </div>
+                      <p className="text-gray-700 bg-gray-50 p-3 rounded-md">{additionalContext}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
+
+        {/* Analysis Results */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Key Insights */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Badge variant="outline">{projectName}</Badge>
-                <span className="text-lg">Project Overview</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Research Question */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-gray-800 flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    Research Question
-                  </h4>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditingQuestion(!editingQuestion)}
-                  >
-                    <Edit3 className="w-3 h-3" />
-                  </Button>
-                </div>
-                {editingQuestion ? (
-                  <div className="space-y-2">
-                    <Textarea
-                      value={editedQuestion}
-                      onChange={(e) => setEditedQuestion(e.target.value)}
-                      className="min-h-[80px]"
-                    />
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={handleSaveQuestion}>Save</Button>
-                      <Button size="sm" variant="outline" onClick={() => setEditingQuestion(false)}>Cancel</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-gray-700 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    {editedQuestion}
-                  </p>
-                )}
-              </div>
-
-              {/* Data Source */}
-              <div className="space-y-2">
-                <h4 className="font-semibold text-gray-800 flex items-center gap-2">
-                  <Database className="w-4 h-4" />
-                  Data Source
-                </h4>
-                <p className="text-gray-700 p-3 bg-green-50 rounded-lg border border-green-200">
-                  {dataSource.includes('.') ? `File uploaded: ${dataSource}` : 'Database connection established'}
-                </p>
-              </div>
-
-              {/* Business Context */}
-              {(additionalContext || editedContext) && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-gray-800">Business Context</h4>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingContext(!editingContext)}
-                    >
-                      <Edit3 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                  {editingContext ? (
-                    <div className="space-y-2">
-                      <Textarea
-                        value={editedContext}
-                        onChange={(e) => setEditedContext(e.target.value)}
-                        className="min-h-[80px]"
-                        placeholder="Add business context..."
-                      />
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={handleSaveContext}>Save</Button>
-                        <Button size="sm" variant="outline" onClick={() => setEditingContext(false)}>Cancel</Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-gray-700 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                      {editedContext}
-                    </p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Right Half - Analysis Results */}
-      <div className="w-1/2 p-6">
-        <div className="space-y-6">
-          <Card className="border-green-200 bg-green-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-800">
-                <Sparkles className="w-5 h-5" />
-                Analysis Results
+                <Lightbulb className="w-5 h-5 text-yellow-600" />
+                Key Insights
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <p className="text-green-700">
-                  Based on your research question and data, here are the key insights discovered:
-                </p>
-                <div className="bg-white p-4 rounded-lg border border-green-200">
-                  <p className="text-gray-700">
-                    {analysisResults?.insights || "Analysis results would appear here. This includes answers to your research question, statistical findings, patterns identified, and data-driven insights."}
-                  </p>
-                </div>
-              </div>
+              <p className="text-gray-700 mb-4">{analysisResults?.insights}</p>
+              <Badge className="bg-green-100 text-green-800">
+                Confidence: {analysisResults?.confidence}
+              </Badge>
             </CardContent>
           </Card>
 
-          {/* Let's Dig Deeper Section */}
-          <Card className="border-purple-200 bg-purple-50">
+          {/* Recommendations */}
+          <Card>
             <CardHeader>
-              <CardTitle className="text-purple-800">Let's Dig Deeper</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                Recommendations
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* 1. Free Text Follow-up Questions */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-purple-700">
-                  Ask Additional Questions
-                </label>
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder="What else would you like to know about this data?"
-                    value={followUpQuestion}
-                    onChange={(e) => setFollowUpQuestion(e.target.value)}
-                    className="resize-none"
-                    rows={2}
-                  />
-                  <Button 
-                    onClick={handleAskFollowUp}
-                    disabled={!followUpQuestion.trim()}
-                    className="shrink-0"
-                  >
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Ask
-                  </Button>
-                </div>
-              </div>
-
-              {/* 2. Recommendations */}
-              <Button 
-                onClick={handleGetRecommendations}
-                variant="outline"
-                className="w-full justify-start"
-              >
-                <Lightbulb className="w-4 h-4 mr-2" />
-                Get Recommendations
-              </Button>
-
-              {/* 3. Visualize */}
-              <Button 
-                onClick={handleVisualize}
-                variant="outline"
-                className="w-full justify-start"
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Visualize the Answer
-              </Button>
-
-              {/* 4. Export Findings */}
-              <Button 
-                onClick={handleExport}
-                variant="outline"
-                className="w-full justify-start"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export Findings
-              </Button>
+            <CardContent>
+              <ul className="space-y-2">
+                {analysisResults?.recommendations?.map((rec: string, index: number) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                    <span className="text-gray-700">{rec}</span>
+                  </li>
+                ))}
+              </ul>
             </CardContent>
           </Card>
         </div>
