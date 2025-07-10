@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Send, Database, Lightbulb, History, Code, Sparkles, Settings, Upload, FolderOpen, LogOut, User } from 'lucide-react';
+import { Send, Database, Lightbulb, History, Code, Sparkles, Settings, Upload, FolderOpen, LogOut, User, LogIn } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,6 +44,7 @@ interface DataSource {
 const QueryBuilder = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -90,19 +91,13 @@ const QueryBuilder = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
-      if (!session) {
-        navigate('/auth');
-      }
+      setIsLoading(false);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
-      if (!session) {
-        navigate('/auth');
-      }
+      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -125,6 +120,14 @@ const QueryBuilder = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const promptLogin = () => {
+    toast({
+      title: "Authentication Required",
+      description: "Please sign in to connect data sources and ask questions",
+    });
+    navigate('/auth');
   };
 
   const handleDataSourceConnect = (source: DataSource) => {
@@ -301,6 +304,11 @@ const QueryBuilder = () => {
   };
 
   const handleSendMessage = () => {
+    if (!user) {
+      promptLogin();
+      return;
+    }
+
     if (!currentInput.trim()) return;
 
     const userMessage: Message = {
@@ -336,6 +344,14 @@ const QueryBuilder = () => {
     }, 1500); // 1.5 seconds of analysis animation
 
     setCurrentInput('');
+  };
+
+  const handleConnectDataClick = () => {
+    if (!user) {
+      promptLogin();
+      return;
+    }
+    setShowDataConfig(true);
   };
 
   const handleSelectVisualization = (type: string, data: any[]) => {
@@ -389,7 +405,7 @@ const QueryBuilder = () => {
     }
   };
 
-  if (user === null && session === null) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
@@ -401,6 +417,11 @@ const QueryBuilder = () => {
   }
 
   if (showDataConfig) {
+    if (!user) {
+      promptLogin();
+      return null;
+    }
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
         <div className="max-w-4xl mx-auto">
@@ -441,31 +462,42 @@ const QueryBuilder = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {user && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-white/60 rounded-lg">
-                  <User className="w-4 h-4" />
-                  <span className="text-sm text-gray-700">{user.email}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={signOut}
-                    className="ml-2"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
-              <Link to="/history">
+              {user ? (
+                <>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-white/60 rounded-lg">
+                    <User className="w-4 h-4" />
+                    <span className="text-sm text-gray-700">{user.email}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={signOut}
+                      className="ml-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <Link to="/history">
+                    <Button 
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <History className="w-4 h-4" />
+                      History
+                    </Button>
+                  </Link>
+                </>
+              ) : (
                 <Button 
+                  onClick={() => navigate('/auth')}
                   variant="outline"
                   className="flex items-center gap-2"
                 >
-                  <History className="w-4 h-4" />
-                  History
+                  <LogIn className="w-4 h-4" />
+                  Sign In
                 </Button>
-              </Link>
+              )}
               <Button 
-                onClick={() => setShowDataConfig(true)}
+                onClick={handleConnectDataClick}
                 className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
               >
                 <Upload className="w-4 h-4" />
@@ -482,6 +514,7 @@ const QueryBuilder = () => {
                   <Button 
                     size="lg"
                     className="flex items-center gap-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-8 py-4 text-lg shadow-lg"
+                    onClick={user ? undefined : (e) => { e.preventDefault(); promptLogin(); }}
                   >
                     <Sparkles className="w-6 h-6" />
                     Start New Investigation
@@ -492,6 +525,7 @@ const QueryBuilder = () => {
                     size="lg"
                     variant="outline"
                     className="flex items-center gap-3 border-blue-300 text-blue-700 hover:bg-blue-50 px-8 py-4 text-lg shadow-lg"
+                    onClick={user ? undefined : (e) => { e.preventDefault(); promptLogin(); }}
                   >
                     <FolderOpen className="w-6 h-6" />
                     Continue Existing Case
@@ -504,6 +538,17 @@ const QueryBuilder = () => {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Show auth prompt in messages if not logged in */}
+          {!user && (
+            <div className="flex justify-start">
+              <div className="max-w-2xl p-5 rounded-3xl shadow-sm bg-yellow-50 border border-yellow-200 text-gray-800">
+                <p className="whitespace-pre-line leading-relaxed">
+                  👋 Welcome to Data Detective! You can explore this demo, but you'll need to <button onClick={() => navigate('/auth')} className="text-blue-600 underline hover:text-blue-800">sign in</button> to connect your data sources and start investigating your data.
+                </p>
+              </div>
+            </div>
+          )}
+          
           {messages.map((message) => (
             <div
               key={message.id}
@@ -580,16 +625,23 @@ const QueryBuilder = () => {
               value={currentInput}
               onChange={(e) => setCurrentInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="🕵️ What mystery are you trying to solve?"
+              placeholder={user ? "🕵️ What mystery are you trying to solve?" : "🕵️ Sign in to start asking questions about your data"}
               className="flex-1 p-4 text-lg border-blue-200 focus:border-blue-400 rounded-2xl"
+              disabled={!user}
             />
             <Button 
               onClick={handleSendMessage}
               className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 px-8 py-4 rounded-2xl shadow-lg"
+              disabled={!user}
             >
               <Send className="w-5 h-5" />
             </Button>
           </div>
+          {!user && (
+            <p className="text-center text-sm text-gray-500 mt-2">
+              <button onClick={() => navigate('/auth')} className="text-blue-600 hover:underline">Sign in</button> to connect your data and start investigating
+            </p>
+          )}
         </div>
       </div>
 
