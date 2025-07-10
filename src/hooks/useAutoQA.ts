@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export const useAutoQA = () => {
   const [lastReport, setLastReport] = useState<QAReport | null>(null);
-  const [isAutoEnabled, setIsAutoEnabled] = useState(false);
+  const [isAutoEnabled, setIsAutoEnabled] = useState(false); // Disabled by default
   const qaSystemRef = useRef(new AutoQASystem());
   const { toast } = useToast();
   const lastRunRef = useRef<number>(0);
@@ -29,7 +29,7 @@ export const useAutoQA = () => {
             return addedNodes.some(node => 
               node.nodeType === Node.ELEMENT_NODE && 
               (node as Element).querySelector('[data-testid], [data-feature]') &&
-              !(node as Element).closest('.qa-runner, .toast')
+              !(node as Element).closest('.qa-runner, .toast, [data-sonner-toaster]')
             );
           }
           return false;
@@ -46,16 +46,22 @@ export const useAutoQA = () => {
               
               // Auto-fix any critical issues
               if (report.failed > 0) {
+                console.log('🔧 Auto-fixing detected issues...');
                 await qaSystemRef.current.autoFix(report);
-              }
-              
-              // Only show toast for failures after auto-fix attempt
-              if (report.overall === 'fail') {
-                toast({
-                  title: 'Auto-QA Alert',
-                  description: `${report.failed} test(s) failed - attempting auto-fix`,
-                  variant: 'destructive'
-                });
+                
+                // Re-run QA to verify fixes
+                const rerunReport = await qaSystemRef.current.runFullQA();
+                setLastReport(rerunReport);
+                
+                // Only show toast for remaining failures
+                if (rerunReport.failed > 0) {
+                  toast({
+                    title: 'Auto-QA Alert',
+                    description: `${rerunReport.failed} test(s) still failing after auto-fix`,
+                    variant: 'destructive',
+                    duration: 6000,
+                  });
+                }
               }
               
             } catch (error) {
@@ -106,7 +112,8 @@ export const useAutoQA = () => {
       title: `Auto-QA ${!isAutoEnabled ? 'Enabled' : 'Disabled'}`,
       description: !isAutoEnabled 
         ? 'QA will now run automatically and attempt to fix issues'
-        : 'Auto-QA has been disabled'
+        : 'Auto-QA has been disabled',
+      duration: 4000,
     });
   };
 

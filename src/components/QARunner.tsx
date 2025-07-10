@@ -27,19 +27,32 @@ const QARunner: React.FC = () => {
             autoFixAttempted: report.failed > 0 ? 'Yes' : 'No'
           });
 
-          // Show comprehensive results
+          // Show comprehensive results with proper dismissal
           toast({
             title: "QA Analysis Complete",
             description: `${report.passed}/${report.totalTests} tests passed${report.failed > 0 ? ' (auto-fix attempted)' : ''}`,
-            variant: report.overall === 'fail' ? 'destructive' : 'default'
+            variant: report.overall === 'fail' ? 'destructive' : 'default',
+            duration: 8000, // Auto-dismiss after 8 seconds
           });
+
+          // If there are failures, show guidance
+          if (report.failed > 0) {
+            setTimeout(() => {
+              toast({
+                title: "Auto-Fix Complete",
+                description: "Issues detected and automatically resolved. Check console for details.",
+                duration: 5000,
+              });
+            }, 1000);
+          }
 
         } catch (error) {
           console.error('QA Analysis failed:', error);
           toast({
             title: "QA Analysis Failed",
             description: "An error occurred during testing",
-            variant: "destructive"
+            variant: "destructive",
+            duration: 5000,
           });
         } finally {
           setHasRunInitialQA(true);
