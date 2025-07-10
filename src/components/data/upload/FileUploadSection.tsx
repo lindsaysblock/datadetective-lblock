@@ -37,7 +37,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
         currentTarget: {} as HTMLInputElement,
         preventDefault: () => {},
         stopPropagation: () => {},
-        nativeEvent: new Event('change'),
+        nativeEvent: {} as Event,
         isDefaultPrevented: () => false,
         isPropagationStopped: () => false,
         persist: () => {},
