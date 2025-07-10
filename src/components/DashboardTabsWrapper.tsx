@@ -11,9 +11,44 @@ import FindingsTab from './dashboard/tabs/FindingsTab';
 import AuditTab from './dashboard/tabs/AuditTab';
 import QATab from './dashboard/tabs/QATab';
 import ManageTab from './dashboard/tabs/ManageTab';
+import { type ParsedData } from '../utils/dataParser';
 
 const DashboardTabsWrapper: React.FC = () => {
   const [activeTab, setActiveTab] = useState('insights');
+  
+  // Mock data and handlers for demonstration
+  const mockData: ParsedData = {
+    columns: [],
+    rows: [],
+    summary: { totalRows: 0, totalColumns: 0 }
+  };
+  
+  const mockFindings: any[] = [];
+  const mockRecommendations: any[] = [];
+
+  const handleUpdateHypothesis = (hypothesis: any) => {
+    console.log('Hypothesis updated:', hypothesis);
+  };
+
+  const handleHypothesisUpdate = (hypothesis: any) => {
+    console.log('Hypothesis update:', hypothesis);
+  };
+
+  const handleSelectVisualization = (type: string, data: any[]) => {
+    console.log('Visualization selected:', type, data);
+  };
+
+  const handleExportFinding = (finding: any) => {
+    console.log('Finding exported:', finding);
+  };
+
+  const handleShareFinding = (finding: any) => {
+    console.log('Finding shared:', finding);
+  };
+
+  const handleDataUpdate = (newData: ParsedData) => {
+    console.log('Data updated:', newData);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -30,7 +65,7 @@ const DashboardTabsWrapper: React.FC = () => {
         <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
         
         <TabsContent value="insights" className="mt-6">
-          <InsightsTab />
+          <InsightsTab onUpdateHypothesis={handleUpdateHypothesis} />
         </TabsContent>
         
         <TabsContent value="analytics" className="mt-6">
@@ -38,7 +73,10 @@ const DashboardTabsWrapper: React.FC = () => {
         </TabsContent>
         
         <TabsContent value="visualize" className="mt-6">
-          <VisualizationTab />
+          <VisualizationTab 
+            recommendations={mockRecommendations}
+            onSelectVisualization={handleSelectVisualization}
+          />
         </TabsContent>
         
         <TabsContent value="reporting" className="mt-6">
@@ -46,11 +84,15 @@ const DashboardTabsWrapper: React.FC = () => {
         </TabsContent>
         
         <TabsContent value="hypothesis" className="mt-6">
-          <HypothesisTab />
+          <HypothesisTab onHypothesisUpdate={handleHypothesisUpdate} />
         </TabsContent>
         
         <TabsContent value="findings" className="mt-6">
-          <FindingsTab />
+          <FindingsTab 
+            findings={mockFindings}
+            onExportFinding={handleExportFinding}
+            onShareFinding={handleShareFinding}
+          />
         </TabsContent>
         
         <TabsContent value="audit" className="mt-6">
@@ -62,7 +104,10 @@ const DashboardTabsWrapper: React.FC = () => {
         </TabsContent>
         
         <TabsContent value="manage" className="mt-6">
-          <ManageTab />
+          <ManageTab 
+            data={mockData}
+            onDataUpdate={handleDataUpdate}
+          />
         </TabsContent>
       </Tabs>
     </div>

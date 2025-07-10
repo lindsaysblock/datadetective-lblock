@@ -17,6 +17,21 @@ const DataUploadFlowWrapper: React.FC = () => {
     handleSaveDataset
   } = useDataUpload();
 
+  // Wrapper function to handle file change events properly
+  const handleFileChangeEvent = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      handleFileChange(selectedFile);
+    }
+  };
+
+  // Wrapper function to handle file upload properly
+  const handleFileUploadClick = async () => {
+    if (file) {
+      await handleFileUpload(file);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
@@ -35,8 +50,8 @@ const DataUploadFlowWrapper: React.FC = () => {
           parsing={parsing}
           parsedData={parsedData}
           researchQuestion={researchQuestion}
-          onFileChange={handleFileChange}
-          onFileUpload={handleFileUpload}
+          onFileChange={handleFileChangeEvent}
+          onFileUpload={handleFileUploadClick}
           onResearchQuestionChange={handleResearchQuestionChange}
           onStartAnalysis={handleStartAnalysis}
           onSaveDataset={handleSaveDataset}
