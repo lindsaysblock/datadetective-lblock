@@ -1,1 +1,11 @@
+
 project_id = "ayqsgubaggljcoqftfyz"
+
+[functions.process-dataset]
+verify_jwt = true
+
+[functions.export-data]
+verify_jwt = true
+
+[functions.data-quality-check]
+verify_jwt = true
