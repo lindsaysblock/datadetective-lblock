@@ -103,13 +103,21 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
   return (
     <div className="space-y-6">
       {/* Step 1: File Upload */}
-      <FileUploadSection
-        file={file}
-        uploading={uploading}
-        parsing={parsing}
-        onFileChange={handleFileChangeWithTextSupport}
-        onFileUpload={onFileUpload}
-      />
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
+            1
+          </div>
+          <h3 className="text-lg font-semibold">Upload Your Data</h3>
+        </div>
+        <FileUploadSection
+          file={file}
+          uploading={uploading}
+          parsing={parsing}
+          onFileChange={handleFileChangeWithTextSupport}
+          onFileUpload={onFileUpload}
+        />
+      </div>
 
       {/* Step 2: Research Question - Show after file is uploaded and parsed */}
       {parsedData && (

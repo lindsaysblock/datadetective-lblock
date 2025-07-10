@@ -29,8 +29,11 @@ const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-semibold">
+                4
+              </div>
               <Search className="w-6 h-6 text-purple-600" />
-              <h3 className="text-lg font-semibold text-gray-800">Ready to Investigate?</h3>
+              <h3 className="text-lg font-semibold text-gray-800">Step 4: Ready to Investigate?</h3>
             </div>
             <p className="text-gray-600 mb-4">
               Let our AI detective analyze your data and uncover insights
