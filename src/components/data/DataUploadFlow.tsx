@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, FileText, Upload, Database, Type } from 'lucide-react';
+import { CheckCircle2, FileText, Upload, Database, Type, Search, Sparkles } from 'lucide-react';
 import FileUploadSection from './FileUploadSection';
 import { useToast } from '@/hooks/use-toast';
 
@@ -33,6 +33,7 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
 }) => {
   const [activeUploadMethod, setActiveUploadMethod] = useState<'file' | 'connect' | 'text'>('file');
   const [textData, setTextData] = useState('');
+  const [additionalContext, setAdditionalContext] = useState('');
   const { toast } = useToast();
 
   const handleTextDataUpload = () => {
@@ -49,32 +50,23 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
     const textBlob = new Blob([textData], { type: 'text/plain' });
     const textFile = new File([textBlob], 'pasted-data.txt', { type: 'text/plain' });
     
-    // Create a proper fake event object that matches ChangeEvent<HTMLInputElement>
-    const fakeEvent = {
-      target: {
-        files: [textFile],
-        value: '',
-        name: '',
-        type: 'file'
-      },
-      currentTarget: null,
-      nativeEvent: new Event('change'),
-      bubbles: false,
-      cancelable: false,
-      defaultPrevented: false,
-      eventPhase: 0,
-      isTrusted: false,
-      preventDefault: () => {},
-      isDefaultPrevented: () => false,
-      stopPropagation: () => {},
-      isPropagationStopped: () => false,
-      persist: () => {},
-      timeStamp: Date.now(),
-      type: 'change'
-    } as React.ChangeEvent<HTMLInputElement>;
+    // Create a simple input element and trigger the change event
+    const input = document.createElement('input');
+    input.type = 'file';
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(textFile);
+    input.files = dataTransfer.files;
     
-    onFileChange(fakeEvent);
+    const event = new Event('change', { bubbles: true });
+    Object.defineProperty(event, 'target', {
+      writable: false,
+      value: input
+    });
+    
+    onFileChange(event as React.ChangeEvent<HTMLInputElement>);
   };
+
+  const isReadyToAnalyze = parsedData && researchQuestion.trim();
 
   return (
     <div className="space-y-6">
@@ -174,12 +166,20 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
         onResearchQuestionChange={onResearchQuestionChange}
       />
 
-      {/* Action Buttons */}
+      {/* Step 3: Additional Context */}
+      <AdditionalContextSection 
+        additionalContext={additionalContext}
+        onAdditionalContextChange={setAdditionalContext}
+      />
+
+      {/* Data Detective Analysis Button */}
       {parsedData && (
-        <DataActionButtons 
+        <DataDetectiveActionButtons 
           researchQuestion={researchQuestion}
+          additionalContext={additionalContext}
           onSaveDataset={onSaveDataset}
-          onStartAnalysis={onStartAnalysis}
+          onStartAnalysis={() => onStartAnalysis()}
+          isReadyToAnalyze={isReadyToAnalyze}
         />
       )}
     </div>
@@ -210,27 +210,55 @@ const ResearchQuestionSection: React.FC<{
   </div>
 );
 
-const DataActionButtons: React.FC<{
+const AdditionalContextSection: React.FC<{
+  additionalContext: string;
+  onAdditionalContextChange: (value: string) => void;
+}> = ({ additionalContext, onAdditionalContextChange }) => (
+  <div className="bg-gray-50 rounded-lg p-4">
+    <div className="flex items-center gap-3 mb-2">
+      <div className={`w-3 h-3 rounded-full ${additionalContext.trim() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+      <h3 className="font-medium">Step 3: Additional Context (Optional)</h3>
+    </div>
+    <div className="space-y-3">
+      <label htmlFor="additionalContext" className="text-sm text-gray-700">
+        Provide business context, data background, or specific details about your dataset
+      </label>
+      <Textarea
+        id="additionalContext"
+        placeholder="e.g., This data comes from our Q4 customer survey. We're particularly interested in the 25-35 age group. Please focus on regional differences..."
+        value={additionalContext}
+        onChange={(e) => onAdditionalContextChange(e.target.value)}
+        className="min-h-20"
+      />
+    </div>
+  </div>
+);
+
+const DataDetectiveActionButtons: React.FC<{
   researchQuestion: string;
+  additionalContext: string;
   onSaveDataset: () => void;
   onStartAnalysis: () => void;
-}> = ({ researchQuestion, onSaveDataset, onStartAnalysis }) => (
-  <div className="flex justify-between items-center pt-4 border-t">
+  isReadyToAnalyze: boolean;
+}> = ({ researchQuestion, additionalContext, onSaveDataset, onStartAnalysis, isReadyToAnalyze }) => (
+  <div className="flex justify-between items-center pt-6 border-t">
     <Button 
       onClick={onSaveDataset}
       variant="outline"
       className="flex items-center gap-2"
     >
+      <FileText className="w-4 h-4" />
       Save Dataset
     </Button>
     
     <Button 
       onClick={onStartAnalysis}
-      disabled={!researchQuestion.trim()}
-      className="flex items-center gap-2"
+      disabled={!isReadyToAnalyze}
+      className="flex items-center gap-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-semibold px-6 py-2 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105"
     >
-      <CheckCircle2 className="w-4 h-4" />
-      Start Analysis
+      <Search className="w-4 h-4" />
+      <span>Start Detective Analysis</span>
+      <Sparkles className="w-4 h-4" />
     </Button>
   </div>
 );
