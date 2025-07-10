@@ -132,11 +132,11 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
         <p className="text-gray-600">Upload files, paste data directly, or connect to your data sources</p>
       </div>
 
-      <Tabs defaultValue="amplitude" className="w-full">
+      <Tabs defaultValue="database" className="w-full">
         <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="amplitude" className="flex items-center gap-2">
-            <Globe className="w-4 h-4" />
-            Amplitude
+          <TabsTrigger value="database" className="flex items-center gap-2">
+            <Database className="w-4 h-4" />
+            Database
           </TabsTrigger>
           <TabsTrigger value="paste" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
@@ -146,13 +146,13 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
             <Upload className="w-4 h-4" />
             Files
           </TabsTrigger>
+          <TabsTrigger value="amplitude" className="flex items-center gap-2">
+            <Globe className="w-4 h-4" />
+            Amplitude
+          </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <Globe className="w-4 h-4" />
             Analytics
-          </TabsTrigger>
-          <TabsTrigger value="database" className="flex items-center gap-2">
-            <Database className="w-4 h-4" />
-            Database
           </TabsTrigger>
           <TabsTrigger value="warehouse" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
@@ -160,8 +160,29 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="amplitude" className="space-y-4">
-          <AmplitudeIntegration onConnect={handleAmplitudeConnect} />
+        <TabsContent value="database" className="space-y-4">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Database Connection</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="db-url">Database Connection String</Label>
+                <Input
+                  id="db-url"
+                  type="password"
+                  placeholder="postgresql://user:pass@host:port/database"
+                  value={databaseUrl}
+                  onChange={(e) => setDatabaseUrl(e.target.value)}
+                />
+              </div>
+              <Button onClick={connectDatabase} className="w-full">
+                Connect Database
+              </Button>
+            </div>
+            <div className="mt-4 text-sm text-gray-600">
+              <p>🗄️ Supports: PostgreSQL, MySQL, SQLite</p>
+              <p>🔐 Read-only access recommended for safety</p>
+            </div>
+          </Card>
         </TabsContent>
 
         <TabsContent value="paste" className="space-y-4">
@@ -224,6 +245,10 @@ Examples:
           </Card>
         </TabsContent>
 
+        <TabsContent value="amplitude" className="space-y-4">
+          <AmplitudeIntegration onConnect={handleAmplitudeConnect} />
+        </TabsContent>
+
         <TabsContent value="analytics" className="space-y-4">
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Analytics Platforms</h3>
@@ -245,31 +270,6 @@ Examples:
             <div className="mt-4 text-sm text-gray-600">
               <p>📊 Supports: Google Analytics, Mixpanel, Segment</p>
               <p>🔒 Your API keys are stored securely</p>
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="database" className="space-y-4">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Database Connection</h3>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="db-url">Database Connection String</Label>
-                <Input
-                  id="db-url"
-                  type="password"
-                  placeholder="postgresql://user:pass@host:port/database"
-                  value={databaseUrl}
-                  onChange={(e) => setDatabaseUrl(e.target.value)}
-                />
-              </div>
-              <Button onClick={connectDatabase} className="w-full">
-                Connect Database
-              </Button>
-            </div>
-            <div className="mt-4 text-sm text-gray-600">
-              <p>🗄️ Supports: PostgreSQL, MySQL, SQLite</p>
-              <p>🔐 Read-only access recommended for safety</p>
             </div>
           </Card>
         </TabsContent>
