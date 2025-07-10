@@ -2,8 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
-import Header from '@/components/Header';
+import { ArrowLeft, CheckCircle2, Plus, History, HelpCircle } from 'lucide-react';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import ProjectNamingDialog from '@/components/data/upload/ProjectNamingDialog';
@@ -15,6 +14,8 @@ import BusinessContextStep from '@/components/project/BusinessContextStep';
 import AnalysisSummaryStep from '@/components/project/AnalysisSummaryStep';
 import AnalyzingIcon from '@/components/AnalyzingIcon';
 import { SignInModal } from '@/components/auth/SignInModal';
+import DataDetectiveLogo from '@/components/DataDetectiveLogo';
+import HelpMenu from '@/components/HelpMenu';
 
 const NewProject = () => {
   const { user, handleUserChange } = useAuthState();
@@ -144,7 +145,57 @@ const NewProject = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <Header user={user} onUserChange={handleUserChange} />
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <Link to="/" className="flex items-center gap-2">
+                <DataDetectiveLogo size="sm" showText={true} />
+              </Link>
+              
+              <Link to="/">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Dashboard
+                </Button>
+              </Link>
+            </div>
+            
+            <div className="text-center flex-1 mx-8">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                New Project
+              </h1>
+              <p className="text-blue-600 text-lg">Let's explore your data together</p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Link to="/new-project">
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  New Project
+                </Button>
+              </Link>
+              
+              <Link to="/query-history">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <History className="w-4 h-4" />
+                  Projects
+                </Button>
+              </Link>
+              
+              <HelpMenu />
+              
+              <Button 
+                onClick={() => setShowSignInModal(true)}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+              >
+                Sign In / Sign Up
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <FormRecoveryDialog
         open={showRecoveryDialog}
@@ -166,22 +217,6 @@ const NewProject = () => {
       />
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="flex items-center justify-between mb-8">
-          <Link to="/">
-            <Button variant="outline" className="flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Dashboard
-            </Button>
-          </Link>
-          <div className="text-center flex-1 mx-8">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Start New Project
-            </h1>
-            <p className="text-blue-600 text-lg">Let's explore your data together</p>
-          </div>
-          <div className="w-24"></div>
-        </div>
-
         {renderStepIndicator()}
         
         {/* Analysis Progress - Show above project dialog */}
