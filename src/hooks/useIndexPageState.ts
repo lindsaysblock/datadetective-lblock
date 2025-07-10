@@ -6,6 +6,7 @@ import { useAuthState } from '@/hooks/useAuthState';
 import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
+import { ToastAction } from '@/components/ui/toast';
 
 export const useIndexPageState = () => {
   const { user, loading, handleUserChange } = useAuthState();
@@ -41,10 +42,11 @@ export const useIndexPageState = () => {
       toast({
         title: "Incomplete Project Detected",
         description: "You have an unfinished project. Visit 'New Project' to continue where you left off.",
-        action: {
-          label: "Continue Project",
-          onClick: () => window.location.href = '/new-project'
-        }
+        action: (
+          <ToastAction altText="Continue Project" onClick={() => window.location.href = '/new-project'}>
+            Continue Project
+          </ToastAction>
+        )
       });
     }
   }, [loading, user, hasStoredData, toast]);
