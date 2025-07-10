@@ -123,6 +123,7 @@ export const runQATests = async (): Promise<QAReport> => {
   
   return {
     overall,
+    timestamp: new Date(),
     passed,
     failed,
     warnings,
@@ -231,6 +232,7 @@ export const runEnhancedQATests = async (): Promise<QAReport> => {
   
   return {
     overall,
+    timestamp: new Date(),
     passed,
     failed,
     warnings,
