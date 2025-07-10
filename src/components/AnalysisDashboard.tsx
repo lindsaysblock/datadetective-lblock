@@ -1,27 +1,41 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Lightbulb, BarChart3, Database, TestTube } from 'lucide-react';
+import { Lightbulb, BarChart3, Database, TestTube, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BusinessInsights from './BusinessInsights';
 import DataVisualization from './DataVisualization';
 import HypothesisTracker from './HypothesisTracker';
 import VisualizationFindings from './VisualizationFindings';
+import DataManagementPanel from './DataManagementPanel';
 import { type ParsedData } from '../utils/dataParser';
 
 interface AnalysisDashboardProps {
   parsedData: ParsedData;
   filename?: string;
   findings: any[];
+  onDataUpdate?: (newData: ParsedData) => void;
 }
 
 const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
   parsedData,
   filename,
-  findings
+  findings,
+  onDataUpdate
 }) => {
   const [activeTab, setActiveTab] = useState('insights');
+  const [currentData, setCurrentData] = useState(parsedData);
   const { toast } = useToast();
+
+  const handleDataUpdate = (newData: ParsedData) => {
+    setCurrentData(newData);
+    if (onDataUpdate) {
+      onDataUpdate(newData);
+    }
+    toast({
+      title: "Data Updated",
+      description: "Your dataset has been updated successfully.",
+    });
+  };
 
   const generateRecommendations = (data: ParsedData) => {
     const numericColumns = data.columns.filter(col => col.type === 'number');
@@ -119,7 +133,7 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
       exportDate: new Date().toISOString(),
       metadata: {
         source: filename || 'unknown',
-        dataRows: parsedData?.summary.totalRows || 0
+        dataRows: currentData?.summary.totalRows || 0
       }
     };
     
@@ -165,7 +179,7 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
     }
   };
 
-  const recommendations = generateRecommendations(parsedData);
+  const recommendations = generateRecommendations(currentData);
 
   return (
     <div>
@@ -174,12 +188,12 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
           📊 Data Analysis Dashboard
         </h1>
         <p className="text-gray-600">
-          Analyzing {filename} • {parsedData.summary.totalRows} rows • {parsedData.summary.totalColumns} columns
+          Analyzing {filename} • {currentData.summary.totalRows} rows • {currentData.summary.totalColumns} columns
         </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-8">
+        <TabsList className="grid w-full grid-cols-5 mb-8">
           <TabsTrigger value="insights" className="flex items-center gap-2">
             <Lightbulb className="w-4 h-4" />
             Business Insights
@@ -195,6 +209,10 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
           <TabsTrigger value="findings" className="flex items-center gap-2">
             <Database className="w-4 h-4" />
             Findings
+          </TabsTrigger>
+          <TabsTrigger value="manage" className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Data Management
           </TabsTrigger>
         </TabsList>
 
@@ -218,6 +236,13 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
             findings={findings}
             onExportFinding={handleExportFinding}
             onShareFinding={handleShareFinding}
+          />
+        </TabsContent>
+
+        <TabsContent value="manage">
+          <DataManagementPanel 
+            data={currentData}
+            onDataUpdate={handleDataUpdate}
           />
         </TabsContent>
       </Tabs>

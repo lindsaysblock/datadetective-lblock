@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,6 +14,7 @@ import UndoRedoControls from './UndoRedoControls';
 import { useAuthState } from '../hooks/useAuthState';
 import { useDataUpload } from '../hooks/useDataUpload';
 import { useUndoRedo } from '../hooks/useUndoRedo';
+import { type ParsedData } from '../utils/dataParser';
 
 interface AppState {
   activeTab: string;
@@ -25,6 +25,7 @@ interface AppState {
 const QueryBuilder = () => {
   const [activeTab, setActiveTab] = useState('connect');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [currentParsedData, setCurrentParsedData] = useState<ParsedData | null>(null);
 
   const { user, loading, handleUserChange } = useAuthState();
   const {
@@ -54,6 +55,13 @@ const QueryBuilder = () => {
     showOnboarding: false,
     lastAction: 'initial'
   });
+
+  // Update current parsed data when upload data changes
+  useEffect(() => {
+    if (parsedData) {
+      setCurrentParsedData(parsedData);
+    }
+  }, [parsedData]);
 
   // Check if user is new (first time visiting)
   useEffect(() => {
@@ -155,6 +163,15 @@ const QueryBuilder = () => {
     });
   };
 
+  const handleDataUpdate = (newData: ParsedData) => {
+    setCurrentParsedData(newData);
+    pushState({
+      activeTab,
+      showOnboarding: false,
+      lastAction: 'updated data through management tools'
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -191,15 +208,16 @@ const QueryBuilder = () => {
   }
 
   // Show analysis dashboard after successful data upload
-  if (parsedData) {
+  if (currentParsedData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <Header user={user} onUserChange={handleUserChange} />
         <div className="container mx-auto px-4 py-8">
           <AnalysisDashboard
-            parsedData={parsedData}
+            parsedData={currentParsedData}
             filename={filename}
             findings={findings}
+            onDataUpdate={handleDataUpdate}
           />
         </div>
       </div>
