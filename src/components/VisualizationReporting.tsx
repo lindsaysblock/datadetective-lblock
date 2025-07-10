@@ -1,10 +1,9 @@
 
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, FileText, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import ReportsHeader from './reporting/ReportsHeader';
 import ReportsList from './reporting/ReportsList';
 import ReportCreator from './reporting/ReportCreator';
 import ReportScheduler from './reporting/ReportScheduler';
@@ -109,35 +108,11 @@ const VisualizationReporting: React.FC<VisualizationReportingProps> = ({ onRepor
 
   return (
     <Card className="p-6 bg-gradient-to-br from-green-50 to-blue-50 border-green-200">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-green-100 rounded-lg">
-            <BarChart3 className="w-6 h-6 text-green-600" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-gray-800">📊 Visualization & Reporting</h3>
-            <p className="text-sm text-gray-600">Create, schedule, and share visual reports</p>
-          </div>
-        </div>
-        
-        <Button 
-          onClick={createReport}
-          disabled={isGenerating || !newReportTitle.trim()}
-          className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-        >
-          {isGenerating ? (
-            <>
-              <Settings className="w-4 h-4 mr-2 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <FileText className="w-4 h-4 mr-2" />
-              Create Report
-            </>
-          )}
-        </Button>
-      </div>
+      <ReportsHeader
+        isGenerating={isGenerating}
+        newReportTitle={newReportTitle}
+        onCreateReport={createReport}
+      />
 
       <Tabs defaultValue="reports" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-6">

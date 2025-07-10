@@ -9,15 +9,13 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   Database, 
   Upload, 
-  Zap, 
-  Globe, 
   Settings, 
   CheckCircle, 
   AlertCircle,
-  FileText,
-  Calendar,
-  Plus
+  Calendar
 } from 'lucide-react';
+import FileUploadInput from './data/upload/FileUploadInput';
+import FileUploadSuccess from './data/upload/FileUploadSuccess';
 
 interface DataSource {
   id: string;
@@ -134,32 +132,9 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({
         </CardHeader>
         <CardContent className="space-y-4">
           {!uploadComplete ? (
-            <div>
-              <Label htmlFor="file-upload" className="block text-sm font-medium mb-2">
-                Select File
-              </Label>
-              <Input
-                id="file-upload"
-                type="file"
-                accept=".csv,.json,.txt,.xlsx"
-                onChange={handleFileSelect}
-                className="cursor-pointer"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Supported formats: CSV, JSON, TXT, XLSX (max 100MB)
-              </p>
-            </div>
+            <FileUploadInput onFileChange={handleFileSelect} />
           ) : (
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-                <span className="text-green-700 font-medium">File uploaded successfully!</span>
-              </div>
-              <Button onClick={handleUploadMoreClick} className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Upload Another File
-              </Button>
-            </div>
+            <FileUploadSuccess onUploadMore={handleUploadMoreClick} />
           )}
         </CardContent>
       </Card>
