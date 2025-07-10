@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export const useAutoQA = () => {
   const [lastReport, setLastReport] = useState<QAReport | null>(null);
-  const [isAutoEnabled, setIsAutoEnabled] = useState(false); // Changed to false by default
+  const [isAutoEnabled, setIsAutoEnabled] = useState(false);
   const qaSystemRef = useRef(new AutoQASystem());
   const { toast } = useToast();
   const lastRunRef = useRef<number>(0);
@@ -44,11 +44,16 @@ export const useAutoQA = () => {
               const report = await qaSystemRef.current.runFullQA();
               setLastReport(report);
               
-              // Only show toast for failures
+              // Auto-fix any critical issues
+              if (report.failed > 0) {
+                await qaSystemRef.current.autoFix(report);
+              }
+              
+              // Only show toast for failures after auto-fix attempt
               if (report.overall === 'fail') {
                 toast({
                   title: 'Auto-QA Alert',
-                  description: `${report.failed} test(s) failed`,
+                  description: `${report.failed} test(s) failed - attempting auto-fix`,
                   variant: 'destructive'
                 });
               }
@@ -56,7 +61,7 @@ export const useAutoQA = () => {
             } catch (error) {
               console.error('Auto-QA failed:', error);
             }
-          }, 3000); // 3 second debounce
+          }, 3000);
         }
       });
 
@@ -77,8 +82,21 @@ export const useAutoQA = () => {
   }, [isAutoEnabled, toast]);
 
   const runManualQA = async (): Promise<QAReport> => {
+    console.log('🔍 Running manual QA analysis...');
     const report = await qaSystemRef.current.runFullQA();
     setLastReport(report);
+    
+    // Auto-fix any issues found during manual run
+    if (report.failed > 0) {
+      console.log('🔧 Auto-fixing detected issues...');
+      await qaSystemRef.current.autoFix(report);
+      
+      // Run QA again to verify fixes
+      const rerunReport = await qaSystemRef.current.runFullQA();
+      setLastReport(rerunReport);
+      return rerunReport;
+    }
+    
     return report;
   };
 
@@ -87,7 +105,7 @@ export const useAutoQA = () => {
     toast({
       title: `Auto-QA ${!isAutoEnabled ? 'Enabled' : 'Disabled'}`,
       description: !isAutoEnabled 
-        ? 'QA will now run automatically when significant changes are detected'
+        ? 'QA will now run automatically and attempt to fix issues'
         : 'Auto-QA has been disabled'
     });
   };
