@@ -99,8 +99,6 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
     }, 2000);
   };
 
-  const isReadyToAnalyze = Boolean(parsedData && researchQuestion.trim());
-
   console.log('DataUploadFlow render:', { parsedData: !!parsedData, file: !!file, uploading, parsing });
 
   return (
@@ -140,12 +138,10 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
       {/* Step 4: Analysis Action - Always show */}
       <Separator />
       <AnalysisActionSection
-        isReadyToAnalyze={isReadyToAnalyze}
+        researchQuestion={researchQuestion}
+        setResearchQuestion={onResearchQuestionChange}
         parsedData={parsedData}
         onStartAnalysis={handleStartAnalysisClick}
-        onSaveDataset={onSaveDataset}
-        teachModeEnabled={teachModeEnabled}
-        onTeachModeToggle={setTeachModeEnabled}
       />
 
       <ProjectNamingDialog
