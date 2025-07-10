@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 import FileUploadSection from './upload/FileUploadSection';
 import ResearchQuestionSection from './upload/ResearchQuestionSection';
 import AdditionalContextSection from './upload/AdditionalContextSection';
-import AnalysisActionSection from './upload/AnalysisActionSection';
+import { AnalysisActionSection } from './upload/AnalysisActionSection';
 import ProjectNamingDialog from './upload/ProjectNamingDialog';
 import { Plus } from 'lucide-react';
 
