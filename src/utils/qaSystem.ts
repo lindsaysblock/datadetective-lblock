@@ -3,9 +3,7 @@ import { QAReport } from './qa/types';
 import { QATestSuites } from './qa/qaTestSuites';
 import { AutoFixSystem } from './qa/autoFixSystem';
 import { AutoRefactorSystem } from './qa/autoRefactorSystem';
-import { PerformanceAnalyzer } from './qa/performanceAnalyzer';
-import { RefactoringAnalyzer } from './qa/refactoringAnalyzer';
-import { TestRunner } from './qa/testRunner';
+import { TestOrchestrator } from './qa/testOrchestrator';
 
 export * from './qa/types';
 
@@ -13,42 +11,17 @@ export class AutoQASystem {
   private qaTestSuites = new QATestSuites();
   private autoFixSystem = new AutoFixSystem();
   private autoRefactorSystem = new AutoRefactorSystem();
-  private performanceAnalyzer = new PerformanceAnalyzer(this.qaTestSuites);
-  private refactoringAnalyzer = new RefactoringAnalyzer(this.qaTestSuites);
-  private testRunner = new TestRunner(this.qaTestSuites);
+  private testOrchestrator = new TestOrchestrator(this.qaTestSuites);
   private startTime: number = 0;
-  private performanceMetrics: Map<string, number> = new Map();
 
   async runFullQA(): Promise<QAReport> {
     console.log('🔍 Starting comprehensive QA testing with enhanced performance monitoring...');
     this.startTime = performance.now();
-    this.qaTestSuites.clearResults();
-    this.performanceMetrics.clear();
 
     try {
-      // Run all test suites with performance tracking
-      await this.runTestWithMetrics('Components', () => this.qaTestSuites.testComponents());
-      await this.runTestWithMetrics('Data Flow', () => this.qaTestSuites.testDataFlow());
-      await this.runTestWithMetrics('User Experience', () => this.qaTestSuites.testUserExperience());
-      await this.runTestWithMetrics('Data Integrity', () => this.qaTestSuites.testDataIntegrity());
-      await this.runTestWithMetrics('Authentication', () => this.qaTestSuites.testAuthentication());
-      await this.runTestWithMetrics('Routing', () => this.qaTestSuites.testRouting());
-      await this.runTestWithMetrics('System Health', () => this.qaTestSuites.testSystemHealth());
-
-      // Run load and unit tests with enhanced monitoring
-      await this.runTestWithMetrics('Load Tests', () => this.testRunner.runLoadTests());
-      await this.runTestWithMetrics('Unit Tests', () => this.testRunner.runUnitTests());
-      
-      // Performance and refactoring analysis
-      const performanceMetrics = await this.runTestWithMetrics('Performance Analysis', 
-        () => this.performanceAnalyzer.analyzePerformance()
-      );
-      
-      const refactoringRecommendations = await this.runTestWithMetrics('Refactoring Analysis',
-        () => this.refactoringAnalyzer.analyzeRefactoringNeeds()
-      );
-
+      const { performanceMetrics, refactoringRecommendations } = await this.testOrchestrator.runAllTests();
       const report = this.generateEnhancedReport(performanceMetrics, refactoringRecommendations);
+      
       console.log('✅ QA testing completed with comprehensive coverage:', report);
       
       // Auto-trigger refactoring analysis if needed
@@ -86,43 +59,6 @@ export class AutoQASystem {
     }
   }
 
-  private async runTestWithMetrics<T>(testName: string, testFn: () => Promise<T>): Promise<T> {
-    const startTime = performance.now();
-    const startMemory = this.getMemoryUsage();
-    
-    try {
-      const result = await testFn();
-      const endTime = performance.now();
-      const endMemory = this.getMemoryUsage();
-      
-      const duration = endTime - startTime;
-      const memoryDelta = endMemory - startMemory;
-      
-      this.performanceMetrics.set(`${testName}_duration`, duration);
-      this.performanceMetrics.set(`${testName}_memory`, memoryDelta);
-      
-      console.log(`⏱️ ${testName}: ${duration.toFixed(2)}ms, Memory: ${memoryDelta > 0 ? '+' : ''}${memoryDelta.toFixed(2)}MB`);
-      
-      return result;
-    } catch (error) {
-      const endTime = performance.now();
-      const duration = endTime - startTime;
-      
-      this.performanceMetrics.set(`${testName}_duration`, duration);
-      this.performanceMetrics.set(`${testName}_error`, 1);
-      
-      console.error(`❌ ${testName} failed after ${duration.toFixed(2)}ms:`, error);
-      throw error;
-    }
-  }
-
-  private getMemoryUsage(): number {
-    if ('memory' in performance) {
-      return (performance as any).memory.usedJSHeapSize / 1024 / 1024;
-    }
-    return 0;
-  }
-
   private async checkForAutoRefactoring(report: QAReport): Promise<void> {
     try {
       const suggestions = await this.autoRefactorSystem.analyzeCodebase();
@@ -157,14 +93,15 @@ export class AutoQASystem {
 
     const overall = failed > 0 ? 'fail' : warnings > 0 ? 'warning' : 'pass';
     const totalDuration = performance.now() - this.startTime;
+    const performanceMonitor = this.testOrchestrator.getPerformanceMonitor();
 
     // Enhanced performance metrics with QA system insights
     const enhancedMetrics = {
       ...performanceMetrics,
       qaSystemDuration: totalDuration,
-      testExecutionMetrics: Object.fromEntries(this.performanceMetrics),
-      systemEfficiency: this.calculateSystemEfficiency(),
-      memoryEfficiency: this.calculateMemoryEfficiency()
+      testExecutionMetrics: Object.fromEntries(performanceMonitor.getMetrics()),
+      systemEfficiency: performanceMonitor.calculateSystemEfficiency(),
+      memoryEfficiency: performanceMonitor.calculateMemoryEfficiency()
     };
 
     console.log(`📊 QA System Performance Summary:`);
@@ -183,49 +120,6 @@ export class AutoQASystem {
       performanceMetrics: enhancedMetrics,
       refactoringRecommendations
     };
-  }
-
-  private calculateSystemEfficiency(): number {
-    let efficiency = 100;
-    
-    // Penalize for slow test execution
-    this.performanceMetrics.forEach((duration, testName) => {
-      if (testName.endsWith('_duration')) {
-        if (duration > 1000) efficiency -= 10; // Very slow
-        else if (duration > 500) efficiency -= 5; // Slow
-      }
-    });
-    
-    // Penalize for errors
-    this.performanceMetrics.forEach((value, testName) => {
-      if (testName.endsWith('_error')) {
-        efficiency -= 20; // Major penalty for errors
-      }
-    });
-    
-    return Math.max(0, efficiency);
-  }
-
-  private calculateMemoryEfficiency(): number {
-    let efficiency = 100;
-    let totalMemoryDelta = 0;
-    let memoryTests = 0;
-    
-    this.performanceMetrics.forEach((memoryDelta, testName) => {
-      if (testName.endsWith('_memory')) {
-        totalMemoryDelta += memoryDelta;
-        memoryTests++;
-      }
-    });
-    
-    if (memoryTests > 0) {
-      const avgMemoryDelta = totalMemoryDelta / memoryTests;
-      if (avgMemoryDelta > 50) efficiency -= 30; // High memory usage
-      else if (avgMemoryDelta > 20) efficiency -= 15; // Moderate memory usage
-      else if (avgMemoryDelta > 10) efficiency -= 5; // Low memory usage
-    }
-    
-    return Math.max(0, efficiency);
   }
 
   async autoFix(report: QAReport): Promise<void> {

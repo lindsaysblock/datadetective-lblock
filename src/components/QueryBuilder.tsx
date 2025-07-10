@@ -1,182 +1,55 @@
 
-import React, { useState, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, Database, Wand2, History, User, Plus, Play } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Upload, Database, History, User, Plus } from 'lucide-react';
 import DataDetectiveLogo from './DataDetectiveLogo';
-import RateLimitedDropzone from './RateLimitedDropzone';
-import DataSourceManager from './DataSourceManager';
 import AnalysisDashboard from './AnalysisDashboard';
 import OnboardingFlow from './OnboardingFlow';
 import Header from './Header';
-import DatasetLibrary from './DatasetLibrary';
-import UserProfilePanel from './UserProfilePanel';
-import EnhancedUploadProgress from './EnhancedUploadProgress';
 import LegalFooter from './LegalFooter';
-import { generateMockDataset } from '@/utils/mockData';
-import { parseFile } from '@/utils/dataParser';
 import QARunner from './QARunner';
-import { useAuthState } from '@/hooks/useAuthState';
-import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
-import { useDataUpload } from '@/hooks/useDataUpload';
-
-interface AnalysisData {
-  columns: any[];
-  rows: any[];
-  summary: any;
-}
+import ProjectActionButtons from './query/ProjectActionButtons';
+import DataUploadTab from './query/DataUploadTab';
+import ProjectLibraryTab from './query/ProjectLibraryTab';
+import DataSourceTab from './query/DataSourceTab';
+import ProfileTab from './query/ProfileTab';
+import { useQueryBuilderState } from '@/hooks/useQueryBuilderState';
 
 const QueryBuilder: React.FC = () => {
-  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
-  const [currentFilename, setCurrentFilename] = useState<string | null>(null);
-  const [currentDatasetId, setCurrentDatasetId] = useState<string | null>(null);
-  const [findings, setFindings] = useState<any[]>([]);
-  const [showOnboarding, setShowOnboarding] = useState(true);
-  const [activeTab, setActiveTab] = useState('upload');
-  
-  const { user, loading, handleUserChange } = useAuthState();
-  const { saveDataset } = useDatasetPersistence();
   const {
+    analysisData,
+    currentFilename,
+    findings,
+    showOnboarding,
+    activeTab,
+    user,
+    loading,
     uploading,
     uploadProgress,
     uploadStatus,
     uploadError,
-    filename: uploadFilename,
+    uploadFilename,
     estimatedTime,
-    handleFileUpload,
-    resetUpload
-  } = useDataUpload();
-  
-  const { toast } = useToast();
-
-  const handleFileProcessed = useCallback(async (file: File) => {
-    try {
-      resetUpload();
-      const parsedData = await handleFileUpload(file);
-      
-      if (parsedData) {
-        setAnalysisData(parsedData);
-        setCurrentFilename(file.name);
-        setActiveTab('analysis');
-        
-        toast({
-          title: "Data Loaded",
-          description: `${file.name} processed successfully.`,
-        });
-      }
-    } catch (error: any) {
-      console.error("Error processing file:", error);
-      toast({
-        title: "File Processing Error",
-        description: error.message || "Failed to process the file.",
-        variant: "destructive",
-      });
-    }
-  }, [handleFileUpload, resetUpload, toast]);
-
-  const handleSaveToAccount = async () => {
-    if (!analysisData || !currentFilename) return;
-    
-    try {
-      const datasetId = await saveDataset(currentFilename, analysisData);
-      if (datasetId) {
-        setCurrentDatasetId(datasetId);
-        toast({
-          title: "Dataset Saved",
-          description: "Your analysis has been saved to your account.",
-        });
-      }
-    } catch (error: any) {
-      console.error('Error saving dataset:', error);
-      toast({
-        title: "Save Failed",
-        description: error.message || "Failed to save dataset",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDataSourceLoaded = (data: any, sourceName: string) => {
-    const columns = Object.keys(data[0] || {}).map(key => ({
-      name: key,
-      type: 'string',
-      samples: data.slice(0, 5).map((row: any) => row[key])
-    }));
-    const summary = {
-      totalRows: data.length,
-      totalColumns: columns.length,
-      source: sourceName
-    };
-    setAnalysisData({ columns, rows: data, summary });
-    setCurrentFilename(sourceName);
-    setActiveTab('analysis');
-    toast({
-      title: "Data Source Loaded",
-      description: `Data from ${sourceName} loaded successfully.`,
-    });
-  };
-
-  const handleDatasetSelect = async (dataset: any) => {
-    try {
-      const analysisData = {
-        columns: dataset.metadata?.columns || [],
-        rows: dataset.metadata?.sample_rows || [],
-        summary: dataset.summary || {}
-      };
-      
-      setAnalysisData(analysisData);
-      setCurrentFilename(dataset.original_filename);
-      setCurrentDatasetId(dataset.id);
-      setActiveTab('analysis');
-      
-      toast({
-        title: "Dataset Loaded",
-        description: `${dataset.name} loaded for analysis.`,
-      });
-    } catch (error: any) {
-      console.error('Error loading dataset:', error);
-      toast({
-        title: "Load Failed",
-        description: "Failed to load dataset for analysis",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleGenerateMockData = () => {
-    const mockData = generateMockDataset(100, 3);
-    handleDataSourceLoaded(mockData, 'AI Generated Sample Data');
-  };
+    setAnalysisData,
+    setShowOnboarding,
+    setActiveTab,
+    handleUserChange,
+    handleFileProcessed,
+    handleSaveToAccount,
+    handleDataSourceLoaded,
+    handleDatasetSelect,
+    handleGenerateMockData,
+    handleStartNewProject,
+    handleResumeProject
+  } = useQueryBuilderState();
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
-    toast({
-      title: "Welcome to Data Detective!",
-      description: "You're all set to start analyzing your data.",
-    });
   };
 
   const handleOnboardingSkip = () => {
     setShowOnboarding(false);
-    toast({
-      title: "Onboarding Skipped",
-      description: "You can always access help from the menu.",
-    });
-  };
-
-  const handleStartNewProject = () => {
-    setAnalysisData(null);
-    setCurrentFilename(null);
-    setCurrentDatasetId(null);
-    setFindings([]);
-    resetUpload();
-    setActiveTab('upload');
-  };
-
-  const handleResumeProject = () => {
-    setActiveTab('library');
   };
 
   if (loading) {
@@ -248,32 +121,10 @@ const QueryBuilder: React.FC = () => {
                 />
               )}
 
-              {/* Project CTAs */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <Card className="p-6 bg-gradient-to-br from-green-50 to-blue-50 border-green-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={handleStartNewProject}>
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-green-500 rounded-full">
-                      <Plus className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg text-gray-800">Start New Project</h3>
-                      <p className="text-gray-600">Upload new data and begin fresh analysis</p>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={handleResumeProject}>
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-purple-500 rounded-full">
-                      <Play className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg text-gray-800">Resume Project</h3>
-                      <p className="text-gray-600">Continue working on saved datasets</p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
+              <ProjectActionButtons
+                onStartNewProject={handleStartNewProject}
+                onResumeProject={handleResumeProject}
+              />
 
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-4">
@@ -295,113 +146,34 @@ const QueryBuilder: React.FC = () => {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="upload" className="space-y-6">
-                  <div className="text-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Select Your Data</h2>
-                    <p className="text-gray-600">Choose how you'd like to provide data for analysis</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card className="p-6 bg-white/80 backdrop-blur-sm border-purple-200">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Upload className="w-6 h-6 text-purple-600" />
-                        <h2 className="text-xl font-semibold">Upload Your Data</h2>
-                      </div>
-                      <RateLimitedDropzone 
-                        onFileProcessed={handleFileProcessed}
-                        maxFileSize={100}
-                        maxFilesPerHour={20}
-                      />
-                    </Card>
-
-                    <Card className="p-6 bg-white/80 backdrop-blur-sm border-green-200">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Wand2 className="w-6 h-6 text-green-600" />
-                        <h2 className="text-xl font-semibold">AI Data Generation</h2>
-                      </div>
-                      <p className="text-gray-600 mb-4">
-                        Don't have data? Let our AI generate sample datasets for practice
-                      </p>
-                      <Button onClick={handleGenerateMockData} className="w-full">
-                        Generate Sample Data
-                      </Button>
-                    </Card>
-                  </div>
-
-                  {(uploading || uploadStatus === 'complete' || uploadStatus === 'error') && (
-                    <EnhancedUploadProgress
-                      isUploading={uploading}
-                      progress={uploadProgress}
-                      status={uploadStatus}
-                      filename={uploadFilename}
-                      error={uploadError}
-                      estimatedTime={estimatedTime}
-                      onSaveToAccount={user ? handleSaveToAccount : undefined}
-                      showSaveOption={user && uploadStatus === 'complete'}
-                    />
-                  )}
+                <TabsContent value="upload">
+                  <DataUploadTab
+                    onFileProcessed={handleFileProcessed}
+                    onGenerateMockData={handleGenerateMockData}
+                    uploading={uploading}
+                    uploadProgress={uploadProgress}
+                    uploadStatus={uploadStatus}
+                    uploadFilename={uploadFilename}
+                    uploadError={uploadError}
+                    estimatedTime={estimatedTime}
+                    user={user}
+                    onSaveToAccount={handleSaveToAccount}
+                  />
                 </TabsContent>
 
                 <TabsContent value="library">
-                  {user ? (
-                    <div className="space-y-6">
-                      <div className="text-center">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Project History</h2>
-                        <p className="text-gray-600">Resume analysis on your saved datasets</p>
-                      </div>
-                      <DatasetLibrary onDatasetSelect={handleDatasetSelect} />
-                    </div>
-                  ) : (
-                    <Card className="text-center py-12">
-                      <div className="text-center">
-                        <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-600 mb-2">Sign In Required</h3>
-                        <p className="text-gray-500 mb-4">Create an account to save and manage your projects</p>
-                        <Button onClick={() => window.location.href = '/auth'}>
-                          Sign In / Sign Up
-                        </Button>
-                      </div>
-                    </Card>
-                  )}
+                  <ProjectLibraryTab
+                    user={user}
+                    onDatasetSelect={handleDatasetSelect}
+                  />
                 </TabsContent>
 
                 <TabsContent value="connect">
-                  <div className="space-y-6">
-                    <div className="text-center">
-                      <h2 className="text-2xl font-bold text-gray-800 mb-2">Connect Data Sources</h2>
-                      <p className="text-gray-600">Import data from external sources and databases</p>
-                    </div>
-                    <Card className="p-6 bg-white/80 backdrop-blur-sm border-blue-200">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Database className="w-6 h-6 text-blue-600" />
-                        <h2 className="text-xl font-semibold">External Data Sources</h2>
-                      </div>
-                      <DataSourceManager onFileUpload={handleFileProcessed} />
-                    </Card>
-                  </div>
+                  <DataSourceTab onFileUpload={handleFileProcessed} />
                 </TabsContent>
 
                 <TabsContent value="profile">
-                  {user ? (
-                    <div className="space-y-6">
-                      <div className="text-center">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">User Profile</h2>
-                        <p className="text-gray-600">Manage your account and preferences</p>
-                      </div>
-                      <UserProfilePanel />
-                    </div>
-                  ) : (
-                    <Card className="text-center py-12">
-                      <div className="text-center">
-                        <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-600 mb-2">Sign In Required</h3>
-                        <p className="text-gray-500 mb-4">Create an account to access your profile</p>
-                        <Button onClick={() => window.location.href = '/auth'}>
-                          Sign In / Sign Up
-                        </Button>
-                      </div>
-                    </Card>
-                  )}
+                  <ProfileTab user={user} />
                 </TabsContent>
               </Tabs>
             </div>

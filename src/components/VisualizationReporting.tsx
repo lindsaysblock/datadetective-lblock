@@ -2,28 +2,12 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  BarChart3,
-  LineChart,
-  PieChart,
-  TrendingUp,
-  Download,
-  Share2,
-  Calendar,
-  Filter,
-  Eye,
-  Mail,
-  FileText,
-  Image,
-  Presentation,
-  Clock,
-  Settings
-} from 'lucide-react';
+import { BarChart3, FileText, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import ReportsList from './reporting/ReportsList';
+import ReportCreator from './reporting/ReportCreator';
+import ReportScheduler from './reporting/ReportScheduler';
 
 interface Report {
   id: string;
@@ -73,25 +57,6 @@ const VisualizationReporting: React.FC<VisualizationReportingProps> = ({ onRepor
   const [selectedType, setSelectedType] = useState<Report['type']>('dashboard');
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
-
-  const getReportIcon = (type: Report['type']) => {
-    switch (type) {
-      case 'dashboard': return BarChart3;
-      case 'chart': return LineChart;
-      case 'table': return FileText;
-      case 'presentation': return Presentation;
-      default: return BarChart3;
-    }
-  };
-
-  const getStatusColor = (status: Report['status']) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-700';
-      case 'draft': return 'bg-yellow-100 text-yellow-700';
-      case 'archived': return 'bg-gray-100 text-gray-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
-  };
 
   const createReport = async () => {
     if (!newReportTitle.trim()) return;
@@ -181,131 +146,21 @@ const VisualizationReporting: React.FC<VisualizationReportingProps> = ({ onRepor
           <TabsTrigger value="schedule">Scheduling</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="reports" className="space-y-4">
-          <div className="grid gap-4">
-            {reports.map((report) => {
-              const IconComponent = getReportIcon(report.type);
-              
-              return (
-                <Card key={report.id} className="p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <IconComponent className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-800">{report.title}</h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs">
-                            {report.type}
-                          </Badge>
-                          <Badge className={`text-xs ${getStatusColor(report.status)}`}>
-                            {report.status}
-                          </Badge>
-                          {report.schedule && report.schedule !== 'none' && (
-                            <Badge className="bg-purple-100 text-purple-700 text-xs">
-                              <Clock className="w-3 h-3 mr-1" />
-                              {report.schedule}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Button size="sm" variant="outline" onClick={() => exportReport(report.id, 'pdf')}>
-                        <Download className="w-3 h-3 mr-1" />
-                        PDF
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => exportReport(report.id, 'excel')}>
-                        <Download className="w-3 h-3 mr-1" />
-                        Excel
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Share2 className="w-3 h-3 mr-1" />
-                        Share
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>Last generated: {report.lastGenerated.toLocaleDateString()}</span>
-                    {report.recipients && (
-                      <span>{report.recipients.length} recipient(s)</span>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+        <TabsContent value="reports">
+          <ReportsList reports={reports} onExportReport={exportReport} />
         </TabsContent>
 
-        <TabsContent value="create" className="space-y-4">
-          <Card className="p-4">
-            <h4 className="font-semibold mb-4">Create New Report</h4>
-            
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="report-title">Report Title</Label>
-                <Input
-                  id="report-title"
-                  placeholder="Enter report title..."
-                  value={newReportTitle}
-                  onChange={(e) => setNewReportTitle(e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <Label>Report Type</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {(['dashboard', 'chart', 'table', 'presentation'] as const).map((type) => {
-                    const IconComponent = getReportIcon(type);
-                    return (
-                      <Button
-                        key={type}
-                        variant={selectedType === type ? "default" : "outline"}
-                        onClick={() => setSelectedType(type)}
-                        className="flex items-center gap-2 justify-start"
-                      >
-                        <IconComponent className="w-4 h-4" />
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </Card>
+        <TabsContent value="create">
+          <ReportCreator
+            newReportTitle={newReportTitle}
+            selectedType={selectedType}
+            onTitleChange={setNewReportTitle}
+            onTypeChange={setSelectedType}
+          />
         </TabsContent>
 
-        <TabsContent value="schedule" className="space-y-4">
-          <div className="grid gap-4">
-            {reports.map((report) => (
-              <Card key={report.id} className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold">{report.title}</h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Current schedule: {report.schedule === 'none' ? 'Manual' : report.schedule}
-                    </p>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    {(['daily', 'weekly', 'monthly', 'none'] as const).map((schedule) => (
-                      <Button
-                        key={schedule}
-                        size="sm"
-                        variant={report.schedule === schedule ? "default" : "outline"}
-                        onClick={() => scheduleReport(report.id, schedule)}
-                      >
-                        {schedule === 'none' ? 'Manual' : schedule}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+        <TabsContent value="schedule">
+          <ReportScheduler reports={reports} onScheduleReport={scheduleReport} />
         </TabsContent>
       </Tabs>
     </Card>
