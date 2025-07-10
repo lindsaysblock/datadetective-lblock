@@ -100,6 +100,8 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
 
   const isReadyToAnalyze = Boolean(parsedData && researchQuestion.trim());
 
+  console.log('DataUploadFlow render:', { parsedData: !!parsedData, file: !!file, uploading, parsing });
+
   return (
     <div className="space-y-6">
       {/* Step 1: File Upload */}
