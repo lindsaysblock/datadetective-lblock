@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, FileText, Database, MessageSquare, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -20,7 +20,7 @@ import { useFileUpload } from '@/hooks/useFileUpload';
 const Index = () => {
   const { user, loading, handleUserChange } = useAuthState();
   const [activeTab, setActiveTab] = useState('dataExploration');
-  const [initialQuestion, setInitialQuestion] = useState('');
+  const [researchQuestion, setResearchQuestion] = useState('');
   const { toast } = useToast();
   const { datasets, saveDataset, loading: datasetsLoading, refreshDatasets } = useDatasetPersistence();
   const navigate = useNavigate();
@@ -74,6 +74,32 @@ const Index = () => {
     }
   };
 
+  const handleStartAnalysis = () => {
+    if (!parsedData) {
+      toast({
+        title: "No Data",
+        description: "Please upload data first before starting analysis.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!researchQuestion.trim()) {
+      toast({
+        title: "Missing Question",
+        description: "Please describe what you want to analyze or discover.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Here you would typically start the analysis process
+    toast({
+      title: "Analysis Started",
+      description: `Starting analysis: "${researchQuestion}"`,
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -105,51 +131,95 @@ const Index = () => {
           <Card className="mb-8 border-blue-300">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl font-bold">Data Exploration</CardTitle>
+                <CardTitle className="text-2xl font-bold">Data Detective</CardTitle>
                 <DashboardTabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
               </div>
               <CardDescription className="text-gray-600">
                 {activeTab === 'dataExploration'
-                  ? 'Upload a file to explore its contents and ask questions.'
+                  ? 'Upload your data and ask questions to discover insights.'
                   : 'View and manage your uploaded datasets.'}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {activeTab === 'dataExploration' ? (
-                <div className="space-y-4">
-                  <FileUploadSection
-                    file={file}
-                    uploading={uploading}
-                    parsing={parsing}
-                    onFileChange={handleFileChange}
-                    onFileUpload={handleFileUpload}
-                  />
+                <div className="space-y-6">
+                  {/* Step 1: Data Status */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`w-3 h-3 rounded-full ${parsedData ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      <h3 className="font-medium">Step 1: Your Data</h3>
+                    </div>
+                    {parsedData ? (
+                      <div className="flex items-center gap-2 text-sm text-green-700">
+                        <FileText className="w-4 h-4" />
+                        <span>Loaded: {file?.name} ({parsedData.rows?.length || 0} rows, {parsedData.columns?.length || 0} columns)</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <p className="text-sm text-gray-600">No data loaded. Upload a file to get started.</p>
+                        <FileUploadSection
+                          file={file}
+                          uploading={uploading}
+                          parsing={parsing}
+                          onFileChange={handleFileChange}
+                          onFileUpload={handleFileUpload}
+                        />
+                      </div>
+                    )}
+                  </div>
 
+                  {/* Step 2: Research Question */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`w-3 h-3 rounded-full ${researchQuestion.trim() ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      <h3 className="font-medium">Step 2: What do you want to discover?</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <Label htmlFor="researchQuestion" className="text-sm text-gray-700">
+                        Describe your research question or what you want to analyze
+                      </Label>
+                      <Input
+                        id="researchQuestion"
+                        placeholder="e.g., What factors influence customer satisfaction? Are there any sales trends over time?"
+                        value={researchQuestion}
+                        onChange={(e) => setResearchQuestion(e.target.value)}
+                        className="text-sm"
+                      />
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <MessageSquare className="w-3 h-3" />
+                        <span>Be specific about what insights you're looking for</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Data Preview */}
                   {parsedData && (
                     <div className="space-y-4">
-                      <DataPreviewGrid parsedData={parsedData} />
-
                       <Separator />
+                      <DataPreviewGrid parsedData={parsedData} />
+                    </div>
+                  )}
 
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <Label htmlFor="initialQuestion" className="block text-sm font-medium text-gray-700">
-                            Initial Question
-                          </Label>
-                          <Input
-                            type="text"
-                            id="initialQuestion"
-                            placeholder="What do you want to know about this data?"
-                            className="mt-1"
-                            value={initialQuestion}
-                            onChange={(e) => setInitialQuestion(e.target.value)}
-                          />
-                        </div>
-                        <Button onClick={handleSaveDataset}>
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
-                          Save Dataset
-                        </Button>
-                      </div>
+                  {/* Action Buttons */}
+                  {parsedData && (
+                    <div className="flex justify-between items-center pt-4 border-t">
+                      <Button 
+                        onClick={handleSaveDataset}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <Database className="w-4 h-4" />
+                        Save Dataset
+                      </Button>
+                      
+                      <Button 
+                        onClick={handleStartAnalysis}
+                        disabled={!researchQuestion.trim()}
+                        className="flex items-center gap-2"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        Start Analysis
+                      </Button>
                     </div>
                   )}
                 </div>
