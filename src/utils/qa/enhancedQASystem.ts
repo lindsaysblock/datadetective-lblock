@@ -1,4 +1,3 @@
-
 import { QAReport, QATestResult } from './types';
 import { DynamicCodebaseAnalyzer } from './analysis/dynamicCodebaseAnalyzer';
 import { EnhancedAutoRefactor } from './analysis/enhancedAutoRefactor';
@@ -17,10 +16,13 @@ export class EnhancedQASystem {
   private startTime: number = 0;
 
   async runEnhancedQA(): Promise<QAReport> {
-    console.log('🚀 Starting Enhanced QA System with dynamic analysis...');
+    console.log('🚀 Starting Enhanced QA System with compliance checking...');
     this.startTime = performance.now();
 
     try {
+      // Run compliance check first
+      await this.runComplianceCheck();
+      
       const codebaseAnalysis = await this.analyzeCodebase();
       const dynamicTests = await this.generateTests(codebaseAnalysis);
       const testResults = await this.executeTests(dynamicTests);
@@ -29,12 +31,21 @@ export class EnhancedQASystem {
       
       await this.executeRefactoringIfNeeded(refactorDecision);
       
-      console.log('✅ Enhanced QA analysis complete');
+      console.log('✅ Enhanced QA analysis complete with compliance enforcement');
       return report;
       
     } catch (error) {
       console.error('❌ Enhanced QA system error:', error);
       return this.generateErrorReport(error);
+    }
+  }
+
+  private async runComplianceCheck(): Promise<void> {
+    try {
+      const { autoComplianceSystem } = await import('./standards/autoComplianceSystem');
+      await autoComplianceSystem.runComplianceCheck();
+    } catch (error) {
+      console.warn('⚠️ Compliance check failed:', error);
     }
   }
 
