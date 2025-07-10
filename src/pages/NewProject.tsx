@@ -1,273 +1,267 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Plus, 
-  ArrowLeft, 
-  Sparkles, 
-  Target, 
-  Database,
-  FileText,
-  Lightbulb,
-  CheckCircle,
-  HelpCircle
-} from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Label } from '@/components/ui/label';
+import { ArrowLeft, ArrowRight, Upload, Database, Globe, FileText, CheckCircle2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import Header from '@/components/Header';
+import { useAuthState } from '@/hooks/useAuthState';
+
+interface Dataset {
+  name: string;
+  type: 'file' | 'database' | 'api';
+  file?: File | null;
+  url?: string;
+}
 
 const NewProject = () => {
-  const navigate = useNavigate();
-  const [projectName, setProjectName] = useState('');
-  const [researchQuestion, setResearchQuestion] = useState('');
+  const { user, handleUserChange } = useAuthState();
   const [step, setStep] = useState(1);
+  const [projectName, setProjectName] = useState('');
+  const [projectDescription, setProjectDescription] = useState('');
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [newDataset, setNewDataset] = useState<Dataset>({ name: '', type: 'file' });
+  const [file, setFile] = useState<File | null>(null);
+  const [url, setUrl] = useState('');
 
-  const handleCreateProject = () => {
-    // In a real app, this would create the project in your database/state
-    console.log('Creating project:', { projectName, researchQuestion });
-    
-    // Navigate to main explorer with the new project
-    navigate(`/?new-project=true&name=${encodeURIComponent(projectName)}&question=${encodeURIComponent(researchQuestion)}`);
+  const nextStep = () => setStep(prev => prev + 1);
+  const prevStep = () => setStep(prev => prev - 1);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setNewDataset(prev => ({ ...prev, name: selectedFile.name, file: selectedFile }));
+    }
   };
 
-  const sampleQuestions = [
-    "What factors are driving customer churn in our business?",
-    "How effective are our marketing campaigns across different channels?", 
-    "Which product features correlate with higher user engagement?",
-    "What are the patterns in our sales performance over time?",
-    "How do different customer segments behave on our platform?",
-    "What operational inefficiencies can we identify in our processes?"
-  ];
+  const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setUrl(event.target.value);
+    setNewDataset(prev => ({ ...prev, name: 'API Data', type: 'api', url: event.target.value }));
+  };
 
-  if (step === 1) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
-        <div className="max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <Link to="/history">
-              <Button variant="outline" className="flex items-center gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Back to History
-              </Button>
-            </Link>
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl shadow-lg">
-                <HelpCircle className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                  What Are You Trying to Answer?
-                </h1>
-                <p className="text-blue-600 text-lg">Start with your research question</p>
-              </div>
-            </div>
-          </div>
+  const addDataset = () => {
+    if (newDataset.name && (newDataset.file || newDataset.url)) {
+      setDatasets(prev => [...prev, newDataset]);
+      setNewDataset({ name: '', type: 'file' });
+      setFile(null);
+      setUrl('');
+    }
+  };
 
-          {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Research Question Form */}
-            <div className="space-y-6">
-              <Card className="border-green-200 bg-gradient-to-br from-green-50 to-blue-50">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3 text-green-800">
-                    <Target className="w-6 h-6" />
-                    Your Research Question
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-3">
-                      What question are you trying to answer with data? *
-                    </label>
-                    <Textarea
-                      placeholder="e.g., What factors are causing our customer retention to decline, and which segments are most at risk?"
-                      value={researchQuestion}
-                      onChange={(e) => setResearchQuestion(e.target.value)}
-                      className="border-green-200 focus:border-green-400 min-h-[120px] text-base"
-                    />
-                    <p className="text-sm text-green-700 mt-2 font-medium">
-                      💡 Tip: Be specific about what you want to discover or validate
-                    </p>
-                  </div>
+  const removeDataset = (index: number) => {
+    const updatedDatasets = [...datasets];
+    updatedDatasets.splice(index, 1);
+    setDatasets(updatedDatasets);
+  };
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Project Name *
-                    </label>
-                    <Input
-                      placeholder="Give your research a memorable name"
-                      value={projectName}
-                      onChange={(e) => setProjectName(e.target.value)}
-                      className="border-green-200 focus:border-green-400"
-                    />
-                  </div>
-
-                  <Button 
-                    onClick={() => setStep(2)}
-                    disabled={!projectName.trim() || !researchQuestion.trim()}
-                    className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-lg py-6"
-                    size="lg"
-                  >
-                    Continue to Data Setup
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Guidance and Examples */}
-            <div className="space-y-6">
-              <Card className="border-purple-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3">
-                    <Lightbulb className="w-5 h-5 text-yellow-600" />
-                    Example Research Questions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Click any example to use it as a starting point:
-                  </p>
-                  <div className="space-y-3">
-                    {sampleQuestions.map((question, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        className="w-full text-left justify-start h-auto p-4 border-purple-200 hover:bg-purple-50 hover:border-purple-300"
-                        onClick={() => setResearchQuestion(question)}
-                      >
-                        <span className="text-sm leading-relaxed">{question}</span>
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Best Practices */}
-              <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3 text-blue-800">
-                    <Sparkles className="w-5 h-5" />
-                    Question Guidelines
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-blue-800">
-                      <strong>Be specific:</strong> Instead of "analyze sales," ask "what drives sales differences between regions?"
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-blue-800">
-                      <strong>Focus on decisions:</strong> What action will you take based on the answer?
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-blue-800">
-                      <strong>Include context:</strong> Consider timeframes, segments, or conditions that matter
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleSubmit = () => {
+    // Handle project submission logic here
+    console.log('Project Name:', projectName);
+    console.log('Project Description:', projectDescription);
+    console.log('Datasets:', datasets);
+    // You would typically send this data to your backend
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <Header user={user} onUserChange={handleUserChange} />
+      
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <Button 
-            variant="outline" 
-            onClick={() => setStep(1)}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Research Question
-          </Button>
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl shadow-lg">
-              <Database className="w-7 h-7 text-white" />
+          <Link to="/">
+            <Button variant="outline" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+          </Link>
+          <div className="text-center flex-1 mx-8">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Start New Project
+            </h1>
+            <p className="text-blue-600 text-lg">Let's explore your data together</p>
+          </div>
+          <div className="w-24"></div> {/* Spacer for balance */}
+        </div>
+
+        {/* Stepper */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className={`flex items-center gap-2 ${step > 1 ? 'text-blue-600' : 'text-gray-400'}`}>
+              {step > 1 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
+              Project Details
             </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                Connect Your Data
-              </h1>
-              <p className="text-blue-600 text-lg">Upload files or connect data sources</p>
+            <div className={`flex items-center gap-2 ${step > 2 ? 'text-blue-600' : 'text-gray-400'}`}>
+              {step > 2 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
+              Add Datasets
+            </div>
+            <div className="flex items-center gap-2 text-gray-400">
+              <div className="w-5 h-5 rounded-full border border-gray-400"></div>
+              Review & Submit
             </div>
           </div>
+          <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mt-2" style={{ width: `${(step - 1) * 50}%` }}></div>
         </div>
 
-        {/* Research Question Summary */}
-        <Card className="mb-8 border-green-200 bg-gradient-to-br from-green-50 to-blue-50">
-          <CardContent className="p-6">
-            <h3 className="font-semibold text-green-800 mb-2">Research Question: {projectName}</h3>
-            <p className="text-green-700 italic">"{researchQuestion}"</p>
-          </CardContent>
-        </Card>
-
-        {/* Data Connection Options */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="border-blue-200 hover:border-blue-300 transition-all duration-200 cursor-pointer hover:shadow-md">
+        {/* Forms */}
+        {step === 1 && (
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-blue-600" />
-                Upload Files
-              </CardTitle>
+              <CardTitle>Project Details</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Upload CSV, JSON, or Excel files to start analyzing your data
-              </p>
-              <Button 
-                className="w-full" 
-                onClick={handleCreateProject}
-              >
-                Choose Files
-              </Button>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="name">Project Name</Label>
+                <Input
+                  id="name"
+                  placeholder="Enter project name"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Project Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe your project"
+                  value={projectDescription}
+                  onChange={(e) => setProjectDescription(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={nextStep}>
+                  Next <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
             </CardContent>
           </Card>
+        )}
 
-          <Card className="border-purple-200 hover:border-purple-300 transition-all duration-200 cursor-pointer hover:shadow-md">
+        {step === 2 && (
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <Database className="w-5 h-5 text-purple-600" />
-                Connect Database
-              </CardTitle>
+              <CardTitle>Add Datasets</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Connect to your database, data warehouse, or analytics platform
-              </p>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={handleCreateProject}
-              >
-                Setup Connection
-              </Button>
+            <CardContent className="space-y-4">
+              {/* Upload Dataset */}
+              <div>
+                <Label htmlFor="upload">Upload File</Label>
+                <div className="flex items-center space-x-4">
+                  <Input
+                    type="file"
+                    id="upload"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                  <Label htmlFor="upload" className="cursor-pointer bg-blue-100 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-200">
+                    <Upload className="w-4 h-4 mr-2 inline-block" />
+                    Choose File
+                  </Label>
+                  {file && <span className="text-gray-600">{file.name}</span>}
+                </div>
+              </div>
+
+              {/* Connect to Database */}
+              <div>
+                <Label htmlFor="database">Connect to Database</Label>
+                <Input
+                  id="database"
+                  placeholder="Enter database connection string"
+                  disabled
+                />
+                <p className="text-gray-500 text-sm mt-1">Coming Soon</p>
+              </div>
+
+              {/* Connect to API */}
+              <div>
+                <Label htmlFor="api">Connect to API</Label>
+                <div className="flex items-center space-x-4">
+                  <Input
+                    type="url"
+                    id="api"
+                    placeholder="Enter API endpoint URL"
+                    value={url}
+                    onChange={handleUrlChange}
+                  />
+                </div>
+              </div>
+
+              <Button onClick={addDataset} className="mt-4">Add Dataset</Button>
+
+              {/* Datasets List */}
+              {datasets.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-xl font-semibold mb-4">Datasets</h3>
+                  <ul>
+                    {datasets.map((dataset, index) => (
+                      <li key={index} className="flex items-center justify-between bg-gray-50 p-4 rounded-md mb-2">
+                        <div className="flex items-center gap-3">
+                          {dataset.type === 'file' && <FileText className="w-5 h-5 text-blue-500" />}
+                          {dataset.type === 'database' && <Database className="w-5 h-5 text-blue-500" />}
+                          {dataset.type === 'api' && <Globe className="w-5 h-5 text-blue-500" />}
+                          <span>{dataset.name}</span>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => removeDataset(index)} className="text-red-500">
+                          Remove
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex justify-between mt-8">
+                <Button variant="outline" onClick={prevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Previous
+                </Button>
+                <Button onClick={nextStep}>
+                  Next <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
             </CardContent>
           </Card>
-        </div>
+        )}
 
-        {/* Skip Option */}
-        <div className="text-center mt-8">
-          <Button 
-            variant="ghost" 
-            onClick={handleCreateProject}
-            className="text-blue-600 hover:text-blue-800"
-          >
-            Skip for now - I'll add data later
-          </Button>
-        </div>
+        {step === 3 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Review & Submit</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="text-xl font-semibold mb-2">Project Details</h3>
+                <p><strong>Name:</strong> {projectName}</p>
+                <p><strong>Description:</strong> {projectDescription}</p>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">Datasets</h3>
+                <ul>
+                  {datasets.map((dataset, index) => (
+                    <li key={index} className="flex items-center gap-3">
+                      {dataset.type === 'file' && <FileText className="w-5 h-5 text-blue-500" />}
+                      {dataset.type === 'database' && <Database className="w-5 h-5 text-blue-500" />}
+                      {dataset.type === 'api' && <Globe className="w-5 h-5 text-blue-500" />}
+                      <span>{dataset.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="flex justify-between mt-8">
+                <Button variant="outline" onClick={prevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Previous
+                </Button>
+                <Button onClick={handleSubmit}>Submit</Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

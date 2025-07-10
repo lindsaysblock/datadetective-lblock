@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
+import Header from '@/components/Header';
+import { useAuthState } from '@/hooks/useAuthState';
 
 interface Dataset {
   name: string;
@@ -38,6 +40,7 @@ interface Project {
 }
 
 const QueryHistory = () => {
+  const { user, handleUserChange } = useAuthState();
   const [searchTerm, setSearchTerm] = useState('');
   const [editingProject, setEditingProject] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -150,8 +153,10 @@ const QueryHistory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <Header user={user} onUserChange={handleUserChange} />
+      
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">

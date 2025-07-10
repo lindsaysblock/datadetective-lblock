@@ -9,6 +9,7 @@ import Auth from './pages/Auth';
 import NotFound from './pages/NotFound';
 import NewProject from './pages/NewProject';
 import QueryHistory from './pages/QueryHistory';
+import Profile from './pages/Profile';
 import QARunner from './components/QARunner';
 import AutoRefactorPrompts from './components/AutoRefactorPrompts';
 import './App.css';
@@ -24,6 +25,7 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/new-project" element={<NewProject />} />
             <Route path="/query-history" element={<QueryHistory />} />
             <Route path="*" element={<NotFound />} />

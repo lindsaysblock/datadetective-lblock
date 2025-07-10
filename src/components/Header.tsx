@@ -9,9 +9,10 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, UserCircle } from 'lucide-react';
+import { User, Settings, LogOut, UserCircle, History, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Link, useNavigate } from 'react-router-dom';
 import HelpMenu from './HelpMenu';
 
 interface HeaderProps {
@@ -21,6 +22,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ user, onUserChange }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
@@ -28,6 +30,7 @@ const Header: React.FC<HeaderProps> = ({ user, onUserChange }) => {
       if (error) throw error;
       
       onUserChange(null);
+      navigate('/');
       toast({
         title: "Signed Out",
         description: "You have been successfully signed out.",
@@ -42,22 +45,34 @@ const Header: React.FC<HeaderProps> = ({ user, onUserChange }) => {
     }
   };
 
-  const handleProfile = () => {
-    // Navigate to profile tab in main app
-    const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set('tab', 'profile');
-    window.history.pushState({}, '', currentUrl.toString());
-    window.location.reload(); // Simple way to trigger tab change
-  };
-
   return (
     <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-6">
-            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Data Detective
-            </h1>
+            <Link to="/" className="flex items-center gap-2">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Data Detective
+              </h1>
+            </Link>
+            
+            {user && (
+              <div className="flex items-center gap-2">
+                <Link to="/new-project">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    New Project
+                  </Button>
+                </Link>
+                
+                <Link to="/query-history">
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <History className="w-4 h-4" />
+                    Projects
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-4">
@@ -77,10 +92,12 @@ const Header: React.FC<HeaderProps> = ({ user, onUserChange }) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={handleProfile}>
-                    <UserCircle className="w-4 h-4 mr-2" />
-                    Profile & Settings
-                  </DropdownMenuItem>
+                  <Link to="/profile">
+                    <DropdownMenuItem>
+                      <UserCircle className="w-4 h-4 mr-2" />
+                      Profile & Settings
+                    </DropdownMenuItem>
+                  </Link>
                   
                   <DropdownMenuSeparator />
                   
@@ -91,9 +108,9 @@ const Header: React.FC<HeaderProps> = ({ user, onUserChange }) => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button onClick={() => window.location.href = '/auth'}>
-                Sign In
-              </Button>
+              <Link to="/auth">
+                <Button>Sign In</Button>
+              </Link>
             )}
           </div>
         </div>
