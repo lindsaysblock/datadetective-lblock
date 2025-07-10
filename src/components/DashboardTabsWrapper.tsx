@@ -1,118 +1,125 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import DashboardTabs from './dashboard/DashboardTabs';
-import InsightsTab from './dashboard/tabs/InsightsTab';
 import AnalyticsTab from './dashboard/tabs/AnalyticsTab';
+import InsightsTab from './dashboard/tabs/InsightsTab';
 import VisualizationTab from './dashboard/tabs/VisualizationTab';
-import ReportingTab from './dashboard/tabs/ReportingTab';
 import HypothesisTab from './dashboard/tabs/HypothesisTab';
 import FindingsTab from './dashboard/tabs/FindingsTab';
-import AuditTab from './dashboard/tabs/AuditTab';
-import QATab from './dashboard/tabs/QATab';
+import ReportingTab from './dashboard/tabs/ReportingTab';
 import ManageTab from './dashboard/tabs/ManageTab';
-import { type ParsedData } from '../utils/dataParser';
+import QATab from './dashboard/tabs/QATab';
+import AuditTab from './dashboard/tabs/AuditTab';
+import { ParsedData } from '@/utils/dataParser';
 
-const DashboardTabsWrapper: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('insights');
-  
-  // Mock data and handlers for demonstration
+interface DashboardTabsWrapperProps {
+  data?: ParsedData;
+}
+
+const DashboardTabsWrapper: React.FC<DashboardTabsWrapperProps> = ({ data }) => {
+  const [activeTab, setActiveTab] = useState('analytics');
+
   const mockData: ParsedData = {
-    columns: [],
-    rows: [],
+    columns: ['user_id', 'event_name', 'timestamp', 'value'],
+    rows: [
+      ['user_1', 'login', '2024-01-01T10:00:00Z', '1'],
+      ['user_2', 'purchase', '2024-01-01T11:00:00Z', '99.99']
+    ],
     summary: { 
-      totalRows: 0, 
-      totalColumns: 0,
-      possibleUserIdColumns: [],
-      possibleEventColumns: [],
-      possibleTimestampColumns: []
+      totalRows: 2, 
+      totalColumns: 4,
+      possibleUserIdColumns: ['user_id'],
+      possibleEventColumns: ['event_name'],
+      possibleTimestampColumns: ['timestamp']
     }
   };
   
-  const mockFindings: any[] = [];
-  const mockRecommendations: any[] = [];
+  const mockFindings = [
+    {
+      id: '1',
+      title: 'User Engagement Peak',
+      description: 'Peak user activity occurs between 10-11 AM',
+      confidence: 'high',
+      type: 'insight'
+    }
+  ];
 
-  const handleUpdateHypothesis = (hypothesis: any) => {
-    console.log('Hypothesis updated:', hypothesis);
-  };
+  const mockRecommendations = [
+    {
+      id: '1',
+      type: 'bar' as const,
+      title: 'User Activity by Hour',
+      description: 'Shows peak usage times',
+      config: { xAxis: 'hour', yAxis: 'count' }
+    }
+  ];
 
-  const handleHypothesisUpdate = (hypothesis: any) => {
-    console.log('Hypothesis update:', hypothesis);
-  };
+  const mockHypotheses = [
+    {
+      id: '1',
+      hypothesis: 'Users are more active in the morning',
+      status: 'testing' as const,
+      confidence: 0.75,
+      evidence: ['Peak activity at 10-11 AM', 'Lower evening engagement']
+    }
+  ];
 
-  const handleSelectVisualization = (type: string, data: any[]) => {
-    console.log('Visualization selected:', type, data);
-  };
-
-  const handleExportFinding = (finding: any) => {
-    console.log('Finding exported:', finding);
-  };
-
-  const handleShareFinding = (finding: any) => {
-    console.log('Finding shared:', finding);
-  };
-
-  const handleDataUpdate = (newData: ParsedData) => {
-    console.log('Data updated:', newData);
-  };
+  const currentData = data || mockData;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Analytics Dashboard
-        </h1>
-        <p className="text-gray-600 mt-2">
-          Comprehensive insights and analysis tools
-        </p>
-      </div>
-
+    <div className="w-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <DashboardTabs />
         
-        <TabsContent value="insights" className="mt-6">
-          <InsightsTab onUpdateHypothesis={handleUpdateHypothesis} />
-        </TabsContent>
-        
-        <TabsContent value="analytics" className="mt-6">
+        <TabsContent value="analytics">
           <AnalyticsTab />
         </TabsContent>
         
-        <TabsContent value="visualize" className="mt-6">
-          <VisualizationTab 
-            recommendations={mockRecommendations}
-            onSelectVisualization={handleSelectVisualization}
+        <TabsContent value="insights">
+          <InsightsTab 
+            onUpdateHypothesis={(hypothesis) => console.log('Update hypothesis:', hypothesis)}
           />
         </TabsContent>
         
-        <TabsContent value="reporting" className="mt-6">
+        <TabsContent value="visualization">
+          <VisualizationTab 
+            recommendations={mockRecommendations}
+            onSelectVisualization={(rec) => console.log('Selected visualization:', rec)}
+          />
+        </TabsContent>
+        
+        <TabsContent value="hypothesis">
+          <HypothesisTab 
+            onHypothesisUpdate={(hypotheses) => console.log('Hypotheses updated:', hypotheses)}
+          />
+        </TabsContent>
+        
+        <TabsContent value="findings">
+          <FindingsTab 
+            findings={mockFindings}
+            onExportFinding={(finding) => console.log('Export finding:', finding)}
+            onShareFinding={(finding) => console.log('Share finding:', finding)}
+          />
+        </TabsContent>
+        
+        <TabsContent value="reporting">
           <ReportingTab />
         </TabsContent>
         
-        <TabsContent value="hypothesis" className="mt-6">
-          <HypothesisTab onHypothesisUpdate={handleHypothesisUpdate} />
-        </TabsContent>
-        
-        <TabsContent value="findings" className="mt-6">
-          <FindingsTab 
-            findings={mockFindings}
-            onExportFinding={handleExportFinding}
-            onShareFinding={handleShareFinding}
+        <TabsContent value="manage">
+          <ManageTab 
+            data={currentData}
+            onDataUpdate={(newData) => console.log('Data updated:', newData)}
           />
         </TabsContent>
         
-        <TabsContent value="audit" className="mt-6">
-          <AuditTab />
-        </TabsContent>
-        
-        <TabsContent value="qa" className="mt-6">
+        <TabsContent value="qa">
           <QATab />
         </TabsContent>
         
-        <TabsContent value="manage" className="mt-6">
-          <ManageTab 
-            data={mockData}
-            onDataUpdate={handleDataUpdate}
-          />
+        <TabsContent value="audit">
+          <AuditTab />
         </TabsContent>
       </Tabs>
     </div>

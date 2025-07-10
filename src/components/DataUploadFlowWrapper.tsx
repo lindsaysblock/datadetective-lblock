@@ -1,62 +1,145 @@
 
-import React from 'react';
-import { useDataUpload } from '@/hooks/useDataUpload';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Upload, FileText, BarChart3 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import DataUploadFlow from './data/DataUploadFlow';
+import { useDataUpload } from '@/hooks/useDataUpload';
 
 const DataUploadFlowWrapper: React.FC = () => {
+  const [showUploadFlow, setShowUploadFlow] = useState(false);
+  const { toast } = useToast();
   const {
-    file,
-    uploading,
-    parsing,
+    selectedFile,
+    isUploading,
+    uploadProgress,
     parsedData,
-    researchQuestion,
-    handleFileChange,
+    error,
+    handleFileSelect,
     handleFileUpload,
-    handleResearchQuestionChange,
-    handleStartAnalysis,
-    handleSaveDataset
+    clearError
   } = useDataUpload();
 
-  // Wrapper function to handle file change events properly
-  const handleFileChangeEvent = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      handleFileChange(selectedFile);
-    }
-  };
-
-  // Wrapper function to handle file upload properly
-  const handleFileUploadClick = async () => {
+  const handleFileSelectWrapper = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
-      await handleFileUpload(file);
+      handleFileSelect(file);
     }
   };
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Start Your Data Analysis Journey
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Upload your data and let AI help you discover insights
-          </p>
-        </div>
-        
-        <DataUploadFlow
-          file={file}
-          uploading={uploading}
-          parsing={parsing}
-          parsedData={parsedData}
-          researchQuestion={researchQuestion}
-          onFileChange={handleFileChangeEvent}
-          onFileUpload={handleFileUploadClick}
-          onResearchQuestionChange={handleResearchQuestionChange}
-          onStartAnalysis={handleStartAnalysis}
-          onSaveDataset={handleSaveDataset}
+  const handleUploadClick = async () => {
+    if (selectedFile) {
+      try {
+        await handleFileUpload();
+        toast({
+          title: "Upload Successful",
+          description: "Your file has been processed successfully.",
+        });
+      } catch (error) {
+        toast({
+          title: "Upload Failed",
+          description: "There was an error processing your file.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  if (showUploadFlow) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DataUploadFlow 
+          onFileSelect={handleFileSelectWrapper}
+          onUpload={handleUploadClick}
         />
       </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto py-8 px-4">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-foreground mb-4">
+          Upload Your Data
+        </h1>
+        <p className="text-muted-foreground max-w-2xl mx-auto">
+          Start by uploading your dataset to begin analysis. We support CSV, JSON, and Excel files.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
+        <Card className="text-center hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <Upload className="w-12 h-12 mx-auto text-primary mb-2" />
+            <CardTitle className="text-lg">Upload Data</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Drag and drop or select files to upload your dataset
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="text-center hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <FileText className="w-12 h-12 mx-auto text-primary mb-2" />
+            <CardTitle className="text-lg">Process</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Automatically parse and validate your data structure
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="text-center hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <BarChart3 className="w-12 h-12 mx-auto text-primary mb-2" />
+            <CardTitle className="text-lg">Analyze</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Generate insights and visualizations from your data
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="text-center">
+        <Button 
+          onClick={() => setShowUploadFlow(true)}
+          size="lg"
+          className="px-8"
+        >
+          <Upload className="w-5 h-5 mr-2" />
+          Start Upload Process
+        </Button>
+      </div>
+
+      {error && (
+        <div className="mt-4 text-center">
+          <p className="text-destructive">{error}</p>
+          <Button onClick={clearError} variant="outline" className="mt-2">
+            Clear Error
+          </Button>
+        </div>
+      )}
+
+      {parsedData && (
+        <div className="mt-8 text-center">
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>Upload Complete</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Successfully processed {parsedData.summary.totalRows} rows and {parsedData.summary.totalColumns} columns
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
