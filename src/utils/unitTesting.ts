@@ -31,6 +31,12 @@ export interface UnitTestReport {
   };
 }
 
+interface AssertionHelper {
+  equal: (actual: any, expected: any, message?: string) => void;
+  truthy: (value: any, message?: string) => void;
+  falsy: (value: any, message?: string) => void;
+}
+
 export class UnitTestingSystem {
   private testSuites: Map<string, () => Promise<TestSuite>> = new Map();
 
@@ -112,13 +118,13 @@ export class UnitTestingSystem {
     return report;
   }
 
-  private async runTest(testName: string, testFn: () => void | Promise<void>): Promise<UnitTestResult> {
+  private async runTest(testName: string, testFn: (assert: AssertionHelper) => void | Promise<void>): Promise<UnitTestResult> {
     const startTime = performance.now();
     let assertions = 0;
     let passedAssertions = 0;
 
-    // Mock assertion helper
-    const assert = {
+    // Create assertion helper
+    const assert: AssertionHelper = {
       equal: (actual: any, expected: any, message?: string) => {
         assertions++;
         if (actual === expected) {
@@ -146,10 +152,7 @@ export class UnitTestingSystem {
     };
 
     try {
-      // Inject assert into global scope for test
-      (globalThis as any).assert = assert;
-      
-      await testFn();
+      await testFn(assert);
       
       return {
         testName,
@@ -167,8 +170,6 @@ export class UnitTestingSystem {
         assertions,
         passedAssertions
       };
-    } finally {
-      delete (globalThis as any).assert;
     }
   }
 
@@ -180,21 +181,21 @@ export class UnitTestingSystem {
     const suiteStart = performance.now();
     const tests: UnitTestResult[] = [];
 
-    tests.push(await this.runTest('CSV parsing with valid data', () => {
+    tests.push(await this.runTest('CSV parsing with valid data', (assert) => {
       const csvData = 'name,age,city\nJohn,25,NYC\nJane,30,LA';
       const lines = csvData.split('\n');
       assert.equal(lines.length, 3, 'Should parse 3 lines');
       assert.equal(lines[0], 'name,age,city', 'Header should be correct');
     }));
 
-    tests.push(await this.runTest('JSON parsing with valid data', () => {
+    tests.push(await this.runTest('JSON parsing with valid data', (assert) => {
       const jsonData = '{"users": [{"name": "John", "age": 25}]}';
       const parsed = JSON.parse(jsonData);
       assert.truthy(parsed.users, 'Should have users array');
       assert.equal(parsed.users.length, 1, 'Should have one user');
     }));
 
-    tests.push(await this.runTest('Empty data handling', () => {
+    tests.push(await this.runTest('Empty data handling', (assert) => {
       const emptyData = '';
       assert.falsy(emptyData, 'Empty string should be falsy');
     }));
@@ -219,7 +220,7 @@ export class UnitTestingSystem {
     const suiteStart = performance.now();
     const tests: UnitTestResult[] = [];
 
-    tests.push(await this.runTest('Component rendering', () => {
+    tests.push(await this.runTest('Component rendering', (assert) => {
       const element = document.createElement('div');
       element.innerHTML = '<button>Click me</button>';
       const button = element.querySelector('button');
@@ -227,7 +228,7 @@ export class UnitTestingSystem {
       assert.equal(button?.textContent, 'Click me', 'Button text should be correct');
     }));
 
-    tests.push(await this.runTest('Event handling', () => {
+    tests.push(await this.runTest('Event handling', (assert) => {
       const button = document.createElement('button');
       let clicked = false;
       button.onclick = () => { clicked = true; };
@@ -235,7 +236,7 @@ export class UnitTestingSystem {
       assert.truthy(clicked, 'Click event should be handled');
     }));
 
-    tests.push(await this.runTest('DOM manipulation', () => {
+    tests.push(await this.runTest('DOM manipulation', (assert) => {
       const container = document.createElement('div');
       const child = document.createElement('span');
       container.appendChild(child);
@@ -261,20 +262,20 @@ export class UnitTestingSystem {
     const suiteStart = performance.now();
     const tests: UnitTestResult[] = [];
 
-    tests.push(await this.runTest('String utilities', () => {
+    tests.push(await this.runTest('String utilities', (assert) => {
       const text = 'Hello World';
       assert.equal(text.toLowerCase(), 'hello world', 'Should convert to lowercase');
       assert.equal(text.length, 11, 'Should have correct length');
     }));
 
-    tests.push(await this.runTest('Array utilities', () => {
+    tests.push(await this.runTest('Array utilities', (assert) => {
       const arr = [1, 2, 3, 4, 5];
       const filtered = arr.filter(x => x > 3);
       assert.equal(filtered.length, 2, 'Should filter correctly');
       assert.equal(filtered[0], 4, 'First filtered item should be 4');
     }));
 
-    tests.push(await this.runTest('Date utilities', () => {
+    tests.push(await this.runTest('Date utilities', (assert) => {
       const now = new Date();
       const timestamp = now.getTime();
       assert.truthy(timestamp, 'Timestamp should be truthy');
@@ -300,14 +301,14 @@ export class UnitTestingSystem {
     const suiteStart = performance.now();
     const tests: UnitTestResult[] = [];
 
-    tests.push(await this.runTest('Data flow integration', () => {
+    tests.push(await this.runTest('Data flow integration', (assert) => {
       // Simulate data flow from upload to processing
       const mockFile = { name: 'test.csv', size: 1024 };
       assert.truthy(mockFile.name, 'File should have name');
       assert.equal(typeof mockFile.size, 'number', 'Size should be number');
     }));
 
-    tests.push(await this.runTest('Component integration', () => {
+    tests.push(await this.runTest('Component integration', (assert) => {
       // Test component interaction
       const parent = document.createElement('div');
       const child = document.createElement('input');
