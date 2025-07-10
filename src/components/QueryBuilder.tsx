@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Send, Database, Lightbulb, History, Code, Sparkles, Settings, Upload } from 'lucide-react';
+import { Send, Database, Lightbulb, History, Code, Sparkles, Settings, Upload, FolderOpen } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import DataSourceConfig from './DataSourceConfig';
 import { parseFile, generateDataInsights, ParsedData, parseRawText } from '../utils/dataParser';
@@ -323,6 +324,33 @@ const QueryBuilder = () => {
               </Button>
             </div>
           </div>
+          
+          {/* Quick Action Buttons */}
+          {messages.length === 1 && (
+            <div className="mt-6 flex justify-center">
+              <div className="flex gap-4">
+                <Link to="/new-project">
+                  <Button 
+                    size="lg"
+                    className="flex items-center gap-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-8 py-4 text-lg shadow-lg"
+                  >
+                    <Sparkles className="w-6 h-6" />
+                    Start New Project
+                  </Button>
+                </Link>
+                <Link to="/history">
+                  <Button 
+                    size="lg"
+                    variant="outline"
+                    className="flex items-center gap-3 border-blue-300 text-blue-700 hover:bg-blue-50 px-8 py-4 text-lg shadow-lg"
+                  >
+                    <FolderOpen className="w-6 h-6" />
+                    Continue Existing Project
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Messages */}
