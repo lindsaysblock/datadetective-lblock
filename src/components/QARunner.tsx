@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAutoQA } from '../hooks/useAutoQA';
 import { useAutoRefactor } from '../hooks/useAutoRefactor';
 import { useToast } from '@/hooks/use-toast';
 import { RefactoringSuggestion } from '../utils/qa/autoRefactorSystem';
+import LoadTestRunner from './LoadTestRunner';
 
 const QARunner: React.FC = () => {
   const { runManualQA, isAutoEnabled } = useAutoQA();
@@ -110,7 +110,11 @@ const QARunner: React.FC = () => {
     }
   }, [runManualQA, toast, hasRunInitialQA, autoRefactorEnabled]);
 
-  return null;
+  return (
+    <div className="space-y-6">
+      <LoadTestRunner />
+    </div>
+  );
 };
 
 export default QARunner;
