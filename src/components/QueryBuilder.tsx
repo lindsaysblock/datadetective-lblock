@@ -15,6 +15,7 @@ import UndoRedoControls from './UndoRedoControls';
 import { useAuthState } from '../hooks/useAuthState';
 import { useDataUpload } from '../hooks/useDataUpload';
 import { useUndoRedo } from '../hooks/useUndoRedo';
+import { useAutoQA } from '../hooks/useAutoQA';
 import { type ParsedData } from '../utils/dataParser';
 
 interface AppState {
@@ -41,6 +42,9 @@ const QueryBuilder = () => {
     estimatedTime,
     handleFileUpload
   } = useDataUpload();
+
+  // Initialize auto-QA system
+  const { lastReport, isAutoEnabled, toggleAutoQA } = useAutoQA();
 
   // Initialize undo/redo for app state
   const {
@@ -343,6 +347,31 @@ const QueryBuilder = () => {
               </p>
             </Card>
           </div>
+
+          {/* QA Status Display */}
+          {lastReport && (
+            <div className="mb-8 p-4 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl max-w-2xl mx-auto">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${
+                    lastReport.overall === 'pass' ? 'bg-green-500' : 
+                    lastReport.overall === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                  }`} />
+                  <span className="text-sm font-medium text-gray-700">
+                    Quality Score: {lastReport.passed}/{lastReport.totalTests} tests passed
+                  </span>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={toggleAutoQA}
+                  className={isAutoEnabled ? 'bg-green-50 border-green-200' : ''}
+                >
+                  Auto-QA: {isAutoEnabled ? 'ON' : 'OFF'}
+                </Button>
+              </div>
+            </div>
+          )}
           
           {!user && (
             <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl max-w-3xl mx-auto">

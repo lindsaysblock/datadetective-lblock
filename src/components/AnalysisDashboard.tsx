@@ -9,6 +9,7 @@ import VisualizationFindings from './VisualizationFindings';
 import DataManagementPanel from './DataManagementPanel';
 import AdvancedAnalytics from './AdvancedAnalytics';
 import VisualizationReporting from './VisualizationReporting';
+import QADashboard from './QADashboard';
 import { type ParsedData } from '../utils/dataParser';
 import AuditLogsPanel from './AuditLogsPanel';
 import DataGovernancePanel from './DataGovernancePanel';
@@ -197,7 +198,7 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-8 mb-8">
+        <TabsList className="grid w-full grid-cols-9 mb-8">
           <TabsTrigger value="insights" className="flex items-center gap-2">
             <Lightbulb className="w-4 h-4" />
             Business Insights
@@ -225,6 +226,10 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
           <TabsTrigger value="audit" className="flex items-center gap-2">
             <Shield className="w-4 h-4" />
             Audit
+          </TabsTrigger>
+          <TabsTrigger value="qa" className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            QA
           </TabsTrigger>
           <TabsTrigger value="manage" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
@@ -268,6 +273,10 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
             <AuditLogsPanel />
             <DataGovernancePanel />
           </div>
+        </TabsContent>
+
+        <TabsContent value="qa">
+          <QADashboard />
         </TabsContent>
 
         <TabsContent value="manage">
