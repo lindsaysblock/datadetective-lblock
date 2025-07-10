@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Lightbulb, BarChart3, Database, TestTube, Settings } from 'lucide-react';
+import { Lightbulb, BarChart3, Database, TestTube, Settings, Brain, FileText, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BusinessInsights from './BusinessInsights';
 import DataVisualization from './DataVisualization';
 import HypothesisTracker from './HypothesisTracker';
 import VisualizationFindings from './VisualizationFindings';
 import DataManagementPanel from './DataManagementPanel';
+import AdvancedAnalytics from './AdvancedAnalytics';
+import VisualizationReporting from './VisualizationReporting';
 import { type ParsedData } from '../utils/dataParser';
 
 interface AnalysisDashboardProps {
@@ -193,14 +195,22 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 mb-8">
+        <TabsList className="grid w-full grid-cols-8 mb-8">
           <TabsTrigger value="insights" className="flex items-center gap-2">
             <Lightbulb className="w-4 h-4" />
             Business Insights
           </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <Brain className="w-4 h-4" />
+            AI Analytics
+          </TabsTrigger>
           <TabsTrigger value="visualize" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Visualizations
+          </TabsTrigger>
+          <TabsTrigger value="reporting" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Reports
           </TabsTrigger>
           <TabsTrigger value="hypothesis" className="flex items-center gap-2">
             <TestTube className="w-4 h-4" />
@@ -210,9 +220,13 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
             <Database className="w-4 h-4" />
             Findings
           </TabsTrigger>
+          <TabsTrigger value="audit" className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Audit
+          </TabsTrigger>
           <TabsTrigger value="manage" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
-            Data Management
+            Manage
           </TabsTrigger>
         </TabsList>
 
@@ -220,11 +234,19 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
           <BusinessInsights onUpdateHypothesis={handleHypothesisUpdate} />
         </TabsContent>
 
+        <TabsContent value="analytics">
+          <AdvancedAnalytics />
+        </TabsContent>
+
         <TabsContent value="visualize">
           <DataVisualization 
             recommendations={recommendations}
             onSelectVisualization={handleSelectVisualization}
           />
+        </TabsContent>
+
+        <TabsContent value="reporting">
+          <VisualizationReporting />
         </TabsContent>
 
         <TabsContent value="hypothesis">
@@ -237,6 +259,16 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
             onExportFinding={handleExportFinding}
             onShareFinding={handleShareFinding}
           />
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <div className="text-center py-12">
+            <Shield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">Audit Logs & Data Governance</h3>
+            <p className="text-gray-500">
+              Track data access, changes, and compliance - Coming next!
+            </p>
+          </div>
         </TabsContent>
 
         <TabsContent value="manage">

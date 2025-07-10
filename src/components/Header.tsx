@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,13 +12,13 @@ import {
   Download, 
   Calendar,
   Key,
-  MessageCircle,
-  BarChart3
+  MessageCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { OAuthButtons } from './auth/OAuthButtons';
 import { EmailAuthTabs } from './auth/EmailAuthTabs';
+import DataDetectiveLogo from './DataDetectiveLogo';
 
 interface HeaderProps {
   user: any;
@@ -162,14 +161,7 @@ const Header = ({ user, onUserChange }: HeaderProps) => {
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl">
-            <BarChart3 className="w-6 h-6 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Data Detective
-          </h1>
-        </div>
+        <DataDetectiveLogo size="md" showText={true} animated={false} />
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 max-w-md">
