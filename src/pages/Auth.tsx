@@ -7,6 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { OAuthButtons } from '@/components/auth/OAuthButtons';
 import { EmailAuthTabs } from '@/components/auth/EmailAuthTabs';
+import { useAuthState } from '@/hooks/useAuthState';
+import DataDetectiveLogo from '@/components/DataDetectiveLogo';
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -14,24 +16,14 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuthState();
 
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate('/dashboard');
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        navigate('/dashboard');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    // Redirect to dashboard if user is already logged in
+    if (!authLoading && user) {
+      navigate('/dashboard');
+    }
+  }, [user, authLoading, navigate]);
 
   const signInWithEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +40,12 @@ const Auth = () => {
           description: error.message,
           variant: "destructive",
         });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "You have been signed in successfully.",
+        });
+        // Navigation will happen automatically via useEffect when user state updates
       }
     } catch (error) {
       toast({
@@ -95,12 +93,26 @@ const Auth = () => {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-6">
+        <div className="text-center">
+          <DataDetectiveLogo />
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="mb-4">
+            <DataDetectiveLogo size="sm" />
+          </div>
           <CardTitle className="text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Welcome to Data Explorer
+            Welcome to Data Detective
           </CardTitle>
           <CardDescription>
             Sign in to start discovering insights from your data

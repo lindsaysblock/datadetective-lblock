@@ -13,6 +13,7 @@ import Header from './Header';
 import { generateMockDataset } from '@/utils/mockData';
 import { parseFile } from '@/utils/dataParser';
 import QARunner from './QARunner';
+import { useAuthState } from '@/hooks/useAuthState';
 
 interface AnalysisData {
   columns: any[];
@@ -24,7 +25,7 @@ const QueryBuilder: React.FC = () => {
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [currentFilename, setCurrentFilename] = useState<string | null>(null);
   const [findings, setFindings] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null);
+  const { user, loading, handleUserChange } = useAuthState();
   const { toast } = useToast();
 
   const handleFileProcessed = useCallback(async (file: File) => {
@@ -47,7 +48,6 @@ const QueryBuilder: React.FC = () => {
   }, [toast]);
 
   const handleDataSourceLoaded = (data: any, sourceName: string) => {
-    // Simulate parsing and summarizing data
     const columns = Object.keys(data[0] || {}).map(key => ({
       name: key,
       type: 'string',
@@ -85,10 +85,21 @@ const QueryBuilder: React.FC = () => {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center">
+          <DataDetectiveLogo />
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <QARunner />
-      <Header user={user} onUserChange={setUser} />
+      <Header user={user} onUserChange={handleUserChange} />
       
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">

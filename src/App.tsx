@@ -10,6 +10,7 @@ import QueryHistory from "./pages/QueryHistory";
 import NewProject from "./pages/NewProject";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -21,11 +22,31 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/dashboard" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/history" element={<QueryHistory />} />
-          <Route path="/new-project" element={<NewProject />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/history" 
+            element={
+              <ProtectedRoute>
+                <QueryHistory />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/new-project" 
+            element={
+              <ProtectedRoute>
+                <NewProject />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
