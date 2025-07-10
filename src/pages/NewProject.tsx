@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { ArrowLeft, ArrowRight, Upload, Database, Globe, FileText, CheckCircle2 
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import { useAuthState } from '@/hooks/useAuthState';
+import { AnalysisActionSection } from '@/components/data/upload/AnalysisActionSection';
 
 interface Dataset {
   name: string;
@@ -25,6 +27,8 @@ const NewProject = () => {
   const [newDataset, setNewDataset] = useState<Dataset>({ name: '', type: 'file' });
   const [file, setFile] = useState<File | null>(null);
   const [url, setUrl] = useState('');
+  const [researchQuestion, setResearchQuestion] = useState('');
+  const [parsedData, setParsedData] = useState<any>(null);
 
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
@@ -34,6 +38,8 @@ const NewProject = () => {
     if (selectedFile) {
       setFile(selectedFile);
       setNewDataset(prev => ({ ...prev, name: selectedFile.name, file: selectedFile }));
+      // Simulate parsing the file
+      setParsedData({ rows: 100, columns: 10, preview: [] });
     }
   };
 
@@ -57,12 +63,8 @@ const NewProject = () => {
     setDatasets(updatedDatasets);
   };
 
-  const handleSubmit = () => {
-    // Handle project submission logic here
-    console.log('Project Name:', projectName);
-    console.log('Project Description:', projectDescription);
-    console.log('Datasets:', datasets);
-    // You would typically send this data to your backend
+  const handleStartAnalysis = () => {
+    console.log('Starting analysis with question:', researchQuestion);
   };
 
   return (
@@ -84,7 +86,7 @@ const NewProject = () => {
             </h1>
             <p className="text-blue-600 text-lg">Let's explore your data together</p>
           </div>
-          <div className="w-24"></div> {/* Spacer for balance */}
+          <div className="w-24"></div>
         </div>
 
         {/* Stepper */}
@@ -98,15 +100,15 @@ const NewProject = () => {
               {step > 2 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
               Add Datasets
             </div>
-            <div className="flex items-center gap-2 text-gray-400">
-              <div className="w-5 h-5 rounded-full border border-gray-400"></div>
-              Review & Submit
+            <div className={`flex items-center gap-2 ${step > 3 ? 'text-blue-600' : 'text-gray-400'}`}>
+              {step > 3 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
+              Analysis Setup
             </div>
           </div>
-          <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mt-2" style={{ width: `${(step - 1) * 50}%` }}></div>
+          <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mt-2" style={{ width: `${((step - 1) / 3) * 100}%` }}></div>
         </div>
 
-        {/* Forms */}
+        {/* Step 1: Project Details */}
         {step === 1 && (
           <Card>
             <CardHeader>
@@ -140,6 +142,7 @@ const NewProject = () => {
           </Card>
         )}
 
+        {/* Step 2: Add Datasets */}
         {step === 2 && (
           <Card>
             <CardHeader>
@@ -189,7 +192,13 @@ const NewProject = () => {
                 </div>
               </div>
 
-              <Button onClick={addDataset} className="mt-4">Add Dataset</Button>
+              <Button 
+                onClick={addDataset} 
+                className="mt-4"
+                disabled={!file && !url}
+              >
+                Add Dataset
+              </Button>
 
               {/* Datasets List */}
               {datasets.length > 0 && (
@@ -218,7 +227,7 @@ const NewProject = () => {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Previous
                 </Button>
-                <Button onClick={nextStep}>
+                <Button onClick={nextStep} disabled={datasets.length === 0 && !file}>
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
@@ -226,38 +235,25 @@ const NewProject = () => {
           </Card>
         )}
 
+        {/* Step 3: Analysis Setup */}
         {step === 3 && (
           <Card>
             <CardHeader>
-              <CardTitle>Review & Submit</CardTitle>
+              <CardTitle>Analysis Setup</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Project Details</h3>
-                <p><strong>Name:</strong> {projectName}</p>
-                <p><strong>Description:</strong> {projectDescription}</p>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Datasets</h3>
-                <ul>
-                  {datasets.map((dataset, index) => (
-                    <li key={index} className="flex items-center gap-3">
-                      {dataset.type === 'file' && <FileText className="w-5 h-5 text-blue-500" />}
-                      {dataset.type === 'database' && <Database className="w-5 h-5 text-blue-500" />}
-                      {dataset.type === 'api' && <Globe className="w-5 h-5 text-blue-500" />}
-                      <span>{dataset.name}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <AnalysisActionSection
+                researchQuestion={researchQuestion}
+                setResearchQuestion={setResearchQuestion}
+                parsedData={parsedData || (datasets.length > 0 ? { rows: 100, columns: 10 } : null)}
+                onStartAnalysis={handleStartAnalysis}
+              />
 
               <div className="flex justify-between mt-8">
                 <Button variant="outline" onClick={prevStep}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Previous
                 </Button>
-                <Button onClick={handleSubmit}>Submit</Button>
               </div>
             </CardContent>
           </Card>

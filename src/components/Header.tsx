@@ -19,9 +19,10 @@ import DataDetectiveLogo from './DataDetectiveLogo';
 interface HeaderProps {
   user: any;
   onUserChange: (user: any) => void;
+  onShowSignIn?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onUserChange }) => {
+const Header: React.FC<HeaderProps> = ({ user, onUserChange, onShowSignIn }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -107,9 +108,9 @@ const Header: React.FC<HeaderProps> = ({ user, onUserChange }) => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link to="/auth">
-                <Button>Sign In</Button>
-              </Link>
+              <Button onClick={onShowSignIn}>
+                Sign In / Sign Up
+              </Button>
             )}
           </div>
         </div>

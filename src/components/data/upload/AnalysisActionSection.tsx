@@ -1,117 +1,186 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Search, Save, Sparkles, GraduationCap } from 'lucide-react';
-import AnalyzingIcon from '@/components/AnalyzingIcon';
+import { Sparkles, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { SignInModal } from '@/components/auth/SignInModal';
+import { useAuthState } from '@/hooks/useAuthState';
 
 interface AnalysisActionSectionProps {
-  isReadyToAnalyze: boolean;
+  researchQuestion: string;
+  setResearchQuestion: (question: string) => void;
   parsedData: any;
   onStartAnalysis: () => void;
-  onSaveDataset: () => void;
-  teachModeEnabled?: boolean;
-  onTeachModeToggle?: (enabled: boolean) => void;
 }
 
-const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
-  isReadyToAnalyze,
+export const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
+  researchQuestion,
+  setResearchQuestion,
   parsedData,
-  onStartAnalysis,
-  onSaveDataset,
-  teachModeEnabled = false,
-  onTeachModeToggle
+  onStartAnalysis
 }) => {
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { user } = useAuthState();
+  const [showSignInModal, setShowSignInModal] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
+  const { toast } = useToast();
 
-  const handleStartAnalysis = () => {
-    setIsAnalyzing(true);
+  const handleAnalyzeClick = () => {
+    if (!user) {
+      setShowSignInModal(true);
+      return;
+    }
+
+    if (!parsedData) {
+      toast({
+        title: "No Data",
+        description: "Please upload data first before starting analysis.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!researchQuestion.trim()) {
+      toast({
+        title: "Missing Question",
+        description: "Please describe what you want to analyze or discover.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAnalyzing(true);
     onStartAnalysis();
     
-    // Simulate analysis duration
+    // Simulate analysis time
     setTimeout(() => {
-      setIsAnalyzing(false);
-    }, 5000);
+      setAnalyzing(false);
+      toast({
+        title: "Analysis Complete",
+        description: "Your data analysis is ready!",
+      });
+    }, 3000);
   };
 
-  if (isAnalyzing) {
-    return (
-      <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
-        <CardContent className="p-8">
-          <AnalyzingIcon isAnalyzing={true} />
-        </CardContent>
-      </Card>
-    );
-  }
+  const signInWithEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setAuthLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "You have been signed in successfully.",
+        });
+        setShowSignInModal(false);
+        // Automatically start analysis after sign in
+        setTimeout(() => handleAnalyzeClick(), 100);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const signUpWithEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setAuthLoading(true);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/new-project`
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Check your email for the confirmation link!",
+        });
+        setShowSignInModal(false);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setAuthLoading(false);
+    }
+  };
 
   return (
-    <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-semibold">
-                4
-              </div>
-              <Search className="w-6 h-6 text-purple-600" />
-              <h3 className="text-lg font-semibold text-gray-800">Step 4: Ready to Investigate?</h3>
-            </div>
-            <p className="text-gray-600 mb-4">
-              Let our AI detective analyze your data and uncover insights
-            </p>
-            
-            {/* Education Toggle */}
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="teach-mode"
-                  checked={teachModeEnabled}
-                  onCheckedChange={onTeachModeToggle}
-                />
-                <Label htmlFor="teach-mode" className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-                  <GraduationCap className="w-4 h-4 text-blue-600" />
-                  Teach me how to code queries
-                </Label>
-              </div>
-            </div>
-            
-            {teachModeEnabled && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                <p className="text-blue-700 text-sm">
-                  🎓 <strong>Learning Mode Enabled:</strong> We'll show you how to write SQL queries 
-                  and explain each step of the analysis process.
-                </p>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex gap-3">
-            {parsedData && (
-              <Button 
-                onClick={onSaveDataset}
-                variant="outline"
-                className="border-purple-200 hover:bg-purple-50"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save Dataset
-              </Button>
-            )}
-            
-            <Button 
-              onClick={handleStartAnalysis}
-              disabled={!isReadyToAnalyze}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-6"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Start Detective Analysis
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="research-question">Research Question</Label>
+        <Textarea
+          id="research-question"
+          placeholder="What do you want to discover from this data? (e.g., 'What are the main trends in sales over time?')"
+          value={researchQuestion}
+          onChange={(e) => setResearchQuestion(e.target.value)}
+          className="min-h-[100px]"
+        />
+      </div>
+      
+      <Button 
+        onClick={handleAnalyzeClick}
+        disabled={analyzing}
+        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+        size="lg"
+      >
+        {analyzing ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Analyzing Data...
+          </>
+        ) : (
+          <>
+            <Sparkles className="w-4 h-4 mr-2" />
+            Start Detective Analysis
+          </>
+        )}
+      </Button>
+
+      <SignInModal
+        open={showSignInModal}
+        onOpenChange={setShowSignInModal}
+        email={email}
+        password={password}
+        loading={authLoading}
+        setEmail={setEmail}
+        setPassword={setPassword}
+        onSignIn={signInWithEmail}
+        onSignUp={signUpWithEmail}
+      />
+    </div>
   );
 };
-
-export default AnalysisActionSection;
