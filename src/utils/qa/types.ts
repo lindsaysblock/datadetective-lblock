@@ -30,6 +30,10 @@ export interface PerformanceMetrics {
   testExecutionMetrics?: Record<string, number>;
   systemEfficiency?: number;
   memoryEfficiency?: number;
+  codebaseHealth?: number;
+  refactoringReadiness?: number;
+  dynamicAnalysisEnabled?: boolean;
+  enhancedMode?: boolean;
 }
 
 export interface RefactoringRecommendation {
