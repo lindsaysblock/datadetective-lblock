@@ -21,10 +21,15 @@ const DashboardTabsWrapper: React.FC<DashboardTabsWrapperProps> = ({ data }) => 
   const [activeTab, setActiveTab] = useState('analytics');
 
   const mockData: ParsedData = {
-    columns: ['user_id', 'event_name', 'timestamp', 'value'],
+    columns: [
+      { name: 'user_id', type: 'string', samples: ['user_1', 'user_2'] },
+      { name: 'event_name', type: 'string', samples: ['login', 'purchase'] },
+      { name: 'timestamp', type: 'date', samples: ['2024-01-01T10:00:00Z', '2024-01-01T11:00:00Z'] },
+      { name: 'value', type: 'number', samples: [1, 99.99] }
+    ],
     rows: [
-      ['user_1', 'login', '2024-01-01T10:00:00Z', '1'],
-      ['user_2', 'purchase', '2024-01-01T11:00:00Z', '99.99']
+      { user_id: 'user_1', event_name: 'login', timestamp: '2024-01-01T10:00:00Z', value: 1 },
+      { user_id: 'user_2', event_name: 'purchase', timestamp: '2024-01-01T11:00:00Z', value: 99.99 }
     ],
     summary: { 
       totalRows: 2, 
@@ -70,7 +75,10 @@ const DashboardTabsWrapper: React.FC<DashboardTabsWrapperProps> = ({ data }) => 
   return (
     <div className="w-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <DashboardTabs />
+        <DashboardTabs 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
         
         <TabsContent value="analytics">
           <AnalyticsTab />

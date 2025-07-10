@@ -11,27 +11,31 @@ const DataUploadFlowWrapper: React.FC = () => {
   const [showUploadFlow, setShowUploadFlow] = useState(false);
   const { toast } = useToast();
   const {
-    selectedFile,
-    isUploading,
+    file,
+    uploading,
     uploadProgress,
     parsedData,
-    error,
-    handleFileSelect,
+    uploadError,
+    handleFileChange,
     handleFileUpload,
-    clearError
+    researchQuestion,
+    handleResearchQuestionChange,
+    handleStartAnalysis,
+    handleSaveDataset,
+    resetUpload
   } = useDataUpload();
 
   const handleFileSelectWrapper = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      handleFileSelect(file);
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      handleFileChange(selectedFile);
     }
   };
 
   const handleUploadClick = async () => {
-    if (selectedFile) {
+    if (file) {
       try {
-        await handleFileUpload();
+        await handleFileUpload(file);
         toast({
           title: "Upload Successful",
           description: "Your file has been processed successfully.",
@@ -50,8 +54,16 @@ const DataUploadFlowWrapper: React.FC = () => {
     return (
       <div className="min-h-screen bg-background">
         <DataUploadFlow 
-          onFileSelect={handleFileSelectWrapper}
-          onUpload={handleUploadClick}
+          file={file}
+          uploading={uploading}
+          parsing={false}
+          parsedData={parsedData}
+          researchQuestion={researchQuestion}
+          onFileChange={handleFileSelectWrapper}
+          onFileUpload={handleUploadClick}
+          onResearchQuestionChange={handleResearchQuestionChange}
+          onStartAnalysis={handleStartAnalysis}
+          onSaveDataset={handleSaveDataset}
         />
       </div>
     );
@@ -117,10 +129,10 @@ const DataUploadFlowWrapper: React.FC = () => {
         </Button>
       </div>
 
-      {error && (
+      {uploadError && (
         <div className="mt-4 text-center">
-          <p className="text-destructive">{error}</p>
-          <Button onClick={clearError} variant="outline" className="mt-2">
+          <p className="text-destructive">{uploadError}</p>
+          <Button onClick={resetUpload} variant="outline" className="mt-2">
             Clear Error
           </Button>
         </div>
