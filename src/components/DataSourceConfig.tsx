@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log('File selected for upload:', file.name, file.size, 'bytes');
       onFileUpload(file);
       const newSource: DataSource = {
         id: Date.now().toString(),
@@ -45,9 +47,13 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
   };
 
   const handleRawDataPaste = () => {
-    if (!rawDataText.trim()) return;
+    if (!rawDataText.trim()) {
+      console.log('No raw data text provided');
+      return;
+    }
     
     try {
+      console.log('Processing pasted data, length:', rawDataText.length);
       const parsedData = parseRawText(rawDataText);
       onFileUpload(new File([rawDataText], 'pasted-data.txt', { type: 'text/plain' }));
       
@@ -60,6 +66,7 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
       };
       setConnectedSources(prev => [...prev, newSource]);
       setRawDataText('');
+      console.log('Pasted data processed successfully');
     } catch (error) {
       console.error('Error parsing pasted data:', error);
     }
@@ -84,8 +91,12 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
   };
 
   const connectAnalytics = () => {
-    if (!apiKey.trim()) return;
+    if (!apiKey.trim()) {
+      console.log('No API key provided for analytics connection');
+      return;
+    }
     
+    console.log('Connecting to analytics platform with API key');
     const newSource: DataSource = {
       id: Date.now().toString(),
       name: 'Analytics Platform',
@@ -99,8 +110,12 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
   };
 
   const connectDatabase = () => {
-    if (!databaseUrl.trim()) return;
+    if (!databaseUrl.trim()) {
+      console.log('No database URL provided');
+      return;
+    }
     
+    console.log('Connecting to database:', databaseUrl.substring(0, 20) + '...');
     const newSource: DataSource = {
       id: Date.now().toString(),
       name: 'Database Connection',
@@ -114,6 +129,7 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
   };
 
   const connectProgrammingEnv = (envName: 'python' | 'r' | 'matlab') => {
+    console.log('Connecting to programming environment:', envName);
     const newSource: DataSource = {
       id: Date.now().toString(),
       name: `${envName.toUpperCase()} Environment`,
@@ -126,6 +142,7 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
   };
 
   const connectCloudPlatform = (platformName: string, type: 'cloud' | 'warehouse') => {
+    console.log('Connecting to cloud platform:', platformName);
     const newSource: DataSource = {
       id: Date.now().toString(),
       name: platformName,
@@ -138,6 +155,7 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
   };
 
   const connectBITool = (toolName: 'tableau' | 'powerbi' | 'looker') => {
+    console.log('Connecting to BI tool:', toolName);
     const newSource: DataSource = {
       id: Date.now().toString(),
       name: `${toolName.charAt(0).toUpperCase() + toolName.slice(1)} Integration`,
@@ -156,21 +174,21 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
         <p className="text-gray-600">Upload files, paste data directly, or connect to your data sources</p>
       </div>
 
-      <Tabs defaultValue="database" className="w-full">
+      <Tabs defaultValue="files" className="w-full">
         <TabsList className="grid w-full grid-cols-8">
-          <TabsTrigger value="database" className="flex items-center gap-1 text-xs">
-            <Database className="w-3 h-3" />
-            SQL
+          <TabsTrigger value="files" className="flex items-center gap-1 text-xs">
+            <Upload className="w-3 h-3" />
+            Files
           </TabsTrigger>
           <TabsTrigger value="paste" className="flex items-center gap-1 text-xs">
             <FileText className="w-3 h-3" />
             Paste
           </TabsTrigger>
-          <TabsTrigger value="file" className="flex items-center gap-1 text-xs">
-            <Upload className="w-3 h-3" />
-            Files
+          <TabsTrigger value="database" className="flex items-center gap-1 text-xs">
+            <Database className="w-3 h-3" />
+            SQL
           </TabsTrigger>
-          <TabsTrigger value="programming" className="flex items-center gap-1 text-xs">
+          <TabsTrigger value="code" className="flex items-center gap-1 text-xs">
             <Code className="w-3 h-3" />
             Code
           </TabsTrigger>
@@ -192,27 +210,26 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="database" className="space-y-4">
+        <TabsContent value="files" className="space-y-4">
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">SQL Database Connection</h3>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="db-url">Database Connection String</Label>
+            <div className="text-center">
+              <Upload className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Upload Data Files</h3>
+              <p className="text-gray-600 mb-4">Upload CSV, JSON, or Excel files with your data</p>
+              <Label htmlFor="file-upload" className="cursor-pointer">
+                <div className="border-2 border-dashed border-blue-300 hover:border-blue-400 rounded-lg p-6 transition-colors">
+                  <FileText className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                  <span className="text-blue-600 font-medium">Click to upload or drag and drop</span>
+                  <p className="text-sm text-gray-500 mt-1">Supports CSV, JSON, XLSX files up to 50MB</p>
+                </div>
                 <Input
-                  id="db-url"
-                  type="password"
-                  placeholder="postgresql://user:pass@host:port/database"
-                  value={databaseUrl}
-                  onChange={(e) => setDatabaseUrl(e.target.value)}
+                  id="file-upload"
+                  type="file"
+                  accept=".csv,.json,.xlsx,.xls"
+                  onChange={handleFileUpload}
+                  className="hidden"
                 />
-              </div>
-              <Button onClick={connectDatabase} className="w-full">
-                Connect Database
-              </Button>
-            </div>
-            <div className="mt-4 text-sm text-gray-600">
-              <p>🗄️ Supports: PostgreSQL, MySQL, SQLite, SQL Server</p>
-              <p>🔐 Read-only access recommended for safety</p>
+              </Label>
             </div>
           </Card>
         </TabsContent>
@@ -253,31 +270,32 @@ Examples:
           </Card>
         </TabsContent>
 
-        <TabsContent value="file" className="space-y-4">
+        <TabsContent value="database" className="space-y-4">
           <Card className="p-6">
-            <div className="text-center">
-              <Upload className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Upload Data Files</h3>
-              <p className="text-gray-600 mb-4">Upload CSV, JSON, or Excel files with your data</p>
-              <Label htmlFor="file-upload" className="cursor-pointer">
-                <div className="border-2 border-dashed border-blue-300 hover:border-blue-400 rounded-lg p-6 transition-colors">
-                  <FileText className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                  <span className="text-blue-600 font-medium">Click to upload or drag and drop</span>
-                  <p className="text-sm text-gray-500 mt-1">Supports CSV, JSON, XLSX files up to 50MB</p>
-                </div>
+            <h3 className="text-lg font-semibold mb-4">SQL Database Connection</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="db-url">Database Connection String</Label>
                 <Input
-                  id="file-upload"
-                  type="file"
-                  accept=".csv,.json,.xlsx,.xls"
-                  onChange={handleFileUpload}
-                  className="hidden"
+                  id="db-url"
+                  type="password"
+                  placeholder="postgresql://user:pass@host:port/database"
+                  value={databaseUrl}
+                  onChange={(e) => setDatabaseUrl(e.target.value)}
                 />
-              </Label>
+              </div>
+              <Button onClick={connectDatabase} className="w-full">
+                Connect Database
+              </Button>
+            </div>
+            <div className="mt-4 text-sm text-gray-600">
+              <p>🗄️ Supports: PostgreSQL, MySQL, SQLite, SQL Server</p>
+              <p>🔐 Read-only access recommended for safety</p>
             </div>
           </Card>
         </TabsContent>
 
-        <TabsContent value="programming" className="space-y-4">
+        <TabsContent value="code" className="space-y-4">
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Programming Languages & Environments</h3>
             <p className="text-gray-600 mb-6">Connect to popular data science and analysis environments</p>

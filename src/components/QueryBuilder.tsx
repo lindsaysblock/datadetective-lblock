@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,28 +37,39 @@ const QueryBuilder = () => {
   const [insights, setInsights] = useState<string[]>([]);
   const [user, setUser] = useState<any>(null);
   const [findings, setFindings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const initializeAuth = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
+        // Get current session
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user || null);
+        
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          console.log('Auth state changed:', event, session?.user?.email);
+          setUser(session?.user || null);
+        });
+
+        return () => subscription.unsubscribe();
       } catch (error) {
-        console.error('Error fetching user:', error);
+        console.error('Error initializing auth:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user || null);
-    });
-
-    return () => subscription.unsubscribe();
+    initializeAuth();
   }, []);
 
+  const handleUserChange = (newUser: any) => {
+    setUser(newUser);
+  };
+
   const handleDataSourceConnect = (source: DataSource) => {
+    console.log('Data source connected:', source);
     toast({
       title: "Data Source Connected!",
       description: `Successfully connected to ${source.name}.`,
@@ -65,6 +77,7 @@ const QueryBuilder = () => {
   };
 
   const handleFileUpload = async (file: File) => {
+    console.log('Starting file upload:', file.name);
     setUploading(true);
     setUploadProgress(0);
     setUploadStatus('uploading');
@@ -74,8 +87,10 @@ const QueryBuilder = () => {
     try {
       // Simulate upload progress
       setUploadProgress(20);
+      console.log('Parsing file...');
       
       const parsed = await parseFile(file);
+      console.log('File parsed successfully:', parsed.summary);
       setParsedData(parsed);
       setUploadProgress(50);
       setUploadStatus('processing');
@@ -86,10 +101,12 @@ const QueryBuilder = () => {
 
       const generatedInsights = generateDataInsights(parsed);
       setInsights(generatedInsights);
+      console.log('Generated insights:', generatedInsights.length);
       
-      // Generate some findings based on the data
+      // Generate findings based on the data
       const mockFindings = generateMockFindings(parsed);
       setFindings(mockFindings);
+      console.log('Generated findings:', mockFindings.length);
       
       setUploadStatus('complete');
       setUploadProgress(100);
@@ -299,11 +316,22 @@ const QueryBuilder = () => {
     return recommendations;
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <Header user={user} onUserChange={handleUserChange} />
+        <div className="container mx-auto px-4 py-8 flex items-center justify-center">
+          <AnalyzingIcon />
+        </div>
+      </div>
+    );
+  }
+
   // Show upload progress screen
   if (uploading || uploadStatus === 'complete' || uploadStatus === 'error') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <Header user={user} onUserChange={setUser} />
+        <Header user={user} onUserChange={handleUserChange} />
         <div className="container mx-auto px-4 py-8">
           <UploadProgress
             isUploading={uploading}
@@ -323,7 +351,7 @@ const QueryBuilder = () => {
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <Header user={user} onUserChange={setUser} />
+        <Header user={user} onUserChange={handleUserChange} />
         <div className="container mx-auto px-4 py-8">
           <div className="mb-6 text-center">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -385,7 +413,7 @@ const QueryBuilder = () => {
   // Main landing page
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <Header user={user} onUserChange={setUser} />
+      <Header user={user} onUserChange={handleUserChange} />
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
