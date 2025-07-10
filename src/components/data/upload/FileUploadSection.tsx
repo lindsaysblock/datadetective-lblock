@@ -8,6 +8,7 @@ import { Upload, File } from 'lucide-react';
 interface FileUploadSectionProps {
   file: File | null;
   uploading: boolean;
+  parsing: boolean;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onFileUpload: () => void;
 }
@@ -15,6 +16,7 @@ interface FileUploadSectionProps {
 const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   file,
   uploading,
+  parsing,
   onFileChange,
   onFileUpload
 }) => {
@@ -45,20 +47,20 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             </div>
             <Button 
               onClick={onFileUpload} 
-              disabled={uploading}
+              disabled={uploading || parsing}
               className="flex items-center gap-2"
             >
               <Upload className="w-4 h-4" />
-              {uploading ? 'Processing...' : 'Upload'}
+              {uploading || parsing ? 'Processing...' : 'Upload'}
             </Button>
           </div>
         )}
       </div>
 
-      {uploading && (
+      {parsing && (
         <div className="text-blue-600 flex items-center">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
-          Processing data...
+          Parsing data...
         </div>
       )}
     </div>
