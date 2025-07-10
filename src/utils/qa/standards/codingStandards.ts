@@ -1,5 +1,3 @@
-import { CodingStandard, StandardViolation, ComplianceReport } from './codingStandards';
-
 export interface CodingStandard {
   id: string;
   name: string;

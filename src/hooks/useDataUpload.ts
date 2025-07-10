@@ -5,17 +5,25 @@ import { parseFile, generateDataInsights, type ParsedData } from '../utils/dataP
 import { generateMockFindings, calculateEstimatedTime } from '../utils/dataProcessing';
 
 export const useDataUpload = () => {
+  const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<'uploading' | 'processing' | 'complete' | 'error'>('uploading');
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [filename, setFilename] = useState<string | undefined>(undefined);
+  const [parsing, setParsing] = useState(false);
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
+  const [researchQuestion, setResearchQuestion] = useState('');
   const [insights, setInsights] = useState<string[]>([]);
   const [findings, setFindings] = useState<any[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
   const { toast } = useToast();
+
+  const handleFileChange = (selectedFile: File) => {
+    setFile(selectedFile);
+    setFilename(selectedFile.name);
+  };
 
   const handleFileUpload = async (file: File) => {
     console.log('Starting file upload:', file.name);
@@ -25,6 +33,7 @@ export const useDataUpload = () => {
     setUploadError(null);
     setFilename(file.name);
     setAnalyzing(true);
+    setParsing(true);
 
     const fileSizeInMB = file.size / (1024 * 1024);
     const baseTime = calculateEstimatedTime(fileSizeInMB);
@@ -41,6 +50,7 @@ export const useDataUpload = () => {
       const parsed = await parseFile(file);
       console.log('File parsed successfully:', parsed.summary);
       setParsedData(parsed);
+      setParsing(false);
       
       // Processing phase (50% of progress)
       setUploadProgress(50);
@@ -88,13 +98,30 @@ export const useDataUpload = () => {
     }
   };
 
+  const handleResearchQuestionChange = (question: string) => {
+    setResearchQuestion(question);
+  };
+
+  const handleStartAnalysis = () => {
+    console.log('Starting analysis with research question:', researchQuestion);
+    // Analysis logic would go here
+  };
+
+  const handleSaveDataset = () => {
+    console.log('Saving dataset...');
+    // Save logic would go here
+  };
+
   const resetUpload = () => {
+    setFile(null);
     setUploading(false);
     setUploadProgress(0);
     setUploadStatus('uploading');
     setUploadError(null);
     setFilename(undefined);
+    setParsing(false);
     setParsedData(null);
+    setResearchQuestion('');
     setInsights([]);
     setFindings([]);
     setAnalyzing(false);
@@ -102,17 +129,24 @@ export const useDataUpload = () => {
   };
 
   return {
+    file,
     uploading,
     uploadProgress,
     uploadStatus,
     uploadError,
     filename,
+    parsing,
     parsedData,
+    researchQuestion,
     insights,
     findings,
     analyzing,
     estimatedTime,
+    handleFileChange,
     handleFileUpload,
+    handleResearchQuestionChange,
+    handleStartAnalysis,
+    handleSaveDataset,
     resetUpload
   };
 };

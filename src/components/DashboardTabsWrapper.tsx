@@ -2,15 +2,15 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import DashboardTabs from './dashboard/DashboardTabs';
-import { InsightsTab } from './dashboard/tabs/InsightsTab';
-import { AnalyticsTab } from './dashboard/tabs/AnalyticsTab';
-import { VisualizationTab } from './dashboard/tabs/VisualizationTab';
-import { ReportingTab } from './dashboard/tabs/ReportingTab';
-import { HypothesisTab } from './dashboard/tabs/HypothesisTab';
-import { FindingsTab } from './dashboard/tabs/FindingsTab';
-import { AuditTab } from './dashboard/tabs/AuditTab';
-import { QATab } from './dashboard/tabs/QATab';
-import { ManageTab } from './dashboard/tabs/ManageTab';
+import InsightsTab from './dashboard/tabs/InsightsTab';
+import AnalyticsTab from './dashboard/tabs/AnalyticsTab';
+import VisualizationTab from './dashboard/tabs/VisualizationTab';
+import ReportingTab from './dashboard/tabs/ReportingTab';
+import HypothesisTab from './dashboard/tabs/HypothesisTab';
+import FindingsTab from './dashboard/tabs/FindingsTab';
+import AuditTab from './dashboard/tabs/AuditTab';
+import QATab from './dashboard/tabs/QATab';
+import ManageTab from './dashboard/tabs/ManageTab';
 
 const DashboardTabsWrapper: React.FC = () => {
   const [activeTab, setActiveTab] = useState('insights');
