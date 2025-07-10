@@ -7,6 +7,7 @@ import Header from './Header';
 import DataSourceManager from './DataSourceManager';
 import AnalysisDashboard from './AnalysisDashboard';
 import DataTestingPanel from './DataTestingPanel';
+import SQLQueryBuilder from './SQLQueryBuilder';
 import UnifiedProgress from './UnifiedProgress';
 import AnalyzingIcon from './AnalyzingIcon';
 import { useAuthState } from '../hooks/useAuthState';
@@ -37,6 +38,12 @@ const QueryBuilder = () => {
     } catch (error) {
       console.error('File upload failed:', error);
     }
+  };
+
+  const handleExecuteQuery = (query: string) => {
+    console.log('Executing SQL query:', query);
+    // Here you would integrate with your actual database execution logic
+    // For now, we'll just log the query
   };
 
   if (loading) {
@@ -121,7 +128,7 @@ const QueryBuilder = () => {
               <TestTube className="w-4 h-4" />
               Testing
             </TabsTrigger>
-            <TabsTrigger value="query" className="flex items-center gap-2" disabled={!user}>
+            <TabsTrigger value="query" className="flex items-center gap-2">
               <Database className="w-4 h-4" />
               Query
             </TabsTrigger>
@@ -144,16 +151,7 @@ const QueryBuilder = () => {
           </TabsContent>
 
           <TabsContent value="query" className="space-y-6">
-            <Card className="p-6">
-              <div className="text-center">
-                <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">Query Builder</h3>
-                <p className="text-gray-500">Advanced query capabilities coming soon!</p>
-                {!user && (
-                  <p className="text-sm text-blue-600 mt-2">Sign in to access query features</p>
-                )}
-              </div>
-            </Card>
+            <SQLQueryBuilder onExecuteQuery={handleExecuteQuery} />
           </TabsContent>
 
           <TabsContent value="visualize" className="space-y-6">
