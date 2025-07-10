@@ -17,7 +17,7 @@ export interface ParsedData {
   };
 }
 
-import { parseUnstructuredData } from './unstructuredDataParser';
+import { parseUnstructuredData } from './parsers/unstructuredDataParser';
 import { parseCSV } from './parsers/csvParser';
 import { parseJSON } from './parsers/jsonParser';
 import { analyzeData } from './parsers/dataAnalyzer';
@@ -29,7 +29,7 @@ export const parseFile = async (file: File): Promise<ParsedData> => {
   const extension = file.name.split('.').pop()?.toLowerCase();
   
   try {
-    let result: { headers: string[]; rows: Record<string, any>[] };
+    let result: ParsedData;
     
     switch (extension) {
       case 'csv':
@@ -47,7 +47,7 @@ export const parseFile = async (file: File): Promise<ParsedData> => {
         break;
     }
     
-    return analyzeData(result.headers, result.rows);
+    return result;
   } catch (error) {
     console.error(`Error parsing file ${file.name}:`, error);
     throw new Error(`Failed to parse ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -78,16 +78,11 @@ export const parseRawText = (text: string): ParsedData => {
   }
 };
 
-const parseTextFile = async (file: File): Promise<{ headers: string[]; rows: Record<string, any>[] }> => {
+const parseTextFile = async (file: File): Promise<ParsedData> => {
   console.log('Parsing text file');
   
   const text = await file.text();
-  const parsedData = parseRawText(text);
-  
-  return {
-    headers: parsedData.columns.map(col => col.name),
-    rows: parsedData.rows
-  };
+  return parseRawText(text);
 };
 
 export { generateDataInsights };

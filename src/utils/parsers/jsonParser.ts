@@ -1,5 +1,6 @@
 
 import { ParsedData } from '../dataParser';
+import { analyzeData } from './dataAnalyzer';
 
 export const parseJSON = async (file: File): Promise<ParsedData> => {
   console.log('Parsing JSON file');
@@ -38,5 +39,5 @@ export const parseJSON = async (file: File): Promise<ParsedData> => {
   const headers = Array.from(allKeys);
   console.log('JSON headers:', headers);
   
-  return { headers, rows: validData };
+  return analyzeData(headers, validData);
 };

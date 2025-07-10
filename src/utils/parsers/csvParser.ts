@@ -1,5 +1,6 @@
 
-import { DataColumn, ParsedData } from '../dataParser';
+import { ParsedData } from '../dataParser';
+import { analyzeData } from './dataAnalyzer';
 
 export const parseCSV = async (file: File): Promise<ParsedData> => {
   console.log('Parsing CSV file');
@@ -57,5 +58,5 @@ export const parseCSV = async (file: File): Promise<ParsedData> => {
   }).filter(row => row !== null);
   
   console.log(`Parsed ${dataRows.length} CSV rows`);
-  return { headers, rows: dataRows as Record<string, any>[] };
+  return analyzeData(headers, dataRows as Record<string, any>[]);
 };
