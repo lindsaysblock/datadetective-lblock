@@ -50,10 +50,14 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
     const textBlob = new Blob([textData], { type: 'text/plain' });
     const textFile = new File([textBlob], 'pasted-data.txt', { type: 'text/plain' });
     
+    // Create a proper FileList using DataTransfer
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(textFile);
+    
     // Create a proper ChangeEvent mock
     const mockEvent = {
       target: {
-        files: [textFile] as FileList,
+        files: dataTransfer.files,
         value: '',
       } as HTMLInputElement,
       currentTarget: {} as HTMLInputElement,
