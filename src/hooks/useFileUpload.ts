@@ -12,7 +12,10 @@ export const useFileUpload = () => {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    setFile(selectedFile);
+    if (selectedFile) {
+      setFile(selectedFile);
+      setParsedData(null); // Reset parsed data when new file is selected
+    }
   };
 
   const handleFileUpload = async () => {
@@ -39,9 +42,18 @@ export const useFileUpload = () => {
             setParsedData({
               columns: results.meta.fields || [],
               rows: results.data,
-              summary: {}
+              summary: {
+                totalRows: results.data.length,
+                totalColumns: results.meta.fields?.length || 0
+              }
             });
             setParsing(false);
+            setUploading(false);
+            
+            toast({
+              title: "Success",
+              description: `File processed successfully! Found ${results.data.length} rows.`,
+            });
           },
           error: (error) => {
             console.error("CSV Parsing Error:", error);
@@ -64,9 +76,18 @@ export const useFileUpload = () => {
             setParsedData({
               columns: columns,
               rows: jsonData,
-              summary: {}
+              summary: {
+                totalRows: jsonData.length,
+                totalColumns: columns.length
+              }
             });
             setParsing(false);
+            setUploading(false);
+            
+            toast({
+              title: "Success",
+              description: `File processed successfully! Found ${jsonData.length} rows.`,
+            });
           } catch (error) {
             console.error("JSON Parsing Error:", error);
             toast({
@@ -96,8 +117,6 @@ export const useFileUpload = () => {
         variant: "destructive",
       });
       setParsing(false);
-      setUploading(false);
-    } finally {
       setUploading(false);
     }
   };

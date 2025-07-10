@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Upload, File } from 'lucide-react';
 
 interface FileUploadSectionProps {
   file: File | null;
@@ -18,62 +19,49 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   onFileUpload
 }) => {
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="text-center">
-          <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Step 1: Upload Your Data</h3>
-          <p className="text-gray-600 mb-4">
-            Choose a CSV file or paste your data directly
-          </p>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept=".csv,.txt,.json"
-                  onChange={onFileChange}
-                  className="hidden"
-                />
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-purple-400 transition-colors">
-                  <FileText className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600">
-                    Click to browse files or drag and drop
-                  </p>
-                </div>
-              </label>
+    <div className="space-y-4">
+      <div className="flex items-center space-x-4">
+        <Input
+          type="file"
+          id="upload"
+          className="hidden"
+          onChange={onFileChange}
+          accept=".csv,.json,.txt"
+        />
+        
+        {!file ? (
+          <Label 
+            htmlFor="upload" 
+            className="cursor-pointer bg-blue-100 text-blue-700 rounded-md py-3 px-6 hover:bg-blue-200 transition-colors duration-200 flex items-center gap-2 text-sm font-medium w-full justify-center border-2 border-dashed border-blue-300"
+          >
+            <Upload className="w-4 h-4" />
+            Choose File (CSV, JSON, or TXT)
+          </Label>
+        ) : (
+          <div className="flex items-center gap-4 flex-1">
+            <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-md py-2 px-3">
+              <File className="w-4 h-4" />
+              <span className="truncate max-w-xs">{file.name}</span>
             </div>
-            
-            {file && (
-              <div className="bg-green-50 p-3 rounded border">
-                <p className="text-sm text-green-700">
-                  Selected: {file.name} ({(file.size / 1024).toFixed(1)} KB)
-                </p>
-              </div>
-            )}
-            
             <Button 
-              onClick={onFileUpload}
-              disabled={!file || uploading}
-              className="w-full"
+              onClick={onFileUpload} 
+              disabled={uploading}
+              className="flex items-center gap-2"
             >
-              {uploading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Process Data
-                </>
-              )}
+              <Upload className="w-4 h-4" />
+              {uploading ? 'Processing...' : 'Upload'}
             </Button>
           </div>
+        )}
+      </div>
+
+      {uploading && (
+        <div className="text-blue-600 flex items-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
+          Processing data...
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 };
 
