@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -140,7 +141,7 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
 Examples:
 • CSV: name,age,city
        John,25,NYC
-• JSON: [{"name":"John","age":25}]
+• JSON: [{'name':'John','age':25}]
 • Lists: Item 1
         Item 2
 • Key-value: name: John
@@ -262,7 +263,6 @@ Examples:
         </TabsContent>
       </Tabs>
 
-      {/* Connected Sources */}
       {connectedSources.length > 0 && (
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Connected Data Sources</h3>
