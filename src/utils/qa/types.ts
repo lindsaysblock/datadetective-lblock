@@ -26,6 +26,10 @@ export interface PerformanceMetrics {
   bundleSize: number;
   componentCount: number;
   largeFiles: string[];
+  qaSystemDuration?: number;
+  testExecutionMetrics?: Record<string, number>;
+  systemEfficiency?: number;
+  memoryEfficiency?: number;
 }
 
 export interface RefactoringRecommendation {
