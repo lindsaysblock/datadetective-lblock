@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,11 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Upload, Database, Globe, FileText, Settings } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { parseRawText } from '../utils/dataParser';
+import AmplitudeIntegration from './AmplitudeIntegration';
 
 interface DataSource {
   id: string;
   name: string;
-  type: 'file' | 'database' | 'api' | 'warehouse';
+  type: 'file' | 'database' | 'api' | 'warehouse' | 'amplitude';
   status: 'connected' | 'disconnected' | 'error';
   lastSync?: Date;
 }
@@ -65,6 +65,24 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
     }
   };
 
+  const handleAmplitudeConnect = (config: any, data: any) => {
+    console.log('Amplitude connection successful:', config, data);
+    
+    // Create a mock file from the Amplitude data
+    const amplitudeFile = new File([JSON.stringify(data.data)], 'amplitude-events.json', { type: 'application/json' });
+    onFileUpload(amplitudeFile);
+    
+    const newSource: DataSource = {
+      id: Date.now().toString(),
+      name: `Amplitude Events (${data.summary.totalEvents} events)`,
+      type: 'amplitude',
+      status: 'connected',
+      lastSync: new Date()
+    };
+    setConnectedSources(prev => [...prev, newSource]);
+    onDataSourceConnect(newSource);
+  };
+
   const connectAnalytics = () => {
     if (!apiKey.trim()) return;
     
@@ -102,8 +120,12 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
         <p className="text-gray-600">Upload files, paste data directly, or connect to your data sources</p>
       </div>
 
-      <Tabs defaultValue="paste" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+      <Tabs defaultValue="amplitude" className="w-full">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="amplitude" className="flex items-center gap-2">
+            <Globe className="w-4 h-4" />
+            Amplitude
+          </TabsTrigger>
           <TabsTrigger value="paste" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Paste
@@ -125,6 +147,10 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
             Warehouse
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="amplitude" className="space-y-4">
+          <AmplitudeIntegration onConnect={handleAmplitudeConnect} />
+        </TabsContent>
 
         <TabsContent value="paste" className="space-y-4">
           <Card className="p-6">
@@ -205,7 +231,7 @@ Examples:
               </Button>
             </div>
             <div className="mt-4 text-sm text-gray-600">
-              <p>📊 Supports: Google Analytics, Mixpanel, Amplitude, Segment</p>
+              <p>📊 Supports: Google Analytics, Mixpanel, Segment</p>
               <p>🔒 Your API keys are stored securely</p>
             </div>
           </Card>
@@ -273,7 +299,7 @@ Examples:
                   <div className="p-2 bg-green-100 rounded-lg">
                     {source.type === 'file' && <FileText className="w-4 h-4 text-green-600" />}
                     {source.type === 'database' && <Database className="w-4 h-4 text-green-600" />}
-                    {source.type === 'api' && <Globe className="w-4 h-4 text-green-600" />}
+                    {(source.type === 'api' || source.type === 'amplitude') && <Globe className="w-4 h-4 text-green-600" />}
                   </div>
                   <div>
                     <p className="font-medium text-gray-800">{source.name}</p>

@@ -51,7 +51,7 @@ const QueryBuilder = () => {
     {
       id: '1',
       type: 'assistant',
-      content: "👋 Hello! I'm here to help you discover insights from your data! \n\nI'm your personal data detective - I'll help you understand user behaviors whether your information is in databases, files, analytics platforms, or anywhere else. Just tell me what you're trying to answer, and I'll guide you through finding the perfect insights! \n\n✨ What are you trying to answer?",
+      content: "🕵️ Hello! I'm your Data Detective - here to help you uncover insights from your data! \n\nI'm your personal data investigator - I'll help you solve mysteries in your user behaviors whether your information is in databases, files, analytics platforms like Amplitude, or anywhere else. Just tell me what case you're trying to solve, and I'll guide you through finding the perfect clues! \n\n✨ What mystery are you trying to solve?",
       timestamp: new Date()
     }
   ]);
@@ -435,9 +435,9 @@ const QueryBuilder = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Data Explorer
+                  Data Detective
                 </h1>
-                <p className="text-blue-600 text-lg">Discover validated insights from your user behavior data</p>
+                <p className="text-blue-600 text-lg">Uncover validated insights from your data without code</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -484,7 +484,7 @@ const QueryBuilder = () => {
                     className="flex items-center gap-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-8 py-4 text-lg shadow-lg"
                   >
                     <Sparkles className="w-6 h-6" />
-                    Start New Project
+                    Start New Investigation
                   </Button>
                 </Link>
                 <Link to="/history">
@@ -494,7 +494,7 @@ const QueryBuilder = () => {
                     className="flex items-center gap-3 border-blue-300 text-blue-700 hover:bg-blue-50 px-8 py-4 text-lg shadow-lg"
                   >
                     <FolderOpen className="w-6 h-6" />
-                    Continue Existing Project
+                    Continue Existing Case
                   </Button>
                 </Link>
               </div>
@@ -519,7 +519,7 @@ const QueryBuilder = () => {
                 <p className="whitespace-pre-line leading-relaxed">{message.content}</p>
                 {message.queryPart && (
                   <div className="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-200">
-                    <p className="text-xs text-blue-600 font-medium mb-1">Building your exploration:</p>
+                    <p className="text-xs text-blue-600 font-medium mb-1">Building your investigation:</p>
                     <code className="text-sm text-blue-800 font-mono">{message.queryPart}</code>
                   </div>
                 )}
@@ -539,7 +539,6 @@ const QueryBuilder = () => {
             error={uploadProgress.error}
           />
           
-          {/* Visualization Recommendations */}
           {showVisualization && visualizationData.length > 0 && (
             <div className="flex justify-start">
               <div className="max-w-4xl">
@@ -551,21 +550,18 @@ const QueryBuilder = () => {
             </div>
           )}
 
-          {/* Hypothesis Tracker Section */}
           <div className="flex justify-start">
             <div className="max-w-4xl">
               <HypothesisTracker onHypothesisUpdate={handleUpdateHypothesis} />
             </div>
           </div>
 
-          {/* Business Insights Section */}
           <div className="flex justify-start">
             <div className="max-w-4xl">
               <BusinessInsights onUpdateHypothesis={handleUpdateHypothesis} />
             </div>
           </div>
 
-          {/* Visualization Findings Section */}
           <div className="flex justify-start">
             <div className="max-w-4xl">
               <VisualizationFindings 
@@ -584,7 +580,7 @@ const QueryBuilder = () => {
               value={currentInput}
               onChange={(e) => setCurrentInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="💭 What are you trying to answer?"
+              placeholder="🕵️ What mystery are you trying to solve?"
               className="flex-1 p-4 text-lg border-blue-200 focus:border-blue-400 rounded-2xl"
             />
             <Button 
@@ -599,44 +595,41 @@ const QueryBuilder = () => {
 
       {/* Sidebar */}
       <div className="w-96 bg-white/60 backdrop-blur border-l border-blue-200 flex flex-col">
-        {/* Data Status */}
         {connectedData && (
           <div className="p-6 border-b border-blue-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-green-100 rounded-lg">
                 <Database className="w-5 h-5 text-green-600" />
               </div>
-              <h3 className="font-semibold text-gray-800">Connected Data</h3>
+              <h3 className="font-semibold text-gray-800">Connected Evidence</h3>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
-              <p className="text-sm text-gray-700 mb-2">📊 {connectedData.summary.totalRows} rows, {connectedData.summary.totalColumns} columns</p>
-              <p className="text-sm text-gray-700">🔍 Ready to explore with quality validation!</p>
+              <p className="text-sm text-gray-700 mb-2">📊 {connectedData.summary.totalRows} clues, {connectedData.summary.totalColumns} attributes</p>
+              <p className="text-sm text-gray-700">🔍 Ready to investigate with quality validation!</p>
             </div>
           </div>
         )}
 
-        {/* Current Progress */}
         <div className="p-6 border-b border-blue-200">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-purple-100 rounded-lg">
               <Code className="w-5 h-5 text-purple-600" />
             </div>
-            <h3 className="font-semibold text-gray-800">Exploration Progress</h3>
+            <h3 className="font-semibold text-gray-800">Investigation Progress</h3>
           </div>
           <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-4 rounded-xl border border-purple-200">
             <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-              {currentQuery || "🌱 Let's discover validated insights together!"}
+              {currentQuery || "🕵️ Let's uncover validated insights together!"}
             </pre>
           </div>
         </div>
 
-        {/* Recommendations */}
         <div className="p-6 border-b border-blue-200">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-yellow-100 rounded-lg">
               <Lightbulb className="w-5 h-5 text-yellow-600" />
             </div>
-            <h3 className="font-semibold text-gray-800">Helpful Suggestions</h3>
+            <h3 className="font-semibold text-gray-800">Investigation Leads</h3>
           </div>
           <div className="space-y-3">
             {recommendations.map((rec, index) => (
@@ -658,13 +651,12 @@ const QueryBuilder = () => {
           </div>
         </div>
 
-        {/* Quick Starters */}
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-orange-100 rounded-lg">
               <History className="w-5 h-5 text-orange-600" />
             </div>
-            <h3 className="font-semibold text-gray-800">Popular Questions</h3>
+            <h3 className="font-semibold text-gray-800">Common Cases</h3>
           </div>
           <div className="space-y-3">
             <Button 
@@ -681,7 +673,7 @@ const QueryBuilder = () => {
               onClick={() => setCurrentInput("How has user activity changed over time?")}
             >
               <span className="text-lg mr-3">📈</span>
-              <span>Activity trends</span>
+              <span>Activity trends investigation</span>
             </Button>
             <Button 
               variant="outline" 
@@ -689,7 +681,7 @@ const QueryBuilder = () => {
               onClick={() => setCurrentInput("Which features do users engage with most?")}
             >
               <span className="text-lg mr-3">🎯</span>
-              <span>Feature engagement</span>
+              <span>Feature engagement case</span>
             </Button>
             <Button 
               variant="outline" 
@@ -697,7 +689,7 @@ const QueryBuilder = () => {
               onClick={() => setCurrentInput("Set up automated recurring reports for my team")}
             >
               <span className="text-lg mr-3">📅</span>
-              <span>Recurring reports</span>
+              <span>Automated evidence reports</span>
             </Button>
           </div>
         </div>
