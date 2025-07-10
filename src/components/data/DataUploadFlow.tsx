@@ -49,9 +49,28 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
     const textBlob = new Blob([textData], { type: 'text/plain' });
     const textFile = new File([textBlob], 'pasted-data.txt', { type: 'text/plain' });
     
-    // Trigger the file change handler with our text file
+    // Create a proper fake event object that matches ChangeEvent<HTMLInputElement>
     const fakeEvent = {
-      target: { files: [textFile] }
+      target: {
+        files: [textFile],
+        value: '',
+        name: '',
+        type: 'file'
+      },
+      currentTarget: null,
+      nativeEvent: new Event('change'),
+      bubbles: false,
+      cancelable: false,
+      defaultPrevented: false,
+      eventPhase: 0,
+      isTrusted: false,
+      preventDefault: () => {},
+      isDefaultPrevented: () => false,
+      stopPropagation: () => {},
+      isPropagationStopped: () => false,
+      persist: () => {},
+      timeStamp: Date.now(),
+      type: 'change'
     } as React.ChangeEvent<HTMLInputElement>;
     
     onFileChange(fakeEvent);
