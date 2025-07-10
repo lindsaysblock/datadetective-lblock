@@ -38,6 +38,7 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [uploadComplete, setUploadComplete] = useState(false);
   const { toast } = useToast();
   const { isOpen, modalConfig, showModal, handleAccept, handleDecline } = usePrivacyModal();
 
@@ -61,6 +62,7 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
       setAnalyzing(false);
       setUploadProgress(0);
       setEstimatedTime(0);
+      setUploadComplete(true);
       
       toast({
         title: "Data Source Connected!",
@@ -97,6 +99,8 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
           )
         );
         
+        setUploadComplete(true);
+        
         toast({
           title: "File Uploaded Successfully!",
           description: `${file.name} has been processed and is ready for analysis.`,
@@ -126,6 +130,23 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
 
   const removeUploadedFile = (fileId: string) => {
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+    if (uploadedFiles.length === 1) {
+      setUploadComplete(false);
+    }
+  };
+
+  const handleUploadMore = () => {
+    // Trigger file input click
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.csv,.json,.txt,.xlsx';
+    fileInput.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        handleFileUploadWithPrivacy(file);
+      }
+    };
+    fileInput.click();
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -145,6 +166,25 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
         dataType={modalConfig.dataType}
         sourceName={modalConfig.sourceName}
       />
+
+      {/* Success Indicator */}
+      {uploadComplete && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-6 h-6 text-green-600" />
+            <div>
+              <h3 className="text-lg font-semibold text-green-800">Upload Successful!</h3>
+              <p className="text-green-700">Your data has been uploaded and is ready for analysis.</p>
+            </div>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <Button onClick={handleUploadMore} className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Upload More Data
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Uploaded Files Section */}
       {uploadedFiles.length > 0 && (
@@ -213,31 +253,8 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
           <DataSourceConfig 
             onDataSourceConnect={handleDataSourceConnect}
             onFileUpload={handleFileUploadWithPrivacy}
+            uploadComplete={uploadComplete}
           />
-          
-          {/* Upload More Button */}
-          <div className="text-center">
-            <Button
-              variant="outline"
-              onClick={() => {
-                // Trigger file input click
-                const fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.accept = '.csv,.json,.txt,.xlsx';
-                fileInput.onchange = (e) => {
-                  const file = (e.target as HTMLInputElement).files?.[0];
-                  if (file) {
-                    handleFileUploadWithPrivacy(file);
-                  }
-                };
-                fileInput.click();
-              }}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Upload Another File
-            </Button>
-          </div>
           
           {analyzing && (
             <div className="text-center">

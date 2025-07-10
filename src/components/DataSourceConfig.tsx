@@ -15,7 +15,8 @@ import {
   CheckCircle, 
   AlertCircle,
   FileText,
-  Calendar
+  Calendar,
+  Plus
 } from 'lucide-react';
 
 interface DataSource {
@@ -29,11 +30,13 @@ interface DataSource {
 interface DataSourceConfigProps {
   onDataSourceConnect: (source: DataSource) => void;
   onFileUpload: (file: File) => Promise<void>;
+  uploadComplete?: boolean;
 }
 
 const DataSourceConfig: React.FC<DataSourceConfigProps> = ({
   onDataSourceConnect,
-  onFileUpload
+  onFileUpload,
+  uploadComplete = false
 }) => {
   const [connectionForm, setConnectionForm] = useState({
     host: '',
@@ -77,6 +80,20 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({
     }
   };
 
+  const handleUploadMore = () => {
+    // Trigger file input click
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.csv,.json,.txt,.xlsx';
+    fileInput.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        onFileUpload(file);
+      }
+    };
+    fileInput.click();
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'connected':
@@ -110,21 +127,34 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="file-upload" className="block text-sm font-medium mb-2">
-              Select File
-            </Label>
-            <Input
-              id="file-upload"
-              type="file"
-              accept=".csv,.json,.txt,.xlsx"
-              onChange={handleFileSelect}
-              className="cursor-pointer"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Supported formats: CSV, JSON, TXT, XLSX (max 100MB)
-            </p>
-          </div>
+          {!uploadComplete ? (
+            <div>
+              <Label htmlFor="file-upload" className="block text-sm font-medium mb-2">
+                Select File
+              </Label>
+              <Input
+                id="file-upload"
+                type="file"
+                accept=".csv,.json,.txt,.xlsx"
+                onChange={handleFileSelect}
+                className="cursor-pointer"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Supported formats: CSV, JSON, TXT, XLSX (max 100MB)
+              </p>
+            </div>
+          ) : (
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+                <span className="text-green-700 font-medium">File uploaded successfully!</span>
+              </div>
+              <Button onClick={handleUploadMore} className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Upload Another File
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
