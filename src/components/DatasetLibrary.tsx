@@ -7,6 +7,9 @@ import { Trash2, Download, Calendar, Database, FileText } from 'lucide-react';
 import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import LoadingCard from './ui/loading-card';
+import EmptyState from './ui/empty-state';
+import { formatFileSize } from '../utils/dataProcessing';
 
 interface DatasetLibraryProps {
   onDatasetSelect?: (dataset: any) => void;
@@ -59,50 +62,17 @@ const DatasetLibrary: React.FC<DatasetLibraryProps> = ({ onDatasetSelect }) => {
     });
   };
 
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return 'Unknown size';
-    const kb = bytes / 1024;
-    const mb = kb / 1024;
-    
-    if (mb >= 1) {
-      return `${mb.toFixed(1)} MB`;
-    } else if (kb >= 1) {
-      return `${kb.toFixed(1)} KB`;
-    } else {
-      return `${bytes} bytes`;
-    }
-  };
-
   if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(6)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded w-full"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
+    return <LoadingCard />;
   }
 
   if (datasets.length === 0) {
     return (
-      <Card className="text-center py-12">
-        <CardContent>
-          <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">No Datasets Yet</h3>
-          <p className="text-gray-500">Upload your first dataset to get started with analysis.</p>
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={Database}
+        title="No Datasets Yet"
+        description="Upload your first dataset to get started with analysis."
+      />
     );
   }
 

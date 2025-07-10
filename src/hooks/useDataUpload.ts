@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile, generateDataInsights, type ParsedData } from '../utils/dataParser';
+import { generateMockFindings, calculateEstimatedTime } from '../utils/dataProcessing';
 
 export const useDataUpload = () => {
   const [uploading, setUploading] = useState(false);
@@ -16,45 +17,6 @@ export const useDataUpload = () => {
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
   const { toast } = useToast();
 
-  const generateMockFindings = (data: ParsedData) => {
-    const findings = [];
-    
-    if (data.summary.possibleUserIdColumns.length > 0) {
-      findings.push({
-        id: '1',
-        title: 'User Identification Patterns',
-        description: 'Analysis of user identifier distribution in the dataset',
-        chartType: 'Bar Chart',
-        insight: `Found ${data.summary.possibleUserIdColumns.length} potential user ID columns. This suggests good data structure for user behavior analysis.`,
-        confidence: 'high' as const,
-        timestamp: new Date(),
-        chartData: data.summary.possibleUserIdColumns.map(col => ({
-          name: col,
-          value: Math.floor(Math.random() * 100) + 50
-        }))
-      });
-    }
-
-    if (data.summary.totalRows > 100) {
-      findings.push({
-        id: '2',
-        title: 'Dataset Size Analysis',
-        description: 'Statistical significance assessment of the dataset',
-        chartType: 'Line Chart',
-        insight: `Dataset contains ${data.summary.totalRows} rows, which provides good statistical power for analysis. Confidence intervals will be reliable.`,
-        confidence: 'high' as const,
-        timestamp: new Date(),
-        chartData: [
-          { name: 'Sample Size', value: data.summary.totalRows },
-          { name: 'Recommended Min', value: 100 },
-          { name: 'Statistical Power', value: Math.min(data.summary.totalRows / 10, 95) }
-        ]
-      });
-    }
-
-    return findings;
-  };
-
   const handleFileUpload = async (file: File) => {
     console.log('Starting file upload:', file.name);
     setUploading(true);
@@ -64,9 +26,8 @@ export const useDataUpload = () => {
     setFilename(file.name);
     setAnalyzing(true);
 
-    // Calculate estimated time based on file size (rough estimate: 1MB per 2 seconds)
     const fileSizeInMB = file.size / (1024 * 1024);
-    const baseTime = Math.max(5000, fileSizeInMB * 2000); // Minimum 5 seconds
+    const baseTime = calculateEstimatedTime(fileSizeInMB);
     setEstimatedTime(baseTime);
 
     try {
