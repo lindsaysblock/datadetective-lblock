@@ -1,16 +1,17 @@
+
 import React, { useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, Database, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataDetectiveLogo } from './ui/logo';
-import DropZone from './Dropzone';
+import DataDetectiveLogo from './DataDetectiveLogo';
+import Dropzone from './Dropzone';
 import DataSourceManager from './DataSourceManager';
 import AnalysisDashboard from './AnalysisDashboard';
 import OnboardingFlow from './OnboardingFlow';
 import Header from './Header';
 import { generateMockDataset } from '@/utils/mockData';
-import { parseData } from '@/utils/dataParser';
+import { parseFile } from '@/utils/dataParser';
 import QARunner from './QARunner';
 
 interface AnalysisData {
@@ -22,12 +23,13 @@ interface AnalysisData {
 const QueryBuilder: React.FC = () => {
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [currentFilename, setCurrentFilename] = useState<string | null>(null);
-	const [findings, setFindings] = useState<any[]>([]);
+  const [findings, setFindings] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
 
   const handleFileProcessed = useCallback(async (file: File) => {
     try {
-      const parsedData = await parseData(file);
+      const parsedData = await parseFile(file);
       setAnalysisData(parsedData);
       setCurrentFilename(file.name);
       toast({
@@ -65,21 +67,28 @@ const QueryBuilder: React.FC = () => {
   };
 
   const handleGenerateMockData = () => {
-    const mockData = generateMockDataset(5, 3);
-    handleDataSourceLoaded(mockData, 'AI Generated Data');
+    const mockData = generateMockDataset(100, 3);
+    handleDataSourceLoaded(mockData, 'AI Generated Sample Data');
   };
 
-  const handleStepComplete = (stepName: string) => {
+  const handleOnboardingComplete = () => {
     toast({
-      title: "Onboarding Step Complete",
-      description: `You've completed the ${stepName} step!`,
+      title: "Welcome to Data Detective!",
+      description: "You're all set to start analyzing your data.",
+    });
+  };
+
+  const handleOnboardingSkip = () => {
+    toast({
+      title: "Onboarding Skipped",
+      description: "You can always access help from the menu.",
     });
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <QARunner />
-      <Header />
+      <Header user={user} onUserChange={setUser} />
       
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
@@ -89,7 +98,10 @@ const QueryBuilder: React.FC = () => {
 
           {!analysisData ? (
             <div className="space-y-8">
-              <OnboardingFlow onStepComplete={handleStepComplete} />
+              <OnboardingFlow 
+                onComplete={handleOnboardingComplete} 
+                onSkip={handleOnboardingSkip} 
+              />
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <Card className="p-6 bg-white/80 backdrop-blur-sm border-purple-200">
@@ -97,7 +109,7 @@ const QueryBuilder: React.FC = () => {
                     <Upload className="w-6 h-6 text-purple-600" />
                     <h2 className="text-xl font-semibold">Upload Your Data</h2>
                   </div>
-                  <DropZone onFileProcessed={handleFileProcessed} />
+                  <Dropzone onFileProcessed={handleFileProcessed} />
                 </Card>
 
                 <Card className="p-6 bg-white/80 backdrop-blur-sm border-blue-200">
@@ -105,7 +117,7 @@ const QueryBuilder: React.FC = () => {
                     <Database className="w-6 h-6 text-blue-600" />
                     <h2 className="text-xl font-semibold">Connect Data Source</h2>
                   </div>
-                  <DataSourceManager onDataLoaded={handleDataSourceLoaded} />
+                  <DataSourceManager onFileUpload={handleFileProcessed} />
                 </Card>
               </div>
 
