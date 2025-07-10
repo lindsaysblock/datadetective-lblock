@@ -1,3 +1,4 @@
+import { CodingStandard, StandardViolation, ComplianceReport } from './codingStandards';
 
 export interface CodingStandard {
   id: string;
@@ -236,6 +237,66 @@ export const CODING_STANDARDS: CodingStandard[] = [
             autoFixable: false,
             suggestedFix: 'Define proper TypeScript interfaces or use unknown/object'
           });
+        }
+      });
+      
+      return violations;
+    }
+  },
+  {
+    id: 'react-hooks-deps',
+    name: 'React Hooks Dependencies',
+    description: 'Ensure useEffect and other hooks have proper dependency arrays',
+    category: 'maintainability',
+    severity: 'warning',
+    autoFixable: false,
+    rule: (code: string) => {
+      const violations: StandardViolation[] = [];
+      const lines = code.split('\n');
+      
+      lines.forEach((line, index) => {
+        if (line.includes('useEffect') && line.includes('[]') && line.includes('async')) {
+          violations.push({
+            standardId: 'react-hooks-deps',
+            line: index + 1,
+            column: 0,
+            message: 'useEffect with async function should include proper dependencies',
+            severity: 'warning',
+            autoFixable: false,
+            suggestedFix: 'Add all dependencies used inside useEffect to the dependency array'
+          });
+        }
+      });
+      
+      return violations;
+    }
+  },
+
+  {
+    id: 'consistent-naming',
+    name: 'Consistent Naming Convention',
+    description: 'Use consistent naming conventions for variables and functions',
+    category: 'maintainability',
+    severity: 'info',
+    autoFixable: false,
+    rule: (code: string) => {
+      const violations: StandardViolation[] = [];
+      const lines = code.split('\n');
+      
+      lines.forEach((line, index) => {
+        // Check for inconsistent boolean naming
+        if (line.includes('const ') && line.includes('=') && !line.includes('is') && !line.includes('has') && !line.includes('should') && line.includes('true') || line.includes('false')) {
+          const varMatch = line.match(/const\s+(\w+)/);
+          if (varMatch && !varMatch[1].startsWith('is') && !varMatch[1].startsWith('has') && !varMatch[1].startsWith('should')) {
+            violations.push({
+              standardId: 'consistent-naming',
+              line: index + 1,
+              column: 0,
+              message: `Boolean variable '${varMatch[1]}' should start with 'is', 'has', or 'should'`,
+              severity: 'info',
+              autoFixable: false
+            });
+          }
         }
       });
       

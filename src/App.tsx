@@ -1,33 +1,41 @@
-
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Toaster } from "@/components/ui/toaster"
-import Index from './pages/Index';
-import Auth from './pages/Auth';
-import Admin from './pages/Admin';
-import NewProject from './pages/NewProject';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import BehavioralAnalysisDemo from "./pages/BehavioralAnalysisDemo";
-import QARunner from './components/QARunner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { Toaster } from '@/components/ui/sonner';
+import DataUploadFlow from './components/data/DataUploadFlow';
+import QueryBuilder from './components/QueryBuilder';
+import QueryHistory from './pages/QueryHistory';
+import DashboardTabs from './components/dashboard/DashboardTabs';
+import AdminDashboard from './components/admin/AdminDashboard';
+import FinalQA from './pages/FinalQA';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <div className="min-h-screen bg-background font-sans antialiased">
-          <Toaster />
-          <QARunner />
+      <TooltipProvider>
+        <Toaster />
+        <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/new-project" element={<NewProject />} />
-            <Route path="/demo" element={<BehavioralAnalysisDemo />} />
+            <Route path="/" element={<Navigate to="/new-project" replace />} />
+            <Route path="/new-project" element={<DataUploadFlow />} />
+            <Route path="/query-builder" element={<QueryBuilder />} />
+            <Route path="/query-history" element={<QueryHistory />} />
+            <Route path="/dashboard" element={<DashboardTabs />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/final-qa" element={<FinalQA />} />
+            <Route path="*" element={<Navigate to="/new-project" replace />} />
           </Routes>
-        </div>
-      </BrowserRouter>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

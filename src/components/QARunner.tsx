@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAutoQA } from '../hooks/useAutoQA';
 import { useAutoRefactor } from '../hooks/useAutoRefactor';
@@ -12,7 +11,7 @@ const QARunner: React.FC = () => {
   const [hasRunInitialQA, setHasRunInitialQA] = useState(false);
 
   // Check if we're in admin context
-  const isAdminContext = window.location.pathname === '/admin';
+  const isAdminContext = window.location.pathname === '/admin' || window.location.pathname === '/final-qa';
 
   useEffect(() => {
     // Only run in admin context
@@ -96,12 +95,40 @@ const QARunner: React.FC = () => {
               duration: 5000,
             });
           } else if (report.failed > 0) {
-            toast({
-              title: "QA Issues Detected",
-              description: `${report.failed} tests failed out of ${report.totalTests}. Auto-fix attempts were made.`,
-              variant: "destructive",
-              duration: 6000,
-            });
+            console.log('🔧 Attempting auto-fix for failed tests...');
+            
+            // Run enhanced QA system for better auto-fixing
+            try {
+              const { EnhancedQASystem } = await import('../utils/qa/enhancedQASystem');
+              const enhancedQA = new EnhancedQASystem();
+              await enhancedQA.autoFix(report);
+              
+              // Re-run QA after auto-fix
+              const fixedReport = await runManualQA();
+              
+              if (fixedReport.failed === 0) {
+                toast({
+                  title: "QA Auto-Fix Complete",
+                  description: `Successfully fixed all issues. System is now optimized.`,
+                  duration: 6000,
+                });
+              } else {
+                toast({
+                  title: "QA Issues Detected",
+                  description: `${fixedReport.failed} tests still failing after auto-fix attempts.`,
+                  variant: "destructive",
+                  duration: 6000,
+                });
+              }
+            } catch (fixError) {
+              console.error('Auto-fix failed:', fixError);
+              toast({
+                title: "QA Issues Detected",
+                description: `${report.failed} tests failed out of ${report.totalTests}. Manual review may be needed.`,
+                variant: "destructive",
+                duration: 6000,
+              });
+            }
           }
 
         } catch (error) {
