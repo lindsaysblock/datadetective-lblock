@@ -3,7 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, Database, Wand2, History, User } from 'lucide-react';
+import { Upload, Database, Wand2, History, User, Plus, Play } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DataDetectiveLogo from './DataDetectiveLogo';
 import RateLimitedDropzone from './RateLimitedDropzone';
@@ -14,6 +14,7 @@ import Header from './Header';
 import DatasetLibrary from './DatasetLibrary';
 import UserProfilePanel from './UserProfilePanel';
 import EnhancedUploadProgress from './EnhancedUploadProgress';
+import LegalFooter from './LegalFooter';
 import { generateMockDataset } from '@/utils/mockData';
 import { parseFile } from '@/utils/dataParser';
 import QARunner from './QARunner';
@@ -119,7 +120,6 @@ const QueryBuilder: React.FC = () => {
 
   const handleDatasetSelect = async (dataset: any) => {
     try {
-      // Convert dataset back to AnalysisData format
       const analysisData = {
         columns: dataset.metadata?.columns || [],
         rows: dataset.metadata?.sample_rows || [],
@@ -166,6 +166,19 @@ const QueryBuilder: React.FC = () => {
     });
   };
 
+  const handleStartNewProject = () => {
+    setAnalysisData(null);
+    setCurrentFilename(null);
+    setCurrentDatasetId(null);
+    setFindings([]);
+    resetUpload();
+    setActiveTab('upload');
+  };
+
+  const handleResumeProject = () => {
+    setActiveTab('library');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
@@ -190,13 +203,34 @@ const QueryBuilder: React.FC = () => {
 
           {activeTab === 'analysis' && analysisData ? (
             <div className="space-y-6">
-              <Button 
-                variant="outline" 
-                onClick={() => setActiveTab('upload')}
-                className="mb-4"
-              >
-                ← Back to Upload
-              </Button>
+              <div className="flex items-center justify-between">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setActiveTab('upload')}
+                  className="mb-4"
+                >
+                  ← Back to Dashboard
+                </Button>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={handleStartNewProject}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    New Project
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={handleResumeProject}
+                    className="flex items-center gap-2"
+                  >
+                    <History className="w-4 h-4" />
+                    Project History
+                  </Button>
+                </div>
+              </div>
               
               <AnalysisDashboard
                 parsedData={analysisData}
@@ -214,19 +248,46 @@ const QueryBuilder: React.FC = () => {
                 />
               )}
 
+              {/* Project CTAs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <Card className="p-6 bg-gradient-to-br from-green-50 to-blue-50 border-green-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={handleStartNewProject}>
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-green-500 rounded-full">
+                      <Plus className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg text-gray-800">Start New Project</h3>
+                      <p className="text-gray-600">Upload new data and begin fresh analysis</p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={handleResumeProject}>
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-purple-500 rounded-full">
+                      <Play className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg text-gray-800">Resume Project</h3>
+                      <p className="text-gray-600">Continue working on saved datasets</p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="upload" className="flex items-center gap-2">
                     <Upload className="w-4 h-4" />
-                    Upload
+                    Select Data
                   </TabsTrigger>
                   <TabsTrigger value="library" className="flex items-center gap-2">
                     <History className="w-4 h-4" />
-                    My Data
+                    Project History
                   </TabsTrigger>
                   <TabsTrigger value="connect" className="flex items-center gap-2">
                     <Database className="w-4 h-4" />
-                    Connect
+                    Connect Sources
                   </TabsTrigger>
                   <TabsTrigger value="profile" className="flex items-center gap-2">
                     <User className="w-4 h-4" />
@@ -235,6 +296,11 @@ const QueryBuilder: React.FC = () => {
                 </TabsList>
 
                 <TabsContent value="upload" className="space-y-6">
+                  <div className="text-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Select Your Data</h2>
+                    <p className="text-gray-600">Choose how you'd like to provide data for analysis</p>
+                  </div>
+
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <Card className="p-6 bg-white/80 backdrop-blur-sm border-purple-200">
                       <div className="flex items-center gap-3 mb-4">
@@ -280,8 +346,8 @@ const QueryBuilder: React.FC = () => {
                   {user ? (
                     <div className="space-y-6">
                       <div className="text-center">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Your Dataset Library</h2>
-                        <p className="text-gray-600">Manage and analyze your saved datasets</p>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Project History</h2>
+                        <p className="text-gray-600">Resume analysis on your saved datasets</p>
                       </div>
                       <DatasetLibrary onDatasetSelect={handleDatasetSelect} />
                     </div>
@@ -290,7 +356,7 @@ const QueryBuilder: React.FC = () => {
                       <div className="text-center">
                         <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-semibold text-gray-600 mb-2">Sign In Required</h3>
-                        <p className="text-gray-500 mb-4">Create an account to save and manage your datasets</p>
+                        <p className="text-gray-500 mb-4">Create an account to save and manage your projects</p>
                         <Button onClick={() => window.location.href = '/auth'}>
                           Sign In / Sign Up
                         </Button>
@@ -300,13 +366,19 @@ const QueryBuilder: React.FC = () => {
                 </TabsContent>
 
                 <TabsContent value="connect">
-                  <Card className="p-6 bg-white/80 backdrop-blur-sm border-blue-200">
-                    <div className="flex items-center gap-3 mb-4">
-                      <Database className="w-6 h-6 text-blue-600" />
-                      <h2 className="text-xl font-semibold">Connect Data Source</h2>
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      <h2 className="text-2xl font-bold text-gray-800 mb-2">Connect Data Sources</h2>
+                      <p className="text-gray-600">Import data from external sources and databases</p>
                     </div>
-                    <DataSourceManager onFileUpload={handleFileProcessed} />
-                  </Card>
+                    <Card className="p-6 bg-white/80 backdrop-blur-sm border-blue-200">
+                      <div className="flex items-center gap-3 mb-4">
+                        <Database className="w-6 h-6 text-blue-600" />
+                        <h2 className="text-xl font-semibold">External Data Sources</h2>
+                      </div>
+                      <DataSourceManager onFileUpload={handleFileProcessed} />
+                    </Card>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="profile">
@@ -336,6 +408,8 @@ const QueryBuilder: React.FC = () => {
           )}
         </div>
       </main>
+      
+      <LegalFooter />
     </div>
   );
 };

@@ -1,16 +1,17 @@
 
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export interface AnalysisResult {
   id: string;
   dataset_id: string;
+  user_id: string;
   type: 'insight' | 'finding' | 'visualization';
   title: string;
-  description?: string;
+  description: string | null;
   data: any;
-  confidence: 'low' | 'medium' | 'high';
+  confidence: 'low' | 'medium' | 'high' | null;
   created_at: string;
 }
 
@@ -19,41 +20,26 @@ export const useAnalysisResults = (datasetId?: string) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const saveResult = async (
-    datasetId: string,
-    type: 'insight' | 'finding' | 'visualization',
-    title: string,
-    description: string,
-    data: any,
-    confidence: 'low' | 'medium' | 'high' = 'medium'
-  ) => {
+  const fetchResults = async () => {
+    if (!datasetId) return;
+    
+    setLoading(true);
     try {
-      setLoading(true);
-      
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('analysis_results')
-        .insert({
-          dataset_id: datasetId,
-          type,
-          title,
-          description,
-          data,
-          confidence
-        });
+        .select('*')
+        .eq('dataset_id', datasetId)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-
-      toast({
-        title: "Analysis Saved",
-        description: `${title} has been saved.`,
-      });
-
-      await fetchResults();
+      
+      // Type assertion to ensure compatibility
+      setResults(data as AnalysisResult[]);
     } catch (error: any) {
-      console.error('Error saving analysis result:', error);
+      console.error('Error fetching analysis results:', error);
       toast({
-        title: "Save Failed",
-        description: error.message || "Failed to save analysis",
+        title: "Error",
+        description: "Failed to fetch analysis results",
         variant: "destructive",
       });
     } finally {
@@ -61,32 +47,38 @@ export const useAnalysisResults = (datasetId?: string) => {
     }
   };
 
-  const fetchResults = async () => {
+  const saveResult = async (result: Omit<AnalysisResult, 'id' | 'created_at' | 'user_id'>) => {
     try {
-      setLoading(true);
-      
-      let query = supabase
-        .from('analysis_results')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
-      if (datasetId) {
-        query = query.eq('dataset_id', datasetId);
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
 
-      const { data, error } = await query;
+      const { data, error } = await supabase
+        .from('analysis_results')
+        .insert([{
+          ...result,
+          user_id: user.id
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
-      setResults(data || []);
-    } catch (error: any) {
-      console.error('Error fetching analysis results:', error);
+
+      setResults(prev => [data as AnalysisResult, ...prev]);
+      
       toast({
-        title: "Load Failed",
-        description: "Failed to load analysis results",
+        title: "Success",
+        description: "Analysis result saved successfully",
+      });
+
+      return data;
+    } catch (error: any) {
+      console.error('Error saving analysis result:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save analysis result",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
+      throw error;
     }
   };
 
@@ -99,33 +91,31 @@ export const useAnalysisResults = (datasetId?: string) => {
 
       if (error) throw error;
 
+      setResults(prev => prev.filter(result => result.id !== id));
+      
       toast({
-        title: "Analysis Deleted",
-        description: "Analysis result has been removed.",
+        title: "Success",
+        description: "Analysis result deleted successfully",
       });
-
-      await fetchResults();
     } catch (error: any) {
       console.error('Error deleting analysis result:', error);
       toast({
-        title: "Delete Failed",
-        description: error.message || "Failed to delete analysis",
+        title: "Error",
+        description: "Failed to delete analysis result",
         variant: "destructive",
       });
     }
   };
 
   useEffect(() => {
-    if (datasetId) {
-      fetchResults();
-    }
+    fetchResults();
   }, [datasetId]);
 
   return {
     results,
     loading,
     saveResult,
-    fetchResults,
-    deleteResult
+    deleteResult,
+    refreshResults: fetchResults
   };
 };

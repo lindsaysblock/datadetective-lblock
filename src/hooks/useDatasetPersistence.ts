@@ -1,16 +1,16 @@
 
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { type ParsedData } from '@/utils/dataParser';
+import { useToast } from '@/hooks/use-toast';
 
 export interface Dataset {
   id: string;
+  user_id: string;
   name: string;
   original_filename: string;
-  file_size?: number;
-  mime_type?: string;
-  storage_path?: string;
+  file_size: number | null;
+  mime_type: string | null;
+  storage_path: string | null;
   metadata: any;
   summary: any;
   created_at: string;
@@ -22,76 +22,9 @@ export const useDatasetPersistence = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const saveDataset = async (
-    filename: string,
-    data: ParsedData,
-    file?: File
-  ): Promise<string | null> => {
-    try {
-      setLoading(true);
-      
-      let storagePath = null;
-      
-      // Upload file to storage if provided
-      if (file) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('User not authenticated');
-        
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        const filePath = `${user.id}/${fileName}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('datasets')
-          .upload(filePath, file);
-          
-        if (uploadError) throw uploadError;
-        storagePath = filePath;
-      }
-
-      // Save dataset metadata
-      const { data: dataset, error } = await supabase
-        .from('datasets')
-        .insert({
-          name: filename.replace(/\.[^/.]+$/, ''),
-          original_filename: filename,
-          file_size: file?.size,
-          mime_type: file?.type,
-          storage_path: storagePath,
-          metadata: {
-            columns: data.columns,
-            sample_rows: data.rows.slice(0, 10)
-          },
-          summary: data.summary
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "Dataset Saved",
-        description: `${filename} has been saved to your account.`,
-      });
-
-      await fetchDatasets();
-      return dataset.id;
-    } catch (error: any) {
-      console.error('Error saving dataset:', error);
-      toast({
-        title: "Save Failed",
-        description: error.message || "Failed to save dataset",
-        variant: "destructive",
-      });
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchDatasets = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const { data, error } = await supabase
         .from('datasets')
         .select('*')
@@ -102,12 +35,58 @@ export const useDatasetPersistence = () => {
     } catch (error: any) {
       console.error('Error fetching datasets:', error);
       toast({
-        title: "Load Failed",
-        description: "Failed to load your datasets",
+        title: "Error",
+        description: "Failed to fetch datasets",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveDataset = async (filename: string, parsedData: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Convert data to JSON-compatible format
+      const metadata = {
+        columns: parsedData.columns || [],
+        sample_rows: parsedData.rows?.slice(0, 10) || []
+      };
+
+      const { data, error } = await supabase
+        .from('datasets')
+        .insert([{
+          user_id: user.id,
+          name: filename.replace(/\.[^/.]+$/, ""), // Remove extension
+          original_filename: filename,
+          file_size: null, // We'll update this if we have file size
+          mime_type: filename.endsWith('.csv') ? 'text/csv' : 'application/json',
+          metadata: metadata,
+          summary: parsedData.summary || {}
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setDatasets(prev => [data, ...prev]);
+      
+      toast({
+        title: "Dataset Saved",
+        description: `${filename} has been saved to your account.`,
+      });
+
+      return data.id;
+    } catch (error: any) {
+      console.error('Error saving dataset:', error);
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save dataset",
+        variant: "destructive",
+      });
+      throw error;
     }
   };
 
@@ -120,17 +99,17 @@ export const useDatasetPersistence = () => {
 
       if (error) throw error;
 
+      setDatasets(prev => prev.filter(dataset => dataset.id !== id));
+      
       toast({
         title: "Dataset Deleted",
-        description: "Dataset has been removed from your account.",
+        description: "Dataset has been permanently deleted.",
       });
-
-      await fetchDatasets();
     } catch (error: any) {
       console.error('Error deleting dataset:', error);
       toast({
         title: "Delete Failed",
-        description: error.message || "Failed to delete dataset",
+        description: "Failed to delete dataset",
         variant: "destructive",
       });
     }
@@ -144,7 +123,7 @@ export const useDatasetPersistence = () => {
     datasets,
     loading,
     saveDataset,
-    fetchDatasets,
-    deleteDataset
+    deleteDataset,
+    refreshDatasets: fetchDatasets
   };
 };
