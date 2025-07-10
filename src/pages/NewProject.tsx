@@ -108,15 +108,15 @@ const NewProject = () => {
             </div>
             <div className={`flex items-center gap-2 ${step > 2 ? 'text-blue-600' : 'text-gray-400'}`}>
               {step > 2 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
-              Connect Data
+              Data Source
             </div>
             <div className={`flex items-center gap-2 ${step > 3 ? 'text-blue-600' : 'text-gray-400'}`}>
               {step > 3 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
-              Additional Context
+              Business Context
             </div>
             <div className={`flex items-center gap-2 ${step > 4 ? 'text-blue-600' : 'text-gray-400'}`}>
               {step > 4 ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-5 h-5 rounded-full border border-gray-400"></div>}
-              Analysis Setup
+              Analysis
             </div>
           </div>
           <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mt-2" style={{ width: `${((step - 1) / 3) * 100}%` }}></div>
@@ -151,7 +151,7 @@ const NewProject = () => {
           </Card>
         )}
 
-        {/* Step 2: Connect Your Data */}
+        {/* Step 2: Data Source */}
         {step === 2 && (
           <Card>
             <CardContent className="p-6">
@@ -160,7 +160,7 @@ const NewProject = () => {
                   2
                 </div>
                 <Plus className="w-5 h-5 text-blue-600" />
-                <h3 className="text-lg font-semibold">Connect Your Data</h3>
+                <h3 className="text-lg font-semibold">Data Source</h3>
               </div>
               <FileUploadSection
                 file={file}
@@ -182,7 +182,7 @@ const NewProject = () => {
           </Card>
         )}
 
-        {/* Step 3: Additional Context */}
+        {/* Step 3: Business Context */}
         {step === 3 && (
           <Card>
             <CardContent className="p-6">
@@ -191,7 +191,7 @@ const NewProject = () => {
                   3
                 </div>
                 <FileSearch className="w-5 h-5 text-orange-600" />
-                <h3 className="text-lg font-semibold">Additional Context</h3>
+                <h3 className="text-lg font-semibold">Business Context</h3>
                 <span className="text-sm text-gray-500">(Optional)</span>
               </div>
               <p className="text-gray-600 mb-4">
@@ -216,11 +216,11 @@ const NewProject = () => {
           </Card>
         )}
 
-        {/* Step 4: Analysis Setup */}
+        {/* Step 4: Analysis */}
         {step === 4 && (
           <Card>
             <CardHeader>
-              <CardTitle>Analysis Setup</CardTitle>
+              <CardTitle>Analysis</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <AnalysisActionSection
