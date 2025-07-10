@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, Database, Globe, FileText, Settings } from 'lucide-react';
+import { Upload, Database, Globe, FileText, Settings, BarChart3 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { parseRawText } from '../utils/dataParser';
 import AmplitudeIntegration from './AmplitudeIntegration';
@@ -13,7 +13,7 @@ import AmplitudeIntegration from './AmplitudeIntegration';
 interface DataSource {
   id: string;
   name: string;
-  type: 'file' | 'database' | 'api' | 'warehouse' | 'amplitude';
+  type: 'file' | 'database' | 'api' | 'warehouse' | 'amplitude' | 'tableau' | 'powerbi' | 'looker';
   status: 'connected' | 'disconnected' | 'error';
   lastSync?: Date;
 }
@@ -113,6 +113,18 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
     setDatabaseUrl('');
   };
 
+  const connectBITool = (toolName: 'tableau' | 'powerbi' | 'looker') => {
+    const newSource: DataSource = {
+      id: Date.now().toString(),
+      name: `${toolName.charAt(0).toUpperCase() + toolName.slice(1)} Integration`,
+      type: toolName,
+      status: 'connected',
+      lastSync: new Date()
+    };
+    setConnectedSources(prev => [...prev, newSource]);
+    onDataSourceConnect(newSource);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -144,7 +156,7 @@ const DataSourceConfig: React.FC<DataSourceConfigProps> = ({ onDataSourceConnect
           </TabsTrigger>
           <TabsTrigger value="warehouse" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
-            Warehouse
+            BI Tools
           </TabsTrigger>
         </TabsList>
 
@@ -264,27 +276,79 @@ Examples:
 
         <TabsContent value="warehouse" className="space-y-4">
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Data Warehouse</h3>
-            <p className="text-gray-600 mb-4">Connect to enterprise data warehouses for large-scale analysis</p>
-            <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col items-center gap-2">
-                <Database className="w-6 h-6" />
-                Snowflake
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col items-center gap-2">
-                <Database className="w-6 h-6" />
-                BigQuery
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col items-center gap-2">
-                <Database className="w-6 h-6" />
-                Redshift
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col items-center gap-2">
-                <Database className="w-6 h-6" />
-                Databricks
-              </Button>
+            <h3 className="text-lg font-semibold mb-4">Business Intelligence Tools</h3>
+            <p className="text-gray-600 mb-6">Connect to popular BI platforms and data warehouses for enterprise-scale analysis</p>
+            
+            {/* BI Tools Section */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium mb-4 text-gray-700">Business Intelligence Platforms</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <Button 
+                  variant="outline" 
+                  className="h-24 flex flex-col items-center gap-2 hover:bg-blue-50 border-blue-200"
+                  onClick={() => connectBITool('tableau')}
+                >
+                  <BarChart3 className="w-8 h-8 text-blue-600" />
+                  <div className="text-center">
+                    <div className="font-medium">Tableau</div>
+                    <div className="text-xs text-gray-500">Data visualization</div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-24 flex flex-col items-center gap-2 hover:bg-yellow-50 border-yellow-200"
+                  onClick={() => connectBITool('powerbi')}
+                >
+                  <BarChart3 className="w-8 h-8 text-yellow-600" />
+                  <div className="text-center">
+                    <div className="font-medium">Power BI</div>
+                    <div className="text-xs text-gray-500">Microsoft analytics</div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-24 flex flex-col items-center gap-2 hover:bg-green-50 border-green-200"
+                  onClick={() => connectBITool('looker')}
+                >
+                  <BarChart3 className="w-8 h-8 text-green-600" />
+                  <div className="text-center">
+                    <div className="font-medium">Looker</div>
+                    <div className="text-xs text-gray-500">Google Cloud BI</div>
+                  </div>
+                </Button>
+              </div>
             </div>
-            <p className="text-sm text-gray-500 mt-4">Enterprise integrations coming soon</p>
+
+            {/* Data Warehouses Section */}
+            <div>
+              <h4 className="text-md font-medium mb-4 text-gray-700">Data Warehouses</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <Button variant="outline" className="h-20 flex flex-col items-center gap-2">
+                  <Database className="w-6 h-6" />
+                  Snowflake
+                </Button>
+                <Button variant="outline" className="h-20 flex flex-col items-center gap-2">
+                  <Database className="w-6 h-6" />
+                  BigQuery
+                </Button>
+                <Button variant="outline" className="h-20 flex flex-col items-center gap-2">
+                  <Database className="w-6 h-6" />
+                  Redshift
+                </Button>
+                <Button variant="outline" className="h-20 flex flex-col items-center gap-2">
+                  <Database className="w-6 h-6" />
+                  Databricks
+                </Button>
+              </div>
+            </div>
+            
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800 font-medium mb-2">✨ Enhanced BI Integration</p>
+              <p className="text-sm text-blue-700">
+                Connect your existing dashboards and reports. Import data models, sync with scheduled refreshes, 
+                and leverage AI insights alongside your current BI workflows.
+              </p>
+            </div>
           </Card>
         </TabsContent>
       </Tabs>
@@ -300,6 +364,7 @@ Examples:
                     {source.type === 'file' && <FileText className="w-4 h-4 text-green-600" />}
                     {source.type === 'database' && <Database className="w-4 h-4 text-green-600" />}
                     {(source.type === 'api' || source.type === 'amplitude') && <Globe className="w-4 h-4 text-green-600" />}
+                    {(source.type === 'tableau' || source.type === 'powerbi' || source.type === 'looker') && <BarChart3 className="w-4 h-4 text-green-600" />}
                   </div>
                   <div>
                     <p className="font-medium text-gray-800">{source.name}</p>
