@@ -1,18 +1,45 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAutoQA } from '../hooks/useAutoQA';
+import { useAutoRefactor } from '../hooks/useAutoRefactor';
 import { useToast } from '@/hooks/use-toast';
+import { RefactoringSuggestion } from '../utils/qa/autoRefactorSystem';
 
 const QARunner: React.FC = () => {
   const { runManualQA, isAutoEnabled } = useAutoQA();
+  const { generateRefactoringMessages } = useAutoRefactor();
   const { toast } = useToast();
   const [hasRunInitialQA, setHasRunInitialQA] = useState(false);
+
+  useEffect(() => {
+    // Listen for auto-refactoring suggestions from QA system
+    const handleAutoRefactorSuggestions = (event: CustomEvent<{ suggestions: RefactoringSuggestion[] }>) => {
+      const { suggestions } = event.detail;
+      if (suggestions.length > 0) {
+        const messages = generateRefactoringMessages(suggestions);
+        
+        // Dispatch refactoring prompts event for UI to handle
+        const promptEvent = new CustomEvent('qa-refactoring-prompts', {
+          detail: { messages }
+        });
+        window.dispatchEvent(promptEvent);
+        
+        console.log(`🔧 Auto-refactoring: ${suggestions.length} high-priority files identified for refactoring`);
+      }
+    };
+
+    window.addEventListener('qa-auto-refactor-suggestions', handleAutoRefactorSuggestions as EventListener);
+
+    return () => {
+      window.removeEventListener('qa-auto-refactor-suggestions', handleAutoRefactorSuggestions as EventListener);
+    };
+  }, [generateRefactoringMessages]);
 
   useEffect(() => {
     // Run comprehensive QA analysis on component mount
     if (!hasRunInitialQA) {
       const runInitialQA = async () => {
-        console.log('🔍 Running comprehensive QA analysis with auto-fix...');
+        console.log('🔍 Running comprehensive QA analysis with auto-fix and refactoring detection...');
         
         try {
           const report = await runManualQA();
@@ -31,7 +58,7 @@ const QARunner: React.FC = () => {
           if (report.failed === 0) {
             toast({
               title: "QA Analysis Complete",
-              description: `All ${report.totalTests} tests passed successfully`,
+              description: `All ${report.totalTests} tests passed successfully. Auto-refactoring analysis included.`,
               duration: 5000,
             });
           }

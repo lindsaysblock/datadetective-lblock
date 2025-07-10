@@ -4,6 +4,7 @@ import { UnitTestingSystem, type UnitTestReport } from './unitTesting';
 import { QAReport, PerformanceMetrics, RefactoringRecommendation, QATestResult } from './qa/types';
 import { QATestSuites } from './qa/qaTestSuites';
 import { AutoFixSystem } from './qa/autoFixSystem';
+import { AutoRefactorSystem } from './qa/autoRefactorSystem';
 
 export * from './qa/types';
 
@@ -12,6 +13,7 @@ export class AutoQASystem {
   private unitTestingSystem = new UnitTestingSystem();
   private qaTestSuites = new QATestSuites();
   private autoFixSystem = new AutoFixSystem();
+  private autoRefactorSystem = new AutoRefactorSystem();
   private startTime: number = 0;
 
   async runFullQA(): Promise<QAReport> {
@@ -39,7 +41,29 @@ export class AutoQASystem {
     const report = this.generateReport(performanceMetrics, refactoringRecommendations);
     console.log('✅ QA testing completed with enhanced coverage:', report);
     
+    // Auto-trigger refactoring analysis if needed
+    await this.checkForAutoRefactoring(report);
+    
     return report;
+  }
+
+  private async checkForAutoRefactoring(report: QAReport): Promise<void> {
+    try {
+      const suggestions = await this.autoRefactorSystem.analyzeCodebase();
+      const autoTriggerSuggestions = await this.autoRefactorSystem.shouldAutoTriggerRefactoring(suggestions);
+      
+      if (autoTriggerSuggestions.length > 0) {
+        console.log(`🔧 Auto-refactoring analysis complete: ${autoTriggerSuggestions.length} high-priority refactoring opportunities identified`);
+        
+        // Dispatch custom event to trigger refactoring prompts in the UI
+        const event = new CustomEvent('qa-auto-refactor-suggestions', {
+          detail: { suggestions: autoTriggerSuggestions }
+        });
+        window.dispatchEvent(event);
+      }
+    } catch (error) {
+      console.warn('Auto-refactoring analysis failed:', error);
+    }
   }
 
   private async runLoadTests(): Promise<void> {
