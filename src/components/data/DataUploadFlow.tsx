@@ -102,14 +102,17 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Step 1: File Upload */}
       <FileUploadSection
         file={file}
         uploading={uploading}
+        parsing={parsing}
         onFileChange={handleFileChangeWithTextSupport}
         onFileUpload={onFileUpload}
       />
 
-      {(parsedData || uploading || parsing) && (
+      {/* Step 2: Research Question - Show after file is uploaded and parsed */}
+      {parsedData && (
         <>
           <Separator />
           <ResearchQuestionSection
@@ -119,6 +122,7 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
         </>
       )}
 
+      {/* Step 3: Additional Context - Show after research question is entered */}
       {parsedData && researchQuestion && (
         <>
           <Separator />
@@ -129,6 +133,7 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
         </>
       )}
 
+      {/* Step 4: Analysis Action - Show when data is parsed */}
       {parsedData && (
         <>
           <Separator />
