@@ -13,25 +13,35 @@ export class TestRunner {
   }
 
   async runLoadTests(): Promise<void> {
-    console.log('🚀 Running load testing suite...');
+    console.log('🚀 Running load testing suite with updated step order...');
     
     const loadTestConfigs: LoadTestConfig[] = [
+      // Step 1: Research Question - Light load
       {
         concurrentUsers: 5,
-        duration: 10,
+        duration: 8,
         rampUpTime: 2,
-        testType: 'component'
+        testType: 'research-question'
       },
+      // Step 2: Connect Your Data - Medium load
       {
-        concurrentUsers: 3,
-        duration: 15,
+        concurrentUsers: 8,
+        duration: 12,
         rampUpTime: 3,
         testType: 'data-processing'
       },
+      // Step 3: Additional Context - Light load (optional step)
       {
-        concurrentUsers: 8,
-        duration: 8,
-        rampUpTime: 2,
+        concurrentUsers: 4,
+        duration: 6,
+        rampUpTime: 1,
+        testType: 'context-processing'
+      },
+      // Step 4: Ready to Investigate - Heavy load
+      {
+        concurrentUsers: 12,
+        duration: 15,
+        rampUpTime: 4,
         testType: 'ui-interaction'
       }
     ];
@@ -39,45 +49,69 @@ export class TestRunner {
     for (const config of loadTestConfigs) {
       try {
         const result = await this.loadTestingSystem.runLoadTest(config);
+        const stepName = this.getStepDisplayName(config.testType);
         
         this.qaTestSuites.addTestResult({
-          testName: `Load Test - ${config.testType}`,
+          testName: `Load Test - ${stepName}`,
           status: result.errorRate < 5 ? 'pass' : result.errorRate < 15 ? 'warning' : 'fail',
-          message: `${config.concurrentUsers} users, ${result.errorRate.toFixed(1)}% error rate, ${result.averageResponseTime.toFixed(0)}ms avg response`,
+          message: `${stepName}: ${config.concurrentUsers} users, ${result.errorRate.toFixed(1)}% error rate, ${result.averageResponseTime.toFixed(0)}ms avg response`,
           performance: result.averageResponseTime,
-          suggestions: result.errorRate > 10 ? ['Consider optimizing component rendering', 'Review memory usage patterns'] : undefined
+          suggestions: result.errorRate > 10 ? [
+            `Optimize ${stepName.toLowerCase()} component rendering`,
+            `Review memory usage patterns in ${stepName.toLowerCase()}`
+          ] : undefined
         });
 
         this.qaTestSuites.addTestResult({
-          testName: `Memory Usage - ${config.testType}`,
+          testName: `Memory Usage - ${stepName}`,
           status: result.memoryUsage.peak < 100 ? 'pass' : result.memoryUsage.peak < 200 ? 'warning' : 'fail',
-          message: `Peak memory: ${result.memoryUsage.peak.toFixed(1)}MB, Growth: ${(result.memoryUsage.final - result.memoryUsage.initial).toFixed(1)}MB`,
-          suggestions: result.memoryUsage.peak > 150 ? ['Monitor for memory leaks', 'Consider component cleanup'] : undefined
+          message: `${stepName} - Peak memory: ${result.memoryUsage.peak.toFixed(1)}MB, Growth: ${(result.memoryUsage.final - result.memoryUsage.initial).toFixed(1)}MB`,
+          suggestions: result.memoryUsage.peak > 150 ? [
+            `Monitor for memory leaks in ${stepName.toLowerCase()}`,
+            `Consider component cleanup for ${stepName.toLowerCase()}`
+          ] : undefined
         });
 
       } catch (error) {
+        const stepName = this.getStepDisplayName(config.testType);
         this.qaTestSuites.addTestResult({
-          testName: `Load Test - ${config.testType}`,
+          testName: `Load Test - ${stepName}`,
           status: 'fail',
-          message: `Load test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+          message: `${stepName} load test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
         });
       }
     }
   }
 
+  private getStepDisplayName(testType: string): string {
+    switch (testType) {
+      case 'research-question':
+        return 'Step 1: Research Question';
+      case 'data-processing':
+        return 'Step 2: Connect Your Data';
+      case 'context-processing':
+        return 'Step 3: Additional Context';
+      case 'ui-interaction':
+        return 'Step 4: Ready to Investigate';
+      default:
+        return testType;
+    }
+  }
+
   async runUnitTests(): Promise<void> {
-    console.log('🧪 Running unit test suite...');
+    console.log('🧪 Running unit test suite with step-aware testing...');
     
     try {
       const unitTestReport = await this.unitTestingSystem.runAllTests();
       
       this.qaTestSuites.addTestResult({
-        testName: 'Unit Test Suite',
+        testName: 'Unit Test Suite (All Steps)',
         status: unitTestReport.failedTests === 0 ? 'pass' : unitTestReport.failedTests < 3 ? 'warning' : 'fail',
-        message: `${unitTestReport.passedTests}/${unitTestReport.totalTests} tests passed, ${unitTestReport.failedTests} failed`,
+        message: `${unitTestReport.passedTests}/${unitTestReport.totalTests} tests passed, ${unitTestReport.failedTests} failed across 4-step flow`,
         suggestions: unitTestReport.failedTests > 0 ? [
-          'Review failed unit tests and fix underlying issues',
-          'Ensure all critical functionality is covered by tests'
+          'Review failed unit tests and fix underlying step-specific issues',
+          'Ensure all critical step functionality is covered by tests',
+          'Add integration tests for step transitions'
         ] : undefined
       });
 
@@ -89,12 +123,13 @@ export class TestRunner {
       ) / 4;
 
       this.qaTestSuites.addTestResult({
-        testName: 'Code Coverage',
+        testName: 'Code Coverage (Step-Aware)',
         status: avgCoverage > 80 ? 'pass' : avgCoverage > 60 ? 'warning' : 'fail',
-        message: `${avgCoverage.toFixed(1)}% average coverage (Statements: ${unitTestReport.coverage.statements.toFixed(1)}%, Functions: ${unitTestReport.coverage.functions.toFixed(1)}%)`,
+        message: `${avgCoverage.toFixed(1)}% average coverage across step components (Statements: ${unitTestReport.coverage.statements.toFixed(1)}%, Functions: ${unitTestReport.coverage.functions.toFixed(1)}%)`,
         suggestions: avgCoverage < 70 ? [
-          'Increase test coverage for critical functions',
-          'Add integration tests for complex workflows'
+          'Increase test coverage for critical step functions',
+          'Add integration tests for step-to-step workflows',
+          'Cover edge cases in step validation logic'
         ] : undefined
       });
 
@@ -109,7 +144,7 @@ export class TestRunner {
 
     } catch (error) {
       this.qaTestSuites.addTestResult({
-        testName: 'Unit Test Suite',
+        testName: 'Unit Test Suite (All Steps)',
         status: 'fail',
         message: `Unit test execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       });
