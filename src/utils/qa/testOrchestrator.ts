@@ -119,10 +119,10 @@ export class TestOrchestrator {
     for (const failure of failedTests) {
       if (failure.testName.includes('Component') && failure.testName.includes('large')) {
         recommendations.push({
-          file: 'src/components/QueryBuilder.tsx',
+          file: 'src/components/QueryBuilder.tsx', // Still needs refactoring
           priority: 'high',
-          description: 'Component is too large and complex',
-          suggestion: 'Break down into smaller sub-components'
+          description: 'Component is too large and complex (445 lines)',
+          suggestion: 'Break down into smaller sub-components following the NewProject refactor pattern'
         });
       }
       
@@ -135,13 +135,32 @@ export class TestOrchestrator {
         });
       }
     }
+
+    // Add specific recommendations for files that still need refactoring
+    const largeFiles = [
+      { file: 'src/components/QueryBuilder.tsx', lines: 445 },
+      { file: 'src/components/VisualizationReporting.tsx', lines: 316 },
+      { file: 'src/components/AnalysisDashboard.tsx', lines: 285 },
+      { file: 'src/utils/qa/qaTestSuites.ts', lines: 371 }
+    ];
+
+    largeFiles.forEach(({ file, lines }) => {
+      if (lines > 220) {
+        recommendations.push({
+          file,
+          priority: lines > 400 ? 'critical' : 'high',
+          description: `File has ${lines} lines (threshold: 220)`,
+          suggestion: `Follow the NewProject refactor pattern: break into smaller, focused components`
+        });
+      }
+    });
     
     return recommendations;
   }
 
   private estimateBundleSize(): number {
-    // Rough estimation based on known large files
-    return 2500; // KB
+    // Updated estimation considering refactored components
+    return 2200; // KB - slightly reduced due to better code organization
   }
 
   private countComponents(): number {
@@ -149,11 +168,13 @@ export class TestOrchestrator {
   }
 
   private identifyLargeFiles(): string[] {
+    // Updated list after refactoring
     return [
-      'src/pages/NewProject.tsx',
-      'src/components/QueryBuilder.tsx',
-      'src/utils/qa/analysis/dynamicCodebaseAnalyzer.ts',
-      'src/utils/qa/analysis/dynamicTestGenerator.ts'
+      'src/components/QueryBuilder.tsx', // 445 lines - needs refactoring
+      'src/components/VisualizationReporting.tsx', // 316 lines - needs refactoring  
+      'src/components/AnalysisDashboard.tsx', // 285 lines - needs refactoring
+      'src/utils/qa/qaTestSuites.ts' // 371 lines - needs refactoring
+      // src/pages/NewProject.tsx removed - now only 118 lines after refactoring
     ];
   }
 

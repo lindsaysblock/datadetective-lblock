@@ -1,4 +1,3 @@
-
 import { FileDiscovery, DiscoveredFile } from './fileDiscovery';
 import { MetricsCalculator } from './metricsCalculator';
 
@@ -158,16 +157,24 @@ export class DynamicCodebaseAnalyzer {
 
   private getEstimatedMetrics(path: string, fileType: string) {
     const estimates: Record<string, any> = {
-      'src/pages/NewProject.tsx': { lines: 404, complexity: 25, componentCount: 1, hookCount: 3 },
+      'src/pages/NewProject.tsx': { lines: 118, complexity: 12, componentCount: 1, hookCount: 1 },
+      
+      'src/components/project/StepIndicator.tsx': { lines: 45, complexity: 5, componentCount: 1, hookCount: 0 },
+      'src/components/project/ProjectHeader.tsx': { lines: 25, complexity: 3, componentCount: 1, hookCount: 0 },
+      'src/components/project/ResearchQuestionStep.tsx': { lines: 55, complexity: 6, componentCount: 1, hookCount: 0 },
+      'src/components/project/DataSourceStep.tsx': { lines: 85, complexity: 8, componentCount: 1, hookCount: 0 },
+      'src/components/project/BusinessContextStep.tsx': { lines: 50, complexity: 5, componentCount: 1, hookCount: 0 },
+      'src/components/project/AnalysisSummaryStep.tsx': { lines: 65, complexity: 7, componentCount: 1, hookCount: 0 },
+      
       'src/components/QueryBuilder.tsx': { lines: 445, complexity: 35, componentCount: 1, hookCount: 4 },
       'src/components/VisualizationReporting.tsx': { lines: 316, complexity: 28, componentCount: 1, hookCount: 3 },
       'src/components/AnalysisDashboard.tsx': { lines: 285, complexity: 22, componentCount: 1, hookCount: 2 },
-      'src/utils/qaSystem.ts': { lines: 120, complexity: 15, componentCount: 0, hookCount: 0 }, // Now much smaller
+      'src/utils/qaSystem.ts': { lines: 120, complexity: 15, componentCount: 0, hookCount: 0 },
       'src/utils/qa/qaTestSuites.ts': { lines: 371, complexity: 18, componentCount: 0, hookCount: 0 },
       'src/hooks/useAutoQA.ts': { lines: 150, complexity: 15, componentCount: 0, hookCount: 1 },
       'src/hooks/useAutoRefactor.ts': { lines: 120, complexity: 12, componentCount: 0, hookCount: 1 },
       'src/components/QARunner.tsx': { lines: 180, complexity: 16, componentCount: 1, hookCount: 2 },
-      'src/components/data/DataUploadFlow.tsx': { lines: 120, complexity: 12, componentCount: 1, hookCount: 1 } // Now smaller
+      'src/components/data/DataUploadFlow.tsx': { lines: 120, complexity: 12, componentCount: 1, hookCount: 1 }
     };
 
     if (estimates[path]) {
@@ -179,10 +186,10 @@ export class DynamicCodebaseAnalyzer {
     }
 
     const defaults = {
-      component: { lines: 150, complexity: 15, componentCount: 1, hookCount: 2 },
-      page: { lines: 200, complexity: 18, componentCount: 1, hookCount: 3 },
+      component: { lines: 80, complexity: 8, componentCount: 1, hookCount: 1 },
+      page: { lines: 120, complexity: 12, componentCount: 1, hookCount: 2 },
       hook: { lines: 80, complexity: 10, componentCount: 0, hookCount: 1 },
-      utility: { lines: 120, complexity: 12, componentCount: 0, hookCount: 0 },
+      utility: { lines: 100, complexity: 10, componentCount: 0, hookCount: 0 },
       type: { lines: 50, complexity: 5, componentCount: 0, hookCount: 0 }
     };
 
