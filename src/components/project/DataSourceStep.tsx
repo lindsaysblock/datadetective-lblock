@@ -62,6 +62,13 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
     fileInput.click();
   };
 
+  const getUploadButtonText = () => {
+    if (uploading || parsing) {
+      return parsing ? 'Processing...' : 'Uploading...';
+    }
+    return files.length === 1 ? 'Upload File' : 'Upload Files';
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -69,31 +76,77 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
         <p className="text-gray-600">Upload your dataset to begin the analysis</p>
       </div>
 
-      <Card>
+      {/* Combined Upload and Connected Data Section */}
+      <Card className={hasValidData ? "bg-green-50 border-green-200" : ""}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="w-5 h-5" />
-            Data Upload
+          <CardTitle className={`flex items-center gap-2 ${hasValidData ? "text-green-700" : ""}`}>
+            {hasValidData ? (
+              <>
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                Data Sources Connected!
+              </>
+            ) : (
+              <>
+                <Upload className="w-5 h-5" />
+                Data Upload
+              </>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col space-y-4">
-            <div>
-              <Label htmlFor="file-upload">Choose Files (CSV, JSON, TXT)</Label>
-              <Input
-                id="file-upload"
-                type="file"
-                multiple
-                accept=".csv,.json,.txt"
-                onChange={onFileChange}
-                className="mt-1"
-              />
+          {!hasValidData && (
+            <div className="flex flex-col space-y-4">
+              <div>
+                <Label htmlFor="file-upload">Choose Files (CSV, JSON, TXT)</Label>
+                <Input
+                  id="file-upload"
+                  type="file"
+                  multiple
+                  accept=".csv,.json,.txt"
+                  onChange={onFileChange}
+                  className="mt-1"
+                />
+              </div>
             </div>
+          )}
 
-            {files.length > 0 && (
-              <div className="space-y-2">
+          {files.length > 0 && (
+            <div className="space-y-2">
+              {!hasValidData && (
                 <h4 className="font-medium text-gray-900">Selected Files:</h4>
-                {files.map((file, index) => (
+              )}
+              
+              {hasValidData && (
+                <p className="text-sm text-green-700 mb-4">
+                  {parsedData.length} file{parsedData.length > 1 ? 's' : ''} uploaded successfully.
+                </p>
+              )}
+
+              {/* File List */}
+              {hasValidData ? (
+                // Show processed data
+                parsedData.map((data, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-green-100 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <File className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-900">{data.name}</span>
+                      <span className="text-xs text-green-600">
+                        ({data.rows} rows × {data.columns} columns)
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onRemoveFile(index)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                // Show selected files
+                files.map((file, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-2">
                       <File className="w-4 h-4 text-gray-500" />
@@ -111,8 +164,10 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
                       Remove
                     </Button>
                   </div>
-                ))}
-                
+                ))
+              )}
+              
+              {!hasValidData && (
                 <Button 
                   onClick={onFileUpload}
                   disabled={uploading || parsing}
@@ -121,84 +176,37 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
                   {uploading || parsing ? (
                     <div className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      {parsing ? 'Processing...' : 'Uploading...'}
+                      {getUploadButtonText()}
                     </div>
                   ) : (
-                    'Process Files'
+                    getUploadButtonText()
                   )}
                 </Button>
-              </div>
-            )}
-          </div>
+              )}
+
+              {hasValidData && (
+                <>
+                  <p className="text-xs text-green-600">
+                    Successfully processed and ready for analysis
+                  </p>
+                  
+                  {/* Add Additional Source Button */}
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleAddAdditionalSource}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Additional Source
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* Data Successfully Processed Section */}
-      {hasValidData && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              Data Sources Connected!
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-green-700 mb-4">
-                {parsedData.length} file{parsedData.length > 1 ? 's' : ''} uploaded successfully.
-              </p>
-              
-              {parsedData.map((data, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <File className="w-4 h-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-900">{data.name}</span>
-                    <span className="text-xs text-green-600">
-                      ({data.rows} rows × {data.columns} columns)
-                    </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onRemoveFile(index)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    ×
-                  </Button>
-                </div>
-              ))}
-              
-              <p className="text-xs text-green-600">
-                Successfully processed and ready for analysis
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Add Additional Source Section */}
-      {hasValidData && (
-        <Card className="border-2 border-dashed border-gray-300">
-          <CardContent className="p-6 text-center">
-            <div className="flex flex-col items-center space-y-4">
-              <Upload className="w-8 h-8 text-gray-400" />
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Want to add another data source?
-                </h3>
-              </div>
-              <Button
-                variant="outline"
-                onClick={handleAddAdditionalSource}
-                className="flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Additional Source
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Success Message */}
       {hasValidData && (
