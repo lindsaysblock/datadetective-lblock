@@ -1,9 +1,9 @@
-
 import { UnitTestReport, TestSuite } from './types';
 import { DataParserTestSuite } from './testSuites/dataParserTests';
 import { ComponentTestSuite } from './testSuites/componentTests';
 import { UtilityTestSuite } from './testSuites/utilityTests';
 import { IntegrationTestSuite } from './testSuites/integrationTests';
+import { AnalyticsUnitTestSuite } from './testSuites/analyticsUnitTests';
 
 export class UnitTestingSystem {
   private testSuites: Map<string, () => Promise<TestSuite>> = new Map();
@@ -17,11 +17,13 @@ export class UnitTestingSystem {
     const componentSuite = new ComponentTestSuite();
     const utilitySuite = new UtilityTestSuite();
     const integrationSuite = new IntegrationTestSuite();
+    const analyticsUnitSuite = new AnalyticsUnitTestSuite();
 
     this.testSuites.set('Data Parser Tests', () => dataParserSuite.run());
     this.testSuites.set('Component Tests', () => componentSuite.run());
     this.testSuites.set('Utility Function Tests', () => utilitySuite.run());
     this.testSuites.set('Integration Tests', () => integrationSuite.run());
+    this.testSuites.set('Analytics Unit Tests', () => analyticsUnitSuite.run());
   }
 
   addTestSuite(name: string, testSuite: () => Promise<TestSuite>): void {

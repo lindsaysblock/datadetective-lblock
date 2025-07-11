@@ -1,4 +1,3 @@
-
 import { runComponentTests } from './testSuites/componentTestSuite';
 import { runDataHandlingTests } from './testSuites/dataHandlingTestSuite';
 import { runPerformanceTests } from './testSuites/performanceTestSuite';
@@ -7,9 +6,13 @@ import { runAnalysisComponentTests } from './testSuites/analysisComponentTestSui
 import { FormPersistenceTestSuite } from './testSuites/formPersistenceTestSuite';
 import { SystemHealthTestSuite } from './testSuites/systemHealthTestSuite';
 import { QATestResult } from './types';
+import { AnalyticsTestSuite } from './testSuites/analyticsTestSuite';
+import { AnalyticsLoadTestSuite } from './testSuites/analyticsLoadTestSuite';
 
 export class QATestSuites {
   private results: QATestResult[] = [];
+  private analyticsTestSuite = new AnalyticsTestSuite();
+  private analyticsLoadTestSuite = new AnalyticsLoadTestSuite();
 
   addTestResult(result: QATestResult): void {
     this.results.push(result);
@@ -65,6 +68,35 @@ export class QATestSuites {
     console.log('🏥 Running system health tests...');
     const systemHealthSuite = new SystemHealthTestSuite(this);
     await systemHealthSuite.runTests();
+  }
+
+  async testAnalytics(): Promise<void> {
+    console.log('📊 Running analytics tests...');
+    const results = await this.analyticsTestSuite.runTests();
+    results.forEach(result => this.addTestResult(result));
+  }
+
+  async testAnalyticsLoad(): Promise<void> {
+    console.log('🚀 Running analytics load tests...');
+    const results = await this.analyticsLoadTestSuite.runLoadTests();
+    results.forEach(result => this.addTestResult(result));
+  }
+
+  async testAnalyticsPerformance(): Promise<void> {
+    console.log('⚡ Running analytics performance tests...');
+    
+    // Test large dataset processing
+    const startTime = performance.now();
+    await this.testAnalytics();
+    const duration = performance.now() - startTime;
+    
+    this.addTestResult({
+      testName: 'Analytics Test Suite Performance',
+      status: duration < 10000 ? 'pass' : 'warning',
+      message: `Analytics test suite completed in ${duration.toFixed(0)}ms`,
+      category: 'analytics-performance',
+      performance: duration
+    });
   }
 }
 

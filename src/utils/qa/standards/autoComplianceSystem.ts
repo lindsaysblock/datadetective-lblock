@@ -1,4 +1,3 @@
-
 import { ComplianceChecker } from './complianceChecker';
 import { ComplianceReport } from './codingStandards';
 
@@ -7,11 +6,13 @@ export class AutoComplianceSystem {
   private isEnabled = true;
   private lastCheck: Date | null = null;
   private checkInterval = 5 * 60 * 1000; // 5 minutes
+  private autoRefactorEnabled = true;
 
   async enableAutoCompliance(): Promise<void> {
     this.isEnabled = true;
+    this.autoRefactorEnabled = true;
     this.checker.setAutoFixEnabled(true);
-    console.log('🤖 Auto-compliance system enabled');
+    console.log('🤖 Auto-compliance system enabled with auto-refactoring');
     
     // Run initial check
     await this.runComplianceCheck();
@@ -29,7 +30,7 @@ export class AutoComplianceSystem {
   async runComplianceCheck(): Promise<ComplianceReport[]> {
     if (!this.isEnabled) return [];
 
-    console.log('🔍 Running compliance check...');
+    console.log('🔍 Running compliance check with auto-refactoring...');
     
     try {
       const reports = await this.checker.checkProject();
@@ -40,6 +41,11 @@ export class AutoComplianceSystem {
       // Trigger auto-fixes for critical violations
       await this.handleCriticalViolations(reports);
       
+      // Auto-refactor if enabled
+      if (this.autoRefactorEnabled) {
+        await this.performAutoRefactoring(reports);
+      }
+      
       this.lastCheck = new Date();
       return reports;
       
@@ -47,6 +53,56 @@ export class AutoComplianceSystem {
       console.error('❌ Compliance check failed:', error);
       return [];
     }
+  }
+
+  private async performAutoRefactoring(reports: ComplianceReport[]): Promise<void> {
+    const { EnhancedAutoRefactor } = await import('../analysis/enhancedAutoRefactor');
+    const autoRefactor = new EnhancedAutoRefactor();
+    
+    try {
+      const decision = await autoRefactor.analyzeAndDecide();
+      
+      if (decision.shouldExecute && decision.confidence > 75) {
+        console.log(`🔧 Auto-executing refactoring with ${decision.confidence}% confidence`);
+        
+        // Generate refactoring messages for high-confidence suggestions
+        const messages = decision.suggestions
+          .filter(s => s.autoRefactor && s.urgencyScore > 70)
+          .slice(0, 2) // Limit to 2 files at a time
+          .map(suggestion => this.generateRefactoringMessage(suggestion));
+        
+        // Dispatch refactoring events
+        messages.forEach((message, index) => {
+          setTimeout(() => {
+            const event = new CustomEvent('qa-auto-refactor-execute', {
+              detail: { message, autoExecute: true }
+            });
+            window.dispatchEvent(event);
+          }, index * 2000); // Stagger executions
+        });
+        
+        console.log(`✅ Auto-refactoring initiated for ${messages.length} files`);
+      }
+    } catch (error) {
+      console.warn('⚠️ Auto-refactoring failed:', error);
+    }
+  }
+
+  private generateRefactoringMessage(suggestion: any): string {
+    const urgencyPrefix = suggestion.priority === 'critical' ? 'URGENT: ' : 
+                         suggestion.priority === 'high' ? 'HIGH PRIORITY: ' : '';
+    
+    return `${urgencyPrefix}Auto-refactor ${suggestion.file} (${suggestion.currentLines} lines, complexity: ${suggestion.complexity}). Break into smaller, focused components. Maintain exact functionality. Priority actions: ${suggestion.suggestedActions.slice(0, 2).join(', ')}.`;
+  }
+
+  enableAutoRefactoring(): void {
+    this.autoRefactorEnabled = true;
+    console.log('🔧 Auto-refactoring enabled');
+  }
+
+  disableAutoRefactoring(): void {
+    this.autoRefactorEnabled = false;
+    console.log('🔧 Auto-refactoring disabled');
   }
 
   private async handleCriticalViolations(reports: ComplianceReport[]): Promise<void> {

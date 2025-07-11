@@ -1,4 +1,3 @@
-
 import { LoadTestingSystem } from './loadTesting/loadTestingSystem';
 import { UnitTestingSystem } from '../unitTesting';
 import { QATestSuites } from '../qa/qaTestSuites';
@@ -9,7 +8,7 @@ export class E2ELoadTest {
   private qaTestSuites = new QATestSuites();
 
   async runComprehensiveLoadTest(): Promise<void> {
-    console.log('🚀 Starting comprehensive E2E load test...');
+    console.log('🚀 Starting comprehensive E2E load test with analytics...');
     
     try {
       // Run component load tests
@@ -28,6 +27,22 @@ export class E2ELoadTest {
         testType: 'data-processing'
       });
 
+      // Add analytics-specific load tests
+      await this.loadTestingSystem.runLoadTest({
+        concurrentUsers: 12,
+        duration: 35,
+        rampUpTime: 5,
+        testType: 'analytics-processing'
+      });
+
+      // Test analytics under concurrent load
+      await this.loadTestingSystem.runLoadTest({
+        concurrentUsers: 8,
+        duration: 25,
+        rampUpTime: 3,
+        testType: 'analytics-concurrent'
+      });
+
       // Run UI interaction tests
       await this.loadTestingSystem.runLoadTest({
         concurrentUsers: 8,
@@ -44,7 +59,7 @@ export class E2ELoadTest {
         testType: 'api'
       });
 
-      console.log('✅ Comprehensive E2E load test completed successfully');
+      console.log('✅ Comprehensive E2E load test with analytics completed successfully');
     } catch (error) {
       console.error('❌ Comprehensive E2E load test failed:', error);
       throw error;
@@ -52,7 +67,7 @@ export class E2ELoadTest {
   }
 
   async runQuickLoadCheck(): Promise<void> {
-    console.log('⚡ Starting quick load check...');
+    console.log('⚡ Starting quick load check with analytics...');
     
     try {
       // Quick component test
@@ -71,7 +86,15 @@ export class E2ELoadTest {
         testType: 'ui-interaction'
       });
 
-      console.log('✅ Quick load check completed successfully');
+      // Quick analytics load test
+      await this.loadTestingSystem.runLoadTest({
+        concurrentUsers: 3,
+        duration: 8,
+        rampUpTime: 1,
+        testType: 'analytics-processing'
+      });
+
+      console.log('✅ Quick load check with analytics completed successfully');
     } catch (error) {
       console.error('❌ Quick load check failed:', error);
       throw error;

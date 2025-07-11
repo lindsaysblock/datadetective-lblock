@@ -8,6 +8,9 @@ export class TestOrchestrator {
   private testExecutionOrder = [
     'components',
     'dataFlow',
+    'analytics', // Added analytics testing
+    'analyticsLoad', // Added analytics load testing
+    'analyticsPerformance', // Added analytics performance testing
     'userExperience',
     'dataIntegrity',
     'authentication',
@@ -61,6 +64,15 @@ export class TestOrchestrator {
           break;
         case 'dataFlow':
           await this.qaTestSuites.testDataFlow();
+          break;
+        case 'analytics':
+          await this.qaTestSuites.testAnalytics();
+          break;
+        case 'analyticsLoad':
+          await this.qaTestSuites.testAnalyticsLoad();
+          break;
+        case 'analyticsPerformance':
+          await this.qaTestSuites.testAnalyticsPerformance();
           break;
         case 'userExperience':
           await this.qaTestSuites.testUserExperience();
