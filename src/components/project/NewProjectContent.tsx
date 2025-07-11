@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { DataAnalysisContext } from '@/types/data';
 import StepIndicator from './StepIndicator';
 import ResearchQuestionStep from './ResearchQuestionStep';
 import DataSourceStep from './DataSourceStep';
@@ -8,7 +9,7 @@ import AnalysisSummaryStep from './AnalysisSummaryStep';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 
 interface NewProjectContentProps {
-  onStartAnalysis: (researchQuestion: string, additionalContext: string, educational: boolean, parsedData?: any, columnMapping?: any) => void;
+  onStartAnalysis: (researchQuestion: string, additionalContext: string, educational: boolean, parsedData?: any, columnMapping?: any) => Promise<void>;
 }
 
 const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }) => {
@@ -19,7 +20,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
     selectedFiles.forEach(file => formData.addFile(file));
   };
 
-  const handleStartAnalysis = (educational: boolean = false) => {
+  const handleStartAnalysis = async (educational: boolean = false) => {
     console.log('Starting analysis with:', {
       researchQuestion: formData.researchQuestion,
       additionalContext: formData.additionalContext,
@@ -27,7 +28,14 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
       parsedData: formData.parsedData,
       columnMapping: formData.columnMapping
     });
-    onStartAnalysis(formData.researchQuestion, formData.additionalContext, educational, formData.parsedData, formData.columnMapping);
+    
+    await onStartAnalysis(
+      formData.researchQuestion,
+      formData.additionalContext,
+      educational,
+      formData.parsedData,
+      formData.columnMapping
+    );
   };
 
   const renderStepContent = () => {

@@ -1,0 +1,56 @@
+
+export interface ParsedDataRow {
+  [key: string]: any;
+}
+
+export interface ParsedDataFile {
+  id: string;
+  name: string;
+  rows: ParsedDataRow[];
+  columns: string[];
+  rowCount: number;
+  preview?: ParsedDataRow[];
+  data?: ParsedDataRow[];
+}
+
+export interface DataAnalysisContext {
+  researchQuestion: string;
+  additionalContext: string;
+  parsedData: ParsedDataFile[];
+  columnMapping?: ColumnMapping;
+  educationalMode: boolean;
+}
+
+export interface ColumnMapping {
+  userIdColumn?: string;
+  timestampColumn?: string;
+  eventColumn?: string;
+  valueColumns: string[];
+  categoryColumns: string[];
+}
+
+export interface AnalysisInsight {
+  id: string;
+  title: string;
+  description: string;
+  value: number | string | any;
+  insight: string;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+export interface AnalysisResults {
+  insights: string;
+  confidence: 'high' | 'medium' | 'low';
+  recommendations: string[];
+  detailedResults: AnalysisInsight[];
+  sqlQuery: string;
+  queryBreakdown?: {
+    steps: Array<{
+      step: number;
+      title: string;
+      description: string;
+      code: string;
+      explanation: string;
+    }>;
+  };
+}

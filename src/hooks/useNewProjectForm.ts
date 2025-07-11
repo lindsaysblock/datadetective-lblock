@@ -1,6 +1,6 @@
 
 import { useProjectFormState } from './useProjectFormState';
-import { useProjectAnalysis } from './useProjectAnalysis';
+import { useDataAnalysis } from './useDataAnalysis';
 import { useProjectAuth } from './useProjectAuth';
 import { useProjectDialogs } from './useProjectDialogs';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
@@ -13,7 +13,7 @@ export const useNewProjectForm = () => {
   const { isLoading } = useFormPersistence();
   
   const formState = useProjectFormState();
-  const analysis = useProjectAnalysis();
+  const analysis = useDataAnalysis();
   const auth = useProjectAuth();
   const dialogs = useProjectDialogs();
 

@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
+import { DataAnalysisContext } from '@/types/data';
 import ProjectAnalysisView from '@/components/ProjectAnalysisView';
 import AnalysisProgressView from '@/components/project/AnalysisProgressView';
 import NewProjectContent from './NewProjectContent';
@@ -20,16 +21,8 @@ const NewProjectContainer = () => {
     isProcessingAnalysis: formData.isProcessingAnalysis,
     analysisCompleted: formData.analysisCompleted,
     hasAnalysisResults: !!formData.analysisResults,
-    hasData: !!formData.parsedData,
-    dataStructure: formData.parsedData ? {
-      type: typeof formData.parsedData,
-      isArray: Array.isArray(formData.parsedData),
-      length: Array.isArray(formData.parsedData) ? formData.parsedData.length : 0,
-      firstItemStructure: Array.isArray(formData.parsedData) && formData.parsedData.length > 0 ? {
-        hasRows: !!formData.parsedData[0]?.rows,
-        rowCount: formData.parsedData[0]?.rows?.length || 0
-      } : null
-    } : null
+    hasData: !!formData.parsedData?.length,
+    dataFiles: formData.parsedData?.length || 0
   });
 
   const handleAnalysisComplete = () => {
@@ -54,27 +47,25 @@ const NewProjectContainer = () => {
     }
   };
 
-  const handleStartAnalysis = (researchQuestion: string, additionalContext: string, educational: boolean = false, parsedData?: any, columnMapping?: any) => {
-    console.log('🚀 Starting analysis in container with:', {
+  const handleStartAnalysis = async (
+    researchQuestion: string,
+    additionalContext: string,
+    educational: boolean = false,
+    parsedData?: any,
+    columnMapping?: any
+  ) => {
+    console.log('🚀 Starting analysis in container');
+    
+    const analysisContext: DataAnalysisContext = {
       researchQuestion,
       additionalContext,
-      educational,
-      hasParsedData: !!parsedData,
-      dataStructure: parsedData ? {
-        isArray: Array.isArray(parsedData),
-        length: Array.isArray(parsedData) ? parsedData.length : 0,
-        firstItemStructure: Array.isArray(parsedData) && parsedData.length > 0 ? {
-          hasRows: !!parsedData[0]?.rows,
-          rowCount: parsedData[0]?.rows?.length || 0,
-          hasColumns: !!parsedData[0]?.columns,
-          columnCount: parsedData[0]?.columns?.length || 0
-        } : null
-      } : null,
-      hasColumnMapping: !!columnMapping
-    });
-    
-    // Pass all the context to the analysis with the correct number of arguments
-    formData.handleStartAnalysisClick(educational);
+      parsedData: parsedData || formData.parsedData || [],
+      columnMapping,
+      educationalMode: educational
+    };
+
+    await formData.startAnalysis(analysisContext);
+    formData.setShowProjectDialog(true);
   };
 
   if (formData.showAnalysisView) {
