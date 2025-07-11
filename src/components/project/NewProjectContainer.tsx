@@ -62,7 +62,7 @@ const NewProjectContainer = () => {
           onProgressUpdate={handleProgressUpdate}
         />
         
-        <NewProjectContent {...formData} onStartAnalysis={handleStartAnalysis} />
+        <NewProjectContent onStartAnalysis={handleStartAnalysis} />
       </div>
     </NewProjectLayout>
   );
