@@ -24,8 +24,12 @@ export const useProjectFormData = () => {
       console.log('Current files:', files);
       console.log('Current parsedData:', parsedData);
       
-      if (index < 0 || index >= files.length) {
-        console.error(`Invalid file index: ${index}. Valid range: 0-${files.length - 1}`);
+      // Check if we're trying to remove from parsedData when files array is different
+      const targetArray = parsedData.length > files.length ? parsedData : files;
+      const targetLength = Math.max(parsedData.length, files.length);
+      
+      if (index < 0 || index >= targetLength) {
+        console.error(`Invalid file index: ${index}. Valid range: 0-${targetLength - 1}`);
         toast({
           title: "Error",
           description: "Unable to remove file: invalid file index.",
@@ -34,16 +38,23 @@ export const useProjectFormData = () => {
         return;
       }
       
+      // Remove from both arrays, but handle cases where arrays might be different lengths
       setFiles(prev => {
-        const newFiles = prev.filter((_, i) => i !== index);
-        console.log('New files after removal:', newFiles);
-        return newFiles;
+        if (index < prev.length) {
+          const newFiles = prev.filter((_, i) => i !== index);
+          console.log('New files after removal:', newFiles);
+          return newFiles;
+        }
+        return prev;
       });
       
       setParsedData(prev => {
-        const newParsedData = prev.filter((_, i) => i !== index);
-        console.log('New parsedData after removal:', newParsedData);
-        return newParsedData;
+        if (index < prev.length) {
+          const newParsedData = prev.filter((_, i) => i !== index);
+          console.log('New parsedData after removal:', newParsedData);
+          return newParsedData;
+        }
+        return prev;
       });
 
       toast({
