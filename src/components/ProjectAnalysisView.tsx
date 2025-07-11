@@ -5,6 +5,8 @@ import ProjectContextCard from './analysis/ProjectContextCard';
 import DigDeeperCard from './analysis/DigDeeperCard';
 import AnalysisResultsCard from './analysis/AnalysisResultsCard';
 import AnalysisExportBar from './analysis/AnalysisExportBar';
+import DetailedAnalysisResults from './analysis/DetailedAnalysisResults';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ProjectAnalysisViewProps {
   projectName: string;
@@ -28,15 +30,15 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
   const [isContextOpen, setIsContextOpen] = useState(false);
 
   const handleExportFindings = () => {
-    console.log('Export findings');
+    console.log('Export findings', analysisResults);
   };
 
   const handleExportVisuals = () => {
-    console.log('Export visuals');
+    console.log('Export visuals', analysisResults);
   };
 
   const handleCreateRecurringReport = () => {
-    console.log('Create recurring report');
+    console.log('Create recurring report', analysisResults);
   };
 
   return (
@@ -53,23 +55,62 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
           onCreateRecurringReport={handleCreateRecurringReport}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <AnalysisResultsCard analysisResults={analysisResults} />
-          </div>
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="overview">Executive Summary</TabsTrigger>
+            <TabsTrigger value="detailed">Detailed Analysis</TabsTrigger>
+            <TabsTrigger value="context">Project Context</TabsTrigger>
+          </TabsList>
 
-          <div className="space-y-6">
-            <ProjectContextCard
-              researchQuestion={researchQuestion}
-              dataSource={dataSource}
-              additionalContext={additionalContext}
-              isOpen={isContextOpen}
-              onOpenChange={setIsContextOpen}
-            />
+          <TabsContent value="overview">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <AnalysisResultsCard analysisResults={analysisResults} />
+              </div>
 
-            <DigDeeperCard onExportFindings={handleExportFindings} />
-          </div>
-        </div>
+              <div className="space-y-6">
+                <DigDeeperCard onExportFindings={handleExportFindings} />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="detailed">
+            <div className="space-y-6">
+              {analysisResults?.detailedResults && (
+                <DetailedAnalysisResults results={analysisResults.detailedResults} />
+              )}
+              {!analysisResults?.detailedResults && (
+                <div className="text-center py-12 text-gray-500">
+                  <p>No detailed analysis results available.</p>
+                  <p className="text-sm mt-2">Run a new analysis to see comprehensive results.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="context">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <ProjectContextCard
+                researchQuestion={researchQuestion}
+                dataSource={dataSource}
+                additionalContext={additionalContext}
+                isOpen={isContextOpen}
+                onOpenChange={setIsContextOpen}
+              />
+              
+              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-semibold mb-4">Analysis Methodology</h3>
+                <div className="space-y-3 text-sm text-gray-600">
+                  <p>• Comprehensive data quality assessment</p>
+                  <p>• Multi-dimensional behavioral analysis</p>
+                  <p>• Statistical significance testing</p>
+                  <p>• Business impact quantification</p>
+                  <p>• Actionable recommendation generation</p>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

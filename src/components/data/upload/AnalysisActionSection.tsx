@@ -1,195 +1,145 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Sparkles, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { SignInModal } from '@/components/auth/SignInModal';
-import { useAuthState } from '@/hooks/useAuthState';
-import AnalyzingIcon from '@/components/AnalyzingIcon';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ArrowRight, BarChart3, TrendingUp, Users, ShoppingCart } from 'lucide-react';
 
 interface AnalysisActionSectionProps {
   researchQuestion: string;
   setResearchQuestion: (question: string) => void;
   parsedData: any;
   onStartAnalysis: () => void;
-  buttonText?: string;
-  showProgress?: boolean;
 }
 
 export const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
   researchQuestion,
-  setResearchQuestion,
   parsedData,
-  onStartAnalysis,
-  buttonText = "Start Detective Analysis",
-  showProgress = false
+  onStartAnalysis
 }) => {
-  const { user } = useAuthState();
-  const [showSignInModal, setShowSignInModal] = useState(false);
-  const [authLoading, setAuthLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [analyzing, setAnalyzing] = useState(false);
-  const { toast } = useToast();
+  const isReadyForAnalysis = researchQuestion.trim().length > 0 && parsedData;
 
-  const handleAnalyzeClick = () => {
-    if (!user) {
-      setShowSignInModal(true);
-      return;
-    }
+  const getDataInsights = () => {
+    if (!parsedData) return null;
 
-    if (!parsedData) {
-      toast({
-        title: "No Data",
-        description: "Please upload data first before starting analysis.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!researchQuestion.trim()) {
-      toast({
-        title: "Missing Question",
-        description: "Please describe what you want to analyze or discover.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setAnalyzing(true);
-    onStartAnalysis();
+    const insights = [];
     
-    // Simulate analysis time
-    setTimeout(() => {
-      setAnalyzing(false);
-      toast({
-        title: "Analysis Complete",
-        description: "Your data analysis is ready!",
-      });
-    }, 3000);
+    // Check for common e-commerce columns
+    const columns = parsedData.columns || parsedData.summary?.columns || [];
+    const columnNames = Array.isArray(columns) ? columns.map((col: any) => col.name || col).join(', ') : '';
+    
+    if (columnNames.includes('action') || columnNames.includes('event')) {
+      insights.push({ icon: ShoppingCart, text: 'E-commerce events detected', color: 'bg-green-100 text-green-700' });
+    }
+    
+    if (columnNames.includes('user_id') || columnNames.includes('customer_id')) {
+      insights.push({ icon: Users, text: 'User tracking available', color: 'bg-blue-100 text-blue-700' });
+    }
+    
+    if (columnNames.includes('timestamp') || columnNames.includes('date')) {
+      insights.push({ icon: TrendingUp, text: 'Time-series analysis ready', color: 'bg-purple-100 text-purple-700' });
+    }
+
+    if (columnNames.includes('total_order_value') || columnNames.includes('revenue') || columnNames.includes('price')) {
+      insights.push({ icon: BarChart3, text: 'Revenue analysis possible', color: 'bg-orange-100 text-orange-700' });
+    }
+
+    return insights;
   };
 
-  const signInWithEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setAuthLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+  const dataInsights = getDataInsights();
 
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Welcome back!",
-          description: "You have been signed in successfully.",
-        });
-        setShowSignInModal(false);
-        setTimeout(() => handleAnalyzeClick(), 100);
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setAuthLoading(false);
+  const getAnalysisPreview = () => {
+    const question = researchQuestion.toLowerCase();
+    
+    if (question.includes('purchase') || question.includes('buy') || question.includes('revenue')) {
+      return 'Purchase behavior, conversion rates, and revenue analysis';
     }
-  };
-
-  const signUpWithEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setAuthLoading(true);
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/new-project`
-        }
-      });
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Check your email for the confirmation link!",
-        });
-        setShowSignInModal(false);
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setAuthLoading(false);
+    
+    if (question.includes('product') || question.includes('popular')) {
+      return 'Product performance, popularity rankings, and profitability metrics';
     }
+    
+    if (question.includes('user') || question.includes('customer')) {
+      return 'User segmentation, lifetime value, and behavioral patterns';
+    }
+    
+    if (question.includes('time') || question.includes('trend')) {
+      return 'Time-based trends, seasonal patterns, and peak activity analysis';
+    }
+    
+    return 'Comprehensive data analysis across multiple dimensions';
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="research-question">Research Question</Label>
-        <Textarea
-          id="research-question"
-          placeholder="What do you want to discover from this data? (e.g., 'What are the main trends in sales over time?')"
-          value={researchQuestion}
-          onChange={(e) => setResearchQuestion(e.target.value)}
-          className="min-h-[100px]"
-        />
-      </div>
-      
-      <Button 
-        onClick={handleAnalyzeClick}
-        disabled={analyzing || showProgress}
-        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-        size="lg"
-      >
-        {analyzing || showProgress ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Analyzing Data...
-          </>
-        ) : (
-          <>
-            <Sparkles className="w-4 h-4 mr-2" />
-            {buttonText}
-          </>
+    <Card className="border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-indigo-800">
+          <BarChart3 className="w-5 h-5" />
+          Ready to Investigate
+        </CardTitle>
+        <CardDescription>
+          Your data and research question are set. Let's generate actionable insights.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Data Quality Indicators */}
+        {dataInsights && dataInsights.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-gray-700">Data Capabilities Detected:</h4>
+            <div className="flex flex-wrap gap-2">
+              {dataInsights.map((insight, index) => (
+                <Badge key={index} variant="secondary" className={`${insight.color} flex items-center gap-1`}>
+                  <insight.icon className="w-3 h-3" />
+                  {insight.text}
+                </Badge>
+              ))}
+            </div>
+          </div>
         )}
-      </Button>
 
-      {showProgress && (
-        <div className="mt-6">
-          <AnalyzingIcon isAnalyzing={true} />
-        </div>
-      )}
+        {/* Analysis Preview */}
+        {researchQuestion && (
+          <div className="bg-white/50 p-3 rounded-lg border border-indigo-100">
+            <h4 className="text-sm font-medium text-gray-700 mb-1">Analysis Preview:</h4>
+            <p className="text-sm text-gray-600">{getAnalysisPreview()}</p>
+          </div>
+        )}
 
-      <SignInModal
-        open={showSignInModal}
-        onOpenChange={setShowSignInModal}
-        email={email}
-        password={password}
-        loading={authLoading}
-        setEmail={setEmail}
-        setPassword={setPassword}
-        onSignIn={signInWithEmail}
-        onSignUp={signUpWithEmail}
-      />
-    </div>
+        {/* Dataset Summary */}
+        {parsedData && (
+          <div className="bg-white/50 p-3 rounded-lg border border-indigo-100">
+            <h4 className="text-sm font-medium text-gray-700 mb-1">Dataset Summary:</h4>
+            <p className="text-sm text-gray-600">
+              {parsedData.summary?.totalRows || parsedData.rows?.length || 0} rows × {' '}
+              {parsedData.summary?.totalColumns || parsedData.columns?.length || 0} columns
+            </p>
+          </div>
+        )}
+
+        <Button 
+          onClick={onStartAnalysis}
+          disabled={!isReadyForAnalysis}
+          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+          size="lg"
+        >
+          {!parsedData ? (
+            "Upload data to continue"
+          ) : !researchQuestion.trim() ? (
+            "Enter research question to continue"
+          ) : (
+            <>
+              Start Deep Analysis
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </>
+          )}
+        </Button>
+
+        {isReadyForAnalysis && (
+          <p className="text-xs text-gray-500 text-center">
+            This will run comprehensive analysis including all 9 test question categories
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 };

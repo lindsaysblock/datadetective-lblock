@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 import ResearchQuestionSection from './upload/ResearchQuestionSection';
@@ -16,7 +15,7 @@ interface DataUploadFlowProps {
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onFileUpload: () => void;
   onResearchQuestionChange: (value: string) => void;
-  onStartAnalysis: () => void;
+  onStartAnalysis: (parsedData?: any) => void;
   onSaveDataset: () => void;
 }
 
@@ -43,13 +42,15 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
     console.log('Starting analysis with project name:', projectName);
     console.log('Research question:', researchQuestion);
     console.log('Additional context:', additionalContext);
+    console.log('Parsed data for analysis:', parsedData);
     
     setIsProcessingAnalysis(true);
     
     setTimeout(() => {
       setIsProcessingAnalysis(false);
       setShowProjectDialog(false);
-      onStartAnalysis();
+      // Pass the parsed data to the analysis
+      onStartAnalysis(parsedData);
     }, 2000);
   };
 
