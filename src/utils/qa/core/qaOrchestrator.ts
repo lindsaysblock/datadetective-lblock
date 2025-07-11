@@ -3,18 +3,17 @@ import { QAReport } from '../types';
 import { QATestSuites } from '../qaTestSuites';
 import { TestOrchestrator } from '../testOrchestrator';
 import { EnhancedQASystem } from '../enhancedQASystem';
-import { PerformanceMonitor } from '../performanceMonitor';
+import { PerformanceOptimizer } from '../performance/performanceOptimizer';
 
 export class QAOrchestrator {
   private qaTestSuites = new QATestSuites();
   private testOrchestrator = new TestOrchestrator(this.qaTestSuites);
   private enhancedQASystem = new EnhancedQASystem();
-  private performanceMonitor = new PerformanceMonitor(this.qaTestSuites);
+  private performanceOptimizer = new PerformanceOptimizer();
   private useEnhancedMode: boolean = true;
 
   async runFullQA(): Promise<QAReport> {
     console.log('🔍 Starting QA testing with enhanced dynamic analysis...');
-    const startTime = performance.now();
 
     try {
       if (this.useEnhancedMode) {
@@ -59,9 +58,9 @@ export class QAOrchestrator {
 
     const enhancedMetrics = {
       ...performanceMetrics,
-      testExecutionMetrics: Object.fromEntries(this.performanceMonitor.getMetrics()),
-      systemEfficiency: this.performanceMonitor.calculateSystemEfficiency(),
-      memoryEfficiency: this.performanceMonitor.calculateMemoryEfficiency(),
+      testExecutionMetrics: Object.fromEntries(this.performanceOptimizer.getMetrics()),
+      systemEfficiency: this.performanceOptimizer.calculateSystemEfficiency(),
+      memoryEfficiency: this.performanceOptimizer.calculateMemoryEfficiency(),
       enhancedMode: this.useEnhancedMode
     };
 
