@@ -10,6 +10,7 @@ import { performanceMonitor, trackMemory } from './utils/performance/performance
 const NewProject = React.lazy(() => import('./pages/NewProject'));
 const QueryHistory = React.lazy(() => import('./pages/QueryHistory'));
 const Index = React.lazy(() => import('./pages/Index'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 
 // Create query client with optimized settings
 const queryClient = new QueryClient({
@@ -27,6 +28,7 @@ const queryClient = new QueryClient({
 const MemoizedNewProject = memo(NewProject);
 const MemoizedQueryHistory = memo(QueryHistory);
 const MemoizedIndex = memo(Index);
+const MemoizedDashboard = memo(Dashboard);
 
 function App() {
   useEffect(() => {
@@ -65,6 +67,7 @@ function App() {
               <Route path="/" element={<MemoizedIndex />} />
               <Route path="/new-project" element={<MemoizedNewProject />} />
               <Route path="/query-history" element={<MemoizedQueryHistory />} />
+              <Route path="/dashboard" element={<MemoizedDashboard />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </React.Suspense>
