@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import DataUploadContainer from './components/upload/DataUploadContainer';
@@ -8,8 +8,6 @@ import DashboardContainer from './components/dashboard/DashboardContainer';
 import VisualizationReporting from './components/VisualizationReporting';
 import ProjectAnalysisView from './components/ProjectAnalysisView';
 import NewProject from './pages/NewProject';
-import { Button } from "@/components/ui/button"
-import { Rocket } from "lucide-react"
 import { generateMockAnalysisResults } from './utils/mockDataGenerator';
 import { EnhancedAnalyticsProvider } from '@/contexts/EnhancedAnalyticsContext';
 
@@ -72,33 +70,7 @@ function App() {
       <Router>
         <div className="min-h-screen bg-background text-foreground">
           <Routes>
-            <Route path="/" element={
-              <div className="container mx-auto mt-10">
-                <h1 className="text-3xl font-bold text-center mb-6">Data Analysis Tool</h1>
-                <div className="text-center mb-6">
-                  <Link to="/new-project">
-                    <Button className="mr-4">
-                      Start New Project
-                    </Button>
-                  </Link>
-                </div>
-                <DataUploadContainer onDataUpload={handleDataUpload} />
-                {data && (
-                  <div className="mt-6">
-                    <h2 className="text-xl font-semibold mb-3">Dashboard</h2>
-                     <DashboardContainer data={data} />
-                    {!analysisResults && (
-                      <div className="flex justify-center mt-6">
-                        <Button onClick={handleRunAnalysis}>
-                          <Rocket className="mr-2 h-4 w-4" />
-                          Run Analysis
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            } />
+            <Route path="/" element={<NewProject />} />
             <Route path="/new-project" element={<NewProject />} />
             <Route path="/reporting" element={<VisualizationReporting />} />
             <Route
@@ -114,16 +86,7 @@ function App() {
                     dataSource={dataSource}
                   />
                 ) : (
-                  <div className="container mx-auto mt-10">
-                    <h1 className="text-3xl font-bold text-center mb-6">No Analysis Results</h1>
-                    <p className="text-center">Please run an analysis first.</p>
-                    <div className="flex justify-center mt-6">
-                      <Button onClick={handleRunAnalysis}>
-                        <Rocket className="mr-2 h-4 w-4" />
-                        Run Analysis
-                      </Button>
-                    </div>
-                  </div>
+                  <NewProject />
                 )
               }
             />
