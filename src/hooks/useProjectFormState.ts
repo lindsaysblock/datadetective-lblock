@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import Papa from 'papaparse';
 
 export const useProjectFormState = () => {
   console.log('useProjectFormState initializing');
@@ -33,6 +34,55 @@ export const useProjectFormState = () => {
     });
   };
 
+  const parseFile = async (file: File): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+
+      if (fileExtension === 'csv') {
+        Papa.parse(file, {
+          header: true,
+          dynamicTyping: true,
+          complete: (results) => {
+            resolve({
+              id: Date.now() + Math.random(),
+              name: file.name,
+              rows: results.data.length,
+              columns: results.meta.fields?.length || 0,
+              preview: results.data.slice(0, 5),
+              data: results.data
+            });
+          },
+          error: (error) => {
+            reject(error);
+          }
+        });
+      } else if (fileExtension === 'json') {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const jsonData = JSON.parse(e.target?.result as string);
+            const dataArray = Array.isArray(jsonData) ? jsonData : [jsonData];
+            const columns = Object.keys(dataArray[0] || {});
+            
+            resolve({
+              id: Date.now() + Math.random(),
+              name: file.name,
+              rows: dataArray.length,
+              columns: columns.length,
+              preview: dataArray.slice(0, 5),
+              data: dataArray
+            });
+          } catch (error) {
+            reject(error);
+          }
+        };
+        reader.readAsText(file);
+      } else {
+        reject(new Error('Unsupported file type'));
+      }
+    });
+  };
+
   const handleFileUpload = async () => {
     if (!files.length) return;
     
@@ -40,15 +90,13 @@ export const useProjectFormState = () => {
     setParsing(true);
     
     try {
-      // Simulate file processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setParsedData(files.map((file, index) => ({ 
-        id: index, 
-        name: file.name, 
-        rows: 100, 
-        columns: 10, 
-        preview: [] 
-      })));
+      const parsedResults = [];
+      for (const file of files) {
+        const parsed = await parseFile(file);
+        parsedResults.push(parsed);
+      }
+      setParsedData(parsedResults);
+      console.log('Files parsed successfully:', parsedResults);
     } catch (error) {
       console.error('File upload error:', error);
     } finally {

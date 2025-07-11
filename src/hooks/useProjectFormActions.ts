@@ -68,20 +68,19 @@ export const useProjectFormActions = (
     if (selectedFiles && selectedFiles.length > 0) {
       Array.from(selectedFiles).forEach(file => {
         formState.addFile(file);
-        // Add parsed data for the new file
-        const newParsedData = { 
-          id: Date.now() + Math.random(), 
-          name: file.name, 
-          rows: 100, 
-          columns: 10, 
-          preview: [] 
-        };
-        formState.setParsedData((prev: any[]) => [...prev, newParsedData]);
       });
     }
   };
 
-  const handleStartAnalysisClick = (educationalMode: boolean) => {
+  const handleFileUpload = () => {
+    formState.handleFileUpload();
+  };
+
+  const removeFile = (index: number) => {
+    formState.removeFile(index);
+  };
+
+  const handleStartAnalysisClick = (educationalMode: boolean = false) => {
     if (!auth.user) {
       auth.setShowSignInModal(true);
       return;
@@ -125,6 +124,8 @@ export const useProjectFormActions = (
     handleRestoreData,
     handleStartFresh,
     handleFileChange,
+    handleFileUpload,
+    removeFile,
     handleStartAnalysisClick,
     handleProjectConfirm,
     handleBackToProject
