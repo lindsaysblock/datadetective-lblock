@@ -2,6 +2,8 @@
 import { useState } from 'react';
 
 export const useProjectFormState = () => {
+  console.log('useProjectFormState initializing');
+  
   const [step, setStep] = useState(1);
   const [researchQuestion, setResearchQuestion] = useState('');
   const [additionalContext, setAdditionalContext] = useState('');
@@ -11,8 +13,25 @@ export const useProjectFormState = () => {
   const [parsedData, setParsedData] = useState<any[]>([]);
   const [currentProjectName, setCurrentProjectName] = useState('');
 
-  const nextStep = () => setStep(prev => prev + 1);
-  const prevStep = () => setStep(prev => prev - 1);
+  console.log('useProjectFormState initialized with step:', step);
+
+  const nextStep = () => {
+    console.log('nextStep called, current step:', step);
+    setStep(prev => {
+      const newStep = prev + 1;
+      console.log('Moving to step:', newStep);
+      return newStep;
+    });
+  };
+  
+  const prevStep = () => {
+    console.log('prevStep called, current step:', step);
+    setStep(prev => {
+      const newStep = prev - 1;
+      console.log('Moving to step:', newStep);
+      return newStep;
+    });
+  };
 
   const handleFileUpload = async () => {
     if (!files.length) return;
@@ -39,15 +58,18 @@ export const useProjectFormState = () => {
   };
 
   const addFile = (file: File) => {
+    console.log('Adding file:', file.name);
     setFiles(prev => [...prev, file]);
   };
 
   const removeFile = (index: number) => {
+    console.log('Removing file at index:', index);
     setFiles(prev => prev.filter((_, i) => i !== index));
     setParsedData(prev => prev.filter((_, i) => i !== index));
   };
 
   const resetForm = () => {
+    console.log('Resetting form');
     setStep(1);
     setResearchQuestion('');
     setAdditionalContext('');

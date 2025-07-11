@@ -64,6 +64,7 @@ const NewProject = () => {
   console.log('Is processing analysis:', isProcessingAnalysis);
 
   if (showAnalysisView) {
+    console.log('Showing analysis view');
     return (
       <ProjectAnalysisView
         projectName={currentProjectName}
@@ -82,6 +83,7 @@ const NewProject = () => {
     
     switch (step) {
       case 1:
+        console.log('Rendering ResearchQuestionStep');
         return (
           <ResearchQuestionStep
             researchQuestion={researchQuestion}
@@ -91,6 +93,7 @@ const NewProject = () => {
         );
 
       case 2:
+        console.log('Rendering DataSourceStep');
         return (
           <DataSourceStep
             files={files}
@@ -105,6 +108,7 @@ const NewProject = () => {
         );
 
       case 3:
+        console.log('Rendering BusinessContextStep');
         return (
           <BusinessContextStep
             additionalContext={additionalContext}
@@ -115,6 +119,7 @@ const NewProject = () => {
         );
 
       case 4:
+        console.log('Rendering AnalysisSummaryStep');
         return (
           <AnalysisSummaryStep
             researchQuestion={researchQuestion}
@@ -128,9 +133,16 @@ const NewProject = () => {
 
       default:
         console.log('Unknown step:', step);
-        return <div>Unknown step: {step}</div>;
+        return (
+          <div className="text-center p-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Unknown step: {step}</h2>
+            <p className="text-gray-600">Please refresh the page or contact support.</p>
+          </div>
+        );
     }
   };
+
+  console.log('Rendering main NewProject component');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">

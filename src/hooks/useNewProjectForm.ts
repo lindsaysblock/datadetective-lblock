@@ -17,8 +17,11 @@ export const useNewProjectForm = () => {
   const auth = useProjectAuth();
   const dialogs = useProjectDialogs();
 
-  console.log('Form state initialized:', formState);
-  console.log('Current step from form state:', formState.step);
+  console.log('Form state initialized:', {
+    step: formState.step,
+    researchQuestion: formState.researchQuestion,
+    files: formState.files?.length || 0
+  });
 
   const { saveFormData, getFormData, clearFormData, hasStoredData } = useFormDataPersistence(
     formState,
@@ -53,7 +56,7 @@ export const useNewProjectForm = () => {
     ...actions
   };
 
-  console.log('useNewProjectForm returning:', Object.keys(returnValue));
+  console.log('useNewProjectForm returning step:', returnValue.step);
   
   return returnValue;
 };
