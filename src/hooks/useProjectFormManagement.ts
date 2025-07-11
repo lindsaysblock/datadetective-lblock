@@ -2,6 +2,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile, type ParsedData } from '@/utils/dataParser';
+import { AnalysisResults } from '@/types/data';
 
 interface ProjectFormState {
   step: number;
@@ -13,6 +14,8 @@ interface ProjectFormState {
   uploading: boolean;
   parsing: boolean;
   currentProjectName: string;
+  analysisCompleted: boolean;
+  analysisResults: AnalysisResults | null;
 }
 
 export const useProjectFormManagement = () => {
@@ -25,7 +28,9 @@ export const useProjectFormManagement = () => {
     columnMapping: {},
     uploading: false,
     parsing: false,
-    currentProjectName: ''
+    currentProjectName: '',
+    analysisCompleted: false,
+    analysisResults: null
   });
 
   const { toast } = useToast();
@@ -166,7 +171,9 @@ export const useProjectFormManagement = () => {
       columnMapping: {},
       uploading: false,
       parsing: false,
-      currentProjectName: ''
+      currentProjectName: '',
+      analysisCompleted: false,
+      analysisResults: null
     });
   }, []);
 

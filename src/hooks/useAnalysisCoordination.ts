@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { useDataAnalysis } from '@/hooks/useDataAnalysis';
-import { DataAnalysisContext, AnalysisResults } from '@/types/data';
+import { DataAnalysisContext, AnalysisResults, ParsedDataFile, ColumnMapping } from '@/types/data';
 import { ParsedData } from '@/utils/dataParser';
 import { useToast } from '@/hooks/use-toast';
 
@@ -11,6 +11,17 @@ interface AnalysisState {
   analysisResults: AnalysisResults | null;
   educationalMode: boolean;
 }
+
+// Helper function to convert ParsedData to ParsedDataFile
+const convertToDataFile = (data: ParsedData, index: number): ParsedDataFile => ({
+  id: `file-${index}-${Date.now()}`,
+  name: `dataset-${index + 1}.csv`,
+  rows: data.rows,
+  columns: data.columns.map(col => col.name),
+  rowCount: data.rowCount,
+  preview: data.rows.slice(0, 10),
+  data: data.rows
+});
 
 export const useAnalysisCoordination = () => {
   const [analysisState, setAnalysisState] = useState<AnalysisState>({
@@ -64,11 +75,24 @@ export const useAnalysisCoordination = () => {
     }));
 
     try {
+      // Convert ParsedData[] to ParsedDataFile[]
+      const dataFiles: ParsedDataFile[] = parsedData.map((data, index) => convertToDataFile(data, index));
+      
+      // Convert columnMapping to proper ColumnMapping type
+      const properColumnMapping: ColumnMapping = {
+        userIdColumn: columnMapping?.userId,
+        timestampColumn: columnMapping?.timestamp,
+        eventColumn: columnMapping?.event,
+        valueColumns: Object.values(columnMapping || {}).filter(Boolean),
+        categoryColumns: []
+      };
+
       const context: DataAnalysisContext = {
         researchQuestion,
         additionalContext: additionalContext || '',
-        parsedData,
-        columnMapping: columnMapping || {}
+        parsedData: dataFiles,
+        columnMapping: properColumnMapping,
+        educationalMode
       };
 
       console.log('📊 Executing analysis with context:', context);

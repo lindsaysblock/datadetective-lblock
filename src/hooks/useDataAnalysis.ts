@@ -23,7 +23,7 @@ export const useDataAnalysis = () => {
       dataStructure: context.parsedData?.[0] ? {
         rows: context.parsedData[0].rows?.length || 0,
         columns: context.parsedData[0].columns?.length || 0,
-        sampleColumns: context.parsedData[0].columns?.slice(0, 3).map(col => col.name) || []
+        sampleColumns: context.parsedData[0].columns?.slice(0, 3) || []
       } : 'No data structure'
     });
 

@@ -1,167 +1,169 @@
+import { ParsedData, DataColumn } from './dataParser';
 
-import { ParsedData } from './dataParser';
-import { parseCSV } from './parsers/csvParser';
-import { parseJSON } from './parsers/jsonParser';
+export type DataSourceType = 'sample_web_analytics' | 'sample_customer_behavior' | 'csv_upload';
 
-export interface DatabaseConfig {
-  type: 'postgresql' | 'mysql' | 'sqlserver' | 'sqlite';
-  host: string;
-  port: string;
-  database: string;
-  username: string;
-  password: string;
+export interface DataSourceConfig {
+  apiKey?: string;
+  username?: string;
+  password?: string;
+  databaseUrl?: string;
+  bucketName?: string;
 }
 
-export interface PlatformConfig {
-  apiKey: string;
-  secretKey?: string;
-  projectId: string;
-  baseUrl?: string;
+export interface DataSourceMetadata {
+  name: string;
+  description: string;
+  columns: Array<{ name: string; type: 'string' | 'number' | 'date'; samples: any[] }>;
+  estimatedRows: number;
+  refreshRate: string;
+  lastUpdated: string;
 }
 
-export class DataConnectors {
-  static async connectDatabase(config: DatabaseConfig): Promise<ParsedData> {
-    console.log('Connecting to database:', config.type);
+const SAMPLE_EVENTS = ['page_view', 'click', 'add_to_cart', 'purchase', 'search', 'form_submit'];
+
+export const generateSampleWebAnalyticsData = (): ParsedData => {
+  const rows = [];
+  const startDate = new Date('2024-01-01');
+  
+  for (let i = 0; i < 1000; i++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + Math.floor(i / 10));
     
-    // In a real implementation, this would connect to the actual database
-    // For now, we'll simulate a database connection
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Mock database data
-    const mockData = {
-      columns: [
-        { name: 'id', type: 'number' as const },
-        { name: 'user_id', type: 'string' as const },
-        { name: 'event_name', type: 'string' as const },
-        { name: 'timestamp', type: 'date' as const },
-        { name: 'value', type: 'number' as const }
-      ],
-      rows: [
-        { id: 1, user_id: 'user_001', event_name: 'page_view', timestamp: '2024-01-01', value: 1 },
-        { id: 2, user_id: 'user_002', event_name: 'click', timestamp: '2024-01-02', value: 5 },
-        { id: 3, user_id: 'user_001', event_name: 'purchase', timestamp: '2024-01-03', value: 99.99 }
-      ],
-      rowCount: 3,
-      fileSize: 1024,
-      summary: {
-        totalRows: 3,
-        totalColumns: 5,
-        possibleUserIdColumns: ['user_id'],
-        possibleEventColumns: ['event_name'],
-        possibleTimestampColumns: ['timestamp']
-      }
-    };
-    
-    return mockData;
+    rows.push({
+      id: i + 1,
+      user_id: `user_${Math.floor(Math.random() * 200) + 1}`,
+      event_name: SAMPLE_EVENTS[Math.floor(Math.random() * SAMPLE_EVENTS.length)],
+      timestamp: date.toISOString(),
+      value: Math.floor(Math.random() * 100) + 1
+    });
   }
 
-  static async connectAmplitude(config: PlatformConfig): Promise<ParsedData> {
-    console.log('Connecting to Amplitude');
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Mock Amplitude data
-    const mockData = {
-      columns: [
-        { name: 'user_id', type: 'string' as const },
-        { name: 'event_type', type: 'string' as const },
-        { name: 'event_time', type: 'date' as const },
-        { name: 'platform', type: 'string' as const },
-        { name: 'country', type: 'string' as const }
-      ],
-      rows: [
-        { user_id: 'amp_user_1', event_type: 'session_start', event_time: '2024-01-01T10:00:00Z', platform: 'iOS', country: 'US' },
-        { user_id: 'amp_user_2', event_type: 'button_click', event_time: '2024-01-01T10:05:00Z', platform: 'Android', country: 'UK' }
-      ],
-      rowCount: 2,
-      fileSize: 512,
-      summary: {
-        totalRows: 2,
-        totalColumns: 5,
-        possibleUserIdColumns: ['user_id'],
-        possibleEventColumns: ['event_type'],
-        possibleTimestampColumns: ['event_time']
-      }
-    };
-    
-    return mockData;
-  }
-
-  static async connectLooker(config: PlatformConfig): Promise<ParsedData> {
-    console.log('Connecting to Looker');
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    return this.generateMockPlatformData('Looker');
-  }
-
-  static async connectPowerBI(config: PlatformConfig): Promise<ParsedData> {
-    console.log('Connecting to Power BI');
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    return this.generateMockPlatformData('PowerBI');
-  }
-
-  static async connectTableau(config: PlatformConfig): Promise<ParsedData> {
-    console.log('Connecting to Tableau');
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    return this.generateMockPlatformData('Tableau');
-  }
-
-  static async connectSnowflake(config: PlatformConfig): Promise<ParsedData> {
-    console.log('Connecting to Snowflake');
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    return this.generateMockPlatformData('Snowflake');
-  }
-
-  static async connectBigQuery(config: PlatformConfig): Promise<ParsedData> {
-    console.log('Connecting to BigQuery');
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    return this.generateMockPlatformData('BigQuery');
-  }
-
-  static async processPastedData(data: string): Promise<ParsedData> {
-    console.log('Processing pasted data');
-    
-    // Try to determine if it's JSON or CSV
-    try {
-      const jsonData = JSON.parse(data);
-      // Create a mock file for JSON parsing
-      const mockFile = new File([data], 'pasted-data.json', { type: 'application/json' });
-      return await parseJSON(mockFile);
-    } catch {
-      // Assume it's CSV
-      const mockFile = new File([data], 'pasted-data.csv', { type: 'text/csv' });
-      return await parseCSV(mockFile);
+  return {
+    columns: [
+      { name: 'id', type: 'number', samples: [1, 2, 3, 4, 5] },
+      { name: 'user_id', type: 'string', samples: ['user_1', 'user_2', 'user_3'] },
+      { name: 'event_name', type: 'string', samples: SAMPLE_EVENTS.slice(0, 3) },
+      { name: 'timestamp', type: 'date', samples: ['2024-01-01T00:00:00.000Z'] },
+      { name: 'value', type: 'number', samples: [50, 75, 30, 90, 15] }
+    ],
+    rows,
+    rowCount: rows.length,
+    fileSize: JSON.stringify(rows).length,
+    summary: {
+      totalRows: rows.length,
+      totalColumns: 5,
+      possibleUserIdColumns: ['user_id'],
+      possibleEventColumns: ['event_name'],
+      possibleTimestampColumns: ['timestamp']
     }
+  };
+};
+
+export const generateCustomerBehaviorData = (): ParsedData => {
+  const rows = [];
+  const countries = ['US', 'UK', 'CA', 'AU', 'DE', 'FR', 'JP'];
+  const platforms = ['web', 'mobile', 'tablet'];
+  const eventTypes = ['purchase', 'view', 'click', 'signup', 'logout'];
+  
+  for (let i = 0; i < 800; i++) {
+    const date = new Date('2024-01-01');
+    date.setHours(date.getHours() + Math.floor(i / 20));
+    
+    rows.push({
+      user_id: `customer_${Math.floor(Math.random() * 150) + 1}`,
+      event_type: eventTypes[Math.floor(Math.random() * eventTypes.length)],
+      event_time: date.toISOString(),
+      platform: platforms[Math.floor(Math.random() * platforms.length)],
+      country: countries[Math.floor(Math.random() * countries.length)]
+    });
   }
 
-  private static generateMockPlatformData(platform: string): ParsedData {
-    return {
-      columns: [
-        { name: 'id', type: 'string' as const },
-        { name: 'metric_name', type: 'string' as const },
-        { name: 'value', type: 'number' as const },
-        { name: 'date', type: 'date' as const },
-        { name: 'dimension', type: 'string' as const }
-      ],
-      rows: [
-        { id: `${platform.toLowerCase()}_1`, metric_name: 'revenue', value: 1000, date: '2024-01-01', dimension: 'product_a' },
-        { id: `${platform.toLowerCase()}_2`, metric_name: 'users', value: 250, date: '2024-01-01', dimension: 'mobile' },
-        { id: `${platform.toLowerCase()}_3`, metric_name: 'sessions', value: 500, date: '2024-01-02', dimension: 'web' }
-      ],
-      rowCount: 3,
-      fileSize: 768,
-      summary: {
-        totalRows: 3,
-        totalColumns: 5,
-        possibleUserIdColumns: [],
-        possibleEventColumns: ['metric_name'],
-        possibleTimestampColumns: ['date']
-      }
-    };
+  return {
+    columns: [
+      { name: 'user_id', type: 'string', samples: ['customer_1', 'customer_2'] },
+      { name: 'event_type', type: 'string', samples: eventTypes.slice(0, 3) },
+      { name: 'event_time', type: 'date', samples: ['2024-01-01T00:00:00.000Z'] },
+      { name: 'platform', type: 'string', samples: platforms },
+      { name: 'country', type: 'string', samples: countries.slice(0, 3) }
+    ],
+    rows,
+    rowCount: rows.length,
+    fileSize: JSON.stringify(rows).length,
+    summary: {
+      totalRows: rows.length,
+      totalColumns: 5,
+      possibleUserIdColumns: ['user_id'],
+      possibleEventColumns: ['event_type'],
+      possibleTimestampColumns: ['event_time']
+    }
+  };
+};
+
+export const connectToDataSource = async (source: DataSourceType, config: DataSourceConfig): Promise<ParsedData> => {
+  console.log('Connecting to data source:', source, config);
+  
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  switch (source) {
+    case 'sample_web_analytics':
+      return generateSampleWebAnalyticsData();
+    case 'sample_customer_behavior':
+      return generateCustomerBehaviorData();
+    case 'csv_upload':
+      throw new Error('CSV upload should be handled through file upload');
+    default:
+      throw new Error(`Unsupported data source: ${source}`);
   }
-}
+};
+
+export const validateDataConnection = async (source: DataSourceType, config: DataSourceConfig): Promise<boolean> => {
+  try {
+    await connectToDataSource(source, config);
+    return true;
+  } catch (error) {
+    console.error('Data connection validation failed:', error);
+    return false;
+  }
+};
+
+export const getDataSourceMetadata = (source: DataSourceType): DataSourceMetadata => {
+  const baseMetadata = {
+    name: '',
+    description: '',
+    columns: [] as Array<{ name: string; type: 'string' | 'number' | 'date'; samples: any[] }>,
+    estimatedRows: 0,
+    refreshRate: '1 hour',
+    lastUpdated: new Date().toISOString()
+  };
+
+  switch (source) {
+    case 'sample_web_analytics':
+      return {
+        ...baseMetadata,
+        name: 'Sample Web Analytics',
+        description: 'Sample web analytics data with user interactions',
+        columns: [
+          { name: 'user_id', type: 'string', samples: ['user_1', 'user_2'] },
+          { name: 'event_name', type: 'string', samples: ['page_view', 'click'] },
+          { name: 'timestamp', type: 'date', samples: ['2024-01-01T00:00:00Z'] },
+          { name: 'value', type: 'number', samples: [1, 5, 10] },
+          { name: 'session_id', type: 'string', samples: ['session_1', 'session_2'] }
+        ],
+        estimatedRows: 1000
+      };
+    case 'sample_customer_behavior':
+      return {
+        ...baseMetadata,
+        name: 'Sample Customer Behavior',
+        description: 'Customer behavior and interaction patterns',
+        columns: [
+          { name: 'customer_id', type: 'string', samples: ['cust_1', 'cust_2'] },
+          { name: 'action', type: 'string', samples: ['purchase', 'browse'] },
+          { name: 'timestamp', type: 'date', samples: ['2024-01-01T00:00:00Z'] }
+        ],
+        estimatedRows: 800
+      };
+    default:
+      return baseMetadata;
+  }
+};

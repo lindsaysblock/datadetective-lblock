@@ -87,6 +87,42 @@ export const parseFile = async (file: File): Promise<ParsedData> => {
   }
 };
 
+export const parseRawText = async (text: string, format: 'csv' | 'json' = 'csv'): Promise<ParsedData> => {
+  console.log('🔍 Parsing raw text data:', { format, length: text.length });
+  
+  try {
+    let parsedData: ParsedData;
+    
+    if (format === 'csv') {
+      const file = new File([text], 'data.csv', { type: 'text/csv' });
+      parsedData = await parseCSV(file);
+    } else {
+      const file = new File([text], 'data.json', { type: 'application/json' });
+      parsedData = await parseJSON(file);
+    }
+    
+    console.log('✅ Raw text parsing completed:', {
+      rows: parsedData.rowCount,
+      columns: parsedData.columns.length
+    });
+    
+    return parsedData;
+  } catch (error) {
+    console.error('❌ Raw text parsing failed:', error);
+    throw error instanceof Error ? error : new Error('Raw text parsing error');
+  }
+};
+
+export class DataParser {
+  static async parseCSV(text: string): Promise<ParsedData> {
+    return parseRawText(text, 'csv');
+  }
+  
+  static async parseJSON(text: string): Promise<ParsedData> {
+    return parseRawText(text, 'json');
+  }
+}
+
 export const generateDataInsights = (data: ParsedData): string[] => {
   const insights: string[] = [];
   

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -207,9 +206,9 @@ const ComprehensiveE2ETest: React.FC = () => {
     // Test data parsing
     tests.push(await runSingleTest('Data Parser', async () => {
       try {
-        const { DataParser } = await import('@/utils/dataParser');
         const testCSV = 'name,age,city\nJohn,25,NYC\nJane,30,LA';
-        const result = DataParser.parseCSV(testCSV);
+        const { parseRawText } = await import('@/utils/dataParser');
+        const result = await parseRawText(testCSV, 'csv');
         
         return {
           pass: result.rows.length === 2 && result.columns.length === 3,
@@ -225,10 +224,17 @@ const ComprehensiveE2ETest: React.FC = () => {
       try {
         const { DataValidator } = await import('@/utils/analysis/dataValidator');
         const mockData = {
-          columns: [{ name: 'test', type: 'string' as const }],
+          columns: [{ name: 'test', type: 'string' as const, samples: ['value'] }],
           rows: [{ test: 'value' }],
           rowCount: 1,
-          fileSize: 100
+          fileSize: 100,
+          summary: {
+            totalRows: 1,
+            totalColumns: 1,
+            possibleUserIdColumns: [],
+            possibleEventColumns: [],
+            possibleTimestampColumns: []
+          }
         };
         
         const validator = new DataValidator(mockData, false);
