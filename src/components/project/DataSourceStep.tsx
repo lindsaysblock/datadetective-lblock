@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import { ArrowRight, ArrowLeft, CheckCircle, Plus } from 'lucide-react';
 import DataSourceOptions from './steps/DataSourceOptions';
 import { DataConnectors } from '@/utils/dataConnectors';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +35,7 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
 }) => {
   const { toast } = useToast();
   const hasUploadedData = parsedData && parsedData.length > 0;
+  const [showAddSource, setShowAddSource] = React.useState(false);
 
   const handleFileUpload = async (uploadedFiles: File[]) => {
     console.log('handleFileUpload called with files:', uploadedFiles);
@@ -110,6 +111,9 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
         title: "Files Processed",
         description: `Successfully processed ${processedData.length} file(s).`,
       });
+      
+      // Hide the add source dialog after successful upload
+      setShowAddSource(false);
       
     } catch (error) {
       console.error('Error processing files:', error);
@@ -240,6 +244,14 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
     }
   };
 
+  const handleAddAdditionalSource = () => {
+    setShowAddSource(true);
+  };
+
+  const handleCancelAddSource = () => {
+    setShowAddSource(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -247,13 +259,29 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
         <p className="text-gray-600">Upload your data files or connect to external sources</p>
       </div>
 
-      {!hasUploadedData ? (
-        <DataSourceOptions
-          onFileUpload={handleFileUpload}
-          onDataPaste={handleDataPaste}
-          onDatabaseConnect={handleDatabaseConnect}
-          onPlatformConnect={handlePlatformConnect}
-        />
+      {!hasUploadedData || showAddSource ? (
+        <div className="space-y-4">
+          {hasUploadedData && showAddSource && (
+            <div className="flex items-center gap-2 mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancelAddSource}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                ← Back to Summary
+              </Button>
+              <h3 className="text-lg font-semibold text-gray-900">Add Additional Data Source</h3>
+            </div>
+          )}
+          
+          <DataSourceOptions
+            onFileUpload={handleFileUpload}
+            onDataPaste={handleDataPaste}
+            onDatabaseConnect={handleDatabaseConnect}
+            onPlatformConnect={handlePlatformConnect}
+          />
+        </div>
       ) : (
         <Card className="bg-green-50 border-green-200">
           <CardHeader>
@@ -262,7 +290,7 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
               Data Connected Successfully!
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="text-center mb-4">
               <img 
                 src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400&h=300&fit=crop" 
@@ -292,6 +320,18 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
                 </Button>
               </div>
             ))}
+
+            {/* Add Additional Source Button */}
+            <div className="pt-2 border-t border-green-200">
+              <Button
+                variant="outline"
+                onClick={handleAddAdditionalSource}
+                className="flex items-center gap-2 text-green-700 border-green-300 hover:bg-green-100"
+              >
+                <Plus className="w-4 h-4" />
+                Add Additional Source
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
