@@ -57,7 +57,8 @@ export const useProjectAnalysis = () => {
       isProcessingAnalysis: true,
       educationalMode: educational,
       analysisResults: null,
-      analysisCompleted: false
+      analysisCompleted: false,
+      showAnalysisView: false // Reset this when starting new analysis
     }));
     
     // Simulate analysis processing with more realistic timing
@@ -83,16 +84,13 @@ export const useProjectAnalysis = () => {
   }, []);
 
   const showResults = useCallback(() => {
-    console.log('🎯 Showing results, current state:', {
-      analysisCompleted: state.analysisCompleted,
-      hasResults: !!state.analysisResults
-    });
+    console.log('🎯 Showing results, setting showAnalysisView to true');
     setState(prev => ({
       ...prev,
       showAnalysisView: true,
       isProcessingAnalysis: false
     }));
-  }, [state.analysisCompleted, state.analysisResults]);
+  }, []);
 
   const resetAnalysis = useCallback(() => {
     setState({

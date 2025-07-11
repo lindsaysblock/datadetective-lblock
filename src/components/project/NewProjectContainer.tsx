@@ -37,9 +37,15 @@ const NewProjectContainer = () => {
   };
 
   const handleViewResults = () => {
-    console.log('View Results clicked');
+    console.log('View Results clicked - before showResults call');
+    console.log('Analysis completed:', formData.analysisCompleted);
+    console.log('Analysis results available:', !!formData.analysisResults);
+    
     if (formData.analysisCompleted && formData.analysisResults) {
       formData.showResults();
+      console.log('showResults called - showAnalysisView should now be:', formData.showAnalysisView);
+    } else {
+      console.log('Cannot show results - analysis not completed or no results available');
     }
   };
 
