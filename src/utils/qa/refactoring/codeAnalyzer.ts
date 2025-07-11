@@ -1,9 +1,16 @@
 
 import { RefactoringSuggestion } from '../autoRefactorSystem';
 import { RefactoringSuggestionGenerator } from './suggestionGenerator';
+import { AutoRefactorMonitor } from './autoRefactorMonitor';
 
 export class CodeAnalyzer {
   private suggestionGenerator = new RefactoringSuggestionGenerator();
+  private autoRefactorMonitor = new AutoRefactorMonitor();
+
+  constructor() {
+    // Start auto-monitoring on initialization
+    this.autoRefactorMonitor.startMonitoring();
+  }
 
   async analyzeCodebase(): Promise<RefactoringSuggestion[]> {
     const suggestions: RefactoringSuggestion[] = [];
@@ -16,7 +23,10 @@ export class CodeAnalyzer {
       { path: 'src/components/QueryBuilder.tsx', lines: 445, type: 'component', complexity: 35 },
       { path: 'src/components/VisualizationReporting.tsx', lines: 316, type: 'component', complexity: 28 },
       { path: 'src/utils/testing/e2eLoadTest.ts', lines: 280, type: 'utility', complexity: 20 },
-      { path: 'src/components/data/DataUploadFlow.tsx', lines: 190, type: 'component', complexity: 16 }
+      { path: 'src/components/data/DataUploadFlow.tsx', lines: 190, type: 'component', complexity: 16 },
+      { path: 'src/components/QARunner.tsx', lines: 331, type: 'component', complexity: 25 },
+      { path: 'src/pages/Dashboard.tsx', lines: 212, type: 'page', complexity: 18 },
+      { path: 'src/components/testing/E2ETestRunner.tsx', lines: 241, type: 'component', complexity: 22 }
     ];
 
     for (const file of knownLargeFiles) {
@@ -26,17 +36,32 @@ export class CodeAnalyzer {
 
     // Sort by priority and maintainability
     suggestions.sort((a, b) => {
-      const priorityOrder = { high: 3, medium: 2, low: 1 };
+      const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
       const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
       if (priorityDiff !== 0) return priorityDiff;
       return a.maintainabilityIndex - b.maintainabilityIndex;
     });
 
     console.log(`🔍 Code analysis complete: ${suggestions.length} refactoring opportunities found`);
+    console.log(`🤖 Auto-refactor monitoring: ${this.autoRefactorMonitor.isMonitoring() ? 'ACTIVE' : 'INACTIVE'} (${this.autoRefactorMonitor.getAutoRefactorThreshold()} line threshold)`);
+    
     suggestions.forEach(s => {
-      console.log(`📁 ${s.file}: ${s.priority} priority (${s.currentLines} lines, complexity: ${s.complexity}, maintainability: ${s.maintainabilityIndex.toFixed(1)})`);
+      const autoFlag = s.autoRefactor ? ' [AUTO-REFACTOR]' : '';
+      console.log(`📁 ${s.file}: ${s.priority} priority (${s.currentLines} lines, complexity: ${s.complexity}, maintainability: ${s.maintainabilityIndex.toFixed(1)})${autoFlag}`);
     });
 
     return suggestions;
+  }
+
+  stopAutoMonitoring(): void {
+    this.autoRefactorMonitor.stopMonitoring();
+  }
+
+  startAutoMonitoring(): void {
+    this.autoRefactorMonitor.startMonitoring();
+  }
+
+  isAutoMonitoringActive(): boolean {
+    return this.autoRefactorMonitor.isMonitoring();
   }
 }
