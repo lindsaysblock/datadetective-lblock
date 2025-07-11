@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile, type ParsedData } from '@/utils/dataParser';
@@ -20,26 +19,45 @@ export const useProjectFormData = () => {
   };
 
   const removeFile = (index: number) => {
-    console.log('Removing file at index:', index);
-    console.log('Current files:', files);
-    console.log('Current parsedData:', parsedData);
-    
-    setFiles(prev => {
-      const newFiles = prev.filter((_, i) => i !== index);
-      console.log('New files after removal:', newFiles);
-      return newFiles;
-    });
-    
-    setParsedData(prev => {
-      const newParsedData = prev.filter((_, i) => i !== index);
-      console.log('New parsedData after removal:', newParsedData);
-      return newParsedData;
-    });
+    try {
+      console.log('Removing file at index:', index);
+      console.log('Current files:', files);
+      console.log('Current parsedData:', parsedData);
+      
+      if (index < 0 || index >= files.length) {
+        console.error(`Invalid file index: ${index}. Valid range: 0-${files.length - 1}`);
+        toast({
+          title: "Error",
+          description: "Unable to remove file: invalid file index.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setFiles(prev => {
+        const newFiles = prev.filter((_, i) => i !== index);
+        console.log('New files after removal:', newFiles);
+        return newFiles;
+      });
+      
+      setParsedData(prev => {
+        const newParsedData = prev.filter((_, i) => i !== index);
+        console.log('New parsedData after removal:', newParsedData);
+        return newParsedData;
+      });
 
-    toast({
-      title: "File Removed",
-      description: "The selected file has been removed from your project.",
-    });
+      toast({
+        title: "File Removed",
+        description: "The selected file has been removed from your project.",
+      });
+    } catch (error) {
+      console.error('Error removing file:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred while removing the file. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFileUpload = async () => {
