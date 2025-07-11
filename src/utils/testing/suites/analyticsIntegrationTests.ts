@@ -1,4 +1,3 @@
-
 import { ParsedData } from '../../dataParser';
 import { DataAnalysisEngine } from '../../analysis/dataAnalysisEngine';
 import { DataValidator } from '../../analytics/dataValidator';
@@ -39,7 +38,7 @@ export class AnalyticsIntegrationTestSuite {
         results.push({
           testName: `Pipeline Stage: ${stage.name}`,
           status: stage.status === 'completed' ? 'pass' : 'fail',
-          message: stage.error || `Stage completed in ${stage.duration?.toFixed(0)}ms`,
+          message: stage.error || `Stage completed in ${(stage.duration || 0).toFixed(0)}ms`,
           category: 'integration'
         });
       });
@@ -173,7 +172,7 @@ export class AnalyticsIntegrationTestSuite {
         const results_analysis = engine.runCompleteAnalysis();
         
         const dataCompletenessResult = results_analysis.find(r => r.id === 'data-completeness');
-        const actualCompleteness = dataCompletenessResult?.value || 0;
+        const actualCompleteness = typeof dataCompletenessResult?.value === 'number' ? dataCompletenessResult.value : 0;
         
         results.push({
           testName: `Data Quality: ${scenario.name}`,
