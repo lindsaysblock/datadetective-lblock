@@ -26,6 +26,44 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
 }) => {
   const hasUploadedFile = file && !uploading && !parsing;
 
+  const handleAddAdditionalSource = () => {
+    // Create a new file input element
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.csv,.json,.txt,.xlsx';
+    fileInput.style.display = 'none';
+    
+    fileInput.onchange = (e) => {
+      const selectedFile = (e.target as HTMLInputElement).files?.[0];
+      if (selectedFile) {
+        // Create a mock event to trigger the file change handler
+        const mockEvent = {
+          target: { files: [selectedFile] as FileList, value: '' } as HTMLInputElement,
+          currentTarget: {} as HTMLInputElement,
+          preventDefault: () => {},
+          stopPropagation: () => {},
+          nativeEvent: new Event('change'),
+          isDefaultPrevented: () => false,
+          isPropagationStopped: () => false,
+          persist: () => {},
+          bubbles: false,
+          cancelable: false,
+          defaultPrevented: false,
+          eventPhase: 0,
+          isTrusted: false,
+          timeStamp: Date.now(),
+          type: 'change'
+        } as React.ChangeEvent<HTMLInputElement>;
+        
+        onFileChange(mockEvent);
+      }
+    };
+    
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
+  };
+
   return (
     <Card className="w-full shadow-sm border-0 bg-white/80 backdrop-blur-sm">
       <CardContent className="p-8">
@@ -60,7 +98,11 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50/50">
               <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
               <p className="text-gray-600 mb-3">Want to add another data source?</p>
-              <Button variant="outline" className="flex items-center gap-2 bg-white hover:bg-gray-50">
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2 bg-white hover:bg-gray-50"
+                onClick={handleAddAdditionalSource}
+              >
                 <Plus className="w-4 h-4" />
                 Add Additional Source
               </Button>
