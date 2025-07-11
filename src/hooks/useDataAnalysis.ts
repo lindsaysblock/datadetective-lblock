@@ -35,7 +35,7 @@ export const useDataAnalysis = (): UseDataAnalysisReturn => {
       // Simulate processing time for UX
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const results = await AnalysisEngine.executeAnalysis(context);
+      const results = await AnalysisEngine.analyzeData(context);
       
       setAnalysisResults(results);
       setAnalysisCompleted(true);
