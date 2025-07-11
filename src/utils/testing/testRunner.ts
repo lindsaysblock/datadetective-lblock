@@ -4,6 +4,7 @@ export interface UnitTestResult {
   status: 'pass' | 'fail' | 'skip' | 'warning';
   duration: number;
   error?: string;
+  message?: string;
   assertions: number;
   passedAssertions: number;
 }

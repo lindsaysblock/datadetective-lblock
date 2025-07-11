@@ -1,5 +1,5 @@
 
-import { UnitTestResult } from '../testRunner';
+import { UnitTestResult } from '../types';
 
 export class EnhancedAnalyticsTests {
   static async runSecurityTests(): Promise<UnitTestResult[]> {
