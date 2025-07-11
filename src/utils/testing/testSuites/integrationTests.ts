@@ -37,7 +37,10 @@ export class IntegrationTestSuite {
   private async testComponentIntegration(): Promise<UnitTestResult> {
     return this.testRunner.runTest('Component Integration', (assert: AssertionHelper) => {
       const mockParentComponent = {
-        child: { rendered: false, props: {} }
+        child: { 
+          rendered: false, 
+          props: {} as { data?: string }
+        }
       };
       
       // Simulate parent-child communication
