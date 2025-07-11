@@ -146,7 +146,7 @@ function executeAnalysis(
     hasColumnMapping: !!columnMapping
   });
 
-  // Enhanced data validation and processing
+  // Enhanced data validation and processing - Fix the data extraction logic
   let processedData: any[] = [];
   let totalRows = 0;
   let totalColumns = 0;
@@ -165,8 +165,8 @@ function executeAnalysis(
       });
       
       if (item && typeof item === 'object') {
+        // Check if this is a parsed file object with data array
         if (item.data && Array.isArray(item.data) && item.data.length > 0) {
-          // This is a parsed file object with data array
           const fileRows = item.data.length;
           const fileColumns = fileRows > 0 ? Object.keys(item.data[0] || {}).length : 0;
           
@@ -181,36 +181,46 @@ function executeAnalysis(
             rows: fileRows,
             columns: fileColumns
           });
-        } else if (item.rows && typeof item.rows === 'number' && item.rows > 0) {
-          // Handle case where we have metadata but need to find actual data
-          console.log(`Item has ${item.rows} rows but no data array - checking for other data properties`);
+        } 
+        // Check if this is ParsedData object with rows property
+        else if (item.rows && Array.isArray(item.rows) && item.rows.length > 0) {
+          const fileRows = item.rows.length;
+          const fileColumns = fileRows > 0 ? Object.keys(item.rows[0] || {}).length : 0;
           
-          // Look for data in other properties
-          const dataKeys = Object.keys(item).filter(key => 
-            key !== 'name' && key !== 'rows' && key !== 'columns' && 
-            Array.isArray(item[key]) && item[key].length > 0
-          );
+          console.log(`Found ParsedData rows: ${fileRows} rows, ${fileColumns} columns`);
           
-          if (dataKeys.length > 0) {
-            const dataArray = item[dataKeys[0]];
-            processedData = processedData.concat(dataArray);
-            totalRows += dataArray.length;
-            totalColumns = Math.max(totalColumns, Object.keys(dataArray[0] || {}).length);
-            
-            fileDetails.push({
-              name: item.name || `File ${index + 1}`,
-              rows: dataArray.length,
-              columns: Object.keys(dataArray[0] || {}).length
-            });
-          }
-        } else if (Object.keys(item).length > 0 && !item.name && !item.rows) {
-          // This might be a direct data row
+          totalRows += fileRows;
+          totalColumns = Math.max(totalColumns, fileColumns);
+          processedData = processedData.concat(item.rows);
+          
+          fileDetails.push({
+            name: item.name || `Dataset ${index + 1}`,
+            rows: fileRows,
+            columns: fileColumns
+          });
+        }
+        // Check if this might be a direct data row
+        else if (Object.keys(item).length > 0 && !item.name && !item.rows && !item.data) {
           processedData.push(item);
           totalRows++;
           totalColumns = Math.max(totalColumns, Object.keys(item).length);
         }
       }
     });
+  }
+  // Handle single ParsedData object
+  else if (parsedData && typeof parsedData === 'object' && parsedData.rows) {
+    if (Array.isArray(parsedData.rows) && parsedData.rows.length > 0) {
+      processedData = parsedData.rows;
+      totalRows = parsedData.rows.length;
+      totalColumns = parsedData.columns ? parsedData.columns.length : Object.keys(parsedData.rows[0] || {}).length;
+      
+      fileDetails.push({
+        name: 'Dataset',
+        rows: totalRows,
+        columns: totalColumns
+      });
+    }
   }
 
   console.log('📋 Final processed data summary:', { 
