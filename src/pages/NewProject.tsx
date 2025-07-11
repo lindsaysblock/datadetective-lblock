@@ -214,7 +214,7 @@ const NewProject = () => {
           <Card className="w-full shadow-sm border-0 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
                   3
                 </div>
                 <div>
@@ -251,7 +251,7 @@ const NewProject = () => {
           <Card className="w-full shadow-sm border-0 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
                   4
                 </div>
                 <div>
