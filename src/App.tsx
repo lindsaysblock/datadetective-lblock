@@ -20,7 +20,7 @@ function App() {
   const [researchQuestion, setResearchQuestion] = useState('What are the key trends in user behavior?');
   const [additionalContext, setAdditionalContext] = useState('Analyzing user engagement metrics to improve retention.');
   const [dataSource, setDataSource] = useState('Internal behavioral dataset');
-	const { toast } = useToast()
+  const { toast } = useToast()
 
   useEffect(() => {
     // Simulate initial data load and analysis
@@ -40,10 +40,10 @@ function App() {
     // Simulate running analysis and getting results
     const mockResults = generateMockAnalysisResults();
     setAnalysisResults(mockResults);
-		toast({
-			title: "Analysis Complete!",
-			description: "Your data has been successfully analyzed.",
-		  })
+    toast({
+      title: "Analysis Complete!",
+      description: "Your data has been successfully analyzed.",
+    })
   };
 
   const handleBackToProject = () => {
@@ -70,57 +70,66 @@ function App() {
       }}
     >
       <Router>
-        <Routes>
-          <Route path="/" element={
-            <div className="container mx-auto mt-10">
-              <h1 className="text-3xl font-bold text-center mb-6">Data Analysis Tool</h1>
-              <DataUploadContainer onDataUpload={handleDataUpload} />
-              {data && (
-                <div className="mt-6">
-                  <h2 className="text-xl font-semibold mb-3">Dashboard</h2>
-                   <DashboardContainer data={data} />
-                  {!analysisResults && (
+        <div className="min-h-screen bg-background text-foreground">
+          <Routes>
+            <Route path="/" element={
+              <div className="container mx-auto mt-10">
+                <h1 className="text-3xl font-bold text-center mb-6">Data Analysis Tool</h1>
+                <div className="text-center mb-6">
+                  <Link to="/new-project">
+                    <Button className="mr-4">
+                      Start New Project
+                    </Button>
+                  </Link>
+                </div>
+                <DataUploadContainer onDataUpload={handleDataUpload} />
+                {data && (
+                  <div className="mt-6">
+                    <h2 className="text-xl font-semibold mb-3">Dashboard</h2>
+                     <DashboardContainer data={data} />
+                    {!analysisResults && (
+                      <div className="flex justify-center mt-6">
+                        <Button onClick={handleRunAnalysis}>
+                          <Rocket className="mr-2 h-4 w-4" />
+                          Run Analysis
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            } />
+            <Route path="/new-project" element={<NewProject />} />
+            <Route path="/reporting" element={<VisualizationReporting />} />
+            <Route
+              path="/project-analysis"
+              element={
+                analysisResults ? (
+                  <ProjectAnalysisView
+                    projectName={projectName}
+                    analysisResults={analysisResults}
+                    onBackToProject={handleBackToProject}
+                    researchQuestion={researchQuestion}
+                    additionalContext={additionalContext}
+                    dataSource={dataSource}
+                  />
+                ) : (
+                  <div className="container mx-auto mt-10">
+                    <h1 className="text-3xl font-bold text-center mb-6">No Analysis Results</h1>
+                    <p className="text-center">Please run an analysis first.</p>
                     <div className="flex justify-center mt-6">
                       <Button onClick={handleRunAnalysis}>
                         <Rocket className="mr-2 h-4 w-4" />
                         Run Analysis
                       </Button>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
-          } />
-          <Route path="/new-project" element={<NewProject />} />
-          <Route path="/reporting" element={<VisualizationReporting />} />
-          <Route
-            path="/project-analysis"
-            element={
-              analysisResults ? (
-                <ProjectAnalysisView
-                  projectName={projectName}
-                  analysisResults={analysisResults}
-                  onBackToProject={handleBackToProject}
-                  researchQuestion={researchQuestion}
-                  additionalContext={additionalContext}
-                  dataSource={dataSource}
-                />
-              ) : (
-                <div className="container mx-auto mt-10">
-                  <h1 className="text-3xl font-bold text-center mb-6">No Analysis Results</h1>
-                  <p className="text-center">Please run an analysis first.</p>
-                  <div className="flex justify-center mt-6">
-                    <Button onClick={handleRunAnalysis}>
-                      <Rocket className="mr-2 h-4 w-4" />
-                      Run Analysis
-                    </Button>
                   </div>
-                </div>
-              )
-            }
-          />
-        </Routes>
-        <Toaster />
+                )
+              }
+            />
+          </Routes>
+          <Toaster />
+        </div>
       </Router>
     </EnhancedAnalyticsProvider>
   );
