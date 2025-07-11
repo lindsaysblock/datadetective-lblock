@@ -36,11 +36,15 @@ export class FileDiscovery {
     const fiberNodes: any[] = [];
     
     try {
-      const reactRoot = document.querySelector('#root')?._reactInternalFiber ||
-                       document.querySelector('#root')?._reactInternals;
-      
-      if (reactRoot) {
-        this.traverseFiber(reactRoot, fiberNodes, 0, 10);
+      const rootElement = document.querySelector('#root');
+      if (rootElement) {
+        // Use type assertion to access React internal properties
+        const reactRoot = (rootElement as any)._reactInternalFiber ||
+                         (rootElement as any)._reactInternals;
+        
+        if (reactRoot) {
+          this.traverseFiber(reactRoot, fiberNodes, 0, 10);
+        }
       }
     } catch (error) {
       console.warn('Could not traverse React fiber nodes:', error);
