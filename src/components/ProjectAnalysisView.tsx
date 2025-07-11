@@ -5,6 +5,7 @@ import ProjectAnalysisHeader from './analysis/ProjectAnalysisHeader';
 import ProjectContextCard from './analysis/ProjectContextCard';
 import DigDeeperCard from './analysis/DigDeeperCard';
 import AnalysisResultsCard from './analysis/AnalysisResultsCard';
+import AnalysisExportBar from './analysis/AnalysisExportBar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface ProjectAnalysisViewProps {
@@ -26,23 +27,18 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
   dataSource,
   educationalMode = false
 }) => {
-  const [additionalQuestion, setAdditionalQuestion] = useState('');
   const [isContextOpen, setIsContextOpen] = useState(false);
-
-  const handleAskMoreQuestions = () => {
-    console.log('Ask more questions:', additionalQuestion);
-  };
-
-  const handleShowRecommendations = () => {
-    console.log('Show AI recommendations');
-  };
-
-  const handleCreateVisuals = () => {
-    console.log('Create visualizations');
-  };
 
   const handleExportFindings = () => {
     console.log('Export findings');
+  };
+
+  const handleExportVisuals = () => {
+    console.log('Export visuals');
+  };
+
+  const handleCreateRecurringReport = () => {
+    console.log('Create recurring report');
   };
 
   return (
@@ -53,28 +49,14 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
           onBackToProject={onBackToProject}
         />
 
+        <AnalysisExportBar
+          onExportFindings={handleExportFindings}
+          onExportVisuals={handleExportVisuals}
+          onCreateRecurringReport={handleCreateRecurringReport}
+        />
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Side - Project Context & Dig Deeper */}
-          <div className="space-y-6">
-            <ProjectContextCard
-              researchQuestion={researchQuestion}
-              dataSource={dataSource}
-              additionalContext={additionalContext}
-              isOpen={isContextOpen}
-              onOpenChange={setIsContextOpen}
-            />
-
-            <DigDeeperCard
-              additionalQuestion={additionalQuestion}
-              onAdditionalQuestionChange={setAdditionalQuestion}
-              onAskMoreQuestions={handleAskMoreQuestions}
-              onShowRecommendations={handleShowRecommendations}
-              onCreateVisuals={handleCreateVisuals}
-              onExportFindings={handleExportFindings}
-            />
-          </div>
-
-          {/* Right Side - Analysis Results */}
+          {/* Left Side - Analysis Results (Primary) */}
           <div className="space-y-6">
             <AnalysisResultsCard analysisResults={analysisResults} />
 
@@ -92,6 +74,19 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
                 </CardContent>
               </Card>
             )}
+          </div>
+
+          {/* Right Side - Context & Actions */}
+          <div className="space-y-6">
+            <ProjectContextCard
+              researchQuestion={researchQuestion}
+              dataSource={dataSource}
+              additionalContext={additionalContext}
+              isOpen={isContextOpen}
+              onOpenChange={setIsContextOpen}
+            />
+
+            <DigDeeperCard onExportFindings={handleExportFindings} />
           </div>
         </div>
       </div>
