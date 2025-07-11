@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, ArrowLeft, CheckCircle, User, Calendar, Activity, Hash, Tag } from 'lucide-react';
+import { ArrowRight, ArrowLeft, CheckCircle, User, Calendar, Activity, Lightbulb, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface ColumnIdentificationStepProps {
@@ -53,8 +53,78 @@ const ColumnIdentificationStep: React.FC<ColumnIdentificationStepProps> = ({
     return 'N/A';
   };
 
+  const isNumericColumn = (columnName: string) => {
+    if (parsedData.length > 0 && parsedData[0].data && parsedData[0].data.length > 0) {
+      const samples = parsedData[0].data.slice(0, 5).map(row => row[columnName]);
+      const numericSamples = samples.filter(sample => {
+        const num = Number(sample);
+        return !isNaN(num) && isFinite(num) && sample !== '' && sample !== null;
+      });
+      return numericSamples.length >= samples.length * 0.8; // 80% or more are numeric
+    }
+    return false;
+  };
+
+  const getColumnRecommendations = () => {
+    const recommendations = [];
+    
+    availableColumns.forEach(column => {
+      const lowerColumn = column.toLowerCase();
+      const sample = getColumnSample(column);
+      const isNumeric = isNumericColumn(column);
+      
+      if (isNumeric) {
+        // Revenue/Money related
+        if (/revenue|sales|price|cost|amount|total|value|fee|payment/.test(lowerColumn)) {
+          recommendations.push({
+            column,
+            type: 'revenue',
+            reason: 'Contains monetary values - great for revenue analysis',
+            priority: 'high',
+            sample
+          });
+        }
+        // Count/Quantity related
+        else if (/count|quantity|qty|number|volume|size/.test(lowerColumn)) {
+          recommendations.push({
+            column,
+            type: 'quantity',
+            reason: 'Contains quantities - useful for volume analysis',
+            priority: 'high',
+            sample
+          });
+        }
+        // General numeric
+        else {
+          recommendations.push({
+            column,
+            type: 'metric',
+            reason: 'Numeric data - can be analyzed for trends and patterns',
+            priority: 'medium',
+            sample
+          });
+        }
+      }
+      // Category columns
+      else if (/category|type|status|segment|group|department|region/.test(lowerColumn)) {
+        recommendations.push({
+          column,
+          type: 'category',
+          reason: 'Contains categories - perfect for grouping and segmentation',
+          priority: 'high',
+          sample
+        });
+      }
+    });
+
+    return recommendations.sort((a, b) => {
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
+      return priorityOrder[b.priority] - priorityOrder[a.priority];
+    });
+  };
+
   const nextStep = () => {
-    if (currentStep < 5) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -66,12 +136,13 @@ const ColumnIdentificationStep: React.FC<ColumnIdentificationStepProps> = ({
   };
 
   const steps = [
-    { number: 1, title: "User Information", icon: User, description: "Who performed the actions?" },
-    { number: 2, title: "Time Information", icon: Calendar, description: "When did actions happen?" },
-    { number: 3, title: "Action Information", icon: Activity, description: "What actions were taken?" },
-    { number: 4, title: "Numbers to Analyze", icon: Hash, description: "What numbers do you want to analyze?" },
-    { number: 5, title: "Categories & Groups", icon: Tag, description: "How do you want to group your data?" }
+    { number: 1, title: "Who", icon: User, description: "Who performed the actions?" },
+    { number: 2, title: "When", icon: Calendar, description: "When did actions happen?" },
+    { number: 3, title: "What", icon: Activity, description: "What actions were taken?" },
+    { number: 4, title: "Categories", icon: Tag, description: "How to group your data?" }
   ];
+
+  const recommendations = getColumnRecommendations();
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -80,7 +151,7 @@ const ColumnIdentificationStep: React.FC<ColumnIdentificationStepProps> = ({
           <div className="space-y-4">
             <div className="text-center mb-6">
               <User className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-              <h3 className="text-xl font-semibold">Step 1: User Information</h3>
+              <h3 className="text-xl font-semibold">Step 1: Who</h3>
               <p className="text-gray-600">Which column identifies who performed the actions?</p>
               <p className="text-sm text-gray-500 mt-2">Examples: Customer ID, User ID, Email, Account Number</p>
             </div>
@@ -114,7 +185,7 @@ const ColumnIdentificationStep: React.FC<ColumnIdentificationStepProps> = ({
           <div className="space-y-4">
             <div className="text-center mb-6">
               <Calendar className="w-12 h-12 text-green-600 mx-auto mb-3" />
-              <h3 className="text-xl font-semibold">Step 2: Time Information</h3>
+              <h3 className="text-xl font-semibold">Step 2: When</h3>
               <p className="text-gray-600">Which column shows when actions happened?</p>
               <p className="text-sm text-gray-500 mt-2">Examples: Date, Timestamp, Created At, Order Date</p>
             </div>
@@ -148,7 +219,7 @@ const ColumnIdentificationStep: React.FC<ColumnIdentificationStepProps> = ({
           <div className="space-y-4">
             <div className="text-center mb-6">
               <Activity className="w-12 h-12 text-purple-600 mx-auto mb-3" />
-              <h3 className="text-xl font-semibold">Step 3: Action Information</h3>
+              <h3 className="text-xl font-semibold">Step 3: What</h3>
               <p className="text-gray-600">Which column describes what action was taken?</p>
               <p className="text-sm text-gray-500 mt-2">Examples: Event Type, Action, Activity, Purchase Type</p>
             </div>
@@ -181,81 +252,61 @@ const ColumnIdentificationStep: React.FC<ColumnIdentificationStepProps> = ({
         return (
           <div className="space-y-4">
             <div className="text-center mb-6">
-              <Hash className="w-12 h-12 text-orange-600 mx-auto mb-3" />
-              <h3 className="text-xl font-semibold">Step 4: Numbers to Analyze</h3>
-              <p className="text-gray-600">Which columns contain numbers you want to analyze?</p>
-              <p className="text-sm text-gray-500 mt-2">Examples: Sales Amount, Quantity, Price, Revenue, Count</p>
+              <Lightbulb className="w-12 h-12 text-orange-600 mx-auto mb-3" />
+              <h3 className="text-xl font-semibold">Step 4: Smart Recommendations</h3>
+              <p className="text-gray-600">We've analyzed your data and found these interesting columns</p>
+              <p className="text-sm text-gray-500 mt-2">Select any that look relevant to your analysis</p>
             </div>
             
             <Card className="bg-orange-50 border-orange-200">
               <CardContent className="pt-6">
-                <Label className="mb-3 block">Click on columns that contain numbers you want to analyze:</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {availableColumns.map(column => (
-                    <div
-                      key={column}
-                      className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                        mapping.valueColumns.includes(column)
-                          ? 'bg-orange-200 border-orange-400 text-orange-800'
-                          : 'bg-white border-gray-200 hover:border-orange-300'
-                      }`}
-                      onClick={() => {
-                        const newColumns = mapping.valueColumns.includes(column)
-                          ? mapping.valueColumns.filter(c => c !== column)
-                          : [...mapping.valueColumns, column];
-                        handleMappingChange('valueColumns', newColumns);
-                      }}
-                    >
-                      <div className="font-medium">{column}</div>
-                      <div className="text-xs text-gray-600">Example: {getColumnSample(column)}</div>
-                      {mapping.valueColumns.includes(column) && (
-                        <CheckCircle className="w-4 h-4 text-orange-600 mt-1" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
-
-      case 5:
-        return (
-          <div className="space-y-4">
-            <div className="text-center mb-6">
-              <Tag className="w-12 h-12 text-teal-600 mx-auto mb-3" />
-              <h3 className="text-xl font-semibold">Step 5: Categories & Groups</h3>
-              <p className="text-gray-600">Which columns help you group or categorize your data?</p>
-              <p className="text-sm text-gray-500 mt-2">Examples: Product Category, Region, Department, Status</p>
-            </div>
-            
-            <Card className="bg-teal-50 border-teal-200">
-              <CardContent className="pt-6">
-                <Label className="mb-3 block">Click on columns that contain categories or groups:</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {availableColumns.map(column => (
-                    <div
-                      key={column}
-                      className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                        mapping.categoryColumns.includes(column)
-                          ? 'bg-teal-200 border-teal-400 text-teal-800'
-                          : 'bg-white border-gray-200 hover:border-teal-300'
-                      }`}
-                      onClick={() => {
-                        const newColumns = mapping.categoryColumns.includes(column)
-                          ? mapping.categoryColumns.filter(c => c !== column)
-                          : [...mapping.categoryColumns, column];
-                        handleMappingChange('categoryColumns', newColumns);
-                      }}
-                    >
-                      <div className="font-medium">{column}</div>
-                      <div className="text-xs text-gray-600">Example: {getColumnSample(column)}</div>
-                      {mapping.categoryColumns.includes(column) && (
-                        <CheckCircle className="w-4 h-4 text-teal-600 mt-1" />
-                      )}
-                    </div>
-                  ))}
-                </div>
+                {recommendations.length > 0 ? (
+                  <div className="space-y-3">
+                    <Label className="mb-3 block">Recommended columns for analysis:</Label>
+                    {recommendations.map((rec, index) => (
+                      <div
+                        key={rec.column}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                          (rec.type === 'category' ? mapping.categoryColumns : mapping.valueColumns).includes(rec.column)
+                            ? 'bg-orange-200 border-orange-400 text-orange-800'
+                            : 'bg-white border-gray-200 hover:border-orange-300'
+                        }`}
+                        onClick={() => {
+                          const targetArray = rec.type === 'category' ? 'categoryColumns' : 'valueColumns';
+                          const currentArray = mapping[targetArray];
+                          const newColumns = currentArray.includes(rec.column)
+                            ? currentArray.filter(c => c !== rec.column)
+                            : [...currentArray, rec.column];
+                          handleMappingChange(targetArray, newColumns);
+                        }}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium">{rec.column}</span>
+                              <Badge 
+                                variant="secondary" 
+                                className={`text-xs ${rec.priority === 'high' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}
+                              >
+                                {rec.priority} priority
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">{rec.reason}</p>
+                            <p className="text-xs text-gray-500">Example: {rec.sample}</p>
+                          </div>
+                          {(rec.type === 'category' ? mapping.categoryColumns : mapping.valueColumns).includes(rec.column) && (
+                            <CheckCircle className="w-5 h-5 text-orange-600 ml-2 flex-shrink-0" />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No specific recommendations found for this dataset.</p>
+                    <p className="text-sm mt-1">You can still proceed with the analysis.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -311,7 +362,7 @@ const ColumnIdentificationStep: React.FC<ColumnIdentificationStepProps> = ({
           {currentStep === 1 ? 'Back to Data' : 'Previous Step'}
         </Button>
         
-        {currentStep < 5 ? (
+        {currentStep < 4 ? (
           <Button onClick={nextStep} className="bg-blue-600 hover:bg-blue-700">
             Next Step
             <ArrowRight className="w-4 h-4 ml-2" />
@@ -351,7 +402,7 @@ const ColumnIdentificationStep: React.FC<ColumnIdentificationStepProps> = ({
               )}
               {mapping.valueColumns.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <Hash className="w-4 h-4 text-orange-600" />
+                  <Lightbulb className="w-4 h-4 text-orange-600" />
                   <span><strong>Numbers:</strong> {mapping.valueColumns.join(', ')}</span>
                 </div>
               )}
