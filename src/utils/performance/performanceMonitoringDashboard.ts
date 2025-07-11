@@ -1,271 +1,156 @@
-import { performanceMonitor } from './performanceMonitor';
-import { performancePolicyEngine } from './performancePolicies';
-import { analysisCache } from './cachingStrategy';
-import { analyticsTaskQueue } from './loadBalancer';
 
-export interface PerformanceDashboardData {
-  currentMetrics: {
-    responseTime: number;
-    memoryUsage: number;
-    cpuUsage: number;
-    cacheHitRate: number;
-    queueLength: number;
-  };
-  policyCompliance: {
-    overall: 'passed' | 'warning' | 'failed';
-    violations: Array<{ metric: string; message: string; severity: string; }>;
-  };
-  trends: {
-    responseTimeTrend: Array<{ timestamp: number; value: number; }>;
-    memoryTrend: Array<{ timestamp: number; value: number; }>;
-    errorRateTrend: Array<{ timestamp: number; value: number; }>;
-  };
-  systemHealth: {
-    uptime: number;
-    errorRate: number;
-    throughput: number;
-    activeUsers: number;
-  };
-  recommendations: Array<{
-    type: 'optimization' | 'scaling' | 'caching' | 'refactoring';
-    priority: 'low' | 'medium' | 'high' | 'critical';
+import { performanceMonitor } from './performanceMonitor';
+
+export interface PerformanceReport {
+  overall: 'passed' | 'warning' | 'failed';
+  results: {
+    metric: string;
+    passed: boolean;
     message: string;
-    impact: string;
-  }>;
+    severity: string;
+  }[];
+  regressions: {
+    metric: string;
+    change: number;
+    message: string;
+  }[];
+  violations: {
+    policy: string;
+    violation: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+  }[];
 }
 
 export class PerformanceMonitoringDashboard {
-  private metricsHistory: Array<{ timestamp: number; metrics: any }> = [];
-  private alertThresholds = {
-    responseTime: 500,
-    memoryUsage: 100,
-    errorRate: 5,
-    cacheHitRate: 70
-  };
+  private static instance: PerformanceMonitoringDashboard;
+  private reports: PerformanceReport[] = [];
 
-  generateDashboardData(): PerformanceDashboardData {
-    const currentMetrics = this.getCurrentMetrics();
-    const policyCompliance = this.checkPolicyCompliance(currentMetrics);
-    const trends = this.calculateTrends();
-    const systemHealth = this.calculateSystemHealth();
-    const recommendations = this.generateRecommendations(currentMetrics, policyCompliance);
-
-    return {
-      currentMetrics,
-      policyCompliance,
-      trends,
-      systemHealth,
-      recommendations
-    };
+  static getInstance(): PerformanceMonitoringDashboard {
+    if (!this.instance) {
+      this.instance = new PerformanceMonitoringDashboard();
+    }
+    return this.instance;
   }
 
-  private getCurrentMetrics() {
-    const memoryUsage = performanceMonitor.getMemoryUsage();
-    const cacheStats = analysisCache.getStats();
-    const queueStats = analyticsTaskQueue.getQueueStats();
+  generateReport(): PerformanceReport {
+    const metrics = performanceMonitor.getMetrics();
+    const results: PerformanceReport['results'] = [];
+    const violations: PerformanceReport['violations'] = [];
     
-    return {
-      responseTime: this.getAverageResponseTime(),
-      memoryUsage,
-      cpuUsage: this.getCPUUsage(),
-      cacheHitRate: cacheStats.hitRate,
-      queueLength: queueStats.totalTasks
-    };
-  }
-
-  private checkPolicyCompliance(metrics: any) {
-    return performancePolicyEngine.generatePerformanceReport({
-      responseTime: metrics.responseTime,
-      memoryUsage: metrics.memoryUsage,
-      bundleSize: this.estimateBundleSize()
-    });
-  }
-
-  private calculateTrends() {
-    const now = Date.now();
-    const last24Hours = now - 24 * 60 * 60 * 1000;
+    // Check response time SLA
+    const avgResponseTime = this.calculateAverageResponseTime(metrics);
+    const responseTimePassed = avgResponseTime < 200;
     
-    const recentMetrics = this.metricsHistory.filter(m => m.timestamp > last24Hours);
-    
-    return {
-      responseTimeTrend: recentMetrics.map(m => ({ 
-        timestamp: m.timestamp, 
-        value: m.metrics.responseTime || 0 
-      })),
-      memoryTrend: recentMetrics.map(m => ({ 
-        timestamp: m.timestamp, 
-        value: m.metrics.memoryUsage || 0 
-      })),
-      errorRateTrend: recentMetrics.map(m => ({ 
-        timestamp: m.timestamp, 
-        value: m.metrics.errorRate || 0 
-      }))
-    };
-  }
-
-  private calculateSystemHealth() {
-    const uptime = performance.now();
-    const errorRate = this.calculateErrorRate();
-    const throughput = this.calculateThroughput();
-    const activeUsers = this.estimateActiveUsers();
-
-    return {
-      uptime,
-      errorRate,
-      throughput,
-      activeUsers
-    };
-  }
-
-  private generateRecommendations(metrics: any, compliance: any): Array<{
-    type: 'optimization' | 'scaling' | 'caching' | 'refactoring';
-    priority: 'low' | 'medium' | 'high' | 'critical';
-    message: string;
-    impact: string;
-  }> {
-    const recommendations = [];
-
-    // High response time
-    if (metrics.responseTime > this.alertThresholds.responseTime) {
-      recommendations.push({
-        type: 'optimization' as const,
-        priority: 'high' as const,
-        message: 'Response time exceeds threshold. Consider optimizing database queries and API calls.',
-        impact: 'Improve user experience and reduce bounce rate'
-      });
-    }
-
-    // High memory usage
-    if (metrics.memoryUsage > this.alertThresholds.memoryUsage) {
-      recommendations.push({
-        type: 'optimization' as const,
-        priority: 'high' as const,
-        message: 'Memory usage is high. Review for memory leaks and optimize data structures.',
-        impact: 'Prevent crashes and improve stability'
-      });
-    }
-
-    // Low cache hit rate
-    if (metrics.cacheHitRate < this.alertThresholds.cacheHitRate) {
-      recommendations.push({
-        type: 'caching' as const,
-        priority: 'medium' as const,
-        message: 'Cache hit rate is low. Review caching strategy and TTL settings.',
-        impact: 'Reduce database load and improve response times'
-      });
-    }
-
-    // High queue length
-    if (metrics.queueLength > 10) {
-      recommendations.push({
-        type: 'scaling' as const,
-        priority: 'medium' as const,
-        message: 'Task queue is growing. Consider adding more workers or optimizing task processing.',
-        impact: 'Reduce processing delays and improve throughput'
-      });
-    }
-
-    // Policy violations
-    compliance.results.forEach(result => {
-      if (!result.passed && result.severity === 'critical') {
-        recommendations.push({
-          type: 'refactoring' as const,
-          priority: 'critical' as const,
-          message: `Critical policy violation: ${result.message}`,
-          impact: 'Maintain code quality and system stability'
-        });
-      }
+    results.push({
+      metric: 'Response Time SLA',
+      passed: responseTimePassed,
+      message: `Average response time: ${avgResponseTime.toFixed(2)}ms (Target: <200ms)`,
+      severity: responseTimePassed ? 'low' : 'high'
     });
 
-    return recommendations;
-  }
-
-  private getAverageResponseTime(): number {
-    const recentMetrics = this.metricsHistory.slice(-10);
-    if (recentMetrics.length === 0) return 0;
-    
-    const total = recentMetrics.reduce((sum, m) => sum + (m.metrics.responseTime || 0), 0);
-    return total / recentMetrics.length;
-  }
-
-  private getCPUUsage(): number {
-    // Simulate CPU usage calculation
-    return Math.random() * 100;
-  }
-
-  private calculateErrorRate(): number {
-    const recentMetrics = this.metricsHistory.slice(-100);
-    if (recentMetrics.length === 0) return 0;
-    
-    const errors = recentMetrics.filter(m => m.metrics.hasError).length;
-    return (errors / recentMetrics.length) * 100;
-  }
-
-  private calculateThroughput(): number {
-    const recentMetrics = this.metricsHistory.slice(-60); // Last minute
-    return recentMetrics.length;
-  }
-
-  private estimateActiveUsers(): number {
-    // Simulate active user estimation
-    return Math.floor(Math.random() * 50) + 10;
-  }
-
-  private estimateBundleSize(): number {
-    // Simulate bundle size calculation
-    return 180; // KB
-  }
-
-  recordMetric(metrics: any): void {
-    this.metricsHistory.push({
-      timestamp: Date.now(),
-      metrics
-    });
-    
-    // Keep only last 1000 entries
-    if (this.metricsHistory.length > 1000) {
-      this.metricsHistory = this.metricsHistory.slice(-1000);
+    if (!responseTimePassed) {
+      violations.push({
+        policy: 'Response Time SLA',
+        violation: `Response time ${avgResponseTime.toFixed(2)}ms exceeds 200ms limit`,
+        severity: 'high'
+      });
     }
+
+    // Check memory usage
+    const memoryUsage = this.getMemoryUsage();
+    const memoryPassed = memoryUsage < 128; // 128MB limit
+    
+    results.push({
+      metric: 'Memory Usage',
+      passed: memoryPassed,
+      message: `Memory usage: ${memoryUsage.toFixed(2)}MB (Target: <128MB)`,
+      severity: memoryPassed ? 'low' : 'medium'
+    });
+
+    if (!memoryPassed) {
+      violations.push({
+        policy: 'Memory Budget',
+        violation: `Memory usage ${memoryUsage.toFixed(2)}MB exceeds 128MB limit`,
+        severity: 'medium'
+      });
+    }
+
+    // Check for performance regressions
+    const regressions = this.detectRegressions(metrics);
+
+    const overall = violations.length === 0 ? 'passed' : 
+                   violations.some(v => v.severity === 'high' || v.severity === 'critical') ? 'failed' : 'warning';
+
+    const report: PerformanceReport = {
+      overall,
+      results,
+      regressions,
+      violations
+    };
+
+    this.reports.push(report);
+    return report;
   }
 
-  startMonitoring(): void {
-    // Record metrics every 30 seconds
-    setInterval(() => {
-      const metrics = this.getCurrentMetrics();
-      this.recordMetric(metrics);
+  private calculateAverageResponseTime(metrics: any[]): number {
+    if (metrics.length === 0) return 0;
+    
+    const responseTimes = metrics
+      .filter(m => m.type === 'function_execution' && m.duration)
+      .map(m => m.duration);
+    
+    if (responseTimes.length === 0) return 0;
+    
+    return responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length;
+  }
+
+  private getMemoryUsage(): number {
+    // Simulate memory usage calculation
+    if (typeof window !== 'undefined' && (window as any).performance?.memory) {
+      const memory = (window as any).performance.memory;
+      return memory.usedJSHeapSize / 1024 / 1024; // Convert to MB
+    }
+    
+    // Fallback estimation
+    return Math.random() * 100; // Random value for simulation
+  }
+
+  private detectRegressions(metrics: any[]): PerformanceReport['regressions'] {
+    const regressions: PerformanceReport['regressions'] = [];
+    
+    // Simple regression detection - compare with previous measurements
+    if (this.reports.length > 0) {
+      const previousReport = this.reports[this.reports.length - 1];
+      const currentAvgTime = this.calculateAverageResponseTime(metrics);
       
-      // Check for alerts
-      this.checkAlerts(metrics);
-    }, 30000);
-  }
-
-  private checkAlerts(metrics: any): void {
-    const alerts = [];
-    
-    if (metrics.responseTime > this.alertThresholds.responseTime) {
-      alerts.push(`High response time: ${metrics.responseTime}ms`);
-    }
-    
-    if (metrics.memoryUsage > this.alertThresholds.memoryUsage) {
-      alerts.push(`High memory usage: ${metrics.memoryUsage}MB`);
-    }
-    
-    if (alerts.length > 0) {
-      console.warn('🚨 Performance Alerts:', alerts);
+      const previousAvgTime = previousReport.results
+        .find(r => r.metric === 'Response Time SLA')
+        ?.message.match(/(\d+\.?\d*)/)?.[0];
       
-      // Dispatch custom event for UI notifications
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('performance-alert', {
-          detail: { alerts, metrics }
-        }));
+      if (previousAvgTime) {
+        const prevTime = parseFloat(previousAvgTime);
+        const change = ((currentAvgTime - prevTime) / prevTime) * 100;
+        
+        if (change > 5) { // 5% regression threshold
+          regressions.push({
+            metric: 'Response Time',
+            change,
+            message: `Response time increased by ${change.toFixed(1)}% (${prevTime}ms → ${currentAvgTime.toFixed(2)}ms)`
+          });
+        }
       }
     }
+    
+    return regressions;
+  }
+
+  getLatestReport(): PerformanceReport | null {
+    return this.reports.length > 0 ? this.reports[this.reports.length - 1] : null;
+  }
+
+  getAllReports(): PerformanceReport[] {
+    return [...this.reports];
   }
 }
 
-export const performanceDashboard = new PerformanceMonitoringDashboard();
-
-// Auto-start monitoring in development
-if (typeof window !== 'undefined' && import.meta.env.DEV) {
-  performanceDashboard.startMonitoring();
-}
+export const performanceDashboard = PerformanceMonitoringDashboard.getInstance();

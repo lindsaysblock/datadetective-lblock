@@ -55,6 +55,8 @@ export const analyzeData = (headers: string[], rows: Record<string, any>[]): Par
   return {
     columns,
     rows,
+    rowCount: rows.length,
+    fileSize: 0, // Will be set by the parser
     summary: {
       totalRows: rows.length,
       totalColumns: headers.length,

@@ -12,11 +12,23 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ data }) => {
   const [activeTab, setActiveTab] = useState('analytics');
   const { processedData, findings, recommendations, hypotheses } = useDashboardData(data);
 
+  // Ensure the data has the required structure
+  const normalizedData: ParsedData = processedData || {
+    columns: [],
+    rows: [],
+    rowCount: 0,
+    fileSize: 0,
+    summary: {
+      totalRows: 0,
+      totalColumns: 0
+    }
+  };
+
   return (
     <DashboardView
       activeTab={activeTab}
       onTabChange={setActiveTab}
-      data={processedData}
+      data={normalizedData}
       findings={findings}
       recommendations={recommendations}
     />
