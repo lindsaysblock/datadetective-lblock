@@ -1,5 +1,5 @@
 
-import { LoadTestingSystem, type LoadTestConfig } from '../loadTesting';
+import { LoadTestingSystem, type LoadTestConfig } from '../testing/loadTesting/loadTestingSystem';
 import { UnitTestingSystem } from '../unitTesting';
 import { QATestSuites } from './qaTestSuites';
 
@@ -12,32 +12,62 @@ export class TestRunner {
     this.qaTestSuites = qaTestSuites;
   }
 
+  async runTest(testName: string, testFn: (assert: any) => void): Promise<any> {
+    const startTime = performance.now();
+    
+    const assert = {
+      truthy: (value: any, message: string) => {
+        if (!value) throw new Error(message);
+      },
+      equal: (actual: any, expected: any, message: string) => {
+        if (actual !== expected) throw new Error(`${message}: expected ${expected}, got ${actual}`);
+      }
+    };
+
+    try {
+      testFn(assert);
+      const duration = performance.now() - startTime;
+      
+      return {
+        name: testName,
+        status: 'pass',
+        duration,
+        error: null
+      };
+    } catch (error) {
+      const duration = performance.now() - startTime;
+      
+      return {
+        name: testName,
+        status: 'fail',
+        duration,
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
   async runLoadTests(): Promise<void> {
-    console.log('🚀 Running load testing suite with updated step order...');
+    console.log('🚀 Running optimized load testing suite...');
     
     const loadTestConfigs: LoadTestConfig[] = [
-      // Step 1: Research Question - Light load
       {
         concurrentUsers: 5,
         duration: 8,
         rampUpTime: 2,
         testType: 'research-question'
       },
-      // Step 2: Connect Your Data - Medium load
       {
         concurrentUsers: 8,
         duration: 12,
         rampUpTime: 3,
         testType: 'data-processing'
       },
-      // Step 3: Additional Context - Light load (optional step)
       {
         concurrentUsers: 4,
         duration: 6,
         rampUpTime: 1,
         testType: 'context-processing'
       },
-      // Step 4: Ready to Investigate - Heavy load
       {
         concurrentUsers: 12,
         duration: 15,
@@ -83,23 +113,8 @@ export class TestRunner {
     }
   }
 
-  private getStepDisplayName(testType: string): string {
-    switch (testType) {
-      case 'research-question':
-        return 'Step 1: Research Question';
-      case 'data-processing':
-        return 'Step 2: Connect Your Data';
-      case 'context-processing':
-        return 'Step 3: Additional Context';
-      case 'ui-interaction':
-        return 'Step 4: Ready to Investigate';
-      default:
-        return testType;
-    }
-  }
-
   async runUnitTests(): Promise<void> {
-    console.log('🧪 Running unit test suite with step-aware testing...');
+    console.log('🧪 Running optimized unit test suite...');
     
     try {
       const unitTestReport = await this.unitTestingSystem.runAllTests();
@@ -148,6 +163,21 @@ export class TestRunner {
         status: 'fail',
         message: `Unit test execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       });
+    }
+  }
+
+  private getStepDisplayName(testType: string): string {
+    switch (testType) {
+      case 'research-question':
+        return 'Step 1: Research Question';
+      case 'data-processing':
+        return 'Step 2: Connect Your Data';
+      case 'context-processing':
+        return 'Step 3: Additional Context';
+      case 'ui-interaction':
+        return 'Step 4: Ready to Investigate';
+      default:
+        return testType;
     }
   }
 }

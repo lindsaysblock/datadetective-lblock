@@ -1,7 +1,6 @@
-
 import { QATestResult } from '../types';
 import { DataAnalysisEngine } from '../../analysis/dataAnalysisEngine';
-import { ParsedData, DataColumn } from '../../dataParser';
+import { ParsedData } from '../../dataParser';
 
 export class AnalyticsTestSuite {
   async runTests(): Promise<QATestResult[]> {
@@ -19,21 +18,7 @@ export class AnalyticsTestSuite {
 
   private async testBasicAnalysis(): Promise<QATestResult> {
     try {
-      const mockData: ParsedData = {
-        columns: [
-          { name: 'action', type: 'string' },
-          { name: 'user_id', type: 'string' },
-          { name: 'product_name', type: 'string' },
-          { name: 'timestamp', type: 'string' }
-        ],
-        rows: [
-          { action: 'view', user_id: 'user1', product_name: 'Product A', timestamp: '2024-01-01T10:00:00Z' },
-          { action: 'purchase', user_id: 'user2', product_name: 'Product B', timestamp: '2024-01-01T11:00:00Z' }
-        ],
-        rowCount: 2,
-        fileSize: 500
-      };
-      
+      const mockData = this.createTestData(2);
       const engine = new DataAnalysisEngine(mockData);
       const results = engine.runCompleteAnalysis();
       
@@ -44,36 +29,13 @@ export class AnalyticsTestSuite {
         category: 'analytics'
       };
     } catch (error) {
-      return {
-        testName: 'Basic Analytics Engine Test',
-        status: 'fail',
-        message: `Analysis failed: ${error}`,
-        category: 'analytics'
-      };
+      return this.createErrorResult('Basic Analytics Engine Test', error);
     }
   }
 
   private async testRowCountAnalysis(): Promise<QATestResult> {
     try {
-      const mockData: ParsedData = {
-        columns: [
-          { name: 'action', type: 'string' },
-          { name: 'user_id', type: 'string' },
-          { name: 'session_id', type: 'string' },
-          { name: 'order_id', type: 'string' },
-          { name: 'total_order_value', type: 'number' }
-        ],
-        rows: Array.from({ length: 1000 }, (_, i) => ({
-          action: i % 3 === 0 ? 'purchase' : 'view',
-          user_id: `user${i % 100}`,
-          session_id: `session${i % 200}`,
-          order_id: i % 3 === 0 ? (i % 10 === 0 ? null : `order${i}`) : null,
-          total_order_value: i % 3 === 0 ? (i % 20 === 0 ? 0 : Math.random() * 100) : null
-        })),
-        rowCount: 1000,
-        fileSize: 50000
-      };
-      
+      const mockData = this.createLargeTestData(1000);
       const engine = new DataAnalysisEngine(mockData);
       const results = engine.analyzeRowCounts();
       
@@ -87,32 +49,13 @@ export class AnalyticsTestSuite {
         category: 'analytics'
       };
     } catch (error) {
-      return {
-        testName: 'Row Count Analysis Test',
-        status: 'fail',
-        message: `Row count analysis failed: ${error}`,
-        category: 'analytics'
-      };
+      return this.createErrorResult('Row Count Analysis Test', error);
     }
   }
 
   private async testActionBreakdownAnalysis(): Promise<QATestResult> {
     try {
-      const mockData: ParsedData = {
-        columns: [
-          { name: 'action', type: 'string' },
-          { name: 'user_id', type: 'string' }
-        ],
-        rows: [
-          { action: 'view', user_id: 'user1' },
-          { action: 'view', user_id: 'user2' },
-          { action: 'purchase', user_id: 'user3' },
-          { action: 'view', user_id: 'unknown' }
-        ],
-        rowCount: 4,
-        fileSize: 200
-      };
-      
+      const mockData = this.createTestData(4);
       const engine = new DataAnalysisEngine(mockData);
       const results = engine.analyzeActionBreakdown();
       
@@ -125,32 +68,13 @@ export class AnalyticsTestSuite {
         category: 'analytics'
       };
     } catch (error) {
-      return {
-        testName: 'Action Breakdown Analysis Test',
-        status: 'fail',
-        message: `Action breakdown failed: ${error}`,
-        category: 'analytics'
-      };
+      return this.createErrorResult('Action Breakdown Analysis Test', error);
     }
   }
 
   private async testTimeAnalysis(): Promise<QATestResult> {
     try {
-      const mockData: ParsedData = {
-        columns: [
-          { name: 'action', type: 'string' },
-          { name: 'user_id', type: 'string' },
-          { name: 'timestamp', type: 'string' }
-        ],
-        rows: Array.from({ length: 50 }, (_, i) => ({
-          action: 'purchase',
-          user_id: `user${i}`,
-          timestamp: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString()
-        })),
-        rowCount: 50,
-        fileSize: 2500
-      };
-      
+      const mockData = this.createTimeSeriesData(50);
       const engine = new DataAnalysisEngine(mockData);
       const results = engine.analyzeTimeTrends();
       
@@ -163,38 +87,13 @@ export class AnalyticsTestSuite {
         category: 'analytics'
       };
     } catch (error) {
-      return {
-        testName: 'Time Analysis Test',
-        status: 'fail',
-        message: `Time analysis failed: ${error}`,
-        category: 'analytics'
-      };
+      return this.createErrorResult('Time Analysis Test', error);
     }
   }
 
   private async testProductAnalysis(): Promise<QATestResult> {
     try {
-      const mockData: ParsedData = {
-        columns: [
-          { name: 'action', type: 'string' },
-          { name: 'user_id', type: 'string' },
-          { name: 'product_name', type: 'string' },
-          { name: 'total_order_value', type: 'number' },
-          { name: 'cost', type: 'number' },
-          { name: 'quantity', type: 'number' }
-        ],
-        rows: Array.from({ length: 100 }, (_, i) => ({
-          action: i % 4 === 0 ? 'purchase' : 'view',
-          user_id: `user${i % 20}`,
-          product_name: `Product ${String.fromCharCode(65 + (i % 5))}`,
-          total_order_value: i % 4 === 0 ? Math.random() * 200 + 50 : null,
-          cost: i % 4 === 0 ? Math.random() * 50 + 10 : null,
-          quantity: i % 4 === 0 ? Math.floor(Math.random() * 5) + 1 : null
-        })),
-        rowCount: 100,
-        fileSize: 8000
-      };
-      
+      const mockData = this.createProductData(100);
       const engine = new DataAnalysisEngine(mockData);
       const results = engine.analyzeProducts();
       
@@ -208,38 +107,13 @@ export class AnalyticsTestSuite {
         category: 'analytics'
       };
     } catch (error) {
-      return {
-        testName: 'Product Analysis Test',
-        status: 'fail',
-        message: `Product analysis failed: ${error}`,
-        category: 'analytics'
-      };
+      return this.createErrorResult('Product Analysis Test', error);
     }
   }
 
   private async testDataQuality(): Promise<QATestResult> {
     try {
-      const mockData: ParsedData = {
-        columns: [
-          { name: 'action', type: 'string' },
-          { name: 'user_id', type: 'string' },
-          { name: 'product_name', type: 'string' },
-          { name: 'timestamp', type: 'string' },
-          { name: 'total_order_value', type: 'number' },
-          { name: 'cost', type: 'number' },
-          { name: 'quantity', type: 'number' }
-        ],
-        rows: [
-          // Good data
-          { action: 'purchase', user_id: 'user1', product_name: 'Product A', timestamp: '2024-01-01T10:00:00Z', total_order_value: 100, cost: 30, quantity: 2 },
-          // Data quality issues
-          { action: 'purchase', user_id: 'user2', product_name: 'Product B', timestamp: '2024-01-01T11:00:00Z', total_order_value: 0, cost: 20, quantity: 1 },
-          { action: 'purchase', user_id: 'user3', product_name: 'Product C', timestamp: '2024-01-01T12:00:00Z', total_order_value: 50, cost: null, quantity: 1 }
-        ],
-        rowCount: 3,
-        fileSize: 300
-      };
-      
+      const mockData = this.createQualityTestData();
       const engine = new DataAnalysisEngine(mockData);
       const results = engine.analyzeRowCounts();
       
@@ -252,12 +126,122 @@ export class AnalyticsTestSuite {
         category: 'analytics'
       };
     } catch (error) {
-      return {
-        testName: 'Data Quality Analysis Test',
-        status: 'fail',
-        message: `Data quality analysis failed: ${error}`,
-        category: 'analytics'
-      };
+      return this.createErrorResult('Data Quality Analysis Test', error);
     }
+  }
+
+  private createTestData(size: number): ParsedData {
+    return {
+      columns: [
+        { name: 'action', type: 'string', samples: ['view', 'purchase'] },
+        { name: 'user_id', type: 'string', samples: ['user1', 'user2'] },
+        { name: 'product_name', type: 'string', samples: ['Product A', 'Product B'] },
+        { name: 'timestamp', type: 'string', samples: ['2024-01-01T10:00:00Z'] }
+      ],
+      rows: Array.from({ length: size }, (_, i) => ({
+        action: i % 2 === 0 ? 'view' : 'purchase',
+        user_id: `user${i + 1}`,
+        product_name: `Product ${String.fromCharCode(65 + (i % 2))}`,
+        timestamp: '2024-01-01T10:00:00Z'
+      })),
+      rowCount: size,
+      fileSize: size * 100,
+      summary: { totalRows: size, totalColumns: 4 }
+    };
+  }
+
+  private createLargeTestData(size: number): ParsedData {
+    return {
+      columns: [
+        { name: 'action', type: 'string' },
+        { name: 'user_id', type: 'string' },
+        { name: 'session_id', type: 'string' },
+        { name: 'order_id', type: 'string' },
+        { name: 'total_order_value', type: 'number' }
+      ],
+      rows: Array.from({ length: size }, (_, i) => ({
+        action: i % 3 === 0 ? 'purchase' : 'view',
+        user_id: `user${i % 100}`,
+        session_id: `session${i % 200}`,
+        order_id: i % 3 === 0 ? (i % 10 === 0 ? null : `order${i}`) : null,
+        total_order_value: i % 3 === 0 ? (i % 20 === 0 ? 0 : Math.random() * 100) : null
+      })),
+      rowCount: size,
+      fileSize: size * 200,
+      summary: { totalRows: size, totalColumns: 5 }
+    };
+  }
+
+  private createTimeSeriesData(size: number): ParsedData {
+    return {
+      columns: [
+        { name: 'action', type: 'string' },
+        { name: 'user_id', type: 'string' },
+        { name: 'timestamp', type: 'string' }
+      ],
+      rows: Array.from({ length: size }, (_, i) => ({
+        action: 'purchase',
+        user_id: `user${i}`,
+        timestamp: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString()
+      })),
+      rowCount: size,
+      fileSize: size * 150,
+      summary: { totalRows: size, totalColumns: 3 }
+    };
+  }
+
+  private createProductData(size: number): ParsedData {
+    return {
+      columns: [
+        { name: 'action', type: 'string' },
+        { name: 'user_id', type: 'string' },
+        { name: 'product_name', type: 'string' },
+        { name: 'total_order_value', type: 'number' },
+        { name: 'cost', type: 'number' },
+        { name: 'quantity', type: 'number' }
+      ],
+      rows: Array.from({ length: size }, (_, i) => ({
+        action: i % 4 === 0 ? 'purchase' : 'view',
+        user_id: `user${i % 20}`,
+        product_name: `Product ${String.fromCharCode(65 + (i % 5))}`,
+        total_order_value: i % 4 === 0 ? Math.random() * 200 + 50 : null,
+        cost: i % 4 === 0 ? Math.random() * 50 + 10 : null,
+        quantity: i % 4 === 0 ? Math.floor(Math.random() * 5) + 1 : null
+      })),
+      rowCount: size,
+      fileSize: size * 180,
+      summary: { totalRows: size, totalColumns: 6 }
+    };
+  }
+
+  private createQualityTestData(): ParsedData {
+    return {
+      columns: [
+        { name: 'action', type: 'string' },
+        { name: 'user_id', type: 'string' },
+        { name: 'product_name', type: 'string' },
+        { name: 'timestamp', type: 'string' },
+        { name: 'total_order_value', type: 'number' },
+        { name: 'cost', type: 'number' },
+        { name: 'quantity', type: 'number' }
+      ],
+      rows: [
+        { action: 'purchase', user_id: 'user1', product_name: 'Product A', timestamp: '2024-01-01T10:00:00Z', total_order_value: 100, cost: 30, quantity: 2 },
+        { action: 'purchase', user_id: 'user2', product_name: 'Product B', timestamp: '2024-01-01T11:00:00Z', total_order_value: 0, cost: 20, quantity: 1 },
+        { action: 'purchase', user_id: 'user3', product_name: 'Product C', timestamp: '2024-01-01T12:00:00Z', total_order_value: 50, cost: null, quantity: 1 }
+      ],
+      rowCount: 3,
+      fileSize: 300,
+      summary: { totalRows: 3, totalColumns: 7 }
+    };
+  }
+
+  private createErrorResult(testName: string, error: unknown): QATestResult {
+    return {
+      testName,
+      status: 'fail',
+      message: `${testName} failed: ${error}`,
+      category: 'analytics'
+    };
   }
 }

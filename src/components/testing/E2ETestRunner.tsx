@@ -2,27 +2,26 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useAutoQA } from '../../hooks/useAutoQA';
 import { useE2ELoadTest } from '../../hooks/useE2ELoadTest';
-import { 
-  Play, 
-  CheckCircle, 
-  AlertTriangle, 
-  XCircle, 
-  Activity,
-  Zap,
-  Settings,
-  BarChart3
-} from 'lucide-react';
+import { Play, Activity, Settings, BarChart3, Zap, CheckCircle } from 'lucide-react';
+import TestResultCard from './TestResultCard';
+import TestCoverageIndicator from './TestCoverageIndicator';
+
+interface TestResult {
+  step: string;
+  status: 'success' | 'warning' | 'error';
+  details: string;
+  timestamp: Date;
+}
 
 const E2ETestRunner: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [currentStep, setCurrentStep] = useState('');
   const [progress, setProgress] = useState(0);
-  const [testResults, setTestResults] = useState<any[]>([]);
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
   const { toast } = useToast();
   const { runManualQA } = useAutoQA();
   const { runFullLoadTest, runQuickLoadCheck } = useE2ELoadTest();
@@ -144,22 +143,17 @@ const E2ETestRunner: React.FC = () => {
   };
 
   const runPerformanceAnalysis = async (): Promise<{ efficient: boolean; efficiency: number }> => {
-    // Simulate performance analysis
     const startTime = performance.now();
     
-    // Check memory usage
     const memoryUsage = 'memory' in performance ? 
       (performance as any).memory.usedJSHeapSize / 1024 / 1024 : 0;
     
-    // Check DOM complexity
     const domNodes = document.getElementsByTagName('*').length;
     
-    // Simulate analysis time
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     const analysisTime = performance.now() - startTime;
     
-    // Calculate efficiency score
     let efficiency = 100;
     if (memoryUsage > 50) efficiency -= 20;
     if (domNodes > 1000) efficiency -= 15;
@@ -171,26 +165,7 @@ const E2ETestRunner: React.FC = () => {
     };
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'success': return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'warning': return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
-      case 'error': return <XCircle className="w-4 h-4 text-red-500" />;
-      default: return <Activity className="w-4 h-4 text-blue-500" />;
-    }
-  };
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'success': return 'default';
-      case 'warning': return 'secondary';
-      case 'error': return 'destructive';
-      default: return 'outline';
-    }
-  };
-
   useEffect(() => {
-    // Auto-run E2E tests on component mount
     const autoRun = setTimeout(() => {
       runFullE2ETest();
     }, 2000);
@@ -245,42 +220,13 @@ const E2ETestRunner: React.FC = () => {
             <h3 className="font-medium text-lg">Test Results</h3>
             <div className="space-y-2">
               {testResults.map((result, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(result.status)}
-                    <div>
-                      <div className="font-medium">{result.step}</div>
-                      <div className="text-sm text-gray-600">{result.details}</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant={getStatusBadgeVariant(result.status)}>
-                      {result.status.toUpperCase()}
-                    </Badge>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {result.timestamp.toLocaleTimeString()}
-                    </div>
-                  </div>
-                </div>
+                <TestResultCard key={index} result={result} />
               ))}
             </div>
           </div>
         )}
 
-        <div className="border-t pt-4">
-          <h4 className="font-medium mb-2">Test Coverage Areas</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {testSteps.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                  <Icon className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm">{step.name}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <TestCoverageIndicator testSteps={testSteps} />
 
         <div className="bg-blue-50 rounded-lg p-4 text-sm text-blue-700">
           <strong>Note:</strong> E2E tests run automatically on page load and can be manually triggered. 

@@ -1,279 +1,220 @@
-import { QATestSuites } from '../../qa/qaTestSuites';
-import { LoadTestConfig, LoadTestResult, TestExecutionResult } from './types';
+
+import { LoadTestConfig, LoadTestResult, LoadTestMetrics } from './types';
 
 export class LoadTestingSystem {
-  private activeTests = new Map<string, AbortController>();
-  private testResults: LoadTestResult[] = [];
-
   async runLoadTest(config: LoadTestConfig): Promise<LoadTestResult> {
-    const testKey = `${config.testType}-${Date.now()}`;
-    const controller = new AbortController();
-    this.activeTests.set(testKey, controller);
+    console.log(`🚀 Starting load test: ${config.testType} with ${config.concurrentUsers} users`);
+    
+    const metrics: LoadTestMetrics = {
+      responseTime: [],
+      errors: 0,
+      successCount: 0,
+      startTime: performance.now(),
+      endTime: 0,
+      memorySnapshots: []
+    };
 
-    console.log(`🚀 Starting ${config.testType} load test with ${config.concurrentUsers} users for ${config.duration}s`);
+    const initialMemory = this.getMemoryUsage();
+    metrics.memorySnapshots.push(initialMemory);
 
     try {
-      const startTime = Date.now();
-      const results = await this.executeLoadTest(config, controller.signal);
-      const endTime = Date.now();
-
-      // Calculate performance metrics
-      const successfulResults = results.filter(r => r.success);
-      const failedResults = results.filter(r => !r.success);
-      const averageResponseTime = successfulResults.length > 0 
-        ? successfulResults.reduce((sum, r) => sum + r.responseTime, 0) / successfulResults.length 
-        : 0;
-      const errorRate = results.length > 0 ? (failedResults.length / results.length) * 100 : 0;
-      const throughput = results.length / (config.duration || 1);
-
-      // Simulate memory usage metrics
-      const memoryUsage = {
-        initial: 50 + Math.random() * 20,
-        peak: 80 + Math.random() * 40,
-        final: 60 + Math.random() * 25
-      };
-
-      const testResult: LoadTestResult = {
-        config,
-        results,
-        duration: endTime - startTime,
-        success: true,
-        timestamp: new Date(),
-        testType: config.testType,
-        concurrentUsers: config.concurrentUsers,
-        averageResponseTime,
-        errorRate,
-        throughput,
-        memoryUsage,
-        cpuUsage: Math.random() * 60 + 20, // Simulate CPU usage
-        successfulRequests: successfulResults.length,
-        failedRequests: failedResults.length
-      };
-
-      this.testResults.push(testResult);
-      console.log(`✅ ${config.testType} load test completed in ${testResult.duration}ms`);
+      // Simulate concurrent users with ramp-up
+      await this.simulateRampUp(config, metrics);
       
-      return testResult;
+      // Run main load test
+      await this.runMainLoadTest(config, metrics);
+      
+      metrics.endTime = performance.now();
+      const finalMemory = this.getMemoryUsage();
+      metrics.memorySnapshots.push(finalMemory);
+
+      return this.calculateResults(metrics, config, initialMemory, finalMemory);
+      
     } catch (error) {
-      const testResult: LoadTestResult = {
-        config,
-        results: [],
-        duration: 0,
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date(),
-        testType: config.testType,
-        concurrentUsers: config.concurrentUsers,
-        averageResponseTime: 0,
-        errorRate: 100,
-        throughput: 0,
-        memoryUsage: { initial: 0, peak: 0, final: 0 },
-        cpuUsage: 0,
-        successfulRequests: 0,
-        failedRequests: 0
-      };
-
-      this.testResults.push(testResult);
-      console.error(`❌ ${config.testType} load test failed:`, error);
-      
-      return testResult;
-    } finally {
-      this.activeTests.delete(testKey);
+      console.error(`❌ Load test failed for ${config.testType}:`, error);
+      throw error;
     }
   }
 
-  private async executeLoadTest(config: LoadTestConfig, signal: AbortSignal): Promise<TestExecutionResult[]> {
-    const results: TestExecutionResult[] = [];
-    const promises: Promise<TestExecutionResult>[] = [];
-
-    // Ramp up users
+  private async simulateRampUp(config: LoadTestConfig, metrics: LoadTestMetrics): Promise<void> {
     const rampUpInterval = (config.rampUpTime * 1000) / config.concurrentUsers;
     
     for (let i = 0; i < config.concurrentUsers; i++) {
-      const userPromise = new Promise<TestExecutionResult>((resolve) => {
-        setTimeout(async () => {
-          if (signal.aborted) {
-            resolve({ success: false, responseTime: 0, error: 'Test aborted' });
-            return;
-          }
-
-          try {
-            const result = await this.simulateUserLoad(config, signal);
-            resolve(result);
-          } catch (error) {
-            resolve({ 
-              success: false, 
-              responseTime: 0, 
-              error: error instanceof Error ? error.message : 'Unknown error' 
-            });
-          }
-        }, i * rampUpInterval);
-      });
-
-      promises.push(userPromise);
+      setTimeout(() => {
+        this.simulateUserActivity(config.testType, metrics);
+      }, i * rampUpInterval);
     }
-
-    const allResults = await Promise.all(promises);
-    results.push(...allResults);
-
-    return results;
+    
+    // Wait for ramp-up to complete
+    await new Promise(resolve => setTimeout(resolve, config.rampUpTime * 1000));
   }
 
-  private async simulateUserLoad(config: LoadTestConfig, signal: AbortSignal): Promise<TestExecutionResult> {
+  private async runMainLoadTest(config: LoadTestConfig, metrics: LoadTestMetrics): Promise<void> {
+    const testDuration = config.duration * 1000;
     const startTime = performance.now();
     
+    const testPromises: Promise<void>[] = [];
+    
+    // Create concurrent user sessions
+    for (let i = 0; i < config.concurrentUsers; i++) {
+      testPromises.push(this.simulateUserSession(config, metrics, testDuration));
+    }
+    
+    await Promise.all(testPromises);
+  }
+
+  private async simulateUserSession(
+    config: LoadTestConfig, 
+    metrics: LoadTestMetrics, 
+    duration: number
+  ): Promise<void> {
+    const sessionStart = performance.now();
+    
+    while (performance.now() - sessionStart < duration) {
+      await this.simulateUserActivity(config.testType, metrics);
+      
+      // Random delay between activities (100-500ms)
+      const delay = Math.random() * 400 + 100;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  private async simulateUserActivity(testType: string, metrics: LoadTestMetrics): Promise<void> {
+    const activityStart = performance.now();
+    
     try {
-      // Simulate different types of load based on test type
-      switch (config.testType) {
+      // Simulate different types of activities based on test type
+      switch (testType) {
         case 'component':
-          await this.simulateComponentLoad(config.duration, signal);
+          await this.simulateComponentLoad();
           break;
         case 'data-processing':
-          await this.simulateDataProcessingLoad(config.duration, signal);
-          break;
-        case 'ui-interaction':
-          await this.simulateUIInteractionLoad(config.duration, signal);
-          break;
-        case 'api':
-          await this.simulateAPILoad(config.duration, signal);
+          await this.simulateDataProcessing();
           break;
         case 'analytics-processing':
-          await this.simulateAnalyticsLoad(config.duration, signal);
+          await this.simulateAnalyticsProcessing();
           break;
         case 'analytics-concurrent':
-          await this.simulateConcurrentAnalyticsLoad(config.duration, signal);
+          await this.simulateAnalyticsConcurrent();
+          break;
+        case 'ui-interaction':
+          await this.simulateUIInteraction();
+          break;
+        case 'api':
+          await this.simulateAPICall();
+          break;
+        case 'research-question':
+          await this.simulateResearchQuestion();
+          break;
+        case 'context-processing':
+          await this.simulateContextProcessing();
           break;
         default:
-          await this.simulateGenericLoad(config.duration, signal);
+          await this.simulateGenericActivity();
       }
-
-      const endTime = performance.now();
-      return {
-        success: true,
-        responseTime: endTime - startTime
-      };
+      
+      const responseTime = performance.now() - activityStart;
+      metrics.responseTime.push(responseTime);
+      metrics.successCount++;
+      
+      // Take memory snapshot occasionally
+      if (Math.random() < 0.1) {
+        metrics.memorySnapshots.push(this.getMemoryUsage());
+      }
+      
     } catch (error) {
-      const endTime = performance.now();
-      return {
-        success: false,
-        responseTime: endTime - startTime,
-        error: error instanceof Error ? error.message : 'Load simulation failed'
-      };
+      metrics.errors++;
+      const responseTime = performance.now() - activityStart;
+      metrics.responseTime.push(responseTime);
     }
   }
 
-  private async simulateComponentLoad(duration: number, signal: AbortSignal): Promise<void> {
-    const endTime = Date.now() + (duration * 1000);
-    
-    while (Date.now() < endTime && !signal.aborted) {
-      // Simulate component rendering load
-      const elements = Array.from({ length: 100 }, (_, i) => ({ id: i, value: Math.random() }));
-      elements.forEach(el => el.value * 2); // Simulate computation
-      
-      await new Promise(resolve => setTimeout(resolve, 50));
+  private async simulateComponentLoad(): Promise<void> {
+    // Simulate React component mounting and rendering
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 50 + 10));
+  }
+
+  private async simulateDataProcessing(): Promise<void> {
+    // Simulate data parsing and processing
+    const dataSize = Math.floor(Math.random() * 1000) + 100;
+    const processingTime = dataSize * 0.1; // Simulate processing time based on data size
+    await new Promise(resolve => setTimeout(resolve, processingTime));
+  }
+
+  private async simulateAnalyticsProcessing(): Promise<void> {
+    // Simulate analytics calculations
+    const complexityFactor = Math.random() * 100 + 50;
+    await new Promise(resolve => setTimeout(resolve, complexityFactor));
+  }
+
+  private async simulateAnalyticsConcurrent(): Promise<void> {
+    // Simulate concurrent analytics processing
+    const concurrentTasks = Math.floor(Math.random() * 3) + 2;
+    const taskPromises = Array.from({ length: concurrentTasks }, () =>
+      new Promise(resolve => setTimeout(resolve, Math.random() * 30 + 10))
+    );
+    await Promise.all(taskPromises);
+  }
+
+  private async simulateUIInteraction(): Promise<void> {
+    // Simulate user interface interactions
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 30 + 5));
+  }
+
+  private async simulateAPICall(): Promise<void> {
+    // Simulate API request/response
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 200 + 50));
+  }
+
+  private async simulateResearchQuestion(): Promise<void> {
+    // Simulate research question processing
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 100 + 20));
+  }
+
+  private async simulateContextProcessing(): Promise<void> {
+    // Simulate context processing
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 50 + 10));
+  }
+
+  private async simulateGenericActivity(): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 100 + 10));
+  }
+
+  private calculateResults(
+    metrics: LoadTestMetrics, 
+    config: LoadTestConfig,
+    initialMemory: number,
+    finalMemory: number
+  ): LoadTestResult {
+    const totalRequests = metrics.successCount + metrics.errors;
+    const duration = metrics.endTime - metrics.startTime;
+    const averageResponseTime = metrics.responseTime.length > 0 
+      ? metrics.responseTime.reduce((sum, time) => sum + time, 0) / metrics.responseTime.length 
+      : 0;
+    const errorRate = totalRequests > 0 ? (metrics.errors / totalRequests) * 100 : 0;
+    const throughput = totalRequests / (duration / 1000); // requests per second
+    const peakMemory = Math.max(...metrics.memorySnapshots);
+
+    return {
+      totalRequests,
+      successfulRequests: metrics.successCount,
+      failedRequests: metrics.errors,
+      averageResponseTime,
+      errorRate,
+      throughput,
+      memoryUsage: {
+        initial: initialMemory,
+        peak: peakMemory,
+        final: finalMemory
+      },
+      duration
+    };
+  }
+
+  private getMemoryUsage(): number {
+    if ('memory' in performance) {
+      return (performance as any).memory.usedJSHeapSize / 1024 / 1024; // MB
     }
-  }
-
-  private async simulateDataProcessingLoad(duration: number, signal: AbortSignal): Promise<void> {
-    const endTime = Date.now() + (duration * 1000);
-    
-    while (Date.now() < endTime && !signal.aborted) {
-      // Simulate data processing
-      const data = Array.from({ length: 1000 }, () => Math.random());
-      data.sort().reverse().filter(x => x > 0.5);
-      
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-  }
-
-  private async simulateUIInteractionLoad(duration: number, signal: AbortSignal): Promise<void> {
-    const endTime = Date.now() + (duration * 1000);
-    
-    while (Date.now() < endTime && !signal.aborted) {
-      // Simulate UI interactions
-      if (typeof document !== 'undefined') {
-        const event = new Event('click');
-        document.dispatchEvent(event);
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 200));
-    }
-  }
-
-  private async simulateAPILoad(duration: number, signal: AbortSignal): Promise<void> {
-    const endTime = Date.now() + (duration * 1000);
-    
-    while (Date.now() < endTime && !signal.aborted) {
-      // Simulate API calls
-      await new Promise(resolve => setTimeout(resolve, Math.random() * 300 + 100));
-    }
-  }
-
-  private async simulateAnalyticsLoad(duration: number, signal: AbortSignal): Promise<void> {
-    const endTime = Date.now() + (duration * 1000);
-    
-    while (Date.now() < endTime && !signal.aborted) {
-      // Simulate analytics processing
-      const analyticsData = Array.from({ length: 500 }, (_, i) => ({
-        user_id: `user${i % 50}`,
-        event: ['view', 'click', 'purchase'][i % 3],
-        value: Math.random() * 100
-      }));
-      
-      // Simulate analysis
-      const grouped = analyticsData.reduce((acc, item) => {
-        acc[item.event] = (acc[item.event] || 0) + item.value;
-        return acc;
-      }, {} as Record<string, number>);
-      
-      await new Promise(resolve => setTimeout(resolve, 150));
-    }
-  }
-
-  private async simulateConcurrentAnalyticsLoad(duration: number, signal: AbortSignal): Promise<void> {
-    const endTime = Date.now() + (duration * 1000);
-    
-    while (Date.now() < endTime && !signal.aborted) {
-      // Simulate concurrent analytics processing
-      const promises = Array.from({ length: 3 }, async () => {
-        const data = Array.from({ length: 200 }, () => Math.random());
-        return data.reduce((sum, val) => sum + val, 0);
-      });
-      
-      await Promise.all(promises);
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-  }
-
-  private async simulateGenericLoad(duration: number, signal: AbortSignal): Promise<void> {
-    const endTime = Date.now() + (duration * 1000);
-    
-    while (Date.now() < endTime && !signal.aborted) {
-      // Generic load simulation
-      for (let i = 0; i < 1000; i++) {
-        Math.sqrt(i);
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 10));
-    }
-  }
-
-  stopAllTests(): void {
-    console.log('🛑 Stopping all load tests...');
-    
-    this.activeTests.forEach((controller, testKey) => {
-      controller.abort();
-      console.log(`⏹️ Stopped test: ${testKey}`);
-    });
-    
-    this.activeTests.clear();
-  }
-
-  getTestResults(): LoadTestResult[] {
-    return [...this.testResults];
-  }
-
-  clearResults(): void {
-    this.testResults = [];
+    return 0;
   }
 }

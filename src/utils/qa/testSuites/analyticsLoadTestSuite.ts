@@ -1,7 +1,7 @@
 
 import { QATestResult } from '../types';
 import { DataAnalysisEngine } from '../../analysis/dataAnalysisEngine';
-import { ParsedData, DataColumn } from '../../dataParser';
+import { ParsedData } from '../../dataParser';
 
 export class AnalyticsLoadTestSuite {
   async runLoadTests(): Promise<QATestResult[]> {
@@ -18,32 +18,16 @@ export class AnalyticsLoadTestSuite {
   private async testConcurrentAnalysis(): Promise<QATestResult> {
     try {
       const startTime = performance.now();
-      const concurrentPromises: Promise<any>[] = [];
+      const mockData = this.createMockBehavioralData(1000);
       
-      // Create multiple analysis engines running concurrently
-      for (let i = 0; i < 5; i++) {
-        const mockData: ParsedData = {
-          columns: [
-            { name: 'action', type: 'string' },
-            { name: 'user_id', type: 'string' },
-            { name: 'product_name', type: 'string' }
-          ],
-          rows: Array.from({ length: 1000 }, (_, j) => ({
-            action: j % 2 === 0 ? 'view' : 'purchase',
-            user_id: `user${j % 50}`,
-            product_name: `Product ${j % 20}`
-          })),
-          rowCount: 1000,
-          fileSize: 50000
-        };
-        
+      // Run 5 concurrent analyses
+      const analysisPromises = Array.from({ length: 5 }, () => {
         const engine = new DataAnalysisEngine(mockData);
-        concurrentPromises.push(Promise.resolve(engine.runCompleteAnalysis()));
-      }
+        return Promise.resolve(engine.runCompleteAnalysis());
+      });
       
-      const results = await Promise.all(concurrentPromises);
-      const endTime = performance.now();
-      const duration = endTime - startTime;
+      const results = await Promise.all(analysisPromises);
+      const duration = performance.now() - startTime;
       
       return {
         testName: 'Concurrent Analysis Load Test',
@@ -53,67 +37,30 @@ export class AnalyticsLoadTestSuite {
         performance: duration
       };
     } catch (error) {
-      return {
-        testName: 'Concurrent Analysis Load Test',
-        status: 'fail',
-        message: `Concurrent analysis failed: ${error}`,
-        category: 'analytics-load'
-      };
+      return this.createErrorResult('Concurrent Analysis Load Test', error);
     }
   }
 
   private async testMemoryUsageWithLargeDatasets(): Promise<QATestResult> {
     try {
-      const initialMemory = (performance as any).memory?.usedJSHeapSize || 0;
+      const initialMemory = this.getMemoryUsage();
+      const largeData = this.createMockBehavioralData(50000);
       
-      // Create very large dataset
-      const largeRows = Array.from({ length: 50000 }, (_, i) => ({
-        action: ['view', 'add_to_cart', 'purchase'][i % 3],
-        user_id: `user${i % 1000}`,
-        session_id: `session${i % 2000}`,
-        product_name: `Product ${i % 100}`,
-        timestamp: new Date(Date.now() - i * 1000).toISOString(),
-        total_order_value: Math.random() * 500,
-        cost: Math.random() * 200,
-        quantity: Math.floor(Math.random() * 10) + 1
-      }));
-      
-      const mockData: ParsedData = {
-        columns: [
-          { name: 'action', type: 'string' },
-          { name: 'user_id', type: 'string' },
-          { name: 'session_id', type: 'string' },
-          { name: 'product_name', type: 'string' },
-          { name: 'timestamp', type: 'string' },
-          { name: 'total_order_value', type: 'number' },
-          { name: 'cost', type: 'number' },
-          { name: 'quantity', type: 'number' }
-        ],
-        rows: largeRows,
-        rowCount: largeRows.length,
-        fileSize: largeRows.length * 300
-      };
-      
-      const engine = new DataAnalysisEngine(mockData);
+      const engine = new DataAnalysisEngine(largeData);
       const results = engine.runCompleteAnalysis();
       
-      const finalMemory = (performance as any).memory?.usedJSHeapSize || 0;
-      const memoryIncrease = (finalMemory - initialMemory) / 1024 / 1024; // MB
+      const finalMemory = this.getMemoryUsage();
+      const memoryIncrease = finalMemory - initialMemory;
       
       return {
         testName: 'Analytics Memory Usage Test',
         status: memoryIncrease < 100 && results.length > 0 ? 'pass' : 'warning',
-        message: `Memory usage: ${memoryIncrease.toFixed(1)}MB increase for ${largeRows.length} rows`,
+        message: `Memory usage: ${memoryIncrease.toFixed(1)}MB increase for ${largeData.rowCount} rows`,
         category: 'analytics-load',
         performance: memoryIncrease
       };
     } catch (error) {
-      return {
-        testName: 'Analytics Memory Usage Test',
-        status: 'fail',
-        message: `Memory test failed: ${error}`,
-        category: 'analytics-load'
-      };
+      return this.createErrorResult('Analytics Memory Usage Test', error);
     }
   }
 
@@ -121,37 +68,19 @@ export class AnalyticsLoadTestSuite {
     try {
       const startTime = performance.now();
       let completedAnalyses = 0;
-      const maxDuration = 15000; // 15 seconds
+      const maxDuration = 15000;
+      const mockData = this.createMockBehavioralData(5000);
       
-      const mockData: ParsedData = {
-        columns: [
-          { name: 'action', type: 'string' },
-          { name: 'user_id', type: 'string' },
-          { name: 'product_name', type: 'string' },
-          { name: 'timestamp', type: 'string' }
-        ],
-        rows: Array.from({ length: 5000 }, (_, i) => ({
-          action: ['view', 'purchase'][i % 2],
-          user_id: `user${i % 200}`,
-          product_name: `Product ${i % 50}`,
-          timestamp: new Date(Date.now() - i * 1000).toISOString()
-        })),
-        rowCount: 5000,
-        fileSize: 250000
-      };
-      
-      // Run analyses continuously for a period
       while (performance.now() - startTime < maxDuration) {
         const engine = new DataAnalysisEngine(mockData);
         const results = engine.runCompleteAnalysis();
         if (results.length > 0) completedAnalyses++;
         
-        // Small delay to prevent overwhelming
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
       const actualDuration = performance.now() - startTime;
-      const throughput = completedAnalyses / (actualDuration / 1000); // analyses per second
+      const throughput = completedAnalyses / (actualDuration / 1000);
       
       return {
         testName: 'Analysis Under Load Test',
@@ -161,38 +90,18 @@ export class AnalyticsLoadTestSuite {
         performance: throughput
       };
     } catch (error) {
-      return {
-        testName: 'Analysis Under Load Test',
-        status: 'fail',
-        message: `Load test failed: ${error}`,
-        category: 'analytics-load'
-      };
+      return this.createErrorResult('Analysis Under Load Test', error);
     }
   }
 
   private async testDataProcessingThroughput(): Promise<QATestResult> {
     try {
-      const startTime = performance.now();
       const datasetSizes = [1000, 5000, 10000, 25000];
       const throughputResults: number[] = [];
       
       for (const size of datasetSizes) {
         const testStart = performance.now();
-        
-        const mockData: ParsedData = {
-          columns: [
-            { name: 'action', type: 'string' },
-            { name: 'user_id', type: 'string' },
-            { name: 'product_name', type: 'string' }
-          ],
-          rows: Array.from({ length: size }, (_, i) => ({
-            action: ['view', 'add_to_cart', 'purchase'][i % 3],
-            user_id: `user${i % 100}`,
-            product_name: `Product ${i % 30}`
-          })),
-          rowCount: size,
-          fileSize: size * 100
-        };
+        const mockData = this.createMockBehavioralData(size);
         
         const engine = new DataAnalysisEngine(mockData);
         const results = engine.runCompleteAnalysis();
@@ -214,12 +123,56 @@ export class AnalyticsLoadTestSuite {
         performance: avgThroughput
       };
     } catch (error) {
-      return {
-        testName: 'Data Processing Throughput Test',
-        status: 'fail',
-        message: `Throughput test failed: ${error}`,
-        category: 'analytics-load'
-      };
+      return this.createErrorResult('Data Processing Throughput Test', error);
     }
+  }
+
+  private createMockBehavioralData(size: number): ParsedData {
+    const actions = ['view', 'add_to_cart', 'purchase', 'share', 'like'];
+    const products = Array.from({ length: 20 }, (_, i) => `Product ${i + 1}`);
+    
+    return {
+      columns: [
+        { name: 'action', type: 'string', samples: actions },
+        { name: 'user_id', type: 'string', samples: ['user1', 'user2'] },
+        { name: 'product_name', type: 'string', samples: products.slice(0, 3) },
+        { name: 'timestamp', type: 'string', samples: ['2024-01-01T10:00:00Z'] },
+        { name: 'total_order_value', type: 'number', samples: [99.99] },
+        { name: 'cost', type: 'number', samples: [29.99] },
+        { name: 'quantity', type: 'number', samples: [1, 2, 3] }
+      ],
+      rows: Array.from({ length: size }, (_, i) => ({
+        action: actions[i % actions.length],
+        user_id: `user${i % 1000}`,
+        product_name: products[i % products.length],
+        timestamp: new Date(Date.now() - i * 1000).toISOString(),
+        total_order_value: Math.random() * 500,
+        cost: Math.random() * 200,
+        quantity: Math.floor(Math.random() * 10) + 1
+      })),
+      rowCount: size,
+      fileSize: size * 300,
+      summary: {
+        totalRows: size,
+        totalColumns: 7,
+        possibleUserIdColumns: ['user_id'],
+        possibleEventColumns: ['action'],
+        possibleTimestampColumns: ['timestamp']
+      }
+    };
+  }
+
+  private getMemoryUsage(): number {
+    return 'memory' in performance ? 
+      (performance as any).memory.usedJSHeapSize / 1024 / 1024 : 0;
+  }
+
+  private createErrorResult(testName: string, error: unknown): QATestResult {
+    return {
+      testName,
+      status: 'fail',
+      message: `${testName} failed: ${error}`,
+      category: 'analytics-load'
+    };
   }
 }
