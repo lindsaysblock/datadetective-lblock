@@ -52,8 +52,8 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
       case 1:
         return (
           <ResearchQuestionStep
-            question={researchQuestion}
-            onQuestionChange={setResearchQuestion}
+            researchQuestion={researchQuestion}
+            setResearchQuestion={setResearchQuestion}
             onNext={nextStep}
           />
         );
@@ -76,8 +76,8 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
       case 3:
         return (
           <BusinessContextStep
-            context={additionalContext}
-            onContextChange={setAdditionalContext}
+            additionalContext={additionalContext}
+            setAdditionalContext={setAdditionalContext}
             onNext={nextStep}
             onPrevious={prevStep}
           />
@@ -100,7 +100,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <StepIndicator currentStep={step} totalSteps={4} />
+      <StepIndicator currentStep={step} />
       {renderStepContent()}
     </div>
   );

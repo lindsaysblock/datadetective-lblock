@@ -49,6 +49,17 @@ const NewProjectContainer = () => {
     }
   };
 
+  const handleStartAnalysis = (researchQuestion: string, additionalContext: string, educational: boolean = false, parsedData?: any, columnMapping?: any) => {
+    console.log('Starting analysis with:', {
+      researchQuestion,
+      additionalContext,
+      educational,
+      parsedData,
+      columnMapping
+    });
+    formData.handleStartAnalysisClick(educational);
+  };
+
   if (formData.showAnalysisView) {
     console.log('Showing analysis view');
     return (
@@ -97,7 +108,7 @@ const NewProjectContainer = () => {
         onProgressUpdate={handleProgressUpdate}
       />
       
-      <NewProjectContent {...formData} />
+      <NewProjectContent {...formData} onStartAnalysis={handleStartAnalysis} />
 
       <ProjectNamingDialog
         open={formData.showProjectDialog}
