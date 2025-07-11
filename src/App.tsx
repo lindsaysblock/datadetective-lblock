@@ -10,6 +10,7 @@ import ProjectAnalysisView from './components/ProjectAnalysisView';
 import NewProject from './pages/NewProject';
 import Index from './pages/Index';
 import Home from './pages/Home';
+import Dashboard from './pages/Dashboard';
 import QueryHistory from './pages/QueryHistory';
 import { generateMockAnalysisResults } from './utils/mockDataGenerator';
 import { EnhancedAnalyticsProvider } from '@/contexts/EnhancedAnalyticsContext';
@@ -75,6 +76,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/home" element={<Home />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/new-project" element={<NewProject />} />
             <Route path="/query-history" element={<QueryHistory />} />
             <Route path="/reporting" element={<VisualizationReporting />} />
