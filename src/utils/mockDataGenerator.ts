@@ -1,4 +1,3 @@
-
 export interface MockUser {
   user_id: string;
   email: string;
@@ -99,4 +98,62 @@ export const generateMockCSVContent = () => {
   });
   
   return csvRows.join('\n');
+};
+
+export const generateMockAnalysisResults = () => {
+  return {
+    summary: {
+      totalInsights: 15,
+      keyFindings: 8,
+      dataQuality: 92,
+      completionTime: new Date().toISOString()
+    },
+    insights: [
+      {
+        type: 'trend',
+        title: 'User Engagement Increasing',
+        description: 'User engagement has increased by 23% over the last month',
+        confidence: 0.89,
+        impact: 'high'
+      },
+      {
+        type: 'pattern',
+        title: 'Peak Usage Hours Identified', 
+        description: 'Most active usage occurs between 2-4 PM EST',
+        confidence: 0.95,
+        impact: 'medium'
+      },
+      {
+        type: 'anomaly',
+        title: 'Unusual Activity Spike',
+        description: 'Detected 45% increase in activity on weekends',
+        confidence: 0.76,
+        impact: 'medium'
+      }
+    ],
+    recommendations: [
+      {
+        title: 'Optimize Peak Hours',
+        description: 'Consider scaling resources during 2-4 PM EST to handle increased load',
+        priority: 'high',
+        estimatedImpact: 'Reduce response time by 15%'
+      },
+      {
+        title: 'Weekend Strategy',
+        description: 'Investigate weekend activity spike and adjust content strategy',
+        priority: 'medium',
+        estimatedImpact: 'Potential 10% increase in weekend conversions'
+      }
+    ],
+    visualizations: [
+      {
+        type: 'line_chart',
+        title: 'User Engagement Trend',
+        data: generateMockUsers(10).map((user, i) => ({
+          date: new Date(Date.now() - (9 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          value: Math.floor(Math.random() * 100) + 50
+        }))
+      }
+    ]
+  };
 };

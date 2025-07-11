@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast"
 import { Toast } from "@/components/ui/toast"
-import DataUpload from './components/DataUpload';
+import DataUploadContainer from './components/upload/DataUploadContainer';
 import DashboardContainer from './components/dashboard/DashboardContainer';
 import VisualizationReporting from './components/VisualizationReporting';
 import ProjectAnalysisView from './components/ProjectAnalysisView';
@@ -71,7 +71,7 @@ function App() {
           <Route path="/" element={
             <div className="container mx-auto mt-10">
               <h1 className="text-3xl font-bold text-center mb-6">Data Analysis Tool</h1>
-              <DataUpload onDataUpload={handleDataUpload} />
+              <DataUploadContainer onDataUpload={handleDataUpload} />
               {data && (
                 <div className="mt-6">
                   <h2 className="text-xl font-semibold mb-3">Dashboard</h2>
