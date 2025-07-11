@@ -1,4 +1,3 @@
-
 import { QATestSuites } from './qaTestSuites';
 import { performanceMonitor } from '../performance/performanceMonitor';
 
@@ -8,8 +7,8 @@ export class TestOrchestrator {
   private testExecutionOrder = [
     'components',
     'dataFlow',
-    'dataValidation', // New: Enhanced data validation
-    'columnIdentification', // New: Column identification tests
+    'dataValidation',
+    'columnIdentification',
     'analytics',
     'analyticsLoad',
     'analyticsPerformance',
@@ -33,10 +32,8 @@ export class TestOrchestrator {
     const startTime = performance.now();
     this.performanceMonitor.startMetric('Full QA Test Suite');
     
-    // Clear previous results
     this.qaTestSuites.clearResults();
     
-    // Run tests in optimized order
     for (const testType of this.testExecutionOrder) {
       await this.runTestWithMetrics(testType);
     }
@@ -134,7 +131,6 @@ export class TestOrchestrator {
     const recommendations = [];
     const results = this.qaTestSuites.getResults();
     
-    // Generate recommendations based on test failures
     const failedTests = results.filter(r => r.status === 'fail');
     
     for (const failure of failedTests) {
@@ -143,7 +139,7 @@ export class TestOrchestrator {
           file: 'src/components/QueryBuilder.tsx',
           priority: 'high',
           description: 'Component is too large and complex (445 lines)',
-          suggestion: 'Break down into smaller sub-components following the DataSourceStep refactor pattern'
+          suggestion: 'Break down into smaller sub-components following the refactor pattern'
         });
       }
       
@@ -157,12 +153,11 @@ export class TestOrchestrator {
       }
     }
 
-    // Add specific recommendations for files that still need refactoring
+    // Updated list after recent refactoring
     const largeFiles = [
       { file: 'src/components/QueryBuilder.tsx', lines: 445 },
       { file: 'src/components/VisualizationReporting.tsx', lines: 316 },
       { file: 'src/components/AnalysisDashboard.tsx', lines: 285 }
-      // Removed DataSourceStep - now refactored to ~70 lines
     ];
 
     largeFiles.forEach(({ file, lines }) => {
@@ -171,7 +166,7 @@ export class TestOrchestrator {
           file,
           priority: lines > 400 ? 'critical' : 'high',
           description: `File has ${lines} lines (threshold: 220)`,
-          suggestion: `Follow the DataSourceStep refactor pattern: break into smaller, focused components`
+          suggestion: `Break into smaller, focused components like we did with NewProjectContainer`
         });
       }
     });
@@ -180,7 +175,7 @@ export class TestOrchestrator {
   }
 
   private estimateBundleSize(): number {
-    return 2150; // KB - reduced due to better code organization
+    return 2100;
   }
 
   private countComponents(): number {
@@ -188,12 +183,10 @@ export class TestOrchestrator {
   }
 
   private identifyLargeFiles(): string[] {
-    // Updated list after DataSourceStep refactoring
     return [
-      'src/components/QueryBuilder.tsx', // 445 lines - needs refactoring
-      'src/components/VisualizationReporting.tsx', // 316 lines - needs refactoring  
-      'src/components/AnalysisDashboard.tsx' // 285 lines - needs refactoring
-      // DataSourceStep removed - now properly refactored
+      'src/components/QueryBuilder.tsx',
+      'src/components/VisualizationReporting.tsx', 
+      'src/components/AnalysisDashboard.tsx'
     ];
   }
 
@@ -211,7 +204,6 @@ export class TestOrchestrator {
     
     if (memoryLeakDetected) return 0;
     
-    // Assume good efficiency if under 50MB
     return Math.max(0, 100 - (memoryUsage / 50) * 100);
   }
 
@@ -223,7 +215,6 @@ export class TestOrchestrator {
     const warnings = results.filter(r => r.status === 'warning').length;
     const failed = results.filter(r => r.status === 'fail').length;
     
-    // Calculate weighted score
     const score = (passed * 1.0 + warnings * 0.7 + failed * 0.0) / results.length * 100;
     return Math.round(score);
   }

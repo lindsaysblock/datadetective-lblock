@@ -1,21 +1,17 @@
 
 import React, { useState } from 'react';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
-import ProjectNamingDialog from '@/components/data/upload/ProjectNamingDialog';
-import FormRecoveryDialog from '@/components/data/upload/FormRecoveryDialog';
 import ProjectAnalysisView from '@/components/ProjectAnalysisView';
 import AnalysisProgressView from '@/components/project/AnalysisProgressView';
-import { SignInModal } from '@/components/auth/SignInModal';
-import Header from '@/components/Header';
 import NewProjectContent from './NewProjectContent';
 import ProjectHeader from './ProjectHeader';
-import LegalFooter from '@/components/LegalFooter';
+import NewProjectLayout from './NewProjectLayout';
+import ProjectDialogs from './ProjectDialogs';
 
 const NewProjectContainer = () => {
   console.log('NewProjectContainer component rendering');
   
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  
   const formData = useNewProjectForm();
 
   console.log('Current step:', formData.step);
@@ -26,7 +22,6 @@ const NewProjectContainer = () => {
 
   const handleAnalysisComplete = () => {
     console.log('Analysis complete handler called, analysisCompleted:', formData.analysisCompleted);
-    // Only show results and close dialog when analysis is truly complete
     if (formData.analysisCompleted && formData.analysisResults) {
       console.log('Showing results now');
       formData.showResults();
@@ -80,33 +75,16 @@ const NewProjectContainer = () => {
   console.log('Rendering main NewProjectContainer component');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <Header />
-      
+    <NewProjectLayout>
       <div className="container mx-auto px-4 py-8">
         <ProjectHeader />
         
-        <FormRecoveryDialog
-          open={formData.showRecoveryDialog}
-          onOpenChange={formData.setShowRecoveryDialog}
-          onRestore={formData.handleRestoreData}
-          onStartFresh={formData.handleStartFresh}
-          lastSaved={formData.lastSaved}
+        <ProjectDialogs
+          formData={formData}
+          analysisProgress={analysisProgress}
+          onViewResults={handleViewResults}
         />
 
-        <SignInModal
-          open={formData.showSignInModal}
-          onOpenChange={formData.setShowSignInModal}
-          email={formData.email}
-          password={formData.password}
-          loading={formData.authLoading}
-          setEmail={formData.setEmail}
-          setPassword={formData.setPassword}
-          onSignIn={formData.handleSignIn}
-          onSignUp={formData.handleSignUp}
-        />
-
-        {/* Analysis Progress Overlay - only show when not in project dialog */}
         <AnalysisProgressView
           isAnalyzing={formData.isProcessingAnalysis && !formData.showProjectDialog}
           onComplete={handleAnalysisComplete}
@@ -114,25 +92,8 @@ const NewProjectContainer = () => {
         />
         
         <NewProjectContent {...formData} onStartAnalysis={handleStartAnalysis} />
-
-        <ProjectNamingDialog
-          open={formData.showProjectDialog}
-          onOpenChange={(open) => {
-            // Only allow closing if analysis is not running or is complete
-            if (!formData.isProcessingAnalysis || formData.analysisCompleted) {
-              formData.setShowProjectDialog(open);
-            }
-          }}
-          onConfirm={formData.handleProjectConfirm}
-          onViewResults={handleViewResults}
-          isProcessing={formData.isProcessingAnalysis}
-          analysisProgress={analysisProgress}
-          analysisCompleted={formData.analysisCompleted}
-        />
       </div>
-
-      <LegalFooter />
-    </div>
+    </NewProjectLayout>
   );
 };
 

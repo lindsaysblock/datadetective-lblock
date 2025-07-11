@@ -5,7 +5,7 @@ import { useProjectAuth } from './useProjectAuth';
 import { useProjectDialogs } from './useProjectDialogs';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useFormDataPersistence } from './useFormDataPersistence';
-import { useProjectFormActions } from './useProjectFormActions';
+import { useProjectFormHandlers } from './useProjectFormHandlers';
 
 export const useNewProjectForm = () => {
   console.log('useNewProjectForm hook called');
@@ -24,13 +24,13 @@ export const useNewProjectForm = () => {
     parsedData: formState.parsedData?.length || 0
   });
 
-  const { saveFormData, getFormData, clearFormData, hasStoredData } = useFormDataPersistence(
+  const { saveFormData, getFormData, clearFormData } = useFormDataPersistence(
     formState,
     dialogs,
     isLoading
   );
 
-  const actions = useProjectFormActions(
+  const handlers = useProjectFormHandlers(
     formState,
     analysis,
     auth,
@@ -53,8 +53,8 @@ export const useNewProjectForm = () => {
     // Dialog state
     ...dialogs,
     
-    // Actions
-    ...actions
+    // Handlers
+    ...handlers
   };
 
   console.log('useNewProjectForm returning step:', returnValue.step);
