@@ -27,7 +27,32 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
   };
 
   const handleColumnMapping = (mapping: ColumnMapping) => {
-    formData.setColumnMapping(mapping);
+    // Convert ColumnMapping to the format expected by the form hook
+    const mappingRecord: Record<string, string> = {};
+    
+    if (mapping.userIdColumn) mappingRecord.userIdColumn = mapping.userIdColumn;
+    if (mapping.timestampColumn) mappingRecord.timestampColumn = mapping.timestampColumn;
+    if (mapping.eventColumn) mappingRecord.eventColumn = mapping.eventColumn;
+    
+    // Store arrays as JSON strings for the record format
+    if (mapping.valueColumns?.length) {
+      mappingRecord.valueColumns = JSON.stringify(mapping.valueColumns);
+    }
+    if (mapping.categoryColumns?.length) {
+      mappingRecord.categoryColumns = JSON.stringify(mapping.categoryColumns);
+    }
+    
+    formData.setColumnMapping(mappingRecord);
+  };
+
+  const convertRecordToColumnMapping = (record: Record<string, string>): ColumnMapping => {
+    return {
+      userIdColumn: record.userIdColumn,
+      timestampColumn: record.timestampColumn,
+      eventColumn: record.eventColumn,
+      valueColumns: record.valueColumns ? JSON.parse(record.valueColumns) : [],
+      categoryColumns: record.categoryColumns ? JSON.parse(record.categoryColumns) : []
+    };
   };
 
   const handleStartAnalysis = async (educational: boolean = false) => {
@@ -65,7 +90,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
             uploading={formData.uploading}
             parsing={formData.parsing}
             parsedData={formData.parsedData ? [formData.parsedData] : []}
-            columnMapping={formData.columnMapping}
+            columnMapping={convertRecordToColumnMapping(formData.columnMapping)}
             onFileChange={handleFileChange}
             onFileUpload={handleFileUpload}
             onRemoveFile={formData.removeFile}
@@ -80,7 +105,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
             additionalContext={formData.additionalContext}
             setAdditionalContext={formData.setAdditionalContext}
             parsedData={formData.parsedData ? [formData.parsedData] : []}
-            columnMapping={formData.columnMapping}
+            columnMapping={convertRecordToColumnMapping(formData.columnMapping)}
             onColumnMapping={handleColumnMapping}
             onNext={formData.nextStep}
             onPrevious={formData.prevStep}
@@ -92,7 +117,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
             researchQuestion={formData.researchQuestion}
             additionalContext={formData.additionalContext}
             parsedData={formData.parsedData ? [formData.parsedData] : []}
-            columnMapping={formData.columnMapping}
+            columnMapping={convertRecordToColumnMapping(formData.columnMapping)}
             analysisResults={formData.analysisResults}
             analysisCompleted={formData.analysisCompleted}
             isProcessingAnalysis={formData.isProcessingAnalysis}
