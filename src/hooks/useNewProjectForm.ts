@@ -21,9 +21,9 @@ export const useNewProjectForm = () => {
   console.log('Form state initialized:', formState);
   console.log('Current step from form state:', formState.step);
 
-  // Auto-save form data when values change
+  // Auto-save form data when values change, but not when recovery dialog is open
   useEffect(() => {
-    if (!isLoading && !dialogs.showRecoveryDialog && formState.researchQuestion) {
+    if (!isLoading && !dialogs.showRecoveryDialog && formState.researchQuestion && !dialogs.recoveryDialogDismissed) {
       const timeoutId = setTimeout(() => {
         saveFormData({
           researchQuestion: formState.researchQuestion,
@@ -50,12 +50,13 @@ export const useNewProjectForm = () => {
     formState.step,
     isLoading,
     dialogs.showRecoveryDialog,
+    dialogs.recoveryDialogDismissed,
     saveFormData
   ]);
 
   // Check for saved data on component mount
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && !dialogs.recoveryDialogDismissed) {
       const hasSavedData = hasStoredData();
       console.log('Has stored data:', hasSavedData);
       
@@ -94,6 +95,7 @@ export const useNewProjectForm = () => {
       }
       
       dialogs.setShowRecoveryDialog(false);
+      dialogs.setRecoveryDialogDismissed(true);
       
       toast({
         title: "Progress Restored",
@@ -115,6 +117,7 @@ export const useNewProjectForm = () => {
     clearFormData();
     formState.resetForm();
     dialogs.setShowRecoveryDialog(false);
+    dialogs.setRecoveryDialogDismissed(true);
     
     toast({
       title: "Starting Fresh",
