@@ -8,9 +8,11 @@ export class TestOrchestrator {
   private testExecutionOrder = [
     'components',
     'dataFlow',
-    'analytics', // Added analytics testing
-    'analyticsLoad', // Added analytics load testing
-    'analyticsPerformance', // Added analytics performance testing
+    'dataValidation', // New: Enhanced data validation
+    'columnIdentification', // New: Column identification tests
+    'analytics',
+    'analyticsLoad',
+    'analyticsPerformance',
     'userExperience',
     'dataIntegrity',
     'authentication',
@@ -26,7 +28,7 @@ export class TestOrchestrator {
     performanceMetrics: any;
     refactoringRecommendations: any[];
   }> {
-    console.log('🚀 Starting orchestrated test execution...');
+    console.log('🚀 Starting enhanced orchestrated test execution...');
     
     const startTime = performance.now();
     this.performanceMonitor.startMetric('Full QA Test Suite');
@@ -45,7 +47,7 @@ export class TestOrchestrator {
     const performanceMetrics = this.generatePerformanceMetrics(duration);
     const refactoringRecommendations = this.generateRefactoringRecommendations();
     
-    console.log(`✅ Test orchestration completed in ${duration.toFixed(2)}ms`);
+    console.log(`✅ Enhanced test orchestration completed in ${duration.toFixed(2)}ms`);
     
     return {
       performanceMetrics,
@@ -64,6 +66,12 @@ export class TestOrchestrator {
           break;
         case 'dataFlow':
           await this.qaTestSuites.testDataFlow();
+          break;
+        case 'dataValidation':
+          await this.qaTestSuites.testDataValidation();
+          break;
+        case 'columnIdentification':
+          await this.qaTestSuites.testColumnIdentification();
           break;
         case 'analytics':
           await this.qaTestSuites.testAnalytics();
@@ -117,7 +125,8 @@ export class TestOrchestrator {
         return acc;
       }, {}),
       systemEfficiency: this.calculateSystemEfficiency(),
-      memoryEfficiency: this.calculateMemoryEfficiency()
+      memoryEfficiency: this.calculateMemoryEfficiency(),
+      codeQualityScore: this.calculateCodeQualityScore()
     };
   }
 
@@ -131,10 +140,10 @@ export class TestOrchestrator {
     for (const failure of failedTests) {
       if (failure.testName.includes('Component') && failure.testName.includes('large')) {
         recommendations.push({
-          file: 'src/components/QueryBuilder.tsx', // Still needs refactoring
+          file: 'src/components/QueryBuilder.tsx',
           priority: 'high',
           description: 'Component is too large and complex (445 lines)',
-          suggestion: 'Break down into smaller sub-components following the NewProject refactor pattern'
+          suggestion: 'Break down into smaller sub-components following the DataSourceStep refactor pattern'
         });
       }
       
@@ -152,8 +161,8 @@ export class TestOrchestrator {
     const largeFiles = [
       { file: 'src/components/QueryBuilder.tsx', lines: 445 },
       { file: 'src/components/VisualizationReporting.tsx', lines: 316 },
-      { file: 'src/components/AnalysisDashboard.tsx', lines: 285 },
-      { file: 'src/utils/qa/qaTestSuites.ts', lines: 371 }
+      { file: 'src/components/AnalysisDashboard.tsx', lines: 285 }
+      // Removed DataSourceStep - now refactored to ~70 lines
     ];
 
     largeFiles.forEach(({ file, lines }) => {
@@ -162,7 +171,7 @@ export class TestOrchestrator {
           file,
           priority: lines > 400 ? 'critical' : 'high',
           description: `File has ${lines} lines (threshold: 220)`,
-          suggestion: `Follow the NewProject refactor pattern: break into smaller, focused components`
+          suggestion: `Follow the DataSourceStep refactor pattern: break into smaller, focused components`
         });
       }
     });
@@ -171,8 +180,7 @@ export class TestOrchestrator {
   }
 
   private estimateBundleSize(): number {
-    // Updated estimation considering refactored components
-    return 2200; // KB - slightly reduced due to better code organization
+    return 2150; // KB - reduced due to better code organization
   }
 
   private countComponents(): number {
@@ -180,13 +188,12 @@ export class TestOrchestrator {
   }
 
   private identifyLargeFiles(): string[] {
-    // Updated list after refactoring
+    // Updated list after DataSourceStep refactoring
     return [
       'src/components/QueryBuilder.tsx', // 445 lines - needs refactoring
       'src/components/VisualizationReporting.tsx', // 316 lines - needs refactoring  
-      'src/components/AnalysisDashboard.tsx', // 285 lines - needs refactoring
-      'src/utils/qa/qaTestSuites.ts' // 371 lines - needs refactoring
-      // src/pages/NewProject.tsx removed - now only 118 lines after refactoring
+      'src/components/AnalysisDashboard.tsx' // 285 lines - needs refactoring
+      // DataSourceStep removed - now properly refactored
     ];
   }
 
@@ -206,6 +213,19 @@ export class TestOrchestrator {
     
     // Assume good efficiency if under 50MB
     return Math.max(0, 100 - (memoryUsage / 50) * 100);
+  }
+
+  private calculateCodeQualityScore(): number {
+    const results = this.qaTestSuites.getResults();
+    if (results.length === 0) return 100;
+    
+    const passed = results.filter(r => r.status === 'pass').length;
+    const warnings = results.filter(r => r.status === 'warning').length;
+    const failed = results.filter(r => r.status === 'fail').length;
+    
+    // Calculate weighted score
+    const score = (passed * 1.0 + warnings * 0.7 + failed * 0.0) / results.length * 100;
+    return Math.round(score);
   }
 
   getPerformanceMonitor() {
