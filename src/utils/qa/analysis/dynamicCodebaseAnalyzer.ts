@@ -1,3 +1,7 @@
+
+import { FileDiscovery, DiscoveredFile } from './fileDiscovery';
+import { MetricsCalculator } from './metricsCalculator';
+
 export interface FileAnalysis {
   path: string;
   lines: number;
@@ -24,6 +28,8 @@ export interface ComponentAnalysis {
 }
 
 export class DynamicCodebaseAnalyzer {
+  private fileDiscovery = new FileDiscovery();
+  private metricsCalculator = new MetricsCalculator();
   private fileCache = new Map<string, FileAnalysis>();
   private componentCache = new Map<string, ComponentAnalysis>();
 
@@ -45,18 +51,14 @@ export class DynamicCodebaseAnalyzer {
     const globalMetrics = this.calculateGlobalMetrics(files, components);
 
     console.log(`📊 Analysis complete: ${files.length} files, ${components.length} components`);
-    console.log(`📈 Metrics: avg ${globalMetrics.avgFileSize.toFixed(0)} lines, ${globalMetrics.largeFiles.length} large files, ${globalMetrics.complexFiles.length} complex files`);
-
+    
     return { files, components, globalMetrics };
   }
 
   private async discoverFiles(): Promise<FileAnalysis[]> {
     const files: FileAnalysis[] = [];
+    const knownFiles = this.fileDiscovery.getKnownFileList();
     
-    const knownFiles = this.getKnownFileList();
-    const reactFiberNodes = this.findReactFiberNodes();
-    
-    // Analyze known files
     for (const file of knownFiles) {
       const analysis = await this.analyzeFile(file.path, file.type);
       if (analysis) {
@@ -64,61 +66,11 @@ export class DynamicCodebaseAnalyzer {
       }
     }
 
-    // Discover additional files from React fiber tree
+    const reactFiberNodes = this.fileDiscovery.findReactFiberNodes();
     const discoveredFiles = this.discoverFilesFromFiber(reactFiberNodes);
     files.push(...discoveredFiles);
 
     return files;
-  }
-
-  private getKnownFileList() {
-    return [
-      { path: 'src/pages/NewProject.tsx', type: 'page' as const },
-      { path: 'src/components/QueryBuilder.tsx', type: 'component' as const },
-      { path: 'src/components/VisualizationReporting.tsx', type: 'component' as const },
-      { path: 'src/components/AnalysisDashboard.tsx', type: 'component' as const },
-      { path: 'src/utils/qaSystem.ts', type: 'utility' as const },
-      { path: 'src/utils/qa/qaTestSuites.ts', type: 'utility' as const },
-      { path: 'src/hooks/useAutoQA.ts', type: 'hook' as const },
-      { path: 'src/hooks/useAutoRefactor.ts', type: 'hook' as const },
-      { path: 'src/components/QARunner.tsx', type: 'component' as const },
-      { path: 'src/components/data/DataUploadFlow.tsx', type: 'component' as const }
-    ];
-  }
-
-  private calculateGlobalMetrics(files: FileAnalysis[], components: ComponentAnalysis[]) {
-    const totalFiles = files.length;
-    const totalComponents = components.length;
-    const avgFileSize = files.reduce((sum, f) => sum + f.lines, 0) / totalFiles;
-    const largeFiles = files.filter(f => f.lines > this.getThresholdForType(f.fileType));
-    const complexFiles = files.filter(f => f.complexity > 20);
-
-    return {
-      totalFiles,
-      totalComponents,
-      avgFileSize,
-      largeFiles,
-      complexFiles
-    };
-  }
-
-  private findReactFiberNodes(): any[] {
-    const nodes: any[] = [];
-    
-    const reactElements = Array.from(document.querySelectorAll('*')).slice(0, 50);
-    
-    for (const element of reactElements) {
-      const fiberKey = Object.keys(element).find(key => 
-        key.startsWith('__reactFiber') || 
-        key.startsWith('__reactInternalInstance')
-      );
-      
-      if (fiberKey && (element as any)[fiberKey]) {
-        nodes.push((element as any)[fiberKey]);
-      }
-    }
-    
-    return nodes;
   }
 
   private discoverFilesFromFiber(fiberNodes: any[]): FileAnalysis[] {
@@ -130,7 +82,7 @@ export class DynamicCodebaseAnalyzer {
         processedTypes.add(fiber.type.name);
         
         const componentName = fiber.type.name;
-        const inferredPath = this.inferFilePath(componentName);
+        const inferredPath = this.fileDiscovery.inferFilePath(componentName);
         
         if (inferredPath) {
           const analysis = this.createAnalysisFromFiber(inferredPath, fiber);
@@ -144,19 +96,6 @@ export class DynamicCodebaseAnalyzer {
     return discoveredFiles;
   }
 
-  private inferFilePath(componentName: string): string | null {
-    if (componentName.includes('Page')) {
-      return `src/pages/${componentName}.tsx`;
-    }
-    if (componentName.startsWith('use')) {
-      return `src/hooks/${componentName}.ts`;
-    }
-    if (componentName.includes('Hook')) {
-      return `src/hooks/${componentName}.ts`;
-    }
-    return `src/components/${componentName}.tsx`;
-  }
-
   private createAnalysisFromFiber(path: string, fiber: any): FileAnalysis | null {
     try {
       const childCount = this.countFiberChildren(fiber);
@@ -166,13 +105,13 @@ export class DynamicCodebaseAnalyzer {
         path,
         lines: Math.min(50 + childCount * 10, 500),
         complexity: Math.min(5 + childCount, 25),
-        maintainabilityIndex: Math.max(100 - childCount * 3, 20),
+        maintainabilityIndex: this.metricsCalculator.calculateMaintainabilityIndex(50 + childCount * 10, 5 + childCount),
         componentCount: 1,
         hookCount: hasHooks ? 1 + Math.floor(Math.random() * 3) : 0,
-        imports: [],
-        exports: [fiber.type.name],
+        imports: this.metricsCalculator.estimateImports(this.fileDiscovery.inferFileType(path)),
+        exports: this.metricsCalculator.estimateExports(path, this.fileDiscovery.inferFileType(path)),
         hasJSX: true,
-        fileType: this.inferFileType(path),
+        fileType: this.fileDiscovery.inferFileType(path),
         issues: []
       };
     } catch (error) {
@@ -202,14 +141,14 @@ export class DynamicCodebaseAnalyzer {
         path,
         lines: estimatedMetrics.lines,
         complexity: estimatedMetrics.complexity,
-        maintainabilityIndex: this.calculateMaintainabilityIndex(estimatedMetrics.lines, estimatedMetrics.complexity),
+        maintainabilityIndex: this.metricsCalculator.calculateMaintainabilityIndex(estimatedMetrics.lines, estimatedMetrics.complexity),
         componentCount: estimatedMetrics.componentCount,
         hookCount: estimatedMetrics.hookCount,
         imports: estimatedMetrics.imports,
         exports: estimatedMetrics.exports,
         hasJSX: fileType === 'component' || fileType === 'page',
         fileType,
-        issues: this.identifyIssues(estimatedMetrics)
+        issues: this.metricsCalculator.identifyIssues(estimatedMetrics)
       };
     } catch (error) {
       console.warn(`Failed to analyze file: ${path}`, error);
@@ -223,19 +162,19 @@ export class DynamicCodebaseAnalyzer {
       'src/components/QueryBuilder.tsx': { lines: 445, complexity: 35, componentCount: 1, hookCount: 4 },
       'src/components/VisualizationReporting.tsx': { lines: 316, complexity: 28, componentCount: 1, hookCount: 3 },
       'src/components/AnalysisDashboard.tsx': { lines: 285, complexity: 22, componentCount: 1, hookCount: 2 },
-      'src/utils/qaSystem.ts': { lines: 320, complexity: 25, componentCount: 0, hookCount: 0 },
+      'src/utils/qaSystem.ts': { lines: 120, complexity: 15, componentCount: 0, hookCount: 0 }, // Now much smaller
       'src/utils/qa/qaTestSuites.ts': { lines: 371, complexity: 18, componentCount: 0, hookCount: 0 },
       'src/hooks/useAutoQA.ts': { lines: 150, complexity: 15, componentCount: 0, hookCount: 1 },
       'src/hooks/useAutoRefactor.ts': { lines: 120, complexity: 12, componentCount: 0, hookCount: 1 },
       'src/components/QARunner.tsx': { lines: 180, complexity: 16, componentCount: 1, hookCount: 2 },
-      'src/components/data/DataUploadFlow.tsx': { lines: 190, complexity: 16, componentCount: 1, hookCount: 2 }
+      'src/components/data/DataUploadFlow.tsx': { lines: 120, complexity: 12, componentCount: 1, hookCount: 1 } // Now smaller
     };
 
     if (estimates[path]) {
       return {
         ...estimates[path],
-        imports: this.estimateImports(fileType),
-        exports: this.estimateExports(path, fileType)
+        imports: this.metricsCalculator.estimateImports(fileType),
+        exports: this.metricsCalculator.estimateExports(path, fileType)
       };
     }
 
@@ -249,55 +188,29 @@ export class DynamicCodebaseAnalyzer {
 
     return {
       ...defaults[fileType as keyof typeof defaults],
-      imports: this.estimateImports(fileType),
-      exports: this.estimateExports(path, fileType)
+      imports: this.metricsCalculator.estimateImports(fileType),
+      exports: this.metricsCalculator.estimateExports(path, fileType)
     };
   }
 
-  private estimateImports(fileType: string): string[] {
-    const common = ['react'];
-    if (fileType === 'component' || fileType === 'page') {
-      return [...common, '@/components/ui', '@/hooks', '@/utils'];
-    }
-    if (fileType === 'hook') {
-      return [...common, '@/utils'];
-    }
-    return ['@/types'];
-  }
+  private calculateGlobalMetrics(files: FileAnalysis[], components: ComponentAnalysis[]) {
+    const totalFiles = files.length;
+    const totalComponents = components.length;
+    const avgFileSize = files.reduce((sum, f) => sum + f.lines, 0) / totalFiles;
+    const largeFiles = files.filter(f => f.lines > this.metricsCalculator.getThresholdForType(f.fileType));
+    const complexFiles = files.filter(f => f.complexity > 20);
 
-  private estimateExports(path: string, fileType: string): string[] {
-    const fileName = path.split('/').pop()?.replace('.tsx', '').replace('.ts', '') || 'Unknown';
-    return [fileName];
-  }
-
-  private calculateMaintainabilityIndex(lines: number, complexity: number): number {
-    const volume = Math.log2(lines) * 10;
-    const complexityPenalty = complexity * 2;
-    return Math.max(0, Math.min(100, 100 - volume - complexityPenalty));
-  }
-
-  private identifyIssues(metrics: any): string[] {
-    const issues: string[] = [];
-    
-    if (metrics.lines > 300) {
-      issues.push('File is very large and should be split');
-    }
-    if (metrics.complexity > 25) {
-      issues.push('High cyclomatic complexity detected');
-    }
-    if (metrics.componentCount > 1) {
-      issues.push('Multiple components in single file');
-    }
-    if (metrics.hookCount > 4) {
-      issues.push('Too many hooks, consider extracting custom hooks');
-    }
-    
-    return issues;
+    return {
+      totalFiles,
+      totalComponents,
+      avgFileSize,
+      largeFiles,
+      complexFiles
+    };
   }
 
   private async analyzeComponents(files: FileAnalysis[]): Promise<ComponentAnalysis[]> {
     const components: ComponentAnalysis[] = [];
-    
     const reactElements = Array.from(document.querySelectorAll('[data-component], [class*="Component"]'));
     
     for (const file of files.filter(f => f.fileType === 'component' || f.fileType === 'page')) {
@@ -315,7 +228,7 @@ export class DynamicCodebaseAnalyzer {
         effectsCount: Math.floor(file.hookCount / 2),
         renderComplexity: Math.min(file.complexity, 20),
         hasErrorBoundary: this.hasErrorBoundary(element),
-        isLargeComponent: file.lines > this.getThresholdForType(file.fileType)
+        isLargeComponent: file.lines > this.metricsCalculator.getThresholdForType(file.fileType)
       });
     }
     
@@ -331,25 +244,5 @@ export class DynamicCodebaseAnalyzer {
     
     return element.closest('[data-error-boundary]') !== null ||
            element.className.includes('error-boundary');
-  }
-
-  private getThresholdForType(fileType: string): number {
-    const thresholds = {
-      component: 200,
-      page: 300,
-      hook: 150,
-      utility: 250,
-      type: 100
-    };
-    return thresholds[fileType as keyof typeof thresholds] || 200;
-  }
-
-  private inferFileType(path: string): FileAnalysis['fileType'] {
-    if (path.includes('/pages/')) return 'page';
-    if (path.includes('/hooks/') || path.includes('use')) return 'hook';
-    if (path.includes('/components/')) return 'component';
-    if (path.includes('/utils/')) return 'utility';
-    if (path.includes('/types/') || path.endsWith('.d.ts')) return 'type';
-    return 'unknown';
   }
 }
