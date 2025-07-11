@@ -1,6 +1,6 @@
 
 import { DataAnalysisContext } from '@/types/data';
-import { AnalysisReport, AnalysisResult, DataInsight } from '@/types/analysis';
+import { AnalysisReport, AnalysisResult } from '@/types/analysis';
 import { DataValidator } from '@/utils/analysis/dataValidator';
 import { parseFile, ParsedData } from '@/utils/dataParser';
 
@@ -157,7 +157,8 @@ export class AnalysisCoordinator {
         description: `Analysis of ${data.rowCount} records across ${data.columns.length} dimensions`,
         value: `${data.rowCount} rows × ${data.columns.length} columns`,
         confidence: 'high',
-        type: 'summary'
+        type: 'summary',
+        timestamp: new Date().toISOString()
       });
       
       // Column analysis results
@@ -181,7 +182,8 @@ export class AnalysisCoordinator {
             description: `Statistical analysis of ${col.name} column`,
             value: `Avg: ${avg.toFixed(2)}, Range: ${min} - ${max}`,
             confidence: 'high',
-            type: 'statistical'
+            type: 'statistical',
+            timestamp: new Date().toISOString()
           });
         }
       }
@@ -194,7 +196,8 @@ export class AnalysisCoordinator {
           description: 'Analysis of data distribution patterns',
           value: `${numericalColumns.length} columns analyzed for distribution patterns`,
           confidence: 'medium',
-          type: 'distribution'
+          type: 'distribution',
+          timestamp: new Date().toISOString()
         });
       }
       

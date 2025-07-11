@@ -54,10 +54,12 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
             files={formData.files}
             uploading={formData.uploading}
             parsing={formData.parsing}
-            parsedData={formData.parsedData}
+            parsedData={formData.parsedData ? [formData.parsedData] : []}
             columnMapping={formData.columnMapping}
             onFileChange={handleFileChange}
-            onFileUpload={formData.handleFileUpload}
+            onFileUpload={async (file: File) => {
+              await formData.handleFileUpload(file);
+            }}
             onRemoveFile={formData.removeFile}
             onColumnMapping={formData.setColumnMapping}
             onNext={formData.nextStep}
@@ -69,7 +71,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
           <BusinessContextStep
             additionalContext={formData.additionalContext}
             setAdditionalContext={formData.setAdditionalContext}
-            parsedData={formData.parsedData}
+            parsedData={formData.parsedData ? [formData.parsedData] : []}
             columnMapping={formData.columnMapping}
             onColumnMapping={formData.setColumnMapping}
             onNext={formData.nextStep}
@@ -81,7 +83,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
           <AnalysisSummaryStep
             researchQuestion={formData.researchQuestion}
             additionalContext={formData.additionalContext}
-            parsedData={formData.parsedData}
+            parsedData={formData.parsedData ? [formData.parsedData] : []}
             columnMapping={formData.columnMapping}
             analysisResults={formData.analysisResults}
             analysisCompleted={formData.analysisCompleted}

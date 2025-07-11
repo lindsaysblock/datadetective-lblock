@@ -32,7 +32,22 @@ export interface ChartAnalysisResult extends BaseAnalysisResult {
   }>;
 }
 
-export type AnalysisResult = NumericAnalysisResult | CategoricalAnalysisResult | ChartAnalysisResult;
+export interface SummaryAnalysisResult extends BaseAnalysisResult {
+  type: 'summary';
+  value: string;
+}
+
+export interface StatisticalAnalysisResult extends BaseAnalysisResult {
+  type: 'statistical';
+  value: string;
+}
+
+export interface DistributionAnalysisResult extends BaseAnalysisResult {
+  type: 'distribution';
+  value: string;
+}
+
+export type AnalysisResult = NumericAnalysisResult | CategoricalAnalysisResult | ChartAnalysisResult | SummaryAnalysisResult | StatisticalAnalysisResult | DistributionAnalysisResult;
 
 export interface AnalysisContext {
   researchQuestion: string;
@@ -43,20 +58,31 @@ export interface AnalysisContext {
 
 export interface AnalysisReport {
   id: string;
-  context: AnalysisContext;
+  timestamp: Date;
+  context: DataAnalysisContext;
   results: AnalysisResult[];
-  insights: string;
+  insights: string[];
   recommendations: string[];
   confidence: 'high' | 'medium' | 'low';
-  executionTime: number;
+  executionTime?: number;
   sqlQuery?: string;
-  queryBreakdown?: {
-    steps: Array<{
-      step: number;
-      title: string;
-      description: string;
-      code: string;
-      explanation: string;
-    }>;
+  queryBreakdown?: string[];
+  dataQuality?: {
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+    completeness: number;
   };
 }
+
+// Legacy compatibility types
+export interface DataInsight {
+  id: string;
+  title: string;
+  description: string;
+  value: any;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+// Import the DataAnalysisContext to avoid circular dependencies
+import { DataAnalysisContext } from './data';

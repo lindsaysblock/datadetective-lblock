@@ -23,8 +23,8 @@ const NewProjectContainer = () => {
     isProcessingAnalysis: formData.isProcessingAnalysis,
     analysisCompleted: formData.analysisCompleted,
     hasAnalysisResults: !!formData.analysisResults,
-    hasData: !!formData.parsedData?.length,
-    dataFiles: formData.parsedData?.length || 0
+    hasData: !!formData.parsedData,
+    dataFiles: formData.parsedData ? 1 : 0
   });
 
   // Auto-show E2E test in development or when URL contains test parameter
@@ -66,10 +66,13 @@ const NewProjectContainer = () => {
   ) => {
     console.log('🚀 Starting analysis in container');
     
+    // Convert parsedData to the expected format
+    const dataArray = parsedData && parsedData.rows ? parsedData.rows : (Array.isArray(parsedData) ? parsedData : []);
+    
     const analysisContext: DataAnalysisContext = {
       researchQuestion,
       additionalContext,
-      parsedData: parsedData || formData.parsedData || [],
+      parsedData: dataArray,
       columnMapping,
       educationalMode: educational
     };
