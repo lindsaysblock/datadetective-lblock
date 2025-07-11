@@ -10,11 +10,19 @@ interface AnalysisResultsCardProps {
 const AnalysisResultsCard: React.FC<AnalysisResultsCardProps> = ({ analysisResults }) => {
   console.log('AnalysisResultsCard received:', analysisResults);
 
-  // Handle different possible formats of analysis results
+  // Handle different possible formats of analysis results with proper formatting
+  const formatInsights = (insights: any): string => {
+    if (Array.isArray(insights)) {
+      return insights.join('\n\n');
+    }
+    if (typeof insights === 'string') {
+      return insights;
+    }
+    return 'Analysis completed successfully with key patterns detected.';
+  };
+
   const normalizedResults = {
-    insights: analysisResults?.insights || 
-              (Array.isArray(analysisResults?.insights) ? analysisResults.insights.join(' ') : '') ||
-              'Analysis completed successfully with key patterns detected.',
+    insights: formatInsights(analysisResults?.insights) || 'Analysis completed successfully with key patterns detected.',
     confidence: analysisResults?.confidence || 'medium',
     recommendations: analysisResults?.recommendations || [
       'Consider focusing on high-performing segments',
