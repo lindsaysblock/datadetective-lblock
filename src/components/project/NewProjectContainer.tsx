@@ -8,6 +8,7 @@ import AnalysisProgressView from '@/components/project/AnalysisProgressView';
 import { SignInModal } from '@/components/auth/SignInModal';
 import Header from '@/components/Header';
 import NewProjectContent from './NewProjectContent';
+import ProjectHeader from './ProjectHeader';
 
 const NewProjectContainer = () => {
   console.log('NewProjectContainer component rendering');
@@ -82,6 +83,8 @@ const NewProjectContainer = () => {
       <Header />
       
       <div className="container mx-auto px-4 py-8">
+        <ProjectHeader />
+        
         <FormRecoveryDialog
           open={formData.showRecoveryDialog}
           onOpenChange={formData.setShowRecoveryDialog}
