@@ -8,6 +8,8 @@ import { useProjectAuth } from './useProjectAuth';
 import { useProjectDialogs } from './useProjectDialogs';
 
 export const useNewProjectForm = () => {
+  console.log('useNewProjectForm hook called');
+  
   const { saveFormData, getFormData, clearFormData, hasStoredData, isLoading } = useFormPersistence();
   const { toast } = useToast();
   
@@ -15,6 +17,9 @@ export const useNewProjectForm = () => {
   const analysis = useProjectAnalysis();
   const auth = useProjectAuth();
   const dialogs = useProjectDialogs();
+
+  console.log('Form state initialized:', formState);
+  console.log('Current step from form state:', formState.step);
 
   // Auto-save form data when values change
   useEffect(() => {
@@ -142,7 +147,7 @@ export const useNewProjectForm = () => {
     formState.setCurrentProjectName('');
   };
 
-  return {
+  const returnValue = {
     // Form state
     ...formState,
     
@@ -163,4 +168,8 @@ export const useNewProjectForm = () => {
     handleRestoreData,
     handleStartFresh
   };
+
+  console.log('useNewProjectForm returning:', Object.keys(returnValue));
+  
+  return returnValue;
 };
