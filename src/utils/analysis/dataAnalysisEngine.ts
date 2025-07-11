@@ -1,20 +1,15 @@
-
 import { ParsedData } from '../dataParser';
-import { AnalysisResult } from './types';
+import { AnalysisResult, AnalysisConfig, AnalysisSummary } from './types';
+import { AnalyticsEngineManager } from '../analytics/analyticsEngineManager';
 import { RowCountAnalyzer } from './analyzers/rowCountAnalyzer';
 import { ActionAnalyzer } from './analyzers/actionAnalyzer';
 import { TimeAnalyzer } from './analyzers/timeAnalyzer';
 import { ProductAnalyzer } from './analyzers/productAnalyzer';
 
-interface AnalysisEngineConfig {
-  enableLogging?: boolean;
-  maxRetries?: number;
-  timeoutMs?: number;
-}
-
 export class DataAnalysisEngine {
   private readonly data: ParsedData;
-  private readonly config: AnalysisEngineConfig;
+  private readonly config: AnalysisConfig;
+  private readonly analyticsManager: AnalyticsEngineManager;
   private readonly analyzers: {
     rowCount: RowCountAnalyzer;
     action: ActionAnalyzer;
@@ -22,30 +17,33 @@ export class DataAnalysisEngine {
     product: ProductAnalyzer;
   };
 
-  constructor(data: ParsedData, config: AnalysisEngineConfig = {}) {
+  constructor(data: ParsedData, config: AnalysisConfig = {}) {
     this.config = {
       enableLogging: true,
       maxRetries: 3,
       timeoutMs: 30000,
+      qualityThreshold: 0.7,
       ...config
     };
 
-    if (this.config.enableLogging) {
-      console.log('DataAnalysisEngine initialized with data:', {
-        rows: data.rows?.length || 0,
-        columns: data.columns?.length || 0,
-        fileSize: data.fileSize,
-        summary: data.summary
-      });
-    }
-    
     this.data = data;
+    this.analyticsManager = new AnalyticsEngineManager(this.config.enableLogging);
+    
+    // Initialize analyzers
     this.analyzers = {
       rowCount: new RowCountAnalyzer(data),
       action: new ActionAnalyzer(data),
       time: new TimeAnalyzer(data),
       product: new ProductAnalyzer(data)
     };
+
+    if (this.config.enableLogging) {
+      console.log('DataAnalysisEngine initialized with:', {
+        rows: data.rows?.length || 0,
+        columns: data.columns?.length || 0,
+        fileSize: data.fileSize
+      });
+    }
   }
 
   // Individual analysis methods with proper error handling
@@ -72,20 +70,15 @@ export class DataAnalysisEngine {
     }
 
     const allResults: AnalysisResult[] = [];
-    const analysisResults = new Map<string, AnalysisResult[]>();
     
     try {
-      // Always run row count analysis first (most reliable)
-      const rowResults = this.analyzeRowCounts();
-      analysisResults.set('rowCount', rowResults);
-      allResults.push(...rowResults);
+      // Use analytics manager for basic analysis
+      const basicResults = this.analyticsManager.runCompleteAnalysis(this.data);
+      allResults.push(...basicResults);
 
-      if (this.config.enableLogging) {
-        console.log('✅ Row count analysis completed');
-      }
-
-      // Run other analyses with individual error handling
+      // Run specialized analyzers with error handling
       const analysisTypes = [
+        { name: 'row count', method: () => this.analyzeRowCounts() },
         { name: 'action', method: () => this.analyzeActionBreakdown() },
         { name: 'time', method: () => this.analyzeTimeTrends() },
         { name: 'product', method: () => this.analyzeProducts() }
@@ -94,7 +87,6 @@ export class DataAnalysisEngine {
       analysisTypes.forEach(({ name, method }) => {
         try {
           const results = method();
-          analysisResults.set(name, results);
           allResults.push(...results);
           
           if (this.config.enableLogging) {
@@ -104,8 +96,6 @@ export class DataAnalysisEngine {
           if (this.config.enableLogging) {
             console.warn(`⚠️ ${name} analysis failed:`, error);
           }
-          
-          // Add error result for failed analysis
           allResults.push(this.createErrorResult(`${name}-analysis-error`, error));
         }
       });
@@ -120,6 +110,12 @@ export class DataAnalysisEngine {
     }
 
     return this.validateResults(allResults);
+  }
+
+  // Utility method to get analysis summary
+  getAnalysisSummary(): AnalysisSummary {
+    const results = this.runCompleteAnalysis();
+    return this.analyticsManager.getAnalysisSummary(results);
   }
 
   private executeAnalysis(analysisName: string, analysisFunction: () => AnalysisResult[]): AnalysisResult[] {
@@ -156,7 +152,6 @@ export class DataAnalysisEngine {
 
   private validateResults(results: AnalysisResult[]): AnalysisResult[] {
     return results.filter(result => {
-      // Validate required fields
       const hasRequiredFields = result.id && result.title && result.description && result.insight;
       const hasValidConfidence = ['high', 'medium', 'low'].includes(result.confidence);
       
@@ -168,33 +163,6 @@ export class DataAnalysisEngine {
       return true;
     });
   }
-
-  // Utility method to get analysis summary
-  getAnalysisSummary(): {
-    totalResults: number;
-    highConfidenceResults: number;
-    analysisTypes: string[];
-    dataQuality: 'high' | 'medium' | 'low';
-  } {
-    const results = this.runCompleteAnalysis();
-    const highConfidenceCount = results.filter(r => r.confidence === 'high').length;
-    const analysisTypes = [...new Set(results.map(r => r.id.split('-')[0]))];
-    
-    let dataQuality: 'high' | 'medium' | 'low' = 'low';
-    if (highConfidenceCount > results.length * 0.7) {
-      dataQuality = 'high';
-    } else if (highConfidenceCount > results.length * 0.4) {
-      dataQuality = 'medium';
-    }
-
-    return {
-      totalResults: results.length,
-      highConfidenceResults: highConfidenceCount,
-      analysisTypes,
-      dataQuality
-    };
-  }
 }
 
-// Re-export types for backward compatibility
-export type { AnalysisResult };
+export type { AnalysisResult, AnalysisSummary };
