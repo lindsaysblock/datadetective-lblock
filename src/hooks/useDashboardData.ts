@@ -16,7 +16,7 @@ export const useDashboardData = (initialData?: ParsedData) => {
   };
 
   // Generate some mock processed data if no data is provided
-  const processedData = currentData || {
+  const processedData: ParsedData = currentData || {
     columns: [
       { name: 'id', type: 'number' as const, samples: [1, 2, 3] },
       { name: 'name', type: 'string' as const, samples: ['Sample 1', 'Sample 2', 'Sample 3'] },
@@ -26,6 +26,8 @@ export const useDashboardData = (initialData?: ParsedData) => {
       { id: 2, name: 'Sample 2' },
       { id: 3, name: 'Sample 3' },
     ],
+    rowCount: 3,
+    fileSize: 1024,
     summary: {
       totalRows: 3,
       totalColumns: 2,
