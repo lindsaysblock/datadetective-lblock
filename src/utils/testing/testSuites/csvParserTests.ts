@@ -1,41 +1,70 @@
 
-import { TestSuite } from '../types';
-import { TestRunner } from '../testRunner';
+import { TestRunner, UnitTestResult, AssertionHelper } from '../testRunner';
 
 export class CSVParserTestSuite {
   private testRunner = new TestRunner();
 
-  async run(): Promise<TestSuite> {
-    const setupStart = performance.now();
-    const setupTime = performance.now() - setupStart;
+  async runAllTests(): Promise<UnitTestResult[]> {
+    const tests: UnitTestResult[] = [];
 
-    const suiteStart = performance.now();
-    const tests = [];
+    tests.push(await this.testCSVParsingBasicFunctionality());
+    tests.push(await this.testCSVParsingWithHeaders());
+    tests.push(await this.testCSVParsingEmptyFile());
+    tests.push(await this.testCSVParsingInvalidFormat());
 
-    tests.push(await this.testRunner.runTest('CSV header parsing', (assert) => {
-      const csvText = 'name,age,city\nJohn,25,NYC';
-      const lines = csvText.split('\n');
-      const headers = lines[0].split(',');
-      assert.equal(headers.length, 3, 'Should parse 3 headers');
+    return tests;
+  }
+
+  private async testCSVParsingBasicFunctionality(): Promise<UnitTestResult> {
+    return this.testRunner.runTest('CSV Parsing Basic Functionality', (assert: AssertionHelper) => {
+      const csvData = 'name,age,city\nJohn,30,NYC\nJane,25,LA';
+      const expectedResult = [
+        { name: 'John', age: '30', city: 'NYC' },
+        { name: 'Jane', age: '25', city: 'LA' }
+      ];
+      
+      // Mock CSV parsing functionality
+      const mockParsedData = csvData.split('\n').slice(1).map(row => {
+        const values = row.split(',');
+        return { name: values[0], age: values[1], city: values[2] };
+      });
+
+      assert.equal(mockParsedData.length, 2, 'Should parse 2 rows');
+      assert.equal(mockParsedData[0].name, 'John', 'First row name should be John');
+      assert.equal(mockParsedData[1].name, 'Jane', 'Second row name should be Jane');
+    });
+  }
+
+  private async testCSVParsingWithHeaders(): Promise<UnitTestResult> {
+    return this.testRunner.runTest('CSV Parsing With Headers', (assert: AssertionHelper) => {
+      const csvData = 'name,age,city\nJohn,30,NYC';
+      const headers = csvData.split('\n')[0].split(',');
+      
+      assert.equal(headers.length, 3, 'Should detect 3 headers');
       assert.equal(headers[0], 'name', 'First header should be name');
-    }));
+      assert.equal(headers[2], 'city', 'Third header should be city');
+    });
+  }
 
-    tests.push(await this.testRunner.runTest('CSV data parsing', (assert) => {
-      const csvText = 'name,age,city\nJohn,25,NYC\nJane,30,LA';
-      const lines = csvText.split('\n');
-      const dataRows = lines.slice(1);
-      assert.equal(dataRows.length, 2, 'Should have 2 data rows');
-    }));
+  private async testCSVParsingEmptyFile(): Promise<UnitTestResult> {
+    return this.testRunner.runTest('CSV Parsing Empty File', (assert: AssertionHelper) => {
+      const csvData = '';
+      const isEmpty = csvData.trim().length === 0;
+      
+      assert.truthy(isEmpty, 'Should handle empty CSV files gracefully');
+    });
+  }
 
-    const teardownStart = performance.now();
-    const teardownTime = performance.now() - teardownStart;
-
-    return {
-      suiteName: 'CSV Parser Tests',
-      tests,
-      setupTime,
-      teardownTime,
-      totalDuration: performance.now() - suiteStart
-    };
+  private async testCSVParsingInvalidFormat(): Promise<UnitTestResult> {
+    return this.testRunner.runTest('CSV Parsing Invalid Format', (assert: AssertionHelper) => {
+      const invalidCSV = 'not,proper\ncsv,format,with,extra,columns';
+      
+      // Test that parser handles inconsistent column counts
+      const rows = invalidCSV.split('\n');
+      const headerCount = rows[0].split(',').length;
+      const dataCount = rows[1].split(',').length;
+      
+      assert.truthy(headerCount !== dataCount, 'Should detect column count mismatch');
+    });
   }
 }

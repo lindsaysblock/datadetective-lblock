@@ -123,6 +123,11 @@ export class TestRunner {
   }
 
   async runUnitTests(): Promise<void> {
+    if (!this.qaTestSuites) {
+      console.error('QATestSuites not set for TestRunner');
+      return;
+    }
+
     console.log('🧪 Running optimized unit test suite...');
     
     try {
@@ -139,32 +144,38 @@ export class TestRunner {
         ] : undefined
       });
 
-      const avgCoverage = (
-        unitTestReport.coverage.statements + 
-        unitTestReport.coverage.branches + 
-        unitTestReport.coverage.functions + 
-        unitTestReport.coverage.lines
-      ) / 4;
+      // Check if coverage exists before accessing it
+      if (unitTestReport.coverage) {
+        const avgCoverage = (
+          unitTestReport.coverage.statements + 
+          unitTestReport.coverage.branches + 
+          unitTestReport.coverage.functions + 
+          unitTestReport.coverage.lines
+        ) / 4;
 
-      this.qaTestSuites.addTestResult({
-        testName: 'Code Coverage (Step-Aware)',
-        status: avgCoverage > 80 ? 'pass' : avgCoverage > 60 ? 'warning' : 'fail',
-        message: `${avgCoverage.toFixed(1)}% average coverage across step components (Statements: ${unitTestReport.coverage.statements.toFixed(1)}%, Functions: ${unitTestReport.coverage.functions.toFixed(1)}%)`,
-        suggestions: avgCoverage < 70 ? [
-          'Increase test coverage for critical step functions',
-          'Add integration tests for step-to-step workflows',
-          'Cover edge cases in step validation logic'
-        ] : undefined
-      });
-
-      unitTestReport.testSuites.forEach(suite => {
-        const failedTests = suite.tests.filter(test => test.status === 'fail').length;
         this.qaTestSuites.addTestResult({
-          testName: `${suite.suiteName} Suite`,
-          status: failedTests === 0 ? 'pass' : failedTests < 2 ? 'warning' : 'fail',
-          message: `${suite.tests.length - failedTests}/${suite.tests.length} tests passed in ${suite.totalDuration.toFixed(0)}ms`
+          testName: 'Code Coverage (Step-Aware)',
+          status: avgCoverage > 80 ? 'pass' : avgCoverage > 60 ? 'warning' : 'fail',
+          message: `${avgCoverage.toFixed(1)}% average coverage across step components (Statements: ${unitTestReport.coverage.statements.toFixed(1)}%, Functions: ${unitTestReport.coverage.functions.toFixed(1)}%)`,
+          suggestions: avgCoverage < 70 ? [
+            'Increase test coverage for critical step functions',
+            'Add integration tests for step-to-step workflows',
+            'Cover edge cases in step validation logic'
+          ] : undefined
         });
-      });
+      }
+
+      // Check if testSuites exists before accessing it
+      if (unitTestReport.testSuites) {
+        unitTestReport.testSuites.forEach(suite => {
+          const failedTests = suite.tests.filter(test => test.status === 'fail').length;
+          this.qaTestSuites!.addTestResult({
+            testName: `${suite.suiteName} Suite`,
+            status: failedTests === 0 ? 'pass' : failedTests < 2 ? 'warning' : 'fail',
+            message: `${suite.tests.length - failedTests}/${suite.tests.length} tests passed in ${suite.totalDuration.toFixed(0)}ms`
+          });
+        });
+      }
 
     } catch (error) {
       this.qaTestSuites.addTestResult({

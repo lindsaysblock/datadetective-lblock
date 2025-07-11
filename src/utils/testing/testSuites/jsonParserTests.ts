@@ -1,40 +1,73 @@
 
-import { TestSuite } from '../types';
-import { TestRunner } from '../testRunner';
+import { TestRunner, UnitTestResult, AssertionHelper } from '../testRunner';
 
 export class JSONParserTestSuite {
   private testRunner = new TestRunner();
 
-  async run(): Promise<TestSuite> {
-    const setupStart = performance.now();
-    const setupTime = performance.now() - setupStart;
+  async runAllTests(): Promise<UnitTestResult[]> {
+    const tests: UnitTestResult[] = [];
 
-    const suiteStart = performance.now();
-    const tests = [];
+    tests.push(await this.testJSONParsingBasicFunctionality());
+    tests.push(await this.testJSONParsingNestedObjects());
+    tests.push(await this.testJSONParsingArrays());
+    tests.push(await this.testJSONParsingInvalidFormat());
 
-    tests.push(await this.testRunner.runTest('JSON parsing', (assert) => {
-      const jsonText = '{"name": "John", "age": 25}';
-      const parsed = JSON.parse(jsonText);
-      assert.equal(parsed.name, 'John', 'Should parse name correctly');
-      assert.equal(parsed.age, 25, 'Should parse age correctly');
-    }));
+    return tests;
+  }
 
-    tests.push(await this.testRunner.runTest('JSON array parsing', (assert) => {
-      const jsonText = '[{"id": 1}, {"id": 2}]';
-      const parsed = JSON.parse(jsonText);
-      assert.equal(Array.isArray(parsed), true, 'Should be an array');
-      assert.equal(parsed.length, 2, 'Should have 2 items');
-    }));
+  private async testJSONParsingBasicFunctionality(): Promise<UnitTestResult> {
+    return this.testRunner.runTest('JSON Parsing Basic Functionality', (assert: AssertionHelper) => {
+      const jsonString = '{"name": "John", "age": 30}';
+      
+      try {
+        const parsed = JSON.parse(jsonString);
+        assert.equal(parsed.name, 'John', 'Should parse name correctly');
+        assert.equal(parsed.age, 30, 'Should parse age correctly');
+      } catch (error) {
+        assert.truthy(false, 'Valid JSON should parse without errors');
+      }
+    });
+  }
 
-    const teardownStart = performance.now();
-    const teardownTime = performance.now() - teardownStart;
+  private async testJSONParsingNestedObjects(): Promise<UnitTestResult> {
+    return this.testRunner.runTest('JSON Parsing Nested Objects', (assert: AssertionHelper) => {
+      const jsonString = '{"user": {"name": "John", "details": {"age": 30}}}';
+      
+      try {
+        const parsed = JSON.parse(jsonString);
+        assert.equal(parsed.user.name, 'John', 'Should parse nested name');
+        assert.equal(parsed.user.details.age, 30, 'Should parse deeply nested age');
+      } catch (error) {
+        assert.truthy(false, 'Valid nested JSON should parse without errors');
+      }
+    });
+  }
 
-    return {
-      suiteName: 'JSON Parser Tests',
-      tests,
-      setupTime,
-      teardownTime,
-      totalDuration: performance.now() - suiteStart
-    };
+  private async testJSONParsingArrays(): Promise<UnitTestResult> {
+    return this.testRunner.runTest('JSON Parsing Arrays', (assert: AssertionHelper) => {
+      const jsonString = '[{"name": "John"}, {"name": "Jane"}]';
+      
+      try {
+        const parsed = JSON.parse(jsonString);
+        assert.truthy(Array.isArray(parsed), 'Should parse as array');
+        assert.equal(parsed.length, 2, 'Should have 2 items');
+        assert.equal(parsed[0].name, 'John', 'First item should have correct name');
+      } catch (error) {
+        assert.truthy(false, 'Valid JSON array should parse without errors');
+      }
+    });
+  }
+
+  private async testJSONParsingInvalidFormat(): Promise<UnitTestResult> {
+    return this.testRunner.runTest('JSON Parsing Invalid Format', (assert: AssertionHelper) => {
+      const invalidJSON = '{name: "John", age: 30}'; // Missing quotes around property names
+      
+      try {
+        JSON.parse(invalidJSON);
+        assert.truthy(false, 'Invalid JSON should throw an error');
+      } catch (error) {
+        assert.truthy(true, 'Invalid JSON should be handled gracefully');
+      }
+    });
   }
 }

@@ -31,13 +31,15 @@ export interface TestSuite {
 }
 
 export interface UnitTestReport {
-  timestamp: Date;
   totalTests: number;
   passedTests: number;
   failedTests: number;
-  skippedTests: number;
-  testSuites: TestSuite[];
-  coverage: {
+  testResults: UnitTestResult[];
+  overall: 'pass' | 'warning' | 'fail';
+  timestamp?: Date;
+  skippedTests?: number;
+  testSuites?: TestSuite[];
+  coverage?: {
     statements: number;
     branches: number;
     functions: number;
