@@ -1,4 +1,3 @@
-
 export interface ParsedDataRow {
   [key: string]: any;
 }
@@ -53,4 +52,25 @@ export interface AnalysisResults {
       explanation: string;
     }>;
   };
+}
+
+export interface QuestionLog {
+  id: string;
+  question: string;
+  answer: string;
+  timestamp: Date;
+  confidence: 'high' | 'medium' | 'low';
+  visualizations?: string[];
+}
+
+export interface EnhancedAnalysisResults extends AnalysisResults {
+  questionLog: QuestionLog[];
+  originalQuestion: string;
+  generatedVisuals: {
+    id: string;
+    type: string;
+    title: string;
+    questionId: string;
+    data: any;
+  }[];
 }

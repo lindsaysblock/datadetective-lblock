@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { MessageSquareText, Lightbulb, Send, Sparkles } from 'lucide-react';
+import { MessageSquareText, Lightbulb, Send, Sparkles, Loader2 } from 'lucide-react';
+import { DataAnalysisContext } from '@/types/data';
 
 interface QuestionSuggestion {
   question: string;
@@ -18,14 +19,18 @@ interface AskMoreQuestionsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentAnalysis: any;
-  onSubmitQuestion: (question: string) => void;
+  onSubmitQuestion: (question: string, context: DataAnalysisContext) => Promise<void>;
+  isAnalyzing?: boolean;
+  analysisContext: DataAnalysisContext;
 }
 
 const AskMoreQuestionsModal: React.FC<AskMoreQuestionsModalProps> = ({
   open,
   onOpenChange,
   currentAnalysis,
-  onSubmitQuestion
+  onSubmitQuestion,
+  isAnalyzing = false,
+  analysisContext
 }) => {
   const [customQuestion, setCustomQuestion] = useState('');
 
@@ -66,17 +71,19 @@ const AskMoreQuestionsModal: React.FC<AskMoreQuestionsModalProps> = ({
     }
   };
 
-  const handleSubmitCustomQuestion = () => {
-    if (customQuestion.trim()) {
-      onSubmitQuestion(customQuestion);
+  const handleSubmitCustomQuestion = async () => {
+    if (customQuestion.trim() && !isAnalyzing) {
+      await onSubmitQuestion(customQuestion, analysisContext);
       setCustomQuestion('');
       onOpenChange(false);
     }
   };
 
-  const handleSelectSuggestion = (question: string) => {
-    onSubmitQuestion(question);
-    onOpenChange(false);
+  const handleSelectSuggestion = async (question: string) => {
+    if (!isAnalyzing) {
+      await onSubmitQuestion(question, analysisContext);
+      onOpenChange(false);
+    }
   };
 
   return (
@@ -102,14 +109,24 @@ const AskMoreQuestionsModal: React.FC<AskMoreQuestionsModalProps> = ({
                 onChange={(e) => setCustomQuestion(e.target.value)}
                 placeholder="What would you like to know about your data? Be specific about what insights you're looking for..."
                 className="min-h-[100px] mb-3"
+                disabled={isAnalyzing}
               />
               <Button 
                 onClick={handleSubmitCustomQuestion}
-                disabled={!customQuestion.trim()}
+                disabled={!customQuestion.trim() || isAnalyzing}
                 className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
               >
-                <Send className="w-4 h-4 mr-2" />
-                Analyze This Question
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Analyze This Question
+                  </>
+                )}
               </Button>
             </CardContent>
           </Card>
@@ -145,8 +162,9 @@ const AskMoreQuestionsModal: React.FC<AskMoreQuestionsModalProps> = ({
                       variant="outline"
                       size="sm"
                       className="w-full"
+                      disabled={isAnalyzing}
                     >
-                      Explore This Question
+                      {isAnalyzing ? 'Processing...' : 'Explore This Question'}
                     </Button>
                   </CardContent>
                 </Card>

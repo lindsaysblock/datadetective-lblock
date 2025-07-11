@@ -6,7 +6,13 @@ import DigDeeperCard from './analysis/DigDeeperCard';
 import AnalysisResultsCard from './analysis/AnalysisResultsCard';
 import AnalysisExportBar from './analysis/AnalysisExportBar';
 import DetailedAnalysisResults from './analysis/DetailedAnalysisResults';
+import AskMoreQuestionsModal from './analysis/AskMoreQuestionsModal';
+import QuestionLogDisplay from './analysis/QuestionLogDisplay';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { MessageSquarePlus } from 'lucide-react';
+import { useQuestionLog } from '@/hooks/useQuestionLog';
+import { DataAnalysisContext } from '@/types/data';
 
 interface ProjectAnalysisViewProps {
   projectName: string;
@@ -28,9 +34,33 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
   educationalMode = false
 }) => {
   const [isContextOpen, setIsContextOpen] = useState(false);
+  const [showAskMoreModal, setShowAskMoreModal] = useState(false);
+  
+  const {
+    questionLog,
+    generatedVisuals,
+    isAnalyzing,
+    addQuestion,
+    addVisualization,
+    exportQuestionLog
+  } = useQuestionLog();
+
+  // Create analysis context for additional questions
+  const analysisContext: DataAnalysisContext = {
+    researchQuestion,
+    additionalContext,
+    parsedData: analysisResults?.parsedData || [],
+    columnMapping: analysisResults?.columnMapping || {},
+    educationalMode
+  };
+
+  const handleSubmitQuestion = async (question: string, context: DataAnalysisContext) => {
+    await addQuestion(question, context);
+  };
 
   const handleExportFindings = () => {
     console.log('Export findings', analysisResults);
+    exportQuestionLog();
   };
 
   const handleExportVisuals = () => {
@@ -55,10 +85,22 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
           onCreateRecurringReport={handleCreateRecurringReport}
         />
 
+        {/* Ask More Questions Button */}
+        <div className="flex justify-center mb-6">
+          <Button
+            onClick={() => setShowAskMoreModal(true)}
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+          >
+            <MessageSquarePlus className="w-4 h-4 mr-2" />
+            Ask More Questions
+          </Button>
+        </div>
+
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="overview">Executive Summary</TabsTrigger>
             <TabsTrigger value="detailed">Detailed Analysis</TabsTrigger>
+            <TabsTrigger value="questions">Question Log ({questionLog.length})</TabsTrigger>
             <TabsTrigger value="context">Project Context</TabsTrigger>
           </TabsList>
 
@@ -88,6 +130,30 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
             </div>
           </TabsContent>
 
+          <TabsContent value="questions">
+            <div className="space-y-6">
+              <QuestionLogDisplay
+                questionLog={questionLog}
+                onExportLog={exportQuestionLog}
+                onViewVisualizations={(questionId) => {
+                  console.log('View visualizations for question:', questionId);
+                }}
+              />
+              
+              {questionLog.length === 0 && (
+                <div className="text-center py-8">
+                  <Button
+                    onClick={() => setShowAskMoreModal(true)}
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                  >
+                    <MessageSquarePlus className="w-4 h-4 mr-2" />
+                    Ask Your First Additional Question
+                  </Button>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
           <TabsContent value="context">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <ProjectContextCard
@@ -111,6 +177,15 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
             </div>
           </TabsContent>
         </Tabs>
+
+        <AskMoreQuestionsModal
+          open={showAskMoreModal}
+          onOpenChange={setShowAskMoreModal}
+          currentAnalysis={analysisResults}
+          onSubmitQuestion={handleSubmitQuestion}
+          isAnalyzing={isAnalyzing}
+          analysisContext={analysisContext}
+        />
       </div>
     </div>
   );
