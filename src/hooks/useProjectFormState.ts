@@ -1,6 +1,6 @@
-
 import { useState } from 'react';
 import Papa from 'papaparse';
+import { ColumnMapping } from '../components/data/ColumnIdentificationStep';
 
 export const useProjectFormState = () => {
   console.log('useProjectFormState initializing');
@@ -13,6 +13,10 @@ export const useProjectFormState = () => {
   const [parsing, setParsing] = useState(false);
   const [parsedData, setParsedData] = useState<any[]>([]);
   const [currentProjectName, setCurrentProjectName] = useState('');
+  const [columnMapping, setColumnMapping] = useState<ColumnMapping>({
+    valueColumns: [],
+    categoryColumns: []
+  });
 
   console.log('useProjectFormState initialized with step:', step);
 
@@ -116,6 +120,11 @@ export const useProjectFormState = () => {
     setParsedData(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleColumnMapping = (mapping: ColumnMapping) => {
+    console.log('Column mapping updated:', mapping);
+    setColumnMapping(mapping);
+  };
+
   const resetForm = () => {
     console.log('Resetting form');
     setStep(1);
@@ -126,6 +135,10 @@ export const useProjectFormState = () => {
     setParsing(false);
     setParsedData([]);
     setCurrentProjectName('');
+    setColumnMapping({
+      valueColumns: [],
+      categoryColumns: []
+    });
   };
 
   return {
@@ -137,6 +150,7 @@ export const useProjectFormState = () => {
     parsing,
     parsedData,
     currentProjectName,
+    columnMapping,
     setStep,
     setResearchQuestion,
     setAdditionalContext,
@@ -145,6 +159,7 @@ export const useProjectFormState = () => {
     setParsing,
     setParsedData,
     setCurrentProjectName,
+    setColumnMapping: handleColumnMapping,
     nextStep,
     prevStep,
     handleFileUpload,

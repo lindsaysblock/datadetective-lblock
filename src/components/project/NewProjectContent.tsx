@@ -1,122 +1,107 @@
 
 import React from 'react';
-import StepIndicator from '@/components/project/StepIndicator';
-import ProjectHeader from '@/components/project/ProjectHeader';
-import ResearchQuestionStep from '@/components/project/ResearchQuestionStep';
-import DataSourceStep from '@/components/project/DataSourceStep';
-import BusinessContextStep from '@/components/project/BusinessContextStep';
-import AnalysisSummaryStep from '@/components/project/AnalysisSummaryStep';
+import StepIndicator from './StepIndicator';
+import ResearchQuestionStep from './ResearchQuestionStep';
+import DataSourceStep from './DataSourceStep';
+import BusinessContextStep from './BusinessContextStep';
+import AnalysisSummaryStep from './AnalysisSummaryStep';
+import { useProjectFormState } from '@/hooks/useProjectFormState';
 
 interface NewProjectContentProps {
-  step: number;
-  researchQuestion: string;
-  additionalContext: string;
-  files: File[];
-  uploading: boolean;
-  parsing: boolean;
-  parsedData: any;
-  isProcessingAnalysis: boolean;
-  setResearchQuestion: (question: string) => void;
-  nextStep: () => void;
-  prevStep: () => void;
-  handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleFileUpload: () => void;
-  removeFile: (index: number) => void;
-  setAdditionalContext: (context: string) => void;
-  handleStartAnalysisClick: (educationalMode?: boolean) => void;
+  onStartAnalysis: (researchQuestion: string, additionalContext: string, educational: boolean, parsedData?: any, columnMapping?: any) => void;
 }
 
-const NewProjectContent: React.FC<NewProjectContentProps> = ({
-  step,
-  researchQuestion,
-  additionalContext,
-  files,
-  uploading,
-  parsing,
-  parsedData,
-  isProcessingAnalysis,
-  setResearchQuestion,
-  nextStep,
-  prevStep,
-  handleFileChange,
-  handleFileUpload,
-  removeFile,
-  setAdditionalContext,
-  handleStartAnalysisClick
-}) => {
-  const renderCurrentStep = () => {
-    console.log('Rendering step:', step);
-    
+const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }) => {
+  const {
+    step,
+    researchQuestion,
+    additionalContext,
+    files,
+    uploading,
+    parsing,
+    parsedData,
+    columnMapping,
+    setResearchQuestion,
+    setAdditionalContext,
+    nextStep,
+    prevStep,
+    handleFileUpload,
+    addFile,
+    removeFile,
+    setColumnMapping
+  } = useProjectFormState();
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    selectedFiles.forEach(file => addFile(file));
+  };
+
+  const handleStartAnalysis = (educational: boolean = false) => {
+    console.log('Starting analysis with:', {
+      researchQuestion,
+      additionalContext,
+      educational,
+      parsedData,
+      columnMapping
+    });
+    onStartAnalysis(researchQuestion, additionalContext, educational, parsedData, columnMapping);
+  };
+
+  const renderStepContent = () => {
     switch (step) {
       case 1:
-        console.log('Rendering ResearchQuestionStep');
         return (
           <ResearchQuestionStep
-            researchQuestion={researchQuestion}
-            setResearchQuestion={setResearchQuestion}
+            question={researchQuestion}
+            onQuestionChange={setResearchQuestion}
             onNext={nextStep}
           />
         );
-
       case 2:
-        console.log('Rendering DataSourceStep');
         return (
           <DataSourceStep
             files={files}
             uploading={uploading}
             parsing={parsing}
             parsedData={parsedData}
+            columnMapping={columnMapping}
             onFileChange={handleFileChange}
             onFileUpload={handleFileUpload}
             onRemoveFile={removeFile}
+            onColumnMapping={setColumnMapping}
             onNext={nextStep}
             onPrevious={prevStep}
           />
         );
-
       case 3:
-        console.log('Rendering BusinessContextStep');
         return (
           <BusinessContextStep
-            additionalContext={additionalContext}
-            setAdditionalContext={setAdditionalContext}
+            context={additionalContext}
+            onContextChange={setAdditionalContext}
             onNext={nextStep}
             onPrevious={prevStep}
           />
         );
-
       case 4:
-        console.log('Rendering AnalysisSummaryStep');
         return (
           <AnalysisSummaryStep
             researchQuestion={researchQuestion}
-            files={files}
             additionalContext={additionalContext}
-            isProcessingAnalysis={isProcessingAnalysis}
+            parsedData={parsedData}
+            columnMapping={columnMapping}
+            onStartAnalysis={handleStartAnalysis}
             onPrevious={prevStep}
-            onStartAnalysis={handleStartAnalysisClick}
           />
         );
-
       default:
-        console.log('Unknown step:', step);
-        return (
-          <div className="text-center p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Unknown step: {step}</h2>
-            <p className="text-gray-600">Please refresh the page or contact support.</p>
-          </div>
-        );
+        return null;
     }
   };
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-4xl">
-      <ProjectHeader />
-      <StepIndicator currentStep={step} />
-      
-      <div className="space-y-8">
-        {renderCurrentStep()}
-      </div>
+    <div className="max-w-4xl mx-auto space-y-8">
+      <StepIndicator currentStep={step} totalSteps={4} />
+      {renderStepContent()}
     </div>
   );
 };

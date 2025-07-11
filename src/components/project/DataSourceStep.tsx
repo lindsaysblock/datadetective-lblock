@@ -1,19 +1,22 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, File, CheckCircle, ArrowRight, ArrowLeft, Plus } from 'lucide-react';
+import { Upload, File, CheckCircle, ArrowRight, ArrowLeft, Plus, Settings } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import ColumnIdentificationStep, { ColumnMapping } from '../data/ColumnIdentificationStep';
 
 interface DataSourceStepProps {
   files: File[];
   uploading: boolean;
   parsing: boolean;
   parsedData: any[];
+  columnMapping: ColumnMapping;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onFileUpload: () => void;
   onRemoveFile: (index: number) => void;
+  onColumnMapping: (mapping: ColumnMapping) => void;
   onNext: () => void;
   onPrevious: () => void;
 }
@@ -23,12 +26,15 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
   uploading,
   parsing,
   parsedData,
+  columnMapping,
   onFileChange,
   onFileUpload,
   onRemoveFile,
+  onColumnMapping,
   onNext,
   onPrevious
 }) => {
+  const [showColumnIdentification, setShowColumnIdentification] = useState(false);
   const hasValidData = parsedData && parsedData.length > 0;
 
   const handleAddAdditionalSource = () => {
@@ -68,6 +74,35 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
     }
     return files.length === 1 ? 'Upload File' : 'Upload Files';
   };
+
+  const handleContinueToColumnId = () => {
+    setShowColumnIdentification(true);
+  };
+
+  const handleColumnMappingComplete = (mapping: ColumnMapping) => {
+    onColumnMapping(mapping);
+  };
+
+  const handleColumnIdNext = () => {
+    setShowColumnIdentification(false);
+    onNext();
+  };
+
+  const handleColumnIdPrevious = () => {
+    setShowColumnIdentification(false);
+  };
+
+  // Show column identification step if data is uploaded and user clicked to identify columns
+  if (showColumnIdentification && hasValidData) {
+    return (
+      <ColumnIdentificationStep
+        parsedData={parsedData}
+        onColumnMappingComplete={handleColumnMappingComplete}
+        onNext={handleColumnIdNext}
+        onPrevious={handleColumnIdPrevious}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -190,6 +225,20 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
                     Successfully processed and ready for analysis
                   </p>
                   
+                  {/* Column Identification Button */}
+                  <div className="pt-2 space-y-2">
+                    <Button
+                      onClick={handleContinueToColumnId}
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Settings className="w-4 h-4" />
+                      Identify Column Types
+                    </Button>
+                    <p className="text-xs text-blue-600">
+                      Help us understand your data structure for better analysis recommendations
+                    </p>
+                  </div>
+                  
                   {/* Add Additional Source Button */}
                   <div className="pt-2">
                     <Button
@@ -212,7 +261,7 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
       {hasValidData && (
         <div className="text-center p-4 bg-blue-50 rounded-lg">
           <p className="text-blue-800 font-medium">
-            ✅ Your data is ready! Continue to the next step to add context.
+            ✅ Your data is ready! Continue to add context or identify column types for better analysis.
           </p>
         </div>
       )}
