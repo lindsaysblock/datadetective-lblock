@@ -99,6 +99,7 @@ const NewProject = () => {
             files={files}
             uploading={uploading}
             parsing={parsing}
+            parsedData={parsedData}
             onFileChange={handleFileChange}
             onFileUpload={handleFileUpload}
             onRemoveFile={removeFile}
