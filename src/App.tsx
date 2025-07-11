@@ -8,6 +8,9 @@ import DashboardContainer from './components/dashboard/DashboardContainer';
 import VisualizationReporting from './components/VisualizationReporting';
 import ProjectAnalysisView from './components/ProjectAnalysisView';
 import NewProject from './pages/NewProject';
+import Index from './pages/Index';
+import Home from './pages/Home';
+import QueryHistory from './pages/QueryHistory';
 import { generateMockAnalysisResults } from './utils/mockDataGenerator';
 import { EnhancedAnalyticsProvider } from '@/contexts/EnhancedAnalyticsContext';
 
@@ -70,8 +73,10 @@ function App() {
       <Router>
         <div className="min-h-screen bg-background text-foreground">
           <Routes>
-            <Route path="/" element={<NewProject />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/new-project" element={<NewProject />} />
+            <Route path="/query-history" element={<QueryHistory />} />
             <Route path="/reporting" element={<VisualizationReporting />} />
             <Route
               path="/project-analysis"
@@ -86,7 +91,7 @@ function App() {
                     dataSource={dataSource}
                   />
                 ) : (
-                  <NewProject />
+                  <Index />
                 )
               }
             />
