@@ -1,259 +1,315 @@
 
-import { DataAnalysisContext, ParsedDataFile } from '@/types/data';
-import { AnalysisReport, AnalysisResult, AnalysisContext } from '@/types/analysis';
-import { DataValidator, ValidationResult } from '@/utils/analysis/dataValidator';
-import { DataProcessor } from '@/utils/dataProcessor';
+import { DataAnalysisContext } from '@/types/data';
+import { AnalysisReport, AnalysisResult, DataInsight } from '@/types/analysis';
+import { DataValidator } from '@/utils/analysis/dataValidator';
+import { parseFile, ParsedData } from '@/utils/dataParser';
 
 export class AnalysisCoordinator {
-  private static generateAnalysisId(): string {
-    return `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
-
   static async executeAnalysis(context: DataAnalysisContext): Promise<AnalysisReport> {
-    const startTime = Date.now();
-    console.log('🔍 Starting coordinated analysis');
-
+    console.log('🔍 AnalysisCoordinator starting execution');
+    
     try {
-      // Validate input data
-      const validation = DataValidator.validate(context.parsedData);
+      // Validate input context
+      if (!context.researchQuestion?.trim()) {
+        throw new Error('Research question is required for analysis');
+      }
+
+      if (!context.parsedData || !Array.isArray(context.parsedData) || context.parsedData.length === 0) {
+        throw new Error('Valid parsed data is required for analysis');
+      }
+
+      // Convert parsedData array to ParsedData format if needed
+      const parsedData: ParsedData = Array.isArray(context.parsedData) 
+        ? {
+            columns: context.parsedData.length > 0 ? Object.keys(context.parsedData[0]).map(key => ({ name: key, type: 'string' })) : [],
+            rows: context.parsedData,
+            rowCount: context.parsedData.length,
+            fileSize: JSON.stringify(context.parsedData).length
+          }
+        : context.parsedData;
+
+      // Validate data quality
+      const validator = new DataValidator(parsedData);
+      const validation = validator.validate();
       
       if (!validation.isValid) {
-        return this.createErrorReport(context, validation.errors, startTime);
+        console.warn('Data validation issues:', validation.errors);
       }
 
-      // Process data for analysis
-      const processedData = DataProcessor.extractAnalysisData(context.parsedData);
+      // Perform analysis
+      const insights = await this.generateInsights(context, parsedData);
+      const results = await this.generateResults(context, parsedData, insights);
+      const sqlQuery = this.generateSQLQuery(context, parsedData);
       
-      // Generate analysis results
-      const results = await this.generateAnalysisResults(context, processedData, validation);
-      
-      // Create comprehensive report
       const report: AnalysisReport = {
-        id: this.generateAnalysisId(),
-        context: {
-          researchQuestion: context.researchQuestion,
-          additionalContext: context.additionalContext,
-          dataSource: this.detectDataSource(context.parsedData),
-          educationalMode: context.educationalMode
-        },
+        id: `analysis_${Date.now()}`,
+        timestamp: new Date(),
+        context,
         results,
-        insights: this.generateInsights(context, results, validation),
-        recommendations: this.generateRecommendations(context, results, validation),
-        confidence: this.calculateOverallConfidence(results, validation),
-        executionTime: Date.now() - startTime,
-        sqlQuery: this.generateSQLQuery(context, processedData),
-        queryBreakdown: context.educationalMode ? this.generateQueryBreakdown(context) : undefined
+        insights,
+        confidence: validation.confidence,
+        recommendations: this.generateRecommendations(insights, validation),
+        sqlQuery,
+        queryBreakdown: this.generateQueryBreakdown(sqlQuery),
+        dataQuality: {
+          isValid: validation.isValid,
+          errors: validation.errors,
+          warnings: validation.warnings,
+          completeness: this.calculateCompleteness(parsedData)
+        }
       };
 
-      console.log('✅ Analysis completed successfully');
+      console.log('✅ Analysis completed successfully:', {
+        resultsCount: results.length,
+        insightsCount: insights.length,
+        confidence: report.confidence
+      });
+
       return report;
-
+      
     } catch (error) {
-      console.error('❌ Analysis failed:', error);
-      return this.createErrorReport(context, [error instanceof Error ? error.message : String(error)], startTime);
-    }
-  }
-
-  private static async generateAnalysisResults(
-    context: DataAnalysisContext, 
-    processedData: any, 
-    validation: ValidationResult
-  ): Promise<AnalysisResult[]> {
-    const results: AnalysisResult[] = [];
-
-    // Data overview result
-    results.push({
-      id: 'data-overview',
-      type: 'numeric',
-      title: 'Dataset Overview',
-      description: 'Summary of your connected data',
-      value: processedData.totalRows,
-      unit: 'rows',
-      confidence: validation.score > 80 ? 'high' : validation.score > 60 ? 'medium' : 'low',
-      timestamp: new Date().toISOString(),
-      metadata: {
-        files: processedData.fileCount,
-        columns: processedData.allColumns.length
-      }
-    });
-
-    // Data quality result
-    results.push({
-      id: 'data-quality',
-      type: 'categorical',
-      title: 'Data Quality Assessment',
-      description: 'Overall quality of your dataset',
-      value: validation.score > 80 ? 'Excellent' : validation.score > 60 ? 'Good' : 'Needs Improvement',
-      confidence: 'high',
-      timestamp: new Date().toISOString(),
-      metadata: validation.metadata
-    });
-
-    // Research question specific analysis
-    if (context.researchQuestion) {
-      const questionAnalysis = this.analyzeResearchQuestion(context.researchQuestion, processedData);
-      results.push(...questionAnalysis);
-    }
-
-    return results;
-  }
-
-  private static analyzeResearchQuestion(question: string, data: any): AnalysisResult[] {
-    const results: AnalysisResult[] = [];
-    const lowerQuestion = question.toLowerCase();
-
-    if (lowerQuestion.includes('count') || lowerQuestion.includes('how many')) {
-      results.push({
-        id: 'count-analysis',
-        type: 'numeric',
-        title: 'Count Analysis',
-        description: 'Counting analysis based on your question',
-        value: data.totalRows,
-        unit: 'records',
-        confidence: 'high',
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    if (lowerQuestion.includes('trend') || lowerQuestion.includes('time')) {
-      results.push({
-        id: 'trend-analysis',
-        type: 'chart',
-        title: 'Trend Analysis',
-        description: 'Time-based patterns in your data',
-        value: 'Time series analysis ready',
-        chartType: 'line',
-        chartData: [
-          { name: 'Week 1', value: 45 },
-          { name: 'Week 2', value: 52 },
-          { name: 'Week 3', value: 48 },
-          { name: 'Week 4', value: 61 }
+      console.error('❌ Analysis failed in coordinator:', error);
+      
+      // Return error report
+      return {
+        id: `error_${Date.now()}`,
+        timestamp: new Date(),
+        context,
+        results: [],
+        insights: [`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
+        confidence: 'low',
+        recommendations: [
+          'Check your data format',
+          'Ensure all required fields are present',
+          'Try with a smaller dataset first'
         ],
-        confidence: 'medium',
-        timestamp: new Date().toISOString()
-      });
+        sqlQuery: '-- Analysis failed',
+        queryBreakdown: [],
+        dataQuality: {
+          isValid: false,
+          errors: [error instanceof Error ? error.message : 'Unknown error'],
+          warnings: [],
+          completeness: 0
+        }
+      };
     }
-
-    return results;
   }
 
-  private static generateInsights(context: DataAnalysisContext, results: AnalysisResult[], validation: ValidationResult): string {
-    let insights = `## Analysis Results for: "${context.researchQuestion}"\n\n`;
+  private static async generateInsights(context: DataAnalysisContext, data: ParsedData): Promise<string[]> {
+    const insights: string[] = [];
     
-    insights += `### Data Quality: ${validation.score}/100\n`;
-    insights += `- **Completeness**: ${validation.metadata.completeness.toFixed(1)}%\n`;
-    insights += `- **Total Records**: ${validation.metadata.rowCount.toLocaleString()}\n`;
-    insights += `- **Columns**: ${validation.metadata.columnCount}\n\n`;
-
-    if (validation.warnings.length > 0) {
-      insights += `### Considerations:\n`;
-      validation.warnings.forEach(warning => {
-        insights += `- ${warning}\n`;
-      });
-      insights += '\n';
+    try {
+      // Basic data insights
+      insights.push(`Dataset contains ${data.rowCount} records with ${data.columns.length} columns`);
+      
+      // Column analysis
+      const numericalColumns = data.columns.filter(col => 
+        col.type === 'number' || this.isNumericalColumn(col.name, data.rows)
+      );
+      
+      if (numericalColumns.length > 0) {
+        insights.push(`Identified ${numericalColumns.length} numerical columns for quantitative analysis`);
+      }
+      
+      // Research question specific insights
+      const questionLower = context.researchQuestion.toLowerCase();
+      
+      if (questionLower.includes('trend') || questionLower.includes('time')) {
+        const timeColumns = data.columns.filter(col => 
+          /date|time|timestamp|created|updated/i.test(col.name)
+        );
+        
+        if (timeColumns.length > 0) {
+          insights.push(`Found ${timeColumns.length} time-based columns for trend analysis`);
+        } else {
+          insights.push('No time-based columns detected - consider adding timestamp data for trend analysis');
+        }
+      }
+      
+      if (questionLower.includes('correlation') || questionLower.includes('relationship')) {
+        if (numericalColumns.length >= 2) {
+          insights.push(`${numericalColumns.length} numerical columns available for correlation analysis`);
+        }
+      }
+      
+      // Data quality insights
+      const completeness = this.calculateCompleteness(data);
+      if (completeness < 90) {
+        insights.push(`Data completeness is ${completeness.toFixed(1)}% - some analysis may be limited`);
+      }
+      
+    } catch (error) {
+      console.warn('Error generating insights:', error);
+      insights.push('Basic data structure analysis completed');
     }
-
-    insights += `### Key Findings:\n`;
-    results.forEach(result => {
-      insights += `- **${result.title}**: ${typeof result.value === 'number' ? result.value.toLocaleString() : result.value}\n`;
-    });
-
+    
     return insights;
   }
 
-  private static generateRecommendations(context: DataAnalysisContext, results: AnalysisResult[], validation: ValidationResult): string[] {
+  private static async generateResults(context: DataAnalysisContext, data: ParsedData, insights: string[]): Promise<AnalysisResult[]> {
+    const results: AnalysisResult[] = [];
+    
+    try {
+      // Summary result
+      results.push({
+        id: 'summary',
+        title: 'Data Summary',
+        description: `Analysis of ${data.rowCount} records across ${data.columns.length} dimensions`,
+        value: `${data.rowCount} rows × ${data.columns.length} columns`,
+        confidence: 'high',
+        type: 'summary'
+      });
+      
+      // Column analysis results
+      const numericalColumns = data.columns.filter(col => 
+        this.isNumericalColumn(col.name, data.rows)
+      );
+      
+      for (const col of numericalColumns.slice(0, 3)) { // Limit to first 3 numerical columns
+        const values = data.rows
+          .map(row => parseFloat(row[col.name]))
+          .filter(val => !isNaN(val));
+          
+        if (values.length > 0) {
+          const avg = values.reduce((sum, val) => sum + val, 0) / values.length;
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          
+          results.push({
+            id: `stats_${col.name}`,
+            title: `${col.name} Statistics`,
+            description: `Statistical analysis of ${col.name} column`,
+            value: `Avg: ${avg.toFixed(2)}, Range: ${min} - ${max}`,
+            confidence: 'high',
+            type: 'statistical'
+          });
+        }
+      }
+      
+      // Research question specific results
+      if (context.researchQuestion.toLowerCase().includes('distribution')) {
+        results.push({
+          id: 'distribution',
+          title: 'Data Distribution',
+          description: 'Analysis of data distribution patterns',
+          value: `${numericalColumns.length} columns analyzed for distribution patterns`,
+          confidence: 'medium',
+          type: 'distribution'
+        });
+      }
+      
+    } catch (error) {
+      console.warn('Error generating results:', error);
+    }
+    
+    return results;
+  }
+
+  private static generateSQLQuery(context: DataAnalysisContext, data: ParsedData): string {
+    try {
+      const tableName = 'dataset';
+      const columns = data.columns.map(col => col.name).join(', ');
+      
+      let query = `-- Analysis query for: ${context.researchQuestion}\n`;
+      query += `SELECT ${columns}\n`;
+      query += `FROM ${tableName}\n`;
+      
+      // Add WHERE clause based on research question
+      if (context.researchQuestion.toLowerCase().includes('recent')) {
+        const dateColumns = data.columns.filter(col => 
+          /date|time|timestamp/i.test(col.name)
+        );
+        
+        if (dateColumns.length > 0) {
+          query += `WHERE ${dateColumns[0].name} >= DATE_SUB(NOW(), INTERVAL 30 DAY)\n`;
+        }
+      }
+      
+      query += `ORDER BY ${data.columns[0]?.name || 'id'}\n`;
+      query += `LIMIT 1000;`;
+      
+      return query;
+    } catch (error) {
+      return '-- Error generating SQL query';
+    }
+  }
+
+  private static generateQueryBreakdown(sqlQuery: string): string[] {
+    const breakdown: string[] = [];
+    
+    if (sqlQuery.includes('SELECT')) {
+      breakdown.push('SELECT: Retrieves specified columns from the dataset');
+    }
+    
+    if (sqlQuery.includes('FROM')) {
+      breakdown.push('FROM: Specifies the source table/dataset');
+    }
+    
+    if (sqlQuery.includes('WHERE')) {
+      breakdown.push('WHERE: Applies filters to narrow down the results');
+    }
+    
+    if (sqlQuery.includes('ORDER BY')) {
+      breakdown.push('ORDER BY: Sorts results for consistent output');
+    }
+    
+    if (sqlQuery.includes('LIMIT')) {
+      breakdown.push('LIMIT: Restricts the number of returned rows');
+    }
+    
+    return breakdown;
+  }
+
+  private static generateRecommendations(insights: string[], validation: any): string[] {
     const recommendations: string[] = [];
-
-    if (validation.score < 70) {
-      recommendations.push('Improve data quality by addressing missing values and inconsistencies');
+    
+    if (!validation.isValid) {
+      recommendations.push('Address data quality issues before proceeding with analysis');
     }
-
-    if (validation.metadata.rowCount < 100) {
-      recommendations.push('Consider collecting more data for statistically significant insights');
+    
+    if (validation.warnings.length > 0) {
+      recommendations.push('Review data completeness warnings for better insights');
     }
-
-    if (context.researchQuestion.toLowerCase().includes('user') && validation.metadata.columnCount < 5) {
-      recommendations.push('Add user identifier columns for more detailed user analysis');
-    }
-
-    recommendations.push('Create visualizations to better communicate these insights');
-    recommendations.push('Consider setting up automated reporting for ongoing monitoring');
-
+    
+    recommendations.push('Consider visualizing key metrics for better understanding');
+    recommendations.push('Export results for further analysis in specialized tools');
+    
     return recommendations;
   }
 
-  private static calculateOverallConfidence(results: AnalysisResult[], validation: ValidationResult): 'high' | 'medium' | 'low' {
-    const avgConfidence = results.reduce((sum, result) => {
-      const score = result.confidence === 'high' ? 3 : result.confidence === 'medium' ? 2 : 1;
-      return sum + score;
-    }, 0) / results.length;
-
-    const qualityFactor = validation.score / 100;
-    const finalScore = (avgConfidence / 3) * qualityFactor;
-
-    return finalScore > 0.7 ? 'high' : finalScore > 0.4 ? 'medium' : 'low';
+  private static isNumericalColumn(columnName: string, rows: any[]): boolean {
+    if (rows.length === 0) return false;
+    
+    // Check first few non-null values
+    const sampleValues = rows
+      .slice(0, 10)
+      .map(row => row[columnName])
+      .filter(val => val !== null && val !== undefined && val !== '');
+    
+    if (sampleValues.length === 0) return false;
+    
+    const numericalCount = sampleValues.filter(val => 
+      !isNaN(parseFloat(val)) && isFinite(val)
+    ).length;
+    
+    return numericalCount / sampleValues.length > 0.8; // 80% threshold
   }
 
-  private static generateSQLQuery(context: DataAnalysisContext, data: any): string {
-    if (data.totalRows === 0) {
-      return `-- No data available for SQL generation\n-- Research Question: ${context.researchQuestion}`;
-    }
-
-    return `-- Analysis Query for: ${context.researchQuestion}\nSELECT COUNT(*) as total_records FROM your_data;\n-- Add specific analysis based on research question`;
-  }
-
-  private static generateQueryBreakdown(context: DataAnalysisContext) {
-    return {
-      steps: [
-        {
-          step: 1,
-          title: 'Data Selection',
-          description: 'Select relevant columns for analysis',
-          code: 'SELECT column1, column2 FROM table',
-          explanation: 'Choose columns that relate to your research question'
-        },
-        {
-          step: 2,
-          title: 'Filtering',
-          description: 'Apply filters to focus on relevant data',
-          code: 'WHERE condition = value',
-          explanation: 'Filter data to match your analysis criteria'
+  private static calculateCompleteness(data: ParsedData): number {
+    if (data.rows.length === 0 || data.columns.length === 0) return 0;
+    
+    const totalCells = data.rows.length * data.columns.length;
+    let filledCells = 0;
+    
+    data.rows.forEach(row => {
+      data.columns.forEach(col => {
+        const value = row[col.name];
+        if (value !== null && value !== undefined && value !== '') {
+          filledCells++;
         }
-      ]
-    };
-  }
-
-  private static detectDataSource(data: ParsedDataFile[]): 'file' | 'database' | 'api' | 'paste' {
-    if (!data || data.length === 0) return 'file';
+      });
+    });
     
-    // Simple heuristic - could be enhanced
-    const firstFile = data[0];
-    if (firstFile.name.includes('api') || firstFile.name.includes('json')) return 'api';
-    if (firstFile.name.includes('paste')) return 'paste';
-    if (firstFile.name.includes('db') || firstFile.name.includes('sql')) return 'database';
-    
-    return 'file';
-  }
-
-  private static createErrorReport(context: DataAnalysisContext, errors: string[], startTime: number): AnalysisReport {
-    return {
-      id: this.generateAnalysisId(),
-      context: {
-        researchQuestion: context.researchQuestion,
-        additionalContext: context.additionalContext,
-        dataSource: 'file',
-        educationalMode: context.educationalMode
-      },
-      results: [],
-      insights: `Analysis failed with the following errors:\n${errors.join('\n')}`,
-      recommendations: [
-        'Check your data format and try again',
-        'Ensure you have sufficient data for analysis',
-        'Contact support if the issue persists'
-      ],
-      confidence: 'low',
-      executionTime: Date.now() - startTime,
-      sqlQuery: '-- Analysis failed, no query generated'
-    };
+    return (filledCells / totalCells) * 100;
   }
 }

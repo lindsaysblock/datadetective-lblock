@@ -8,11 +8,13 @@ import NewProjectContent from './NewProjectContent';
 import ProjectHeader from './ProjectHeader';
 import NewProjectLayout from './NewProjectLayout';
 import ProjectDialogs from './ProjectDialogs';
+import ComprehensiveE2ETest from '@/components/testing/ComprehensiveE2ETest';
 
 const NewProjectContainer = () => {
   console.log('NewProjectContainer component rendering');
   
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [showE2ETest, setShowE2ETest] = useState(false);
   const formData = useNewProjectForm();
 
   console.log('Current form state:', {
@@ -24,6 +26,14 @@ const NewProjectContainer = () => {
     hasData: !!formData.parsedData?.length,
     dataFiles: formData.parsedData?.length || 0
   });
+
+  // Auto-show E2E test in development or when URL contains test parameter
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('test') === 'true' || process.env.NODE_ENV === 'development') {
+      setShowE2ETest(true);
+    }
+  }, []);
 
   const handleAnalysisComplete = () => {
     console.log('Analysis complete handler called');
@@ -85,7 +95,7 @@ const NewProjectContainer = () => {
 
   return (
     <NewProjectLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8" data-testid="new-project-container">
         <ProjectHeader />
         
         <ProjectDialogs
@@ -101,6 +111,12 @@ const NewProjectContainer = () => {
         />
         
         <NewProjectContent {...formData} onStartAnalysis={handleStartAnalysis} />
+
+        {showE2ETest && (
+          <div className="mt-8">
+            <ComprehensiveE2ETest />
+          </div>
+        )}
       </div>
     </NewProjectLayout>
   );

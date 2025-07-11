@@ -2,94 +2,74 @@
 import { useState, useCallback } from 'react';
 import { DataAnalysisContext, AnalysisResults } from '@/types/data';
 import { AnalysisEngine } from '@/services/analysisEngine';
+import { useToast } from '@/hooks/use-toast';
 
-interface UseDataAnalysisReturn {
-  isProcessingAnalysis: boolean;
-  analysisResults: AnalysisResults | null;
-  analysisCompleted: boolean;
-  showAnalysisView: boolean;
-  educationalMode: boolean;
-  analysisError: string | null;
-  startAnalysis: (context: DataAnalysisContext) => Promise<void>;
-  showResults: () => void;
-  resetAnalysis: () => void;
-  setShowAnalysisView: (show: boolean) => void;
-}
-
-export const useDataAnalysis = (): UseDataAnalysisReturn => {
-  const [isProcessingAnalysis, setIsProcessingAnalysis] = useState(false);
+export const useDataAnalysis = () => {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null);
-  const [analysisCompleted, setAnalysisCompleted] = useState(false);
-  const [showAnalysisView, setShowAnalysisView] = useState(false);
-  const [educationalMode, setEducationalMode] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const startAnalysis = useCallback(async (context: DataAnalysisContext) => {
-    console.log('🚀 Starting analysis with context:', context);
-    
-    setIsProcessingAnalysis(true);
-    setAnalysisResults(null);
-    setAnalysisCompleted(false);
-    setShowAnalysisView(false);
-    setEducationalMode(context.educationalMode);
+  const analyzeData = useCallback(async (context: DataAnalysisContext): Promise<AnalysisResults | null> => {
+    if (isAnalyzing) {
+      console.warn('Analysis already in progress');
+      return null;
+    }
+
+    setIsAnalyzing(true);
     setAnalysisError(null);
     
     try {
-      // Add UX delay for better user experience
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      console.log('🔍 Starting data analysis with context:', {
+        hasResearchQuestion: !!context.researchQuestion,
+        hasData: !!context.parsedData?.length,
+        dataCount: context.parsedData?.length || 0
+      });
+
       const results = await AnalysisEngine.analyzeData(context);
       
+      console.log('✅ Analysis completed successfully:', {
+        confidence: results.confidence,
+        insightsLength: results.insights?.length || 0,
+        recommendationsCount: results.recommendations?.length || 0
+      });
+
       setAnalysisResults(results);
-      setAnalysisCompleted(true);
       
-      console.log('✅ Analysis completed:', results);
+      toast({
+        title: "Analysis Complete",
+        description: "Your data has been analyzed successfully.",
+      });
+
+      return results;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Analysis failed';
       console.error('❌ Analysis failed:', error);
       
       setAnalysisError(errorMessage);
-      setAnalysisResults({
-        insights: `Analysis failed: ${errorMessage}`,
-        confidence: 'low',
-        recommendations: [
-          'Check your data format and try again',
-          'Ensure your file is not corrupted',
-          'Try uploading a different file'
-        ],
-        detailedResults: [],
-        sqlQuery: '-- Analysis failed'
+      
+      toast({
+        title: "Analysis Failed",
+        description: errorMessage,
+        variant: "destructive",
       });
-      setAnalysisCompleted(true);
+
+      return null;
     } finally {
-      setIsProcessingAnalysis(false);
+      setIsAnalyzing(false);
     }
-  }, []);
+  }, [isAnalyzing, toast]);
 
-  const showResults = useCallback(() => {
-    console.log('🎯 Showing analysis results');
-    setShowAnalysisView(true);
-  }, []);
-
-  const resetAnalysis = useCallback(() => {
-    setIsProcessingAnalysis(false);
+  const clearAnalysis = useCallback(() => {
     setAnalysisResults(null);
-    setAnalysisCompleted(false);
-    setShowAnalysisView(false);
-    setEducationalMode(false);
     setAnalysisError(null);
   }, []);
 
   return {
-    isProcessingAnalysis,
+    isAnalyzing,
     analysisResults,
-    analysisCompleted,
-    showAnalysisView,
-    educationalMode,
     analysisError,
-    startAnalysis,
-    showResults,
-    resetAnalysis,
-    setShowAnalysisView
+    analyzeData,
+    clearAnalysis
   };
 };
