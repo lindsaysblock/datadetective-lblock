@@ -36,9 +36,19 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
     fileInput.onchange = (e) => {
       const selectedFile = (e.target as HTMLInputElement).files?.[0];
       if (selectedFile) {
+        // Create a proper FileList-like object
+        const fileList = {
+          0: selectedFile,
+          length: 1,
+          item: (index: number) => index === 0 ? selectedFile : null,
+          [Symbol.iterator]: function* () {
+            yield selectedFile;
+          }
+        } as FileList;
+        
         // Create a mock event to trigger the file change handler
         const mockEvent = {
-          target: { files: [selectedFile] as FileList, value: '' } as HTMLInputElement,
+          target: { files: fileList, value: '' } as HTMLInputElement,
           currentTarget: {} as HTMLInputElement,
           preventDefault: () => {},
           stopPropagation: () => {},
