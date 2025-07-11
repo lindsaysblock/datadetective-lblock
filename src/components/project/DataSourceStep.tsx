@@ -6,6 +6,7 @@ import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import DataSourceOptions from './steps/DataSourceOptions';
 import { DataConnectors } from '@/utils/dataConnectors';
 import { useToast } from '@/hooks/use-toast';
+import { parseFile } from '@/utils/dataParser';
 
 interface DataSourceStepProps {
   files: File[];
@@ -38,38 +39,86 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
   const handleFileUpload = async (uploadedFiles: File[]) => {
     console.log('handleFileUpload called with files:', uploadedFiles);
     
-    // Create a proper file input event
-    const dataTransfer = new DataTransfer();
-    uploadedFiles.forEach(file => dataTransfer.items.add(file));
-    
-    const mockEvent = {
-      target: {
-        files: dataTransfer.files,
-        value: ''
-      } as HTMLInputElement,
-      currentTarget: {} as HTMLInputElement,
-      preventDefault: () => {},
-      stopPropagation: () => {},
-      nativeEvent: new Event('change'),
-      isDefaultPrevented: () => false,
-      isPropagationStopped: () => false,
-      persist: () => {},
-      bubbles: false,
-      cancelable: false,
-      defaultPrevented: false,
-      eventPhase: 0,
-      isTrusted: false,
-      timeStamp: Date.now(),
-      type: 'change'
-    } as React.ChangeEvent<HTMLInputElement>;
+    if (uploadedFiles.length === 0) {
+      toast({
+        title: "No files selected",
+        description: "Please select at least one file to upload.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    onFileChange(mockEvent);
-    
-    // Wait a bit for the file to be processed, then trigger upload
-    setTimeout(() => {
-      console.log('Triggering file upload');
-      onFileUpload();
-    }, 100);
+    try {
+      // Process each file
+      const processedData = [];
+      
+      for (const file of uploadedFiles) {
+        console.log('Processing file:', file.name);
+        
+        // Parse the file using the dataParser utility
+        const parsed = await parseFile(file);
+        console.log('File parsed successfully:', parsed);
+        
+        // Format the data for display
+        const formattedData = {
+          id: Date.now() + Math.random(),
+          name: file.name,
+          rows: parsed.rowCount,
+          columns: parsed.columns.length,
+          data: parsed.rows,
+          preview: parsed.rows.slice(0, 5),
+          summary: parsed.summary
+        };
+        
+        processedData.push(formattedData);
+      }
+
+      // Create a mock file input event to trigger the parent's onFileChange
+      const dataTransfer = new DataTransfer();
+      uploadedFiles.forEach(file => dataTransfer.items.add(file));
+      
+      const mockEvent = {
+        target: {
+          files: dataTransfer.files,
+          value: ''
+        } as HTMLInputElement,
+        currentTarget: {} as HTMLInputElement,
+        preventDefault: () => {},
+        stopPropagation: () => {},
+        nativeEvent: new Event('change'),
+        isDefaultPrevented: () => false,
+        isPropagationStopped: () => false,
+        persist: () => {},
+        bubbles: false,
+        cancelable: false,
+        defaultPrevented: false,
+        eventPhase: 0,
+        isTrusted: false,
+        timeStamp: Date.now(),
+        type: 'change'
+      } as React.ChangeEvent<HTMLInputElement>;
+
+      onFileChange(mockEvent);
+      
+      // Trigger the upload after a brief delay
+      setTimeout(() => {
+        console.log('Triggering file upload');
+        onFileUpload();
+      }, 100);
+      
+      toast({
+        title: "Files Processed",
+        description: `Successfully processed ${processedData.length} file(s).`,
+      });
+      
+    } catch (error) {
+      console.error('Error processing files:', error);
+      toast({
+        title: "Processing Failed",
+        description: `Failed to process files: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDataPaste = async (data: string) => {
@@ -87,7 +136,7 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
         preview: parsed.rows.slice(0, 5)
       };
       
-      // Trigger the same flow as file upload
+      // Create a mock file for pasted data
       const mockFiles = [new File([data], 'pasted-data.csv', { type: 'text/csv' })];
       handleFileUpload(mockFiles);
       
@@ -243,6 +292,25 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
                 </Button>
               </div>
             ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loading State */}
+      {(uploading || parsing) && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              <div>
+                <h4 className="font-medium text-blue-900">
+                  {uploading ? 'Uploading files...' : 'Processing data...'}
+                </h4>
+                <p className="text-sm text-blue-700">
+                  Please wait while we process your data.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

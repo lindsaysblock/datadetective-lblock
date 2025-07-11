@@ -9,7 +9,7 @@ export const useNewProjectForm = () => {
   const [researchQuestion, setResearchQuestion] = useState('');
   const [additionalContext, setAdditionalContext] = useState('');
   const [files, setFiles] = useState<File[]>([]);
-  const [parsedData, setParsedData] = useState<ParsedData | null>(null);
+  const [parsedData, setParsedData] = useState<ParsedData[]>([]);
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
@@ -24,7 +24,7 @@ export const useNewProjectForm = () => {
 
   console.log('useNewProjectForm hook called');
   console.log('useNewProjectForm returning step:', step);
-  console.log('useNewProjectForm parsedData:', parsedData ? 'has data' : 'no data');
+  console.log('useNewProjectForm parsedData:', parsedData.length > 0 ? 'has data' : 'no data');
 
   const addFile = (file: File) => {
     console.log('Adding file:', file.name);
@@ -33,30 +33,43 @@ export const useNewProjectForm = () => {
 
   const removeFile = (index: number) => {
     setFiles(prev => prev.filter((_, i) => i !== index));
+    setParsedData(prev => prev.filter((_, i) => i !== index));
     if (files.length === 1) {
-      setParsedData(null);
+      setParsedData([]);
     }
   };
 
-  const handleFileUpload = async (file: File) => {
-    console.log('handleFileUpload called with:', file.name);
+  const handleFileUpload = async () => {
+    if (files.length === 0) {
+      console.log('No files to upload');
+      return;
+    }
+
+    console.log('handleFileUpload called with files:', files.map(f => f.name));
     setUploading(true);
     setParsing(true);
 
     try {
-      const parsed = await parseFile(file);
-      console.log('File parsed successfully:', parsed);
-      setParsedData(parsed);
+      const parsedResults: ParsedData[] = [];
+      
+      for (const file of files) {
+        console.log('Processing file:', file.name);
+        const parsed = await parseFile(file);
+        console.log('File parsed successfully:', parsed);
+        parsedResults.push(parsed);
+      }
+      
+      setParsedData(parsedResults);
       
       toast({
-        title: "File Uploaded Successfully!",
-        description: `Processed ${parsed.summary.totalRows} rows and ${parsed.summary.totalColumns} columns.`,
+        title: "Files Uploaded Successfully!",
+        description: `Processed ${parsedResults.length} file(s) with ${parsedResults.reduce((total, data) => total + (data.summary?.totalRows || 0), 0)} total rows.`,
       });
     } catch (error: any) {
       console.error('File upload error:', error);
       toast({
         title: "Upload Failed",
-        description: error.message || 'Failed to process the file.',
+        description: error.message || 'Failed to process the files.',
         variant: "destructive",
       });
     } finally {
