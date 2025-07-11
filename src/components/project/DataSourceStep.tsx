@@ -35,14 +35,39 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
   const { toast } = useToast();
   const hasUploadedData = parsedData && parsedData.length > 0;
 
-  const handleFileUpload = (uploadedFiles: File[]) => {
-    const event = {
+  const handleFileUpload = async (uploadedFiles: File[]) => {
+    console.log('handleFileUpload called with files:', uploadedFiles);
+    
+    // Create a proper file input event
+    const dataTransfer = new DataTransfer();
+    uploadedFiles.forEach(file => dataTransfer.items.add(file));
+    
+    const mockEvent = {
       target: {
-        files: uploadedFiles
-      }
-    } as any;
-    onFileChange(event);
+        files: dataTransfer.files,
+        value: ''
+      } as HTMLInputElement,
+      currentTarget: {} as HTMLInputElement,
+      preventDefault: () => {},
+      stopPropagation: () => {},
+      nativeEvent: new Event('change'),
+      isDefaultPrevented: () => false,
+      isPropagationStopped: () => false,
+      persist: () => {},
+      bubbles: false,
+      cancelable: false,
+      defaultPrevented: false,
+      eventPhase: 0,
+      isTrusted: false,
+      timeStamp: Date.now(),
+      type: 'change'
+    } as React.ChangeEvent<HTMLInputElement>;
+
+    onFileChange(mockEvent);
+    
+    // Wait a bit for the file to be processed, then trigger upload
     setTimeout(() => {
+      console.log('Triggering file upload');
       onFileUpload();
     }, 100);
   };
@@ -189,16 +214,23 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-green-700 mb-4">
-              {parsedData.length} data source{parsedData.length > 1 ? 's' : ''} connected and ready for analysis.
-            </p>
+            <div className="text-center mb-4">
+              <img 
+                src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400&h=300&fit=crop" 
+                alt="Success" 
+                className="w-32 h-24 object-cover rounded-lg mx-auto mb-4"
+              />
+              <p className="text-green-700 mb-4">
+                {parsedData.length} data source{parsedData.length > 1 ? 's' : ''} connected and ready for analysis.
+              </p>
+            </div>
             
             {parsedData.map((data, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-green-100 rounded-lg mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-green-900">{data.name}</span>
+                  <span className="text-sm font-medium text-green-900">{data.name || `Dataset ${index + 1}`}</span>
                   <span className="text-xs text-green-600">
-                    ({data.rows} rows × {data.columns} columns)
+                    ({data.summary?.totalRows || data.rows || 0} rows × {data.summary?.totalColumns || data.columns || 0} columns)
                   </span>
                 </div>
                 <Button
