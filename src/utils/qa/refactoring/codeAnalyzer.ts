@@ -1,4 +1,3 @@
-
 import { RefactoringSuggestion } from '../autoRefactorSystem';
 
 export class CodeAnalyzer {
@@ -38,6 +37,7 @@ export class CodeAnalyzer {
         const priority = this.calculatePriority(file.lines, threshold, file.complexity);
         const suggestedActions = this.generateRefactoringActions(file.path, file.type, file.complexity);
         const autoRefactor = this.shouldAutoRefactor(file.lines, threshold, priority, file.complexity);
+        const urgencyScore = this.calculateUrgencyScore(file.lines, threshold, file.complexity);
         
         suggestions.push({
           file: file.path,
@@ -48,7 +48,10 @@ export class CodeAnalyzer {
           suggestedActions,
           autoRefactor,
           complexity: file.complexity,
-          maintainabilityIndex
+          maintainabilityIndex,
+          issues: this.identifyIssues(file),
+          estimatedImpact: urgencyScore > 70 ? 'high' : urgencyScore > 40 ? 'medium' : 'low',
+          urgencyScore
         });
       }
     }
@@ -75,6 +78,34 @@ export class CodeAnalyzer {
     const complexityPenalty = complexity * 2;
     const maintainability = Math.max(0, 100 - volume - complexityPenalty);
     return maintainability;
+  }
+
+  private calculateUrgencyScore(lines: number, threshold: number, complexity: number): number {
+    let score = 0;
+    
+    // Size factor
+    const sizeRatio = lines / threshold;
+    score += Math.min(sizeRatio * 30, 50);
+    
+    // Complexity factor
+    const complexityRatio = complexity / this.COMPLEXITY_THRESHOLDS.high;
+    score += Math.min(complexityRatio * 40, 50);
+    
+    return Math.min(score, 100);
+  }
+
+  private identifyIssues(file: any): string[] {
+    const issues: string[] = [];
+    
+    if (file.lines > file.type === 'component' ? 200 : 250) {
+      issues.push('Large file size');
+    }
+    
+    if (file.complexity > this.COMPLEXITY_THRESHOLDS.medium) {
+      issues.push('High complexity');
+    }
+    
+    return issues;
   }
 
   private generateReason(file: any, threshold: number): string {

@@ -1,4 +1,3 @@
-
 export interface AutoFixStrategy {
   name: string;
   priority: number;
@@ -11,7 +10,7 @@ export class AutoFixSystem {
   private fixAttempts = new Map<string, number>();
   private maxRetries = 3;
   private fixTimeout = 30000; // 30 seconds
-  private activeTimers = new Set<number>();
+  private activeTimers = new Set<NodeJS.Timeout>();
 
   constructor() {
     this.initializeStrategies();
@@ -94,9 +93,36 @@ export class AutoFixSystem {
     return fixedCount > 0;
   }
 
+  async attemptIntelligentFix(testResult: any): Promise<boolean> {
+    console.log(`🔧 Attempting intelligent fix for: ${testResult.testName}`);
+    
+    // Convert test result to issue format
+    const issue = {
+      type: this.inferIssueType(testResult.testName),
+      message: testResult.message,
+      testName: testResult.testName,
+      suggestions: testResult.suggestions || []
+    };
+
+    const strategy = this.findBestStrategy(issue);
+    if (strategy) {
+      try {
+        const fixed = await this.executeFixWithTimeout(strategy, issue);
+        if (fixed) {
+          console.log(`✅ Intelligent fix successful for: ${testResult.testName}`);
+          return true;
+        }
+      } catch (error) {
+        console.error(`❌ Intelligent fix failed for ${testResult.testName}:`, error);
+      }
+    }
+    
+    return false;
+  }
+
   private async executeFixWithTimeout(strategy: AutoFixStrategy, issue: any): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      const timerId = window.setTimeout(() => {
+      const timerId = setTimeout(() => {
         this.activeTimers.delete(timerId);
         reject(new Error(`Fix timeout after ${this.fixTimeout}ms`));
       }, this.fixTimeout);

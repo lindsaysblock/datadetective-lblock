@@ -3,11 +3,13 @@ import { QAReport } from '../types';
 import { QATestSuites } from '../qaTestSuites';
 import { TestOrchestrator } from '../testOrchestrator';
 import { EnhancedQASystem } from '../enhancedQASystem';
+import { PerformanceMonitor } from '../performanceMonitor';
 
 export class QAOrchestrator {
   private qaTestSuites = new QATestSuites();
   private testOrchestrator = new TestOrchestrator(this.qaTestSuites);
   private enhancedQASystem = new EnhancedQASystem();
+  private performanceMonitor = new PerformanceMonitor(this.qaTestSuites);
   private useEnhancedMode: boolean = true;
 
   async runFullQA(): Promise<QAReport> {
@@ -54,13 +56,12 @@ export class QAOrchestrator {
     const warnings = results.filter(r => r.status === 'warning').length;
 
     const overall = failed > 0 ? 'fail' : warnings > 0 ? 'warning' : 'pass';
-    const performanceMonitor = this.testOrchestrator.getPerformanceMonitor();
 
     const enhancedMetrics = {
       ...performanceMetrics,
-      testExecutionMetrics: Object.fromEntries(performanceMonitor.getMetrics()),
-      systemEfficiency: performanceMonitor.calculateSystemEfficiency(),
-      memoryEfficiency: performanceMonitor.calculateMemoryEfficiency(),
+      testExecutionMetrics: Object.fromEntries(this.performanceMonitor.getMetrics()),
+      systemEfficiency: this.performanceMonitor.calculateSystemEfficiency(),
+      memoryEfficiency: this.performanceMonitor.calculateMemoryEfficiency(),
       enhancedMode: this.useEnhancedMode
     };
 
