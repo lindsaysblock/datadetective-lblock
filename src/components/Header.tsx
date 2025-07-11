@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { User, Settings } from 'lucide-react';
 import { useAuthState } from '@/hooks/useAuthState';
+import DataDetectiveLogo from './DataDetectiveLogo';
 
 interface HeaderProps {
   user?: any;
@@ -21,11 +22,8 @@ const Header: React.FC<HeaderProps> = ({ user: propUser, onUserChange }) => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">DD</span>
-              </div>
-              <span className="font-semibold text-gray-900">Data Detective</span>
+            <Link to="/" className="flex items-center">
+              <DataDetectiveLogo size="sm" showText={true} />
             </Link>
             
             <nav className="flex space-x-6">

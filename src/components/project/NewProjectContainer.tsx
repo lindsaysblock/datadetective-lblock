@@ -9,6 +9,7 @@ import { SignInModal } from '@/components/auth/SignInModal';
 import Header from '@/components/Header';
 import NewProjectContent from './NewProjectContent';
 import ProjectHeader from './ProjectHeader';
+import LegalFooter from '@/components/LegalFooter';
 
 const NewProjectContainer = () => {
   console.log('NewProjectContainer component rendering');
@@ -129,6 +130,8 @@ const NewProjectContainer = () => {
           analysisCompleted={formData.analysisCompleted}
         />
       </div>
+
+      <LegalFooter />
     </div>
   );
 };
