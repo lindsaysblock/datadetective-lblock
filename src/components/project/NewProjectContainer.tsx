@@ -14,14 +14,22 @@ const NewProjectContainer = () => {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const formData = useNewProjectForm();
 
-  console.log('Current step:', formData.step);
-  console.log('Show analysis view:', formData.showAnalysisView);
-  console.log('Is processing analysis:', formData.isProcessingAnalysis);
-  console.log('Analysis completed:', formData.analysisCompleted);
-  console.log('Analysis results:', formData.analysisResults ? 'Available' : 'None');
+  console.log('Current form state:', {
+    step: formData.step,
+    showAnalysisView: formData.showAnalysisView,
+    isProcessingAnalysis: formData.isProcessingAnalysis,
+    analysisCompleted: formData.analysisCompleted,
+    hasAnalysisResults: !!formData.analysisResults,
+    hasData: !!formData.parsedData,
+    dataStructure: formData.parsedData ? {
+      type: typeof formData.parsedData,
+      hasRows: !!formData.parsedData.rows,
+      rowCount: formData.parsedData.rows?.length || 0
+    } : null
+  });
 
   const handleAnalysisComplete = () => {
-    console.log('Analysis complete handler called, analysisCompleted:', formData.analysisCompleted);
+    console.log('Analysis complete handler called');
     if (formData.analysisCompleted && formData.analysisResults) {
       console.log('Showing results now');
       formData.showResults();
@@ -34,31 +42,40 @@ const NewProjectContainer = () => {
   };
 
   const handleViewResults = () => {
-    console.log('View Results clicked - before showResults call');
-    console.log('Analysis completed:', formData.analysisCompleted);
-    console.log('Analysis results available:', !!formData.analysisResults);
-    
+    console.log('View Results clicked');
     if (formData.analysisCompleted && formData.analysisResults) {
       formData.showResults();
-      console.log('showResults called - showAnalysisView should now be:', formData.showAnalysisView);
     } else {
-      console.log('Cannot show results - analysis not completed or no results available');
+      console.log('Cannot show results - analysis not ready');
     }
   };
 
   const handleStartAnalysis = (researchQuestion: string, additionalContext: string, educational: boolean = false, parsedData?: any, columnMapping?: any) => {
-    console.log('Starting analysis with:', {
+    console.log('🚀 Starting analysis in container with:', {
       researchQuestion,
       additionalContext,
       educational,
+      hasParsedData: !!parsedData,
+      dataStructure: parsedData ? {
+        hasRows: !!parsedData.rows,
+        rowCount: parsedData.rows?.length || 0,
+        hasColumns: !!parsedData.columns,
+        columnCount: parsedData.columns?.length || 0
+      } : null,
+      hasColumnMapping: !!columnMapping
+    });
+    
+    // Pass all the context to the analysis
+    formData.handleStartAnalysisClick(educational, {
+      researchQuestion,
+      additionalContext,
       parsedData,
       columnMapping
     });
-    formData.handleStartAnalysisClick(educational);
   };
 
   if (formData.showAnalysisView) {
-    console.log('Showing analysis view');
+    console.log('Rendering analysis view');
     return (
       <ProjectAnalysisView
         projectName={formData.currentProjectName}
@@ -71,8 +88,6 @@ const NewProjectContainer = () => {
       />
     );
   }
-
-  console.log('Rendering main NewProjectContainer component');
 
   return (
     <NewProjectLayout>
