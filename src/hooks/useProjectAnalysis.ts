@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useMemo } from 'react';
 import { DataAnalysisEngine, AnalysisResult } from '../utils/analysis/dataAnalysisEngine';
 import { ParsedData } from '../utils/dataParser';
@@ -104,7 +103,6 @@ export const useProjectAnalysis = () => {
     setState(prev => ({ ...prev, showAnalysisView: show }));
   }, []);
 
-  // Memoized derived values
   const memoizedValues = useMemo(() => ({
     hasValidData: state.analysisResults !== null,
     highConfidenceResults: state.detailedResults.filter(r => r.confidence === 'high').length,
@@ -128,6 +126,54 @@ function executeAnalysis(
   additionalContext: string,
   educational: boolean
 ): AnalysisResults {
+  console.log('📊 Executing analysis with data:', {
+    hasData: !!parsedData,
+    rowCount: parsedData?.rows?.length,
+    columnCount: parsedData?.columns?.length,
+    question: researchQuestion
+  });
+
+  // Check for simple row count questions first
+  const lowerQuestion = researchQuestion.toLowerCase();
+  const isRowCountQuestion = lowerQuestion.includes('how many rows') || 
+                            lowerQuestion.includes('number of rows') ||
+                            lowerQuestion.includes('row count') ||
+                            lowerQuestion.includes('rows in');
+
+  if (parsedData && parsedData.rows && isRowCountQuestion) {
+    const rowCount = parsedData.rows.length;
+    const columnCount = parsedData.columns?.length || 0;
+    
+    return {
+      insights: `Your dataset contains **${rowCount.toLocaleString()} rows** and ${columnCount} columns. ${rowCount > 10000 ? 'This is a substantial dataset that provides excellent statistical power for analysis.' : rowCount > 1000 ? 'This is a good-sized dataset for meaningful analysis.' : 'This is a smaller dataset - results may have limited statistical significance.'}`,
+      confidence: 'high',
+      recommendations: [
+        `With ${rowCount.toLocaleString()} rows of data, you can explore trends and patterns`,
+        'Consider analyzing specific columns or segments of your data',
+        'Look for relationships between different variables in your dataset'
+      ],
+      detailedResults: [
+        {
+          id: 'row-count',
+          title: 'Dataset Size',
+          description: 'Total number of data records',
+          value: rowCount,
+          insight: `Your dataset contains ${rowCount.toLocaleString()} rows of data`,
+          confidence: 'high'
+        },
+        {
+          id: 'column-count',
+          title: 'Data Dimensions', 
+          description: 'Number of data attributes/columns',
+          value: columnCount,
+          insight: `Each row has ${columnCount} data points/attributes`,
+          confidence: 'high'
+        }
+      ],
+      sqlQuery: `-- Count total rows in your dataset\nSELECT COUNT(*) as total_rows FROM your_data;\n-- Result: ${rowCount} rows`
+    };
+  }
+
   let realResults: AnalysisResult[] = [];
   let analysisInsights = "No data available for analysis";
   let confidence: 'high' | 'medium' | 'low' = 'low';
