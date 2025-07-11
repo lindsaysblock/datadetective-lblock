@@ -7,6 +7,7 @@ import DataUploadContainer from './components/upload/DataUploadContainer';
 import DashboardContainer from './components/dashboard/DashboardContainer';
 import VisualizationReporting from './components/VisualizationReporting';
 import ProjectAnalysisView from './components/ProjectAnalysisView';
+import NewProject from './pages/NewProject';
 import { Button } from "@/components/ui/button"
 import { Rocket } from "lucide-react"
 import { generateMockAnalysisResults } from './utils/mockDataGenerator';
@@ -90,6 +91,7 @@ function App() {
               )}
             </div>
           } />
+          <Route path="/new-project" element={<NewProject />} />
           <Route path="/reporting" element={<VisualizationReporting />} />
           <Route
             path="/project-analysis"
