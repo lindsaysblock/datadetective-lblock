@@ -1,9 +1,11 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, ArrowLeft, Upload } from 'lucide-react';
-import FileUploadSection from './steps/FileUploadSection';
+import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import DataSourceOptions from './steps/DataSourceOptions';
+import { DataConnectors } from '@/utils/dataConnectors';
+import { useToast } from '@/hooks/use-toast';
 
 interface DataSourceStepProps {
   files: File[];
@@ -30,40 +32,188 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
   onNext,
   onPrevious
 }) => {
+  const { toast } = useToast();
   const hasUploadedData = parsedData && parsedData.length > 0;
 
-  const canProceed = () => {
-    // Can proceed with or without data
-    return true;
+  const handleFileUpload = (uploadedFiles: File[]) => {
+    const event = {
+      target: {
+        files: uploadedFiles
+      }
+    } as any;
+    onFileChange(event);
+    setTimeout(() => {
+      onFileUpload();
+    }, 100);
+  };
+
+  const handleDataPaste = async (data: string) => {
+    try {
+      const parsed = await DataConnectors.processPastedData(data);
+      console.log('Pasted data processed:', parsed);
+      
+      // Convert to the expected format
+      const formattedData = {
+        id: Date.now(),
+        name: 'Pasted Data',
+        rows: parsed.rowCount,
+        columns: parsed.columns.length,
+        data: parsed.rows,
+        preview: parsed.rows.slice(0, 5)
+      };
+      
+      // Trigger the same flow as file upload
+      const mockFiles = [new File([data], 'pasted-data.csv', { type: 'text/csv' })];
+      handleFileUpload(mockFiles);
+      
+      toast({
+        title: "Data Processed",
+        description: "Your pasted data has been successfully processed.",
+      });
+    } catch (error) {
+      console.error('Error processing pasted data:', error);
+      toast({
+        title: "Processing Failed",
+        description: "Failed to process the pasted data. Please check the format.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDatabaseConnect = async (config: any) => {
+    try {
+      const parsed = await DataConnectors.connectDatabase(config);
+      console.log('Database connected:', parsed);
+      
+      const formattedData = {
+        id: Date.now(),
+        name: `${config.type} Database`,
+        rows: parsed.rowCount,
+        columns: parsed.columns.length,
+        data: parsed.rows,
+        preview: parsed.rows.slice(0, 5)
+      };
+      
+      // Mock the file upload process for database connections
+      const mockFile = new File(['database'], 'database-connection', { type: 'application/json' });
+      handleFileUpload([mockFile]);
+      
+      toast({
+        title: "Database Connected",
+        description: `Successfully connected to ${config.type} database.`,
+      });
+    } catch (error) {
+      console.error('Database connection error:', error);
+      toast({
+        title: "Connection Failed",
+        description: "Failed to connect to the database. Please check your credentials.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePlatformConnect = async (platform: string, config: any) => {
+    try {
+      let parsed;
+      
+      switch (platform) {
+        case 'amplitude':
+          parsed = await DataConnectors.connectAmplitude(config);
+          break;
+        case 'looker':
+          parsed = await DataConnectors.connectLooker(config);
+          break;
+        case 'powerbi':
+          parsed = await DataConnectors.connectPowerBI(config);
+          break;
+        case 'tableau':
+          parsed = await DataConnectors.connectTableau(config);
+          break;
+        case 'snowflake':
+          parsed = await DataConnectors.connectSnowflake(config);
+          break;
+        case 'bigquery':
+          parsed = await DataConnectors.connectBigQuery(config);
+          break;
+        default:
+          throw new Error(`Platform ${platform} not supported`);
+      }
+      
+      const formattedData = {
+        id: Date.now(),
+        name: platform.charAt(0).toUpperCase() + platform.slice(1),
+        rows: parsed.rowCount,
+        columns: parsed.columns.length,
+        data: parsed.rows,
+        preview: parsed.rows.slice(0, 5)
+      };
+      
+      // Mock the file upload process for platform connections
+      const mockFile = new File(['platform'], `${platform}-connection`, { type: 'application/json' });
+      handleFileUpload([mockFile]);
+      
+      toast({
+        title: "Platform Connected",
+        description: `Successfully connected to ${platform}.`,
+      });
+    } catch (error) {
+      console.error('Platform connection error:', error);
+      toast({
+        title: "Connection Failed",
+        description: `Failed to connect to ${platform}. Please check your credentials.`,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Step 2: Upload Your Data</h2>
-        <p className="text-gray-600">Upload your data files or skip to continue without data</p>
+        <p className="text-gray-600">Upload your data files or connect to external sources</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="w-5 h-5" />
-            Upload Your Data
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FileUploadSection
-            files={files}
-            uploading={uploading}
-            parsing={parsing}
-            parsedData={parsedData}
-            onFileChange={onFileChange}
-            onFileUpload={onFileUpload}
-            onRemoveFile={onRemoveFile}
-            onUploadComplete={() => {}}
-          />
-        </CardContent>
-      </Card>
+      {!hasUploadedData ? (
+        <DataSourceOptions
+          onFileUpload={handleFileUpload}
+          onDataPaste={handleDataPaste}
+          onDatabaseConnect={handleDatabaseConnect}
+          onPlatformConnect={handlePlatformConnect}
+        />
+      ) : (
+        <Card className="bg-green-50 border-green-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-700">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              Data Connected Successfully!
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-green-700 mb-4">
+              {parsedData.length} data source{parsedData.length > 1 ? 's' : ''} connected and ready for analysis.
+            </p>
+            
+            {parsedData.map((data, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-green-100 rounded-lg mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-green-900">{data.name}</span>
+                  <span className="text-xs text-green-600">
+                    ({data.rows} rows × {data.columns} columns)
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onRemoveFile(index)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  Remove
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Navigation */}
       <div className="flex justify-between pt-6">
@@ -77,28 +227,12 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
         
         <Button 
           onClick={onNext}
-          disabled={!canProceed()}
           className="bg-blue-600 hover:bg-blue-700"
         >
           {hasUploadedData ? 'Next: Business Context' : 'Skip to Business Context'}
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </div>
-
-      {/* Summary */}
-      {hasUploadedData && (
-        <Card className="bg-gray-50 border-gray-200 mt-6">
-          <CardContent className="pt-6">
-            <h4 className="font-medium text-gray-900 mb-3">Data Summary:</h4>
-            <div className="space-y-1 text-sm">
-              <div className="flex items-center gap-2">
-                <Upload className="w-4 h-4 text-blue-600" />
-                <span><strong>Files:</strong> {parsedData.length} uploaded</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
