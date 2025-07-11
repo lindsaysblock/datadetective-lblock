@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast"
-import { Toast } from "@/components/ui/toast"
+import { Toaster } from "@/components/ui/toaster"
 import DataUploadContainer from './components/upload/DataUploadContainer';
 import DashboardContainer from './components/dashboard/DashboardContainer';
 import VisualizationReporting from './components/VisualizationReporting';
@@ -88,7 +88,6 @@ function App() {
                   )}
                 </div>
               )}
-							<Toast />
             </div>
           } />
           <Route path="/reporting" element={<VisualizationReporting />} />
@@ -119,6 +118,7 @@ function App() {
             }
           />
         </Routes>
+        <Toaster />
       </Router>
     </EnhancedAnalyticsProvider>
   );
