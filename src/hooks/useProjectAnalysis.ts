@@ -42,14 +42,15 @@ export const useProjectAnalysis = () => {
     researchQuestion: string, 
     additionalContext: string, 
     educational: boolean = false,
-    parsedData?: ParsedData
+    parsedData?: any // This could be the array of parsed files
   ) => {
     console.log('🚀 Starting analysis with:', { 
       researchQuestion, 
       additionalContext, 
       educational,
       dataAvailable: !!parsedData,
-      dataRows: parsedData?.rows?.length || 0
+      dataType: Array.isArray(parsedData) ? 'array' : typeof parsedData,
+      dataLength: Array.isArray(parsedData) ? parsedData.length : 'N/A'
     });
     
     setState(prev => ({
@@ -58,7 +59,7 @@ export const useProjectAnalysis = () => {
       educationalMode: educational,
       analysisResults: null,
       analysisCompleted: false,
-      showAnalysisView: false // Reset this when starting new analysis
+      showAnalysisView: false
     }));
     
     // Simulate analysis processing with more realistic timing
@@ -71,7 +72,7 @@ export const useProjectAnalysis = () => {
         analysisResults,
         detailedResults: analysisResults.detailedResults,
         analysisCompleted: true,
-        isProcessingAnalysis: false // Set to false when analysis is complete
+        isProcessingAnalysis: false
       }));
 
       console.log('✅ Analysis results generated and state updated:', {
@@ -125,17 +126,60 @@ export const useProjectAnalysis = () => {
 
 // Helper function to execute analysis
 function executeAnalysis(
-  parsedData: ParsedData | undefined,
+  parsedData: any,
   researchQuestion: string,
   additionalContext: string,
   educational: boolean
 ): AnalysisResults {
   console.log('📊 Executing analysis with data:', {
     hasData: !!parsedData,
-    rowCount: parsedData?.rows?.length,
-    columnCount: parsedData?.columns?.length,
+    dataType: Array.isArray(parsedData) ? 'array' : typeof parsedData,
+    dataLength: Array.isArray(parsedData) ? parsedData.length : 'N/A',
     question: researchQuestion
   });
+
+  // Handle different data formats - could be array of parsed files or single ParsedData
+  let processedData: ParsedData | undefined;
+  
+  if (Array.isArray(parsedData) && parsedData.length > 0) {
+    // If it's an array of parsed files, use the first one or combine them
+    const firstFile = parsedData[0];
+    console.log('📋 Processing first file from array:', {
+      name: firstFile.name,
+      rows: firstFile.rows,
+      columns: firstFile.columns,
+      hasData: firstFile.data && firstFile.data.length > 0
+    });
+    
+    if (firstFile.data && firstFile.data.length > 0) {
+      // Convert the parsed file data to ParsedData format
+      const headers = Object.keys(firstFile.data[0] || {});
+      processedData = {
+        columns: headers.map(header => ({ name: header, type: 'string' as const })),
+        rows: firstFile.data,
+        rowCount: firstFile.data.length,
+        fileSize: 0,
+        summary: {
+          totalRows: firstFile.data.length,
+          totalColumns: headers.length,
+          possibleUserIdColumns: headers.filter(h => /user|customer|id/i.test(h)),
+          possibleEventColumns: headers.filter(h => /event|action|activity/i.test(h)),
+          possibleTimestampColumns: headers.filter(h => /time|date|timestamp/i.test(h))
+        }
+      };
+      console.log('✅ Converted parsed file to ProcessedData:', {
+        rows: processedData.rowCount,
+        columns: processedData.columns.length
+      });
+    }
+  } else if (parsedData && typeof parsedData === 'object' && parsedData.rows) {
+    // It's already in ParsedData format
+    processedData = parsedData;
+    console.log('✅ Using data in ParsedData format:', {
+      rows: processedData.rowCount,
+      columns: processedData.columns?.length
+    });
+  }
 
   // Check for simple row count questions first
   const lowerQuestion = researchQuestion.toLowerCase();
@@ -144,9 +188,9 @@ function executeAnalysis(
                             lowerQuestion.includes('row count') ||
                             lowerQuestion.includes('rows in');
 
-  if (parsedData && parsedData.rows && isRowCountQuestion) {
-    const rowCount = parsedData.rows.length;
-    const columnCount = parsedData.columns?.length || 0;
+  if (processedData && processedData.rows && isRowCountQuestion) {
+    const rowCount = processedData.rows.length;
+    const columnCount = processedData.columns?.length || 0;
     
     console.log('✅ Row count question detected, returning direct answer:', { rowCount, columnCount });
     
@@ -185,11 +229,11 @@ function executeAnalysis(
   let confidence: 'high' | 'medium' | 'low' = 'low';
   let recommendations: string[] = [];
 
-  if (parsedData && parsedData.rows && parsedData.rows.length > 0) {
-    console.log('📊 Running real data analysis on', parsedData.rows.length, 'rows...');
+  if (processedData && processedData.rows && processedData.rows.length > 0) {
+    console.log('📊 Running real data analysis on', processedData.rows.length, 'rows...');
     
     try {
-      const engine = new DataAnalysisEngine(parsedData, { enableLogging: true });
+      const engine = new DataAnalysisEngine(processedData, { enableLogging: true });
       realResults = engine.runCompleteAnalysis();
       
       console.log('✅ Analysis completed with', realResults.length, 'results');
@@ -211,6 +255,11 @@ function executeAnalysis(
     }
   } else {
     console.warn('⚠️ No valid data provided for analysis');
+    console.log('Debug - parsedData details:', {
+      parsedData,
+      isArray: Array.isArray(parsedData),
+      hasRows: processedData?.rows?.length
+    });
     analysisInsights = "No valid data was provided for analysis. Please upload a dataset with rows and columns.";
     recommendations = ["Upload a CSV or JSON file with data", "Ensure the file contains both headers and data rows"];
   }
@@ -220,7 +269,7 @@ function executeAnalysis(
     confidence,
     recommendations,
     detailedResults: realResults,
-    sqlQuery: generateSQLFromQuestion(researchQuestion, parsedData),
+    sqlQuery: generateSQLFromQuestion(researchQuestion, processedData),
     queryBreakdown: educational ? generateQueryBreakdown(researchQuestion) : undefined
   };
 
