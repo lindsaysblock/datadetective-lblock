@@ -1,6 +1,6 @@
 
 import { DataAnalysisContext } from '@/types/data';
-import { AnalysisResult } from '@/utils/analysis/types';
+import { AnalysisResult } from '@/types/analysis';
 import { ParsedData } from '@/utils/dataParser';
 import { DataTypeAnalyzer } from './dataTypeAnalyzer';
 import { StatisticalAnalyzer } from './statisticalAnalyzer';
@@ -47,11 +47,10 @@ export class AnalysisResultsGenerator {
       id: 'dataset-overview',
       title: 'Dataset Overview',
       description: 'Comprehensive analysis of your uploaded dataset',
-      value: `${data.rowCount.toLocaleString()} rows × ${data.columns.length} columns`,
-      insight: `Dataset contains ${data.rowCount.toLocaleString()} records across ${data.columns.length} fields`,
       confidence: 'high',
+      timestamp: new Date().toISOString(),
       type: 'summary',
-      timestamp: new Date().toISOString()
+      value: `Dataset contains ${data.rowCount.toLocaleString()} records across ${data.columns.length} fields`
     };
   }
 
@@ -66,11 +65,12 @@ export class AnalysisResultsGenerator {
           id: `numerical_analysis_${col.name}`,
           title: `${col.name} Statistical Analysis`,
           description: `Statistical analysis of the ${col.name} column`,
-          value: `Average: ${stats.average.toFixed(2)}, Range: ${stats.minimum} to ${stats.maximum}`,
-          insight: `${col.name} has an average of ${stats.average.toFixed(2)} with standard deviation of ${stats.standardDeviation.toFixed(2)}`,
           confidence: stats.count > 10 ? 'high' : 'medium',
-          type: 'statistical',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          type: 'numeric',
+          value: stats.average,
+          unit: 'units',
+          trend: this.determineTrend(stats)
         });
       }
     }
@@ -89,11 +89,11 @@ export class AnalysisResultsGenerator {
           id: `categorical_analysis_${col.name}`,
           title: `${col.name} Category Distribution`,
           description: `Categorical breakdown of ${col.name}`,
-          value: `${distribution.uniqueCategories} unique categories, top: ${distribution.topCategory}`,
-          insight: `${col.name} has ${distribution.uniqueCategories} unique categories with ${distribution.topCategory} being most common`,
           confidence: distribution.totalRecords > 5 ? 'high' : 'medium',
+          timestamp: new Date().toISOString(),
           type: 'categorical',
-          timestamp: new Date().toISOString()
+          value: distribution.topCategory,
+          categories: this.buildCategoryDistribution(data.rows, col.name, distribution)
         });
       }
     }
@@ -112,11 +112,10 @@ export class AnalysisResultsGenerator {
           id: `temporal_analysis_${col.name}`,
           title: `${col.name} Time Distribution`,
           description: `Temporal distribution analysis of ${col.name} column`,
-          value: `Time span: ${timeAnalysis.earliestDate} to ${timeAnalysis.latestDate}`,
-          insight: `${col.name} spans ${timeAnalysis.timeSpan} with ${timeAnalysis.validDateCount} valid dates`,
           confidence: timeAnalysis.validDateCount > 5 ? 'high' : 'medium',
+          timestamp: new Date().toISOString(),
           type: 'distribution',
-          timestamp: new Date().toISOString()
+          value: `Time span: ${timeAnalysis.earliestDate} to ${timeAnalysis.latestDate}`
         });
       }
     }
@@ -131,11 +130,10 @@ export class AnalysisResultsGenerator {
       id: 'data_quality_assessment',
       title: 'Data Quality Assessment',
       description: 'Data quality metrics for your dataset',
-      value: `Completeness: ${qualityMetrics.completeness.toFixed(1)}%`,
-      insight: `Data is ${qualityMetrics.completeness.toFixed(1)}% complete with ${qualityMetrics.duplicates} potential duplicates`,
       confidence: 'high',
+      timestamp: new Date().toISOString(),
       type: 'summary',
-      timestamp: new Date().toISOString()
+      value: `Data is ${qualityMetrics.completeness.toFixed(1)}% complete with ${qualityMetrics.duplicates} potential duplicates`
     };
   }
 
@@ -160,17 +158,45 @@ export class AnalysisResultsGenerator {
             id: 'correlation_analysis',
             title: `Statistical Relationship: ${numericalColumns[0].name} vs ${numericalColumns[1].name}`,
             description: 'Statistical correlation analysis between key variables',
-            value: `Correlation: ${correlation.toFixed(3)} (${strength} ${direction})`,
-            insight: `${strength} ${direction} relationship detected between ${numericalColumns[0].name} and ${numericalColumns[1].name}`,
             confidence: 'high',
+            timestamp: new Date().toISOString(),
             type: 'statistical',
-            timestamp: new Date().toISOString()
+            value: `${strength} ${direction} relationship detected (correlation: ${correlation.toFixed(3)})`
           });
         }
       }
     }
     
     return results;
+  }
+
+  private determineTrend(stats: any): 'up' | 'down' | 'stable' {
+    // Simple heuristic based on standard deviation
+    if (stats.standardDeviation / stats.average > 0.5) {
+      return stats.average > (stats.minimum + stats.maximum) / 2 ? 'up' : 'down';
+    }
+    return 'stable';
+  }
+
+  private buildCategoryDistribution(rows: any[], columnName: string, distribution: any): Array<{ name: string; count: number; percentage: number }> {
+    const values = rows
+      .map(row => row[columnName])
+      .filter(val => val !== null && val !== undefined && val !== '');
+
+    const categoryMap = new Map<string, number>();
+    values.forEach(val => {
+      const key = String(val);
+      categoryMap.set(key, (categoryMap.get(key) || 0) + 1);
+    });
+
+    return Array.from(categoryMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name, count]) => ({
+        name,
+        count,
+        percentage: Math.round((count / values.length) * 100)
+      }));
   }
 
   private calculateDataQuality(data: ParsedData): { completeness: number; duplicates: number } {
@@ -210,11 +236,10 @@ export class AnalysisResultsGenerator {
       id: 'basic-analysis',
       title: 'Basic Data Summary',
       description: 'Basic information extracted from your dataset',
-      value: `${data.rowCount} rows processed successfully`,
-      insight: 'Dataset structure has been analyzed and is ready for further exploration',
       confidence: 'medium',
+      timestamp: new Date().toISOString(),
       type: 'summary',
-      timestamp: new Date().toISOString()
+      value: `${data.rowCount} rows processed successfully`
     };
   }
 }
