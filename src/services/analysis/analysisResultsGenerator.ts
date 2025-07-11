@@ -34,13 +34,7 @@ export class AnalysisResultsGenerator {
             id: `numerical_analysis_${col.name}`,
             title: `${col.name} Statistical Analysis`,
             description: `Real statistical analysis of the ${col.name} column`,
-            value: {
-              average: parseFloat(stats.avg.toFixed(2)),
-              minimum: stats.min,
-              maximum: stats.max,
-              standardDeviation: parseFloat(stats.stdDev.toFixed(2)),
-              count: stats.count
-            },
+            value: `Average: ${stats.avg.toFixed(2)}, Range: ${stats.min} to ${stats.max}, Std Dev: ${stats.stdDev.toFixed(2)} (${stats.count} records)`,
             confidence: stats.count > 10 ? 'high' : 'medium',
             type: 'statistical',
             timestamp: new Date().toISOString()
@@ -56,19 +50,20 @@ export class AnalysisResultsGenerator {
         const distribution = this.analyzeCategoricalDistribution(data.rows, col.name);
         
         if (distribution.uniqueCount > 1) {
+          const categories = distribution.topCategories.map((cat, index) => ({
+            name: cat.name,
+            count: cat.count,
+            percentage: Math.round((cat.count / distribution.totalCount) * 100)
+          }));
+
           results.push({
             id: `categorical_analysis_${col.name}`,
             title: `${col.name} Category Distribution`,
             description: `Real categorical breakdown of ${col.name}`,
-            value: {
-              uniqueCategories: distribution.uniqueCount,
-              totalRecords: distribution.totalCount,
-              topCategory: distribution.topCategory,
-              topCategoryCount: distribution.topCount,
-              diversity: parseFloat((distribution.uniqueCount / distribution.totalCount * 100).toFixed(1))
-            },
+            value: distribution.topCategory,
             confidence: distribution.totalCount > 5 ? 'high' : 'medium',
             type: 'categorical',
+            categories,
             timestamp: new Date().toISOString()
           });
         }
@@ -83,17 +78,12 @@ export class AnalysisResultsGenerator {
         
         if (timeAnalysis) {
           results.push({
-            id: `temporal_analysis_${col.name}`,
-            title: `${col.name} Time Range Analysis`,
-            description: `Real temporal analysis of ${col.name} column`,
-            value: {
-              earliestDate: timeAnalysis.earliest,
-              latestDate: timeAnalysis.latest,
-              daySpan: timeAnalysis.daySpan,
-              validDates: timeAnalysis.validDateCount
-            },
+            id: `distribution_analysis_${col.name}`,
+            title: `${col.name} Time Distribution`,
+            description: `Real temporal distribution analysis of ${col.name} column`,
+            value: `Time span: ${timeAnalysis.earliest} to ${timeAnalysis.latest} (${timeAnalysis.daySpan} days, ${timeAnalysis.validDateCount} valid dates)`,
             confidence: timeAnalysis.validDateCount > 5 ? 'high' : 'medium',
-            type: 'temporal',
+            type: 'distribution',
             timestamp: new Date().toISOString()
           });
         }
@@ -105,13 +95,9 @@ export class AnalysisResultsGenerator {
         id: 'data_quality_assessment',
         title: 'Data Quality Assessment',
         description: 'Real data quality metrics for your dataset',
-        value: {
-          completeness: parseFloat(qualityMetrics.completeness.toFixed(1)),
-          consistency: qualityMetrics.consistency,
-          duplicateRows: qualityMetrics.duplicates
-        },
+        value: `Completeness: ${qualityMetrics.completeness.toFixed(1)}%, Consistency: ${qualityMetrics.consistency.toFixed(1)}%, Duplicates: ${qualityMetrics.duplicates}`,
         confidence: 'high',
-        type: 'quality',
+        type: 'summary',
         timestamp: new Date().toISOString()
       });
       
@@ -193,12 +179,14 @@ export class AnalysisResultsGenerator {
     });
     
     const entries = Array.from(distribution.entries()).sort((a, b) => b[1] - a[1]);
+    const topCategories = entries.slice(0, 5).map(([name, count]) => ({ name, count }));
     
     return {
       uniqueCount: distribution.size,
       topCategory: entries[0]?.[0] || '',
       topCount: entries[0]?.[1] || 0,
-      totalCount: values.length
+      totalCount: values.length,
+      topCategories
     };
   }
 
@@ -263,16 +251,12 @@ export class AnalysisResultsGenerator {
         const correlation = this.calculateSimpleCorrelation(data.rows, numericalColumns[0].name, numericalColumns[1].name);
         if (correlation !== null) {
           results.push({
-            id: 'correlation_analysis',
-            title: `Correlation: ${numericalColumns[0].name} vs ${numericalColumns[1].name}`,
+            id: 'statistical_correlation',
+            title: `Statistical Relationship: ${numericalColumns[0].name} vs ${numericalColumns[1].name}`,
             description: `Statistical correlation analysis between key variables`,
-            value: {
-              correlationCoefficient: parseFloat(correlation.toFixed(3)),
-              strength: Math.abs(correlation) > 0.7 ? 'Strong' : Math.abs(correlation) > 0.3 ? 'Moderate' : 'Weak',
-              direction: correlation > 0 ? 'Positive' : 'Negative'
-            },
+            value: `Correlation coefficient: ${correlation.toFixed(3)} (${Math.abs(correlation) > 0.7 ? 'Strong' : Math.abs(correlation) > 0.3 ? 'Moderate' : 'Weak'} ${correlation > 0 ? 'positive' : 'negative'} relationship)`,
             confidence: 'high',
-            type: 'correlation',
+            type: 'statistical',
             timestamp: new Date().toISOString()
           });
         }
