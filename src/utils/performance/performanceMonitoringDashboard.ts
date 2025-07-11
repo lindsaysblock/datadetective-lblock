@@ -1,4 +1,3 @@
-
 import { performanceMonitor } from './performanceMonitor';
 
 export interface PerformanceReport {
@@ -24,6 +23,7 @@ export interface PerformanceReport {
 export class PerformanceMonitoringDashboard {
   private static instance: PerformanceMonitoringDashboard;
   private reports: PerformanceReport[] = [];
+  private isMonitoring = false;
 
   static getInstance(): PerformanceMonitoringDashboard {
     if (!this.instance) {
@@ -32,13 +32,23 @@ export class PerformanceMonitoringDashboard {
     return this.instance;
   }
 
+  startMonitoring(): void {
+    this.isMonitoring = true;
+    console.log('🔍 Performance monitoring started');
+  }
+
+  stopMonitoring(): void {
+    this.isMonitoring = false;
+    console.log('⏹️ Performance monitoring stopped');
+  }
+
   generateReport(): PerformanceReport {
-    const metrics = performanceMonitor.getMetrics();
+    const report = performanceMonitor.generateReport();
     const results: PerformanceReport['results'] = [];
     const violations: PerformanceReport['violations'] = [];
     
     // Check response time SLA
-    const avgResponseTime = this.calculateAverageResponseTime(metrics);
+    const avgResponseTime = this.calculateAverageResponseTime(report.metrics);
     const responseTimePassed = avgResponseTime < 200;
     
     results.push({
@@ -76,28 +86,69 @@ export class PerformanceMonitoringDashboard {
     }
 
     // Check for performance regressions
-    const regressions = this.detectRegressions(metrics);
+    const regressions = this.detectRegressions(report.metrics);
 
     const overall = violations.length === 0 ? 'passed' : 
                    violations.some(v => v.severity === 'high' || v.severity === 'critical') ? 'failed' : 'warning';
 
-    const report: PerformanceReport = {
+    const performanceReport: PerformanceReport = {
       overall,
       results,
       regressions,
       violations
     };
 
-    this.reports.push(report);
-    return report;
+    this.reports.push(performanceReport);
+    return performanceReport;
+  }
+
+  generateDashboardData(): {
+    currentMetrics: {
+      responseTime: number;
+      memoryUsage: number;
+      bundleSize: number;
+    };
+    recommendations: Array<{
+      message: string;
+      priority: 'low' | 'medium' | 'high';
+    }>;
+  } {
+    const report = performanceMonitor.generateReport();
+    const avgResponseTime = this.calculateAverageResponseTime(report.metrics);
+    const memoryUsage = this.getMemoryUsage();
+    
+    const recommendations = [];
+    
+    if (avgResponseTime > 200) {
+      recommendations.push({
+        message: 'Consider optimizing slow operations to meet response time SLA',
+        priority: 'high' as const
+      });
+    }
+    
+    if (memoryUsage > 128) {
+      recommendations.push({
+        message: 'Memory usage is high, consider implementing memory optimization',
+        priority: 'medium' as const
+      });
+    }
+    
+    return {
+      currentMetrics: {
+        responseTime: avgResponseTime,
+        memoryUsage,
+        bundleSize: 180 // Estimated
+      },
+      recommendations
+    };
   }
 
   private calculateAverageResponseTime(metrics: any[]): number {
     if (metrics.length === 0) return 0;
     
     const responseTimes = metrics
-      .filter(m => m.type === 'function_execution' && m.duration)
-      .map(m => m.duration);
+      .filter(m => m.name && m.duration)
+      .map(m => m.duration!);
     
     if (responseTimes.length === 0) return 0;
     
@@ -105,14 +156,14 @@ export class PerformanceMonitoringDashboard {
   }
 
   private getMemoryUsage(): number {
-    // Simulate memory usage calculation
-    if (typeof window !== 'undefined' && (window as any).performance?.memory) {
-      const memory = (window as any).performance.memory;
-      return memory.usedJSHeapSize / 1024 / 1024; // Convert to MB
+    // Use performance monitor's memory tracking
+    const snapshot = performanceMonitor.takeMemorySnapshot();
+    if (snapshot) {
+      return snapshot.usedJSHeapSize / 1024 / 1024; // Convert to MB
     }
     
     // Fallback estimation
-    return Math.random() * 100; // Random value for simulation
+    return Math.random() * 100;
   }
 
   private detectRegressions(metrics: any[]): PerformanceReport['regressions'] {

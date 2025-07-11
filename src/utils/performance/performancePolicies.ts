@@ -1,4 +1,3 @@
-
 export interface PerformanceBudget {
   responseTimeSLA: number; // milliseconds
   memoryLimit: number; // MB
@@ -24,7 +23,7 @@ export class PerformancePolicyEngine {
 
   private static readonly REGRESSION_THRESHOLD = 5; // 5% regression tolerance
 
-  validateResponseTime(actualTime: number, budget = this.DEFAULT_BUDGETS.responseTimeSLA): {
+  validateResponseTime(actualTime: number, budget = PerformancePolicyEngine.DEFAULT_BUDGETS.responseTimeSLA): {
     passed: boolean;
     message: string;
     severity: 'critical' | 'warning' | 'acceptable';
@@ -40,7 +39,7 @@ export class PerformancePolicyEngine {
     }
   }
 
-  validateMemoryUsage(actualMemory: number, budget = this.DEFAULT_BUDGETS.memoryLimit): {
+  validateMemoryUsage(actualMemory: number, budget = PerformancePolicyEngine.DEFAULT_BUDGETS.memoryLimit): {
     passed: boolean;
     message: string;
     severity: 'critical' | 'warning' | 'acceptable';
@@ -56,7 +55,7 @@ export class PerformancePolicyEngine {
     }
   }
 
-  validateBundleSize(actualSize: number, budget = this.DEFAULT_BUDGETS.bundleSizeLimit): {
+  validateBundleSize(actualSize: number, budget = PerformancePolicyEngine.DEFAULT_BUDGETS.bundleSizeLimit): {
     passed: boolean;
     message: string;
     severity: 'critical' | 'warning' | 'acceptable';
@@ -78,7 +77,7 @@ export class PerformancePolicyEngine {
     message: string;
   } {
     const percentageChange = ((currentMetric - baselineMetric) / baselineMetric) * 100;
-    const isRegression = percentageChange > this.REGRESSION_THRESHOLD;
+    const isRegression = percentageChange > PerformancePolicyEngine.REGRESSION_THRESHOLD;
     
     return {
       isRegression,
@@ -108,14 +107,14 @@ export class PerformancePolicyEngine {
       if (matches) complexity += matches.length;
     });
     
-    const passed = complexity <= this.DEFAULT_BUDGETS.complexityLimit;
+    const passed = complexity <= PerformancePolicyEngine.DEFAULT_BUDGETS.complexityLimit;
     
     return {
       complexity,
       passed,
       message: passed 
         ? `Complexity ${complexity} within limit`
-        : `Complexity ${complexity} exceeds limit of ${this.DEFAULT_BUDGETS.complexityLimit}`
+        : `Complexity ${complexity} exceeds limit of ${PerformancePolicyEngine.DEFAULT_BUDGETS.complexityLimit}`
     };
   }
 
