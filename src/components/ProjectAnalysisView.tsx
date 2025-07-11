@@ -92,39 +92,36 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
           onBackToProject={onBackToProject}
         />
 
-        {/* Prominent Action Bar */}
-        <AnalysisActionBar
-          onAskMoreQuestions={handleAskMoreQuestions}
-          onShowAIRecommendations={handleShowAIRecommendations}
-          onCreateVisuals={handleCreateVisuals}
-          onExportFindings={handleExportFindings}
-        />
-
         <AnalysisExportBar
           onExportFindings={handleExportFindings}
           onExportVisuals={handleExportVisuals}
           onCreateRecurringReport={handleCreateRecurringReport}
         />
 
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
-            <TabsTrigger value="overview">Executive Summary</TabsTrigger>
+        {/* Analysis Results Card - Now at the top */}
+        <div className="mb-8">
+          <AnalysisResultsCard analysisResults={analysisResults} />
+        </div>
+
+        {/* What's Next Section */}
+        <div className="mb-8">
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">🚀 What's Next?</h2>
+            <AnalysisActionBar
+              onAskMoreQuestions={handleAskMoreQuestions}
+              onShowAIRecommendations={handleShowAIRecommendations}
+              onCreateVisuals={handleCreateVisuals}
+              onExportFindings={handleExportFindings}
+            />
+          </div>
+        </div>
+
+        <Tabs defaultValue="detailed" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="detailed">Detailed Analysis</TabsTrigger>
             <TabsTrigger value="questions">Question Log ({questionLog.length})</TabsTrigger>
             <TabsTrigger value="context">Project Context</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="overview">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <AnalysisResultsCard analysisResults={analysisResults} />
-              </div>
-
-              <div className="space-y-6">
-                <DigDeeperCard onExportFindings={handleExportFindings} />
-              </div>
-            </div>
-          </TabsContent>
 
           <TabsContent value="detailed">
             <div className="space-y-6">
