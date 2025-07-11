@@ -23,8 +23,12 @@ const NewProjectContainer = () => {
     hasData: !!formData.parsedData,
     dataStructure: formData.parsedData ? {
       type: typeof formData.parsedData,
-      hasRows: !!formData.parsedData.rows,
-      rowCount: formData.parsedData.rows?.length || 0
+      isArray: Array.isArray(formData.parsedData),
+      length: Array.isArray(formData.parsedData) ? formData.parsedData.length : 0,
+      firstItemStructure: Array.isArray(formData.parsedData) && formData.parsedData.length > 0 ? {
+        hasRows: !!formData.parsedData[0]?.rows,
+        rowCount: formData.parsedData[0]?.rows?.length || 0
+      } : null
     } : null
   });
 
@@ -57,21 +61,20 @@ const NewProjectContainer = () => {
       educational,
       hasParsedData: !!parsedData,
       dataStructure: parsedData ? {
-        hasRows: !!parsedData.rows,
-        rowCount: parsedData.rows?.length || 0,
-        hasColumns: !!parsedData.columns,
-        columnCount: parsedData.columns?.length || 0
+        isArray: Array.isArray(parsedData),
+        length: Array.isArray(parsedData) ? parsedData.length : 0,
+        firstItemStructure: Array.isArray(parsedData) && parsedData.length > 0 ? {
+          hasRows: !!parsedData[0]?.rows,
+          rowCount: parsedData[0]?.rows?.length || 0,
+          hasColumns: !!parsedData[0]?.columns,
+          columnCount: parsedData[0]?.columns?.length || 0
+        } : null
       } : null,
       hasColumnMapping: !!columnMapping
     });
     
-    // Pass all the context to the analysis
-    formData.handleStartAnalysisClick(educational, {
-      researchQuestion,
-      additionalContext,
-      parsedData,
-      columnMapping
-    });
+    // Pass all the context to the analysis with the correct number of arguments
+    formData.handleStartAnalysisClick(educational);
   };
 
   if (formData.showAnalysisView) {
