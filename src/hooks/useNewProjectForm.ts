@@ -23,7 +23,7 @@ export const useNewProjectForm = () => {
 
   // Auto-save form data when values change
   useEffect(() => {
-    if (!isLoading && !dialogs.showRecoveryDialog) {
+    if (!isLoading && !dialogs.showRecoveryDialog && formState.researchQuestion) {
       const timeoutId = setTimeout(() => {
         saveFormData({
           researchQuestion: formState.researchQuestion,
@@ -37,6 +37,7 @@ export const useNewProjectForm = () => {
           parsedData: formState.parsedData,
           currentStep: formState.step
         });
+        console.log('Auto-saved form data');
       }, 1000);
 
       return () => clearTimeout(timeoutId);
@@ -54,16 +55,31 @@ export const useNewProjectForm = () => {
 
   // Check for saved data on component mount
   useEffect(() => {
-    if (!isLoading && hasStoredData()) {
-      const savedData = getFormData();
-      dialogs.setLastSaved(savedData.lastSaved);
-      dialogs.setShowRecoveryDialog(true);
+    if (!isLoading) {
+      const hasSavedData = hasStoredData();
+      console.log('Has stored data:', hasSavedData);
+      
+      if (hasSavedData) {
+        const savedData = getFormData();
+        console.log('Saved data found:', savedData);
+        
+        // Only show recovery dialog if there's meaningful saved data
+        const hasMeaningfulData = savedData.researchQuestion || savedData.additionalContext || savedData.file;
+        
+        if (hasMeaningfulData) {
+          dialogs.setLastSaved(savedData.lastSaved);
+          dialogs.setShowRecoveryDialog(true);
+        }
+      }
     }
   }, [isLoading, hasStoredData, getFormData, dialogs]);
 
   const handleRestoreData = () => {
+    console.log('handleRestoreData called');
     try {
       const savedData = getFormData();
+      console.log('Restoring data:', savedData);
+      
       formState.setResearchQuestion(savedData.researchQuestion || '');
       formState.setAdditionalContext(savedData.additionalContext || '');
       formState.setParsedData(savedData.parsedData);
@@ -95,6 +111,7 @@ export const useNewProjectForm = () => {
   };
 
   const handleStartFresh = () => {
+    console.log('handleStartFresh called');
     clearFormData();
     formState.resetForm();
     dialogs.setShowRecoveryDialog(false);

@@ -13,6 +13,7 @@ import { Clock, Trash2, RotateCcw } from 'lucide-react';
 
 interface FormRecoveryDialogProps {
   open: boolean;
+  onOpenChange: (open: boolean) => void;
   onRestore: () => void;
   onStartFresh: () => void;
   lastSaved?: string;
@@ -20,6 +21,7 @@ interface FormRecoveryDialogProps {
 
 const FormRecoveryDialog: React.FC<FormRecoveryDialogProps> = ({
   open,
+  onOpenChange,
   onRestore,
   onStartFresh,
   lastSaved
@@ -46,8 +48,18 @@ const FormRecoveryDialog: React.FC<FormRecoveryDialogProps> = ({
     }
   };
 
+  const handleRestore = () => {
+    console.log('FormRecoveryDialog: handleRestore called');
+    onRestore();
+  };
+
+  const handleStartFresh = () => {
+    console.log('FormRecoveryDialog: handleStartFresh called');
+    onStartFresh();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -67,11 +79,11 @@ const FormRecoveryDialog: React.FC<FormRecoveryDialogProps> = ({
         </div>
 
         <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
-          <Button variant="outline" onClick={onStartFresh} className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleStartFresh} className="flex items-center gap-2">
             <Trash2 className="w-4 h-4" />
             Start Fresh
           </Button>
-          <Button onClick={onRestore} className="flex items-center gap-2">
+          <Button onClick={handleRestore} className="flex items-center gap-2">
             <RotateCcw className="w-4 h-4" />
             Continue Previous Work
           </Button>

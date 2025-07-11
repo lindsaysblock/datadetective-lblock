@@ -51,11 +51,13 @@ const NewProject = () => {
     handleStartFresh,
     handleSignIn,
     handleSignUp,
-    setShowSignInModal
+    setShowSignInModal,
+    setShowRecoveryDialog
   } = useNewProjectForm();
 
   console.log('Current step:', step);
   console.log('Show analysis view:', showAnalysisView);
+  console.log('Show recovery dialog:', showRecoveryDialog);
 
   if (showAnalysisView) {
     return (
@@ -130,6 +132,7 @@ const NewProject = () => {
       
       <FormRecoveryDialog
         open={showRecoveryDialog}
+        onOpenChange={setShowRecoveryDialog}
         onRestore={handleRestoreData}
         onStartFresh={handleStartFresh}
         lastSaved={lastSaved}
