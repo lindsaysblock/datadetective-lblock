@@ -17,6 +17,8 @@ export const useDashboardData = (data?: ParsedData) => {
         { user_id: 'user_1', event_name: 'login', timestamp: '2024-01-01T10:00:00Z', value: 1 },
         { user_id: 'user_2', event_name: 'purchase', timestamp: '2024-01-01T11:00:00Z', value: 99.99 }
       ],
+      rowCount: 2,
+      fileSize: 0,
       summary: { 
         totalRows: 2, 
         totalColumns: 4,
