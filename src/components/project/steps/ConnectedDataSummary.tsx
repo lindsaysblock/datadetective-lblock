@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Plus } from 'lucide-react';
+import { CheckCircle, Plus, X } from 'lucide-react';
 
 interface ConnectedDataSummaryProps {
   parsedData: any[];
@@ -15,6 +15,11 @@ const ConnectedDataSummary: React.FC<ConnectedDataSummaryProps> = ({
   onRemoveFile,
   onAddAdditionalSource
 }) => {
+  const handleRemoveFile = (index: number) => {
+    console.log('Removing file at index:', index);
+    onRemoveFile(index);
+  };
+
   return (
     <Card className="bg-green-50 border-green-200">
       <CardHeader>
@@ -46,10 +51,10 @@ const ConnectedDataSummary: React.FC<ConnectedDataSummaryProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onRemoveFile(index)}
-              className="text-red-600 hover:text-red-700"
+              onClick={() => handleRemoveFile(index)}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
             >
-              Remove
+              <X className="w-4 h-4" />
             </Button>
           </div>
         ))}
