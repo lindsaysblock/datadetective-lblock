@@ -16,8 +16,8 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ data }) => {
   const normalizedData: ParsedData = {
     columns: processedData?.columns || [],
     rows: processedData?.rows || [],
-    rowCount: processedData?.rowCount || processedData?.rows?.length || 0,
-    fileSize: processedData?.fileSize || 0,
+    rowCount: ('rowCount' in (processedData || {})) ? processedData.rowCount : processedData?.rows?.length || 0,
+    fileSize: ('fileSize' in (processedData || {})) ? processedData.fileSize : 0,
     summary: processedData?.summary || {
       totalRows: processedData?.rows?.length || 0,
       totalColumns: processedData?.columns?.length || 0
