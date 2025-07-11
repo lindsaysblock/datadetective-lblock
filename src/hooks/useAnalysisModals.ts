@@ -6,28 +6,20 @@ export const useAnalysisModals = () => {
   const [showRecommendationsModal, setShowRecommendationsModal] = useState(false);
   const [showVisualsModal, setShowVisualsModal] = useState(false);
 
-  const openQuestionsModal = () => setShowQuestionsModal(true);
-  const closeQuestionsModal = () => setShowQuestionsModal(false);
-  
-  const openRecommendationsModal = () => setShowRecommendationsModal(true);
-  const closeRecommendationsModal = () => setShowRecommendationsModal(false);
-  
-  const openVisualsModal = () => setShowVisualsModal(true);
-  const closeVisualsModal = () => setShowVisualsModal(false);
-
-  return {
-    modals: {
-      showQuestionsModal,
-      showRecommendationsModal,
-      showVisualsModal
-    },
-    actions: {
-      openQuestionsModal,
-      closeQuestionsModal,
-      openRecommendationsModal,
-      closeRecommendationsModal,
-      openVisualsModal,
-      closeVisualsModal
-    }
+  const actions = {
+    openQuestionsModal: () => setShowQuestionsModal(true),
+    closeQuestionsModal: () => setShowQuestionsModal(false),
+    openRecommendationsModal: () => setShowRecommendationsModal(true),
+    closeRecommendationsModal: () => setShowRecommendationsModal(false),
+    openVisualsModal: () => setShowVisualsModal(true),
+    closeVisualsModal: () => setShowVisualsModal(false),
   };
+
+  const modals = {
+    showQuestionsModal,
+    showRecommendationsModal,
+    showVisualsModal,
+  };
+
+  return { modals, actions };
 };
