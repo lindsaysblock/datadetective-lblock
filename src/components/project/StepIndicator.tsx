@@ -6,6 +6,8 @@ interface StepIndicatorProps {
 }
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep }) => {
+  console.log('StepIndicator rendering with current step:', currentStep);
+
   const steps = [
     { label: 'Question', step: 1 },
     { label: 'Data Source', step: 2 },

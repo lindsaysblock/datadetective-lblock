@@ -15,6 +15,8 @@ import BusinessContextStep from '@/components/project/BusinessContextStep';
 import AnalysisSummaryStep from '@/components/project/AnalysisSummaryStep';
 
 const NewProject = () => {
+  console.log('NewProject component rendering');
+  
   const {
     step,
     researchQuestion,
@@ -52,6 +54,9 @@ const NewProject = () => {
     setShowSignInModal
   } = useNewProjectForm();
 
+  console.log('Current step:', step);
+  console.log('Show analysis view:', showAnalysisView);
+
   if (showAnalysisView) {
     return (
       <ProjectAnalysisView
@@ -66,6 +71,8 @@ const NewProject = () => {
   }
 
   const renderCurrentStep = () => {
+    console.log('Rendering step:', step);
+    
     switch (step) {
       case 1:
         return (
@@ -112,7 +119,8 @@ const NewProject = () => {
         );
 
       default:
-        return null;
+        console.log('Unknown step:', step);
+        return <div>Unknown step: {step}</div>;
     }
   };
 

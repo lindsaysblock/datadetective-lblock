@@ -16,6 +16,8 @@ const ResearchQuestionStep: React.FC<ResearchQuestionStepProps> = ({
   setResearchQuestion,
   onNext
 }) => {
+  console.log('ResearchQuestionStep rendering with question:', researchQuestion);
+
   return (
     <Card className="w-full shadow-sm border-0 bg-white/80 backdrop-blur-sm">
       <CardContent className="p-8">
