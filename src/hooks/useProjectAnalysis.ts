@@ -42,7 +42,8 @@ export const useProjectAnalysis = () => {
     researchQuestion: string, 
     additionalContext: string, 
     educational: boolean = false,
-    parsedData?: any
+    parsedData?: any,
+    columnMapping?: any
   ) => {
     console.log('🚀 Starting analysis with:', { 
       researchQuestion, 
@@ -51,7 +52,8 @@ export const useProjectAnalysis = () => {
       dataAvailable: !!parsedData,
       dataType: Array.isArray(parsedData) ? 'array' : typeof parsedData,
       dataLength: Array.isArray(parsedData) ? parsedData.length : 'N/A',
-      dataStructure: parsedData ? Object.keys(parsedData).slice(0, 5) : 'N/A'
+      dataStructure: parsedData ? Object.keys(parsedData).slice(0, 5) : 'N/A',
+      columnMapping: columnMapping ? 'Available' : 'None'
     });
     
     setState(prev => ({
@@ -65,7 +67,7 @@ export const useProjectAnalysis = () => {
     
     setTimeout(() => {
       console.log('🎯 Analysis processing complete, generating results...');
-      const analysisResults = executeAnalysis(parsedData, researchQuestion, additionalContext, educational);
+      const analysisResults = executeAnalysis(parsedData, researchQuestion, additionalContext, educational, columnMapping);
       
       setState(prev => ({
         ...prev,
@@ -124,18 +126,19 @@ export const useProjectAnalysis = () => {
   };
 };
 
-// Updated helper function to execute analysis with better data validation
 function executeAnalysis(
   parsedData: any,
   researchQuestion: string,
   additionalContext: string,
-  educational: boolean
+  educational: boolean,
+  columnMapping?: any
 ): AnalysisResults {
   console.log('📊 Executing analysis with data:', {
     hasData: !!parsedData,
     dataType: Array.isArray(parsedData) ? 'array' : typeof parsedData,
     dataKeys: parsedData ? Object.keys(parsedData).slice(0, 10) : 'N/A',
-    question: researchQuestion
+    question: researchQuestion,
+    hasColumnMapping: !!columnMapping
   });
 
   // Better data validation and processing
@@ -202,7 +205,7 @@ function executeAnalysis(
     processedDataLength: processedData.length
   });
 
-  // Generate analysis based on processed data
+  // Generate analysis based on processed data and column mapping
   if (totalRows === 0) {
     return {
       insights: "No valid data was detected in your upload. Please ensure your file contains data rows with columns. Supported formats include CSV files with headers and data rows, or JSON files with arrays of objects.",
@@ -216,6 +219,26 @@ function executeAnalysis(
       detailedResults: [],
       sqlQuery: "-- No data available for analysis"
     };
+  }
+
+  // Enhanced analysis with column mapping information
+  let analysisInsights = `Analysis completed successfully on your dataset containing ${totalRows.toLocaleString()} rows and ${totalColumns} columns.`;
+  
+  if (columnMapping) {
+    const mappedColumns = [];
+    if (columnMapping.userIdColumn) mappedColumns.push(`user identification (${columnMapping.userIdColumn})`);
+    if (columnMapping.timestampColumn) mappedColumns.push(`timestamps (${columnMapping.timestampColumn})`);
+    if (columnMapping.eventColumn) mappedColumns.push(`events (${columnMapping.eventColumn})`);
+    if (columnMapping.valueColumns && columnMapping.valueColumns.length > 0) {
+      mappedColumns.push(`value analysis (${columnMapping.valueColumns.join(', ')})`);
+    }
+    if (columnMapping.categoryColumns && columnMapping.categoryColumns.length > 0) {
+      mappedColumns.push(`categorization (${columnMapping.categoryColumns.join(', ')})`);
+    }
+    
+    if (mappedColumns.length > 0) {
+      analysisInsights += ` Your data structure has been mapped for ${mappedColumns.join(', ')}, enabling comprehensive analysis of patterns and relationships.`;
+    }
   }
 
   // Check for specific question patterns
@@ -264,34 +287,61 @@ function executeAnalysis(
     };
   }
 
-  // Default analysis for other questions
+  // Default analysis for other questions with column mapping context
+  const detailedResults = [
+    {
+      id: 'data-overview',
+      title: 'Dataset Overview',
+      description: 'Successfully processed dataset statistics',
+      value: totalRows,
+      insight: `Dataset loaded with ${totalRows.toLocaleString()} rows and ${totalColumns} columns`,
+      confidence: 'high' as const
+    },
+    {
+      id: 'data-quality',
+      title: 'Data Quality Check',
+      description: 'Initial data validation completed',
+      value: Math.round((totalRows > 0 ? 100 : 0)),
+      insight: 'Data structure validated successfully',
+      confidence: 'high' as const
+    }
+  ];
+
+  // Add column mapping insights if available
+  if (columnMapping) {
+    if (columnMapping.valueColumns && columnMapping.valueColumns.length > 0) {
+      detailedResults.push({
+        id: 'value-columns',
+        title: 'Numeric Analysis Ready',
+        description: 'Columns identified for numerical analysis',
+        value: columnMapping.valueColumns.length,
+        insight: `Ready to analyze ${columnMapping.valueColumns.length} numeric columns: ${columnMapping.valueColumns.join(', ')}`,
+        confidence: 'high' as const
+      });
+    }
+
+    if (columnMapping.categoryColumns && columnMapping.categoryColumns.length > 0) {
+      detailedResults.push({
+        id: 'category-columns',
+        title: 'Segmentation Ready',
+        description: 'Columns identified for categorization',
+        value: columnMapping.categoryColumns.length,
+        insight: `Ready to segment data by ${columnMapping.categoryColumns.length} categories: ${columnMapping.categoryColumns.join(', ')}`,
+        confidence: 'high' as const
+      });
+    }
+  }
+
   return {
-    insights: `Analysis completed successfully on your dataset containing ${totalRows.toLocaleString()} rows and ${totalColumns} columns. The data is ready for deeper analysis based on your research question: "${researchQuestion}"`,
+    insights: analysisInsights + ` Based on your research question: "${researchQuestion}", the data is now ready for deeper analysis.`,
     confidence: 'high',
     recommendations: [
-      'Your data has been successfully processed and is ready for analysis',
-      'Consider exploring specific patterns or relationships in your data',
+      'Your data has been successfully processed and mapped',
+      columnMapping ? 'Column relationships have been identified for targeted analysis' : 'Consider exploring specific patterns or relationships in your data',
       'Try asking more specific questions about trends, distributions, or comparisons'
     ],
-    detailedResults: [
-      {
-        id: 'data-overview',
-        title: 'Dataset Overview',
-        description: 'Successfully processed dataset statistics',
-        value: totalRows,
-        insight: `Dataset loaded with ${totalRows.toLocaleString()} rows and ${totalColumns} columns`,
-        confidence: 'high'
-      },
-      {
-        id: 'data-quality',
-        title: 'Data Quality Check',
-        description: 'Initial data validation completed',
-        value: Math.round((totalRows > 0 ? 100 : 0)),
-        insight: 'Data structure validated successfully',
-        confidence: 'high'
-      }
-    ],
-    sqlQuery: `-- Analyze your dataset\nSELECT COUNT(*) as total_rows, COUNT(DISTINCT *) as unique_rows\nFROM your_dataset;\n-- Dataset contains ${totalRows} rows`
+    detailedResults,
+    sqlQuery: `-- Analyze your dataset with mapped columns\nSELECT COUNT(*) as total_rows, COUNT(DISTINCT *) as unique_rows\nFROM your_dataset;\n-- Dataset contains ${totalRows} rows`
   };
 }
 

@@ -1,102 +1,127 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, File, Plus } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Upload, File, X, CheckCircle } from 'lucide-react';
 
 interface FileUploadSectionProps {
   files: File[];
   uploading: boolean;
   parsing: boolean;
+  parsedData: any[];
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onFileUpload: () => void;
   onRemoveFile: (index: number) => void;
-  onAddAdditionalSource: () => void;
+  onUploadComplete?: () => void;
 }
 
 const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   files,
   uploading,
   parsing,
+  parsedData,
   onFileChange,
   onFileUpload,
   onRemoveFile,
-  onAddAdditionalSource
+  onUploadComplete
 }) => {
-  const getUploadButtonText = () => {
-    if (uploading || parsing) {
-      return parsing ? 'Processing...' : 'Uploading...';
+  const hasData = parsedData && parsedData.length > 0;
+
+  const handleUpload = async () => {
+    await onFileUpload();
+    if (onUploadComplete) {
+      onUploadComplete();
     }
-    return files.length === 1 ? 'Upload File' : 'Upload Files';
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="w-5 h-5" />
-          Data Upload
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-col space-y-4">
-          <div>
-            <Label htmlFor="file-upload">Choose Files (CSV, JSON, TXT)</Label>
-            <Input
-              id="file-upload"
+    <div className="space-y-4">
+      {/* File Upload Area */}
+      <Card className="border-dashed border-2 border-gray-300 hover:border-blue-400 transition-colors">
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Upload your data files</h3>
+            <p className="text-gray-600 mb-4">
+              Drag and drop files here, or click to select files
+            </p>
+            <input
               type="file"
-              multiple
-              accept=".csv,.json,.txt"
               onChange={onFileChange}
-              className="mt-1"
+              multiple
+              accept=".csv,.json,.xlsx,.xls"
+              className="hidden"
+              id="file-upload"
             />
-          </div>
-        </div>
-
-        {files.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium text-gray-900">Selected Files:</h4>
-            
-            {files.map((file, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <File className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm font-medium">{file.name}</span>
-                  <span className="text-xs text-gray-500">
-                    ({(file.size / 1024).toFixed(1)} KB)
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onRemoveFile(index)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  Remove
-                </Button>
-              </div>
-            ))}
-            
-            <Button 
-              onClick={onFileUpload}
-              disabled={uploading || parsing}
-              className="w-full"
+            <label
+              htmlFor="file-upload"
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
             >
-              {uploading || parsing ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  {getUploadButtonText()}
-                </div>
-              ) : (
-                getUploadButtonText()
-              )}
-            </Button>
+              Choose Files
+            </label>
+            <p className="text-xs text-gray-500 mt-2">
+              Supports CSV, JSON, and Excel files
+            </p>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Selected Files */}
+      {files.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="font-medium text-gray-900">Selected Files:</h4>
+          {files.map((file, index) => (
+            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <File className="w-5 h-5 text-blue-600" />
+                <div>
+                  <p className="font-medium text-gray-900">{file.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {(file.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onRemoveFile(index)}
+                className="text-red-600 hover:text-red-700"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Upload Button */}
+      {files.length > 0 && !hasData && (
+        <Button
+          onClick={handleUpload}
+          disabled={uploading || parsing}
+          className="w-full bg-blue-600 hover:bg-blue-700"
+        >
+          {uploading ? 'Uploading...' : parsing ? 'Processing...' : 'Process Files'}
+        </Button>
+      )}
+
+      {/* Success State */}
+      {hasData && (
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+              <div>
+                <h4 className="font-medium text-green-900">Files processed successfully!</h4>
+                <p className="text-sm text-green-700">
+                  {parsedData.length} file{parsedData.length > 1 ? 's' : ''} ready for analysis
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 
