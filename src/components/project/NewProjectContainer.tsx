@@ -26,12 +26,22 @@ const NewProjectContainer = () => {
     isProcessingAnalysis: formData.isProcessingAnalysis,
     analysisCompleted: formData.analysisCompleted,
     hasAnalysisResults: !!formData.analysisResults,
-    hasData: !!formData.parsedData,
-    dataFiles: formData.parsedData ? 1 : 0
+    hasData: !!formData.parsedData && formData.parsedData.length > 0,
+    dataFiles: formData.parsedData?.length || 0
   });
 
   const handleStartAnalysisWrapper = (educationalMode: boolean = false) => {
     console.log('Starting analysis with educational mode:', educationalMode);
+    console.log('Form data for analysis:', {
+      researchQuestion: formData.researchQuestion?.slice(0, 50) + '...',
+      hasAdditionalContext: !!formData.additionalContext,
+      hasData: !!formData.parsedData && formData.parsedData.length > 0,
+      dataStructure: formData.parsedData?.[0] ? {
+        rows: formData.parsedData[0].rows?.length || 0,
+        columns: formData.parsedData[0].columns?.length || 0
+      } : null
+    });
+    
     handleStartAnalysis(
       formData.researchQuestion,
       formData.additionalContext,
