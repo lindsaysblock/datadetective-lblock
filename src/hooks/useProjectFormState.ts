@@ -5,17 +5,17 @@ export const useProjectFormState = () => {
   const [step, setStep] = useState(1);
   const [researchQuestion, setResearchQuestion] = useState('');
   const [additionalContext, setAdditionalContext] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
-  const [parsedData, setParsedData] = useState<any>(null);
+  const [parsedData, setParsedData] = useState<any[]>([]);
   const [currentProjectName, setCurrentProjectName] = useState('');
 
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
 
   const handleFileUpload = async () => {
-    if (!file) return;
+    if (!files.length) return;
     
     setUploading(true);
     setParsing(true);
@@ -23,7 +23,13 @@ export const useProjectFormState = () => {
     try {
       // Simulate file processing
       await new Promise(resolve => setTimeout(resolve, 2000));
-      setParsedData({ rows: 100, columns: 10, preview: [] });
+      setParsedData(files.map((file, index) => ({ 
+        id: index, 
+        name: file.name, 
+        rows: 100, 
+        columns: 10, 
+        preview: [] 
+      })));
     } catch (error) {
       console.error('File upload error:', error);
     } finally {
@@ -32,14 +38,23 @@ export const useProjectFormState = () => {
     }
   };
 
+  const addFile = (file: File) => {
+    setFiles(prev => [...prev, file]);
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+    setParsedData(prev => prev.filter((_, i) => i !== index));
+  };
+
   const resetForm = () => {
     setStep(1);
     setResearchQuestion('');
     setAdditionalContext('');
-    setFile(null);
+    setFiles([]);
     setUploading(false);
     setParsing(false);
-    setParsedData(null);
+    setParsedData([]);
     setCurrentProjectName('');
   };
 
@@ -47,7 +62,7 @@ export const useProjectFormState = () => {
     step,
     researchQuestion,
     additionalContext,
-    file,
+    files,
     uploading,
     parsing,
     parsedData,
@@ -55,7 +70,7 @@ export const useProjectFormState = () => {
     setStep,
     setResearchQuestion,
     setAdditionalContext,
-    setFile,
+    setFiles,
     setUploading,
     setParsing,
     setParsedData,
@@ -63,6 +78,8 @@ export const useProjectFormState = () => {
     nextStep,
     prevStep,
     handleFileUpload,
+    addFile,
+    removeFile,
     resetForm
   };
 };

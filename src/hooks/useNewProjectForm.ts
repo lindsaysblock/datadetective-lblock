@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useToast } from '@/hooks/use-toast';
@@ -32,12 +31,12 @@ export const useNewProjectForm = () => {
         saveFormData({
           researchQuestion: formState.researchQuestion,
           additionalContext: formState.additionalContext,
-          file: formState.file ? {
-            name: formState.file.name,
-            size: formState.file.size,
-            type: formState.file.type,
-            lastModified: formState.file.lastModified
-          } : null,
+          files: formState.files.map(file => ({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            lastModified: file.lastModified
+          })),
           parsedData: formState.parsedData,
           currentStep: formState.step
         });
@@ -49,7 +48,7 @@ export const useNewProjectForm = () => {
   }, [
     formState.researchQuestion,
     formState.additionalContext,
-    formState.file,
+    formState.files,
     formState.parsedData,
     formState.step,
     isLoading,
@@ -72,7 +71,7 @@ export const useNewProjectForm = () => {
       console.log('Saved data found:', savedData);
       
       // Only show recovery dialog if there's meaningful saved data
-      const hasMeaningfulData = savedData.researchQuestion || savedData.additionalContext || savedData.file;
+      const hasMeaningfulData = savedData.researchQuestion || savedData.additionalContext || savedData.files;
       
       if (hasMeaningfulData) {
         dialogs.setLastSaved(savedData.lastSaved);
@@ -89,15 +88,17 @@ export const useNewProjectForm = () => {
       
       formState.setResearchQuestion(savedData.researchQuestion || '');
       formState.setAdditionalContext(savedData.additionalContext || '');
-      formState.setParsedData(savedData.parsedData);
+      formState.setParsedData(savedData.parsedData || []);
       formState.setStep(savedData.currentStep || 1);
       
-      if (savedData.file && savedData.parsedData) {
-        const mockFile = new File([''], savedData.file.name, {
-          type: savedData.file.type,
-          lastModified: savedData.file.lastModified
-        });
-        formState.setFile(mockFile);
+      if (savedData.files && savedData.files.length > 0) {
+        const mockFiles = savedData.files.map(fileData => 
+          new File([''], fileData.name, {
+            type: fileData.type,
+            lastModified: fileData.lastModified
+          })
+        );
+        formState.setFiles(mockFiles);
       }
       
       dialogs.setShowRecoveryDialog(false);
@@ -134,8 +135,10 @@ export const useNewProjectForm = () => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
-      formState.setFile(selectedFile);
-      formState.setParsedData({ rows: 100, columns: 10, preview: [] });
+      formState.addFile(selectedFile);
+      // Add parsed data for the new file
+      const newParsedData = { id: formState.files.length, name: selectedFile.name, rows: 100, columns: 10, preview: [] };
+      formState.setParsedData(prev => [...prev, newParsedData]);
     }
   };
 

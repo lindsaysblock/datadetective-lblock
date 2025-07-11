@@ -2,29 +2,31 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, CheckCircle, Upload, Plus } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Upload, Plus, File, X } from 'lucide-react';
 import FileUploadSection from '@/components/data/upload/FileUploadSection';
 
 interface DataSourceStepProps {
-  file: File | null;
+  files: File[];
   uploading: boolean;
   parsing: boolean;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onFileUpload: () => void;
+  onRemoveFile: (index: number) => void;
   onNext: () => void;
   onPrevious: () => void;
 }
 
 const DataSourceStep: React.FC<DataSourceStepProps> = ({
-  file,
+  files,
   uploading,
   parsing,
   onFileChange,
   onFileUpload,
+  onRemoveFile,
   onNext,
   onPrevious
 }) => {
-  const hasUploadedFile = file && !uploading && !parsing;
+  const hasUploadedFiles = files.length > 0 && !uploading && !parsing;
 
   const handleAddAdditionalSource = () => {
     // Create a new file input element
@@ -79,28 +81,49 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
       <CardContent className="p-8">
         <div className="flex items-start gap-4 mb-6">
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1 ${
-            hasUploadedFile 
+            hasUploadedFiles 
               ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white' 
               : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
           }`}>
-            {hasUploadedFile ? <CheckCircle className="w-4 h-4" /> : '2'}
+            {hasUploadedFiles ? <CheckCircle className="w-4 h-4" /> : '2'}
           </div>
           <div>
             <h3 className="text-xl font-semibold text-gray-900">Connect Your Data</h3>
-            <p className="text-gray-500 text-sm mt-1">Upload a file or connect to your data source</p>
+            <p className="text-gray-500 text-sm mt-1">Upload files or connect to your data sources</p>
           </div>
         </div>
 
-        {hasUploadedFile ? (
+        {hasUploadedFiles ? (
           <div className="space-y-4">
-            {/* Success state */}
+            {/* Success state with file list */}
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 mb-3">
                 <CheckCircle className="w-6 h-6 text-green-600" />
                 <div>
-                  <h4 className="text-lg font-semibold text-green-800">Data Source Connected!</h4>
-                  <p className="text-green-700">Your file "{file.name}" has been uploaded successfully.</p>
+                  <h4 className="text-lg font-semibold text-green-800">Data Sources Connected!</h4>
+                  <p className="text-green-700">{files.length} file{files.length > 1 ? 's' : ''} uploaded successfully.</p>
                 </div>
+              </div>
+              
+              {/* File list */}
+              <div className="space-y-2">
+                {files.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between bg-white/50 rounded-md p-3">
+                    <div className="flex items-center gap-2">
+                      <File className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-700">{file.name}</span>
+                      <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(1)} KB)</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onRemoveFile(index)}
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -120,7 +143,7 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
           </div>
         ) : (
           <FileUploadSection
-            file={file}
+            file={files[0] || null}
             uploading={uploading}
             parsing={parsing}
             onFileChange={onFileChange}
@@ -135,7 +158,7 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
           </Button>
           <Button 
             onClick={onNext}
-            disabled={!hasUploadedFile}
+            disabled={!hasUploadedFiles}
             className="bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 text-white px-6 flex items-center gap-2"
           >
             Next <ArrowRight className="w-4 h-4" />

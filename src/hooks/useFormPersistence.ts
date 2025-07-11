@@ -5,13 +5,13 @@ import { useToast } from '@/hooks/use-toast';
 export interface FormData {
   researchQuestion: string;
   additionalContext: string;
-  file: {
+  files: {
     name: string;
     size: number;
     type: string;
     lastModified: number;
-  } | null;
-  parsedData: any;
+  }[];
+  parsedData: any[];
   currentStep: number;
   lastSaved: string;
 }
@@ -94,8 +94,8 @@ export const useFormPersistence = () => {
   const getDefaultFormData = (): FormData => ({
     researchQuestion: '',
     additionalContext: '',
-    file: null,
-    parsedData: null,
+    files: [],
+    parsedData: [],
     currentStep: 1,
     lastSaved: ''
   });
@@ -108,7 +108,7 @@ export const useFormPersistence = () => {
       const parsedStorage = JSON.parse(stored);
       const data = parsedStorage.data;
       
-      return !!(data?.researchQuestion || data?.additionalContext || data?.file);
+      return !!(data?.researchQuestion || data?.additionalContext || data?.files?.length > 0);
     } catch {
       return false;
     }

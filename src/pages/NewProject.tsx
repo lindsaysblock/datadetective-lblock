@@ -21,7 +21,7 @@ const NewProject = () => {
     step,
     researchQuestion,
     additionalContext,
-    file,
+    files,
     uploading,
     parsing,
     parsedData,
@@ -45,6 +45,7 @@ const NewProject = () => {
     prevStep,
     handleFileChange,
     handleFileUpload,
+    removeFile,
     handleStartAnalysisClick,
     handleProjectConfirm,
     handleBackToProject,
@@ -68,7 +69,7 @@ const NewProject = () => {
         onBackToProject={handleBackToProject}
         researchQuestion={researchQuestion}
         additionalContext={additionalContext}
-        dataSource={file ? file.name : 'Database Connection'}
+        dataSource={files.length > 0 ? `${files.length} file${files.length > 1 ? 's' : ''}` : 'Database Connection'}
         educationalMode={educationalMode}
       />
     );
@@ -90,11 +91,12 @@ const NewProject = () => {
       case 2:
         return (
           <DataSourceStep
-            file={file}
+            files={files}
             uploading={uploading}
             parsing={parsing}
             onFileChange={handleFileChange}
             onFileUpload={handleFileUpload}
+            onRemoveFile={removeFile}
             onNext={nextStep}
             onPrevious={prevStep}
           />
@@ -114,7 +116,7 @@ const NewProject = () => {
         return (
           <AnalysisSummaryStep
             researchQuestion={researchQuestion}
-            file={file}
+            files={files}
             additionalContext={additionalContext}
             isProcessingAnalysis={isProcessingAnalysis}
             onPrevious={prevStep}
