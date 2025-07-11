@@ -2,14 +2,10 @@
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { usePrivacyModal } from '@/hooks/usePrivacyModal';
-import DataSourceConfig from './DataSourceConfig';
-import RealTimeDataStreaming from './RealTimeDataStreaming';
 import AnalyzingIcon from './AnalyzingIcon';
 import PrivacySecurityModal from './PrivacySecurityModal';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Upload, Zap, Database, CheckCircle, Plus, File, X } from 'lucide-react';
+import FileUploadManager from './DataSourceManager/FileUploadManager';
+import DataSourceTabs from './DataSourceManager/DataSourceTabs';
 
 interface DataSource {
   id: string;
@@ -68,14 +64,12 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
       });
     };
 
-    // Show privacy modal before connecting
     showModal(connectAction, 'connection', source.name);
   };
 
   const handleFileUploadWithPrivacy = async (file: File) => {
     const uploadAction = async () => {
       try {
-        // Add file to processing state
         const newFile: UploadedFile = {
           id: Date.now().toString(),
           name: file.name,
@@ -89,7 +83,6 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
         
         await onFileUpload(file);
         
-        // Update status to success
         setUploadedFiles(prev => 
           prev.map(f => 
             f.id === newFile.id 
@@ -107,7 +100,6 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
         
       } catch (error) {
         console.error('File upload error:', error);
-        // Update status to error
         setUploadedFiles(prev => 
           prev.map(f => 
             f.name === file.name 
@@ -124,7 +116,6 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
       }
     };
     
-    // Show privacy modal before uploading
     showModal(uploadAction, 'upload');
   };
 
@@ -135,7 +126,6 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
   const handleUploadMore = () => {
     console.log('Upload more clicked');
     
-    // Trigger file input click
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = '.csv,.json,.txt,.xlsx';
@@ -148,15 +138,6 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
     fileInput.click();
   };
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  // Check if we have any successfully uploaded files
   const hasSuccessfulUploads = uploadedFiles.some(f => f.status === 'success');
 
   console.log('DataSourceManager render - hasSuccessfulUploads:', hasSuccessfulUploads, 'uploadedFiles:', uploadedFiles);
@@ -171,117 +152,25 @@ const DataSourceManager: React.FC<DataSourceManagerProps> = ({
         sourceName={modalConfig.sourceName}
       />
 
-      {/* Success Indicator - Show when files are uploaded successfully */}
-      {hasSuccessfulUploads && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="w-6 h-6 text-green-600" />
-            <div>
-              <h3 className="text-lg font-semibold text-green-800">Upload Successful!</h3>
-              <p className="text-green-700">Your data has been uploaded and is ready for analysis.</p>
-            </div>
-          </div>
-          <div className="mt-4 flex gap-2">
-            <Button onClick={handleUploadMore} className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Upload More Data
-            </Button>
-          </div>
+      <FileUploadManager
+        uploadedFiles={uploadedFiles}
+        onRemoveFile={removeUploadedFile}
+        onUploadMore={handleUploadMore}
+      />
+
+      <DataSourceTabs
+        onDataSourceConnect={handleDataSourceConnect}
+        onFileUpload={handleFileUploadWithPrivacy}
+        uploadComplete={hasSuccessfulUploads}
+        onUploadMore={handleUploadMore}
+        analyzing={analyzing}
+      />
+      
+      {analyzing && (
+        <div className="text-center">
+          <AnalyzingIcon isAnalyzing={analyzing} />
         </div>
       )}
-
-      {/* Uploaded Files Section */}
-      {uploadedFiles.length > 0 && (
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <File className="w-5 h-5" />
-            Uploaded Files ({uploadedFiles.length})
-          </h3>
-          <div className="space-y-2">
-            {uploadedFiles.map((file) => (
-              <div key={file.id} className="flex items-center justify-between bg-white rounded-md p-3 border">
-                <div className="flex items-center gap-3">
-                  {file.status === 'success' && (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  )}
-                  {file.status === 'processing' && (
-                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                  )}
-                  {file.status === 'error' && (
-                    <X className="w-5 h-5 text-red-600" />
-                  )}
-                  <div>
-                    <p className="font-medium text-sm">{file.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {formatFileSize(file.size)} • {file.uploadedAt.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge 
-                    variant={file.status === 'success' ? 'default' : file.status === 'error' ? 'destructive' : 'secondary'}
-                  >
-                    {file.status === 'success' ? 'Ready' : file.status === 'processing' ? 'Processing' : 'Failed'}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeUploadedFile(file.id)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <Tabs defaultValue="connect" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="connect" className="flex items-center gap-2">
-            <Upload className="w-4 h-4" />
-            Connect Data
-          </TabsTrigger>
-          <TabsTrigger value="streaming" className="flex items-center gap-2">
-            <Zap className="w-4 h-4" />
-            Real-Time Streaming
-          </TabsTrigger>
-          <TabsTrigger value="databases" className="flex items-center gap-2">
-            <Database className="w-4 h-4" />
-            Database Connections
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="connect" className="space-y-6">
-          <DataSourceConfig 
-            onDataSourceConnect={handleDataSourceConnect}
-            onFileUpload={handleFileUploadWithPrivacy}
-            uploadComplete={hasSuccessfulUploads}
-            onUploadMore={handleUploadMore}
-          />
-          
-          {analyzing && (
-            <div className="text-center">
-              <AnalyzingIcon isAnalyzing={analyzing} />
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="streaming" className="space-y-6">
-          <RealTimeDataStreaming />
-        </TabsContent>
-
-        <TabsContent value="databases" className="space-y-6">
-          <div className="text-center py-12">
-            <Database className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">Database Connections</h3>
-            <p className="text-gray-500">
-              Connect to your databases for persistent data storage and querying.
-            </p>
-          </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };

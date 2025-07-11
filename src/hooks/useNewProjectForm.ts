@@ -1,83 +1,78 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useToast } from '@/hooks/use-toast';
-import { useAuthState } from '@/hooks/useAuthState';
-import { supabase } from '@/integrations/supabase/client';
+import { useProjectFormState } from './useProjectFormState';
+import { useProjectAnalysis } from './useProjectAnalysis';
+import { useProjectAuth } from './useProjectAuth';
+import { useProjectDialogs } from './useProjectDialogs';
 
 export const useNewProjectForm = () => {
   const { saveFormData, getFormData, clearFormData, hasStoredData, isLoading } = useFormPersistence();
   const { toast } = useToast();
-  const { user } = useAuthState();
   
-  const [step, setStep] = useState(1);
-  const [researchQuestion, setResearchQuestion] = useState('');
-  const [additionalContext, setAdditionalContext] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [parsing, setParsing] = useState(false);
-  const [parsedData, setParsedData] = useState<any>(null);
-  const [showProjectDialog, setShowProjectDialog] = useState(false);
-  const [isProcessingAnalysis, setIsProcessingAnalysis] = useState(false);
-  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
-  const [lastSaved, setLastSaved] = useState('');
-  const [analysisResults, setAnalysisResults] = useState<any>(null);
-  const [currentProjectName, setCurrentProjectName] = useState('');
-  const [showAnalysisView, setShowAnalysisView] = useState(false);
-  const [showSignInModal, setShowSignInModal] = useState(false);
-  const [authLoading, setAuthLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [analysisCompleted, setAnalysisCompleted] = useState(false);
-
-  // Check for saved data on component mount
-  useEffect(() => {
-    if (!isLoading && hasStoredData()) {
-      const savedData = getFormData();
-      setLastSaved(savedData.lastSaved);
-      setShowRecoveryDialog(true);
-    }
-  }, [isLoading, hasStoredData, getFormData]);
+  const formState = useProjectFormState();
+  const analysis = useProjectAnalysis();
+  const auth = useProjectAuth();
+  const dialogs = useProjectDialogs();
 
   // Auto-save form data when values change
   useEffect(() => {
-    if (!isLoading && !showRecoveryDialog) {
+    if (!isLoading && !dialogs.showRecoveryDialog) {
       const timeoutId = setTimeout(() => {
         saveFormData({
-          researchQuestion,
-          additionalContext,
-          file: file ? {
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            lastModified: file.lastModified
+          researchQuestion: formState.researchQuestion,
+          additionalContext: formState.additionalContext,
+          file: formState.file ? {
+            name: formState.file.name,
+            size: formState.file.size,
+            type: formState.file.type,
+            lastModified: formState.file.lastModified
           } : null,
-          parsedData,
-          currentStep: step
+          parsedData: formState.parsedData,
+          currentStep: formState.step
         });
       }, 1000);
 
       return () => clearTimeout(timeoutId);
     }
-  }, [researchQuestion, additionalContext, file, parsedData, step, isLoading, showRecoveryDialog, saveFormData]);
+  }, [
+    formState.researchQuestion,
+    formState.additionalContext,
+    formState.file,
+    formState.parsedData,
+    formState.step,
+    isLoading,
+    dialogs.showRecoveryDialog,
+    saveFormData
+  ]);
+
+  // Check for saved data on component mount
+  useEffect(() => {
+    if (!isLoading && hasStoredData()) {
+      const savedData = getFormData();
+      dialogs.setLastSaved(savedData.lastSaved);
+      dialogs.setShowRecoveryDialog(true);
+    }
+  }, [isLoading, hasStoredData, getFormData, dialogs]);
 
   const handleRestoreData = () => {
     try {
       const savedData = getFormData();
-      setResearchQuestion(savedData.researchQuestion || '');
-      setAdditionalContext(savedData.additionalContext || '');
-      setParsedData(savedData.parsedData);
-      setStep(savedData.currentStep || 1);
+      formState.setResearchQuestion(savedData.researchQuestion || '');
+      formState.setAdditionalContext(savedData.additionalContext || '');
+      formState.setParsedData(savedData.parsedData);
+      formState.setStep(savedData.currentStep || 1);
       
       if (savedData.file && savedData.parsedData) {
         const mockFile = new File([''], savedData.file.name, {
           type: savedData.file.type,
           lastModified: savedData.file.lastModified
         });
-        setFile(mockFile);
+        formState.setFile(mockFile);
       }
       
-      setShowRecoveryDialog(false);
+      dialogs.setShowRecoveryDialog(false);
       
       toast({
         title: "Progress Restored",
@@ -96,12 +91,8 @@ export const useNewProjectForm = () => {
 
   const handleStartFresh = () => {
     clearFormData();
-    setResearchQuestion('');
-    setAdditionalContext('');
-    setFile(null);
-    setParsedData(null);
-    setStep(1);
-    setShowRecoveryDialog(false);
+    formState.resetForm();
+    dialogs.setShowRecoveryDialog(false);
     
     toast({
       title: "Starting Fresh",
@@ -109,79 +100,37 @@ export const useNewProjectForm = () => {
     });
   };
 
-  const nextStep = () => setStep(prev => prev + 1);
-  const prevStep = () => setStep(prev => prev - 1);
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
-      setFile(selectedFile);
-      setParsedData({ rows: 100, columns: 10, preview: [] });
+      formState.setFile(selectedFile);
+      formState.setParsedData({ rows: 100, columns: 10, preview: [] });
     }
-  };
-
-  const handleFileUpload = () => {
-    if (!file) return;
-    setUploading(true);
-    setParsing(true);
-    
-    setTimeout(() => {
-      setUploading(false);
-      setParsing(false);
-    }, 2000);
   };
 
   const handleStartAnalysisClick = () => {
-    // Check if user is authenticated before starting analysis
-    if (!user) {
-      setShowSignInModal(true);
+    if (!auth.user) {
+      auth.setShowSignInModal(true);
       return;
     }
 
-    console.log('Starting analysis with user authenticated');
-    console.log('Research question:', researchQuestion);
-    console.log('Additional context:', additionalContext);
-    
-    // Start processing analysis immediately
-    setIsProcessingAnalysis(true);
-    
-    // Simulate analysis time
-    setTimeout(() => {
-      setAnalysisCompleted(true);
-      setAnalysisResults({
-        insights: "Based on your research question and data analysis, here are the key findings...",
-        confidence: "high",
-        recommendations: ["Consider implementing A/B testing", "Focus on user engagement metrics"]
-      });
-      
-      // If project name dialog is not open, show results
-      if (!showProjectDialog) {
-        setShowAnalysisView(true);
-        setIsProcessingAnalysis(false);
-      }
-    }, 3000);
-    
-    // Show project naming dialog
-    setShowProjectDialog(true);
+    analysis.startAnalysis(formState.researchQuestion, formState.additionalContext);
+    dialogs.setShowProjectDialog(true);
   };
 
   const handleProjectConfirm = (projectName: string) => {
     console.log('Project named:', projectName);
-    setCurrentProjectName(projectName);
+    formState.setCurrentProjectName(projectName);
     clearFormData();
     
-    // If analysis is completed, show results immediately
-    if (analysisCompleted) {
-      setIsProcessingAnalysis(false);
-      setShowProjectDialog(false);
-      setShowAnalysisView(true);
+    if (analysis.analysisCompleted) {
+      analysis.showResults();
+      dialogs.setShowProjectDialog(false);
     } else {
-      // Wait for analysis to complete
       const checkAnalysis = setInterval(() => {
-        if (analysisCompleted) {
-          setIsProcessingAnalysis(false);
-          setShowProjectDialog(false);
-          setShowAnalysisView(true);
+        if (analysis.analysisCompleted) {
+          analysis.showResults();
+          dialogs.setShowProjectDialog(false);
           clearInterval(checkAnalysis);
         }
       }, 500);
@@ -189,120 +138,29 @@ export const useNewProjectForm = () => {
   };
 
   const handleBackToProject = () => {
-    setShowAnalysisView(false);
-    setAnalysisCompleted(false);
-    setAnalysisResults(null);
-    setCurrentProjectName('');
-  };
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setAuthLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Welcome back!",
-          description: "You have been signed in successfully.",
-        });
-        setShowSignInModal(false);
-        // Proceed with analysis after successful sign in
-        setTimeout(() => handleStartAnalysisClick(), 100);
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setAuthLoading(true);
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/new-project`
-        }
-      });
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Check your email for the confirmation link!",
-        });
-        setShowSignInModal(false);
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setAuthLoading(false);
-    }
+    analysis.resetAnalysis();
+    formState.setCurrentProjectName('');
   };
 
   return {
-    // State
-    step,
-    researchQuestion,
-    additionalContext,
-    file,
-    uploading,
-    parsing,
-    parsedData,
-    showProjectDialog,
-    isProcessingAnalysis,
-    showRecoveryDialog,
-    lastSaved,
-    analysisResults,
-    currentProjectName,
-    showAnalysisView,
-    showSignInModal,
-    authLoading,
-    email,
-    password,
+    // Form state
+    ...formState,
+    
+    // Analysis state
+    ...analysis,
+    
+    // Auth state
+    ...auth,
+    
+    // Dialog state
+    ...dialogs,
     
     // Actions
-    setResearchQuestion,
-    setAdditionalContext,
-    setEmail,
-    setPassword,
-    setShowSignInModal,
-    nextStep,
-    prevStep,
     handleFileChange,
-    handleFileUpload,
     handleStartAnalysisClick,
     handleProjectConfirm,
     handleBackToProject,
     handleRestoreData,
-    handleStartFresh,
-    handleSignIn,
-    handleSignUp
+    handleStartFresh
   };
 };
