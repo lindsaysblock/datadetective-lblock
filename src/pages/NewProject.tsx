@@ -36,6 +36,7 @@ const NewProject = () => {
     authLoading,
     email,
     password,
+    educationalMode,
     setEmail,
     setPassword,
     setResearchQuestion,
@@ -68,6 +69,7 @@ const NewProject = () => {
         researchQuestion={researchQuestion}
         additionalContext={additionalContext}
         dataSource={file ? file.name : 'Database Connection'}
+        educationalMode={educationalMode}
       />
     );
   }

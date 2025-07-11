@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +23,11 @@ export const useNewProjectForm = () => {
 
   // Auto-save form data when values change
   useEffect(() => {
-    if (!isLoading && !dialogs.showRecoveryDialog && !dialogs.recoveryDialogDismissed && formState.researchQuestion) {
+    if (isLoading || dialogs.showRecoveryDialog || dialogs.recoveryDialogDismissed) {
+      return;
+    }
+
+    if (formState.researchQuestion) {
       const timeoutId = setTimeout(() => {
         saveFormData({
           researchQuestion: formState.researchQuestion,
@@ -53,11 +58,11 @@ export const useNewProjectForm = () => {
     saveFormData
   ]);
 
-  // Check for saved data on component mount - always call this hook
+  // Check for saved data on component mount
   useEffect(() => {
-    if (isLoading) return;
-    
-    if (dialogs.recoveryDialogDismissed) return;
+    if (isLoading || dialogs.recoveryDialogDismissed) {
+      return;
+    }
     
     const hasSavedData = hasStoredData();
     console.log('Has stored data:', hasSavedData);
@@ -134,14 +139,14 @@ export const useNewProjectForm = () => {
     }
   };
 
-  const handleStartAnalysisClick = () => {
+  const handleStartAnalysisClick = (educationalMode: boolean) => {
     if (!auth.user) {
       auth.setShowSignInModal(true);
       return;
     }
 
-    // Start analysis immediately
-    analysis.startAnalysis(formState.researchQuestion, formState.additionalContext);
+    // Start analysis immediately with educational mode
+    analysis.startAnalysis(formState.researchQuestion, formState.additionalContext, educationalMode);
     
     // Show project naming dialog immediately (it will persist until analysis is complete)
     dialogs.setShowProjectDialog(true);

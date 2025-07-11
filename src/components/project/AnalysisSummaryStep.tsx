@@ -12,7 +12,7 @@ interface AnalysisSummaryStepProps {
   additionalContext: string;
   isProcessingAnalysis: boolean;
   onPrevious: () => void;
-  onStartAnalysis: () => void;
+  onStartAnalysis: (educationalMode: boolean) => void;
 }
 
 const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
@@ -24,6 +24,10 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   onStartAnalysis
 }) => {
   const [educationalMode, setEducationalMode] = React.useState(true);
+
+  const handleStartAnalysis = () => {
+    onStartAnalysis(educationalMode);
+  };
 
   return (
     <Card className="w-full shadow-sm border-0 bg-white/80 backdrop-blur-sm">
@@ -53,7 +57,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <h4 className="font-semibold text-gray-900 mb-2">Educational Mode</h4>
-              <p className="text-sm text-gray-600">Show detailed explanations and learning insights during analysis</p>
+              <p className="text-sm text-gray-600">Show step-by-step SQL query breakdown and learning insights in results</p>
             </div>
             <div className="flex items-center space-x-2">
               <Switch
@@ -74,7 +78,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             Previous
           </Button>
           <Button 
-            onClick={onStartAnalysis}
+            onClick={handleStartAnalysis}
             disabled={!researchQuestion || !file || isProcessingAnalysis}
             className="bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 text-white px-8 py-3 text-lg"
           >
