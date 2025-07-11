@@ -27,21 +27,59 @@ export const useDataAnalysis = () => {
       } : 'No data structure'
     });
 
+    // Validate context before proceeding
+    if (!context.researchQuestion?.trim()) {
+      const error = 'Research question is required for analysis';
+      setAnalysisError(error);
+      toast({
+        title: "Analysis Error",
+        description: error,
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    if (!context.parsedData || !Array.isArray(context.parsedData) || context.parsedData.length === 0) {
+      const error = 'Valid data is required for analysis';
+      setAnalysisError(error);
+      toast({
+        title: "Analysis Error", 
+        description: error,
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    const dataFile = context.parsedData[0];
+    if (!dataFile.rows || !Array.isArray(dataFile.rows) || dataFile.rows.length === 0) {
+      const error = 'No data rows found in uploaded file';
+      setAnalysisError(error);
+      toast({
+        title: "Analysis Error",
+        description: error,
+        variant: "destructive",
+      });
+      return null;
+    }
+
     setIsAnalyzing(true);
     setAnalysisError(null);
     
     try {
+      console.log('📊 Executing real analysis with AnalysisCoordinator...');
+      
       // Use AnalysisCoordinator directly for real analysis
       const report = await AnalysisCoordinator.executeAnalysis(context);
       
-      console.log('✅ Real analysis completed:', {
+      console.log('✅ Real analysis completed successfully:', {
         confidence: report.confidence,
         insightsCount: report.insights?.length || 0,
         resultsCount: report.results?.length || 0,
-        recommendationsCount: report.recommendations?.length || 0
+        recommendationsCount: report.recommendations?.length || 0,
+        hasSQL: !!report.sqlQuery
       });
 
-      // Transform the report to the expected format
+      // Transform the report to the expected AnalysisResults format
       const results: AnalysisResults = {
         insights: Array.isArray(report.insights) ? report.insights.join('\n\n') : report.insights || 'No insights generated',
         confidence: report.confidence || 'medium',
@@ -69,8 +107,8 @@ export const useDataAnalysis = () => {
       setAnalysisResults(results);
       
       toast({
-        title: "Real Analysis Complete",
-        description: `Analysis completed with ${report.results?.length || 0} findings and ${report.insights?.length || 0} insights.`,
+        title: "Real Analysis Complete ✅",
+        description: `Analysis completed with ${report.results?.length || 0} findings and confidence level: ${report.confidence}`,
       });
 
       return results;
