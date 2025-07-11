@@ -2,11 +2,12 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Settings, TestTube, Play } from 'lucide-react';
+import { Shield, Settings, TestTube, Play, Bug } from 'lucide-react';
 import QARunner from '../QARunner';
 import AutoRefactorPrompts from '../AutoRefactorPrompts';
 import LoadTestRunner from '../LoadTestRunner';
 import FinalQARunner from '../FinalQARunner';
+import ComprehensiveE2ETest from '../testing/ComprehensiveE2ETest';
 
 const AdminDashboard: React.FC = () => {
   return (
@@ -23,7 +24,7 @@ const AdminDashboard: React.FC = () => {
         </CardHeader>
         <CardContent className="p-6">
           <Tabs defaultValue="qa" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="qa" className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
                 Quality Assurance
@@ -31,6 +32,10 @@ const AdminDashboard: React.FC = () => {
               <TabsTrigger value="load-testing" className="flex items-center gap-2">
                 <TestTube className="w-4 h-4" />
                 Load Testing
+              </TabsTrigger>
+              <TabsTrigger value="e2e-testing" className="flex items-center gap-2">
+                <Bug className="w-4 h-4" />
+                E2E Testing
               </TabsTrigger>
               <TabsTrigger value="final-qa" className="flex items-center gap-2">
                 <Play className="w-4 h-4" />
@@ -47,6 +52,12 @@ const AdminDashboard: React.FC = () => {
 
             <TabsContent value="load-testing" className="mt-6">
               <LoadTestRunner />
+            </TabsContent>
+
+            <TabsContent value="e2e-testing" className="mt-6">
+              <div className="space-y-6">
+                <ComprehensiveE2ETest />
+              </div>
             </TabsContent>
 
             <TabsContent value="final-qa" className="mt-6">

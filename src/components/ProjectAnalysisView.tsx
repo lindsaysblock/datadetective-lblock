@@ -5,12 +5,11 @@ import ProjectContextCard from './analysis/ProjectContextCard';
 import DigDeeperCard from './analysis/DigDeeperCard';
 import AnalysisResultsCard from './analysis/AnalysisResultsCard';
 import AnalysisExportBar from './analysis/AnalysisExportBar';
+import AnalysisActionBar from './analysis/AnalysisActionBar';
 import DetailedAnalysisResults from './analysis/DetailedAnalysisResults';
 import AskMoreQuestionsModal from './analysis/AskMoreQuestionsModal';
 import QuestionLogDisplay from './analysis/QuestionLogDisplay';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { MessageSquarePlus } from 'lucide-react';
 import { useQuestionLog } from '@/hooks/useQuestionLog';
 import { DataAnalysisContext } from '@/types/data';
 
@@ -71,6 +70,20 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
     console.log('Create recurring report', analysisResults);
   };
 
+  const handleAskMoreQuestions = () => {
+    setShowAskMoreModal(true);
+  };
+
+  const handleShowAIRecommendations = () => {
+    console.log('Show AI recommendations');
+    // TODO: Implement AI recommendations modal
+  };
+
+  const handleCreateVisuals = () => {
+    console.log('Create visuals');
+    // TODO: Implement create visuals modal
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="container mx-auto px-6 py-8 max-w-7xl">
@@ -79,22 +92,19 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
           onBackToProject={onBackToProject}
         />
 
+        {/* Prominent Action Bar */}
+        <AnalysisActionBar
+          onAskMoreQuestions={handleAskMoreQuestions}
+          onShowAIRecommendations={handleShowAIRecommendations}
+          onCreateVisuals={handleCreateVisuals}
+          onExportFindings={handleExportFindings}
+        />
+
         <AnalysisExportBar
           onExportFindings={handleExportFindings}
           onExportVisuals={handleExportVisuals}
           onCreateRecurringReport={handleCreateRecurringReport}
         />
-
-        {/* Ask More Questions Button */}
-        <div className="flex justify-center mb-6">
-          <Button
-            onClick={() => setShowAskMoreModal(true)}
-            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
-          >
-            <MessageSquarePlus className="w-4 h-4 mr-2" />
-            Ask More Questions
-          </Button>
-        </div>
 
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-6">
@@ -141,14 +151,17 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
               />
               
               {questionLog.length === 0 && (
-                <div className="text-center py-8">
-                  <Button
-                    onClick={() => setShowAskMoreModal(true)}
-                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
-                  >
-                    <MessageSquarePlus className="w-4 h-4 mr-2" />
-                    Ask Your First Additional Question
-                  </Button>
+                <div className="text-center py-12">
+                  <div className="mb-4">
+                    <h3 className="text-xl font-semibold text-gray-700 mb-2">No additional questions yet</h3>
+                    <p className="text-gray-500">Ask more questions to dive deeper into your analysis</p>
+                  </div>
+                  <AnalysisActionBar
+                    onAskMoreQuestions={handleAskMoreQuestions}
+                    onShowAIRecommendations={handleShowAIRecommendations}
+                    onCreateVisuals={handleCreateVisuals}
+                    onExportFindings={handleExportFindings}
+                  />
                 </div>
               )}
             </div>
