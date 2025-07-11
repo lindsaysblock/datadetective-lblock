@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, BookOpen, Sparkles } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { ArrowLeft, Play, BookOpen } from 'lucide-react';
 import AnalysisResultsCard from '@/components/analysis/AnalysisResultsCard';
 
 interface AnalysisSummaryStepProps {
@@ -28,6 +30,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   onStartAnalysis,
   onPrevious
 }) => {
+  const [educationalMode, setEducationalMode] = useState(false);
   const hasData = parsedData && parsedData.length > 0;
   const totalRows = hasData ? parsedData.reduce((sum, file) => sum + (file.rows || 0), 0) : 0;
   const totalFiles = hasData ? parsedData.length : 0;
@@ -84,7 +87,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Ready for Analysis</h2>
-        <p className="text-gray-600">Review your setup and start the analysis</p>
+        <p className="text-gray-600">Review your setup and start the case</p>
       </div>
 
       {/* Summary Card */}
@@ -135,30 +138,39 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <Button 
-              onClick={() => onStartAnalysis(false)}
-              className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 h-auto flex items-center justify-center gap-2"
-            >
-              <Play className="w-5 h-5" />
-              <div className="text-left">
-                <div className="font-medium">Start Analysis</div>
-                <div className="text-xs text-purple-200">Get instant insights</div>
-              </div>
-            </Button>
-
-            <Button 
-              onClick={() => onStartAnalysis(true)}
-              variant="outline"
-              className="flex-1 bg-white hover:bg-orange-50 hover:border-orange-300 px-6 py-3 h-auto flex items-center justify-center gap-2"
-            >
+          {/* Educational Mode Toggle */}
+          <div className="flex items-center justify-between p-4 bg-orange-50 border border-orange-200 rounded-lg mb-6">
+            <div className="flex items-center gap-3">
               <BookOpen className="w-5 h-5 text-orange-600" />
-              <div className="text-left">
-                <div className="font-medium text-gray-900">Educational Mode</div>
-                <div className="text-xs text-gray-500">Learn how it works</div>
+              <div>
+                <Label htmlFor="educational-mode" className="text-sm font-medium text-gray-900 cursor-pointer">
+                  Learn how to analyze step-by-step
+                </Label>
+                <p className="text-xs text-gray-600 mt-1">
+                  Get detailed explanations of each analysis step
+                </p>
               </div>
-            </Button>
+            </div>
+            <Switch
+              id="educational-mode"
+              checked={educationalMode}
+              onCheckedChange={setEducationalMode}
+            />
           </div>
+
+          {/* Start Case Button */}
+          <Button 
+            onClick={() => onStartAnalysis(educationalMode)}
+            className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-4 h-auto flex items-center justify-center gap-3 text-lg"
+          >
+            <Play className="w-6 h-6" />
+            <div>
+              <div className="font-semibold">Start the Case</div>
+              <div className="text-sm text-purple-200">
+                {educationalMode ? 'With step-by-step guidance' : 'Get instant insights'}
+              </div>
+            </div>
+          </Button>
         </CardContent>
       </Card>
 
