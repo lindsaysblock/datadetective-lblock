@@ -1,5 +1,5 @@
 
-import { LoadTestingSystem, type LoadTestConfig } from '../testing/loadTesting/loadTestingSystem';
+import { LoadTestingSystem, type LoadTestConfig } from '../loadTesting';
 import { UnitTestingSystem } from '../unitTesting';
 import { QATestSuites } from './qaTestSuites';
 
