@@ -1,5 +1,6 @@
 
 import { useToast } from '@/hooks/use-toast';
+import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
 
 export const useProjectFormHandlers = (
   formState: any,
@@ -11,6 +12,7 @@ export const useProjectFormHandlers = (
   getFormData: any
 ) => {
   const { toast } = useToast();
+  const { saveDataset } = useDatasetPersistence();
 
   const handleRestoreData = () => {
     console.log('handleRestoreData called');
@@ -74,9 +76,40 @@ export const useProjectFormHandlers = (
     dialogs.setShowProjectDialog(true);
   };
 
-  const handleProjectConfirm = (projectName: string) => {
+  const handleProjectConfirm = async (projectName: string) => {
     console.log('Project named:', projectName);
     formState.setCurrentProjectName(projectName);
+    
+    // Save the project to the database
+    try {
+      if (formState.files && formState.files.length > 0) {
+        // Use the first file's name as the filename
+        const filename = formState.files[0].name;
+        await saveDataset(filename, {
+          columns: formState.parsedData[0]?.columns || [],
+          rows: formState.parsedData || [],
+          summary: {
+            projectName: projectName,
+            researchQuestion: formState.researchQuestion,
+            additionalContext: formState.additionalContext,
+            totalRows: formState.parsedData?.length || 0,
+            description: formState.researchQuestion
+          }
+        });
+        
+        toast({
+          title: "Project Saved",
+          description: `${projectName} has been saved to your project history.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error saving project:', error);
+      toast({
+        title: "Save Failed",
+        description: "Project could not be saved to history.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBackToProject = () => {

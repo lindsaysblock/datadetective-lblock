@@ -79,14 +79,14 @@ const QueryHistory = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <CardTitle className="text-lg">
-                        {dataset.name || `Project ${index + 1}`}
+                        {dataset.summary?.projectName || dataset.name || `Project ${index + 1}`}
                       </CardTitle>
                       <Badge variant="secondary" className="bg-green-100 text-green-800">
                         active
                       </Badge>
                     </div>
                     <CardDescription className="text-gray-600">
-                      {dataset.summary?.description || 'Data analysis project'}
+                      {dataset.summary?.description || dataset.summary?.researchQuestion || 'Data analysis project'}
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">

@@ -11,6 +11,7 @@ import NewProject from './pages/NewProject';
 import Index from './pages/Index';
 import Home from './pages/Home';
 import QueryHistory from './pages/QueryHistory';
+import LegalFooter from './components/LegalFooter';
 import { generateMockAnalysisResults } from './utils/mockDataGenerator';
 import { EnhancedAnalyticsProvider } from '@/contexts/EnhancedAnalyticsContext';
 
@@ -71,32 +72,35 @@ function App() {
       }}
     >
       <Router>
-        <div className="min-h-screen bg-background text-foreground">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/dashboard" element={<DashboardContainer />} />
-            <Route path="/new-project" element={<NewProject />} />
-            <Route path="/query-history" element={<QueryHistory />} />
-            <Route path="/reporting" element={<VisualizationReporting />} />
-            <Route
-              path="/project-analysis"
-              element={
-                analysisResults ? (
-                  <ProjectAnalysisView
-                    projectName={projectName}
-                    analysisResults={analysisResults}
-                    onBackToProject={handleBackToProject}
-                    researchQuestion={researchQuestion}
-                    additionalContext={additionalContext}
-                    dataSource={dataSource}
-                  />
-                ) : (
-                  <Index />
-                )
-              }
-            />
-          </Routes>
+        <div className="min-h-screen bg-background text-foreground flex flex-col">
+          <div className="flex-1">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/home" element={<Home />} />
+              <Route path="/dashboard" element={<DashboardContainer />} />
+              <Route path="/new-project" element={<NewProject />} />
+              <Route path="/query-history" element={<QueryHistory />} />
+              <Route path="/reporting" element={<VisualizationReporting />} />
+              <Route
+                path="/project-analysis"
+                element={
+                  analysisResults ? (
+                    <ProjectAnalysisView
+                      projectName={projectName}
+                      analysisResults={analysisResults}
+                      onBackToProject={handleBackToProject}
+                      researchQuestion={researchQuestion}
+                      additionalContext={additionalContext}
+                      dataSource={dataSource}
+                    />
+                  ) : (
+                    <Index />
+                  )
+                }
+              />
+            </Routes>
+          </div>
+          <LegalFooter />
           <Toaster />
         </div>
       </Router>
