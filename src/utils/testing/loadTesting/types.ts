@@ -21,6 +21,17 @@ export interface LoadTestResult {
   cpuUsage: number;
   successfulRequests: number;
   failedRequests: number;
+  config: LoadTestConfig;
+  results: TestExecutionResult[];
+  success: boolean;
+  error?: string;
+  timestamp: Date;
+}
+
+export interface TestExecutionResult {
+  success: boolean;
+  responseTime: number;
+  error?: string;
 }
 
 export interface LoadTestMetrics {

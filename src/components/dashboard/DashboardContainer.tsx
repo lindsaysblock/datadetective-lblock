@@ -13,14 +13,14 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ data }) => {
   const { processedData, findings, recommendations, hypotheses } = useDashboardData(data);
 
   // Ensure the data has the required structure with all ParsedData properties
-  const normalizedData: ParsedData = processedData || {
-    columns: [],
-    rows: [],
-    rowCount: 0,
-    fileSize: 0,
-    summary: {
-      totalRows: 0,
-      totalColumns: 0
+  const normalizedData: ParsedData = {
+    columns: processedData?.columns || [],
+    rows: processedData?.rows || [],
+    rowCount: processedData?.rowCount || processedData?.rows?.length || 0,
+    fileSize: processedData?.fileSize || 0,
+    summary: processedData?.summary || {
+      totalRows: processedData?.rows?.length || 0,
+      totalColumns: processedData?.columns?.length || 0
     }
   };
 
