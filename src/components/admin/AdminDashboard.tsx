@@ -39,7 +39,10 @@ const AdminDashboard: React.FC = () => {
             </TabsList>
 
             <TabsContent value="qa" className="mt-6">
-              <QARunner />
+              <div className="space-y-6">
+                <QARunner />
+                <AutoRefactorPrompts />
+              </div>
             </TabsContent>
 
             <TabsContent value="load-testing" className="mt-6">
@@ -52,10 +55,6 @@ const AdminDashboard: React.FC = () => {
           </Tabs>
         </CardContent>
       </Card>
-      
-      {/* Include QA Runner and Auto Refactor Prompts only in admin context */}
-      <QARunner />
-      <AutoRefactorPrompts />
     </div>
   );
 };
