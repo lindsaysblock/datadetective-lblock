@@ -9,6 +9,7 @@ interface UseDataAnalysisReturn {
   analysisCompleted: boolean;
   showAnalysisView: boolean;
   educationalMode: boolean;
+  analysisError: string | null;
   startAnalysis: (context: DataAnalysisContext) => Promise<void>;
   showResults: () => void;
   resetAnalysis: () => void;
@@ -21,6 +22,7 @@ export const useDataAnalysis = (): UseDataAnalysisReturn => {
   const [analysisCompleted, setAnalysisCompleted] = useState(false);
   const [showAnalysisView, setShowAnalysisView] = useState(false);
   const [educationalMode, setEducationalMode] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const startAnalysis = useCallback(async (context: DataAnalysisContext) => {
     console.log('🚀 Starting analysis with context:', context);
@@ -30,10 +32,11 @@ export const useDataAnalysis = (): UseDataAnalysisReturn => {
     setAnalysisCompleted(false);
     setShowAnalysisView(false);
     setEducationalMode(context.educationalMode);
+    setAnalysisError(null);
     
     try {
-      // Simulate processing time for UX
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Add UX delay for better user experience
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       const results = await AnalysisEngine.analyzeData(context);
       
@@ -42,11 +45,18 @@ export const useDataAnalysis = (): UseDataAnalysisReturn => {
       
       console.log('✅ Analysis completed:', results);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Analysis failed';
       console.error('❌ Analysis failed:', error);
+      
+      setAnalysisError(errorMessage);
       setAnalysisResults({
-        insights: 'Analysis failed due to an error. Please try again.',
+        insights: `Analysis failed: ${errorMessage}`,
         confidence: 'low',
-        recommendations: ['Check your data format', 'Ensure file is not corrupted', 'Try a different file'],
+        recommendations: [
+          'Check your data format and try again',
+          'Ensure your file is not corrupted',
+          'Try uploading a different file'
+        ],
         detailedResults: [],
         sqlQuery: '-- Analysis failed'
       });
@@ -67,6 +77,7 @@ export const useDataAnalysis = (): UseDataAnalysisReturn => {
     setAnalysisCompleted(false);
     setShowAnalysisView(false);
     setEducationalMode(false);
+    setAnalysisError(null);
   }, []);
 
   return {
@@ -75,6 +86,7 @@ export const useDataAnalysis = (): UseDataAnalysisReturn => {
     analysisCompleted,
     showAnalysisView,
     educationalMode,
+    analysisError,
     startAnalysis,
     showResults,
     resetAnalysis,
