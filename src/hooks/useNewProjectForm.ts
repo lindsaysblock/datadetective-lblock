@@ -21,9 +21,9 @@ export const useNewProjectForm = () => {
   console.log('Form state initialized:', formState);
   console.log('Current step from form state:', formState.step);
 
-  // Auto-save form data when values change, but not when recovery dialog is open
+  // Auto-save form data when values change
   useEffect(() => {
-    if (!isLoading && !dialogs.showRecoveryDialog && formState.researchQuestion && !dialogs.recoveryDialogDismissed) {
+    if (!isLoading && !dialogs.showRecoveryDialog && !dialogs.recoveryDialogDismissed && formState.researchQuestion) {
       const timeoutId = setTimeout(() => {
         saveFormData({
           researchQuestion: formState.researchQuestion,
@@ -54,26 +54,28 @@ export const useNewProjectForm = () => {
     saveFormData
   ]);
 
-  // Check for saved data on component mount
+  // Check for saved data on component mount - always call this hook
   useEffect(() => {
-    if (!isLoading && !dialogs.recoveryDialogDismissed) {
-      const hasSavedData = hasStoredData();
-      console.log('Has stored data:', hasSavedData);
+    if (isLoading) return;
+    
+    if (dialogs.recoveryDialogDismissed) return;
+    
+    const hasSavedData = hasStoredData();
+    console.log('Has stored data:', hasSavedData);
+    
+    if (hasSavedData) {
+      const savedData = getFormData();
+      console.log('Saved data found:', savedData);
       
-      if (hasSavedData) {
-        const savedData = getFormData();
-        console.log('Saved data found:', savedData);
-        
-        // Only show recovery dialog if there's meaningful saved data
-        const hasMeaningfulData = savedData.researchQuestion || savedData.additionalContext || savedData.file;
-        
-        if (hasMeaningfulData) {
-          dialogs.setLastSaved(savedData.lastSaved);
-          dialogs.setShowRecoveryDialog(true);
-        }
+      // Only show recovery dialog if there's meaningful saved data
+      const hasMeaningfulData = savedData.researchQuestion || savedData.additionalContext || savedData.file;
+      
+      if (hasMeaningfulData) {
+        dialogs.setLastSaved(savedData.lastSaved);
+        dialogs.setShowRecoveryDialog(true);
       }
     }
-  }, [isLoading, hasStoredData, getFormData, dialogs]);
+  }, [isLoading, dialogs.recoveryDialogDismissed, hasStoredData, getFormData, dialogs]);
 
   const handleRestoreData = () => {
     console.log('handleRestoreData called');
