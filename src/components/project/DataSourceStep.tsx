@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, File, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Upload, File, CheckCircle, ArrowRight, ArrowLeft, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -30,6 +30,37 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
   onPrevious
 }) => {
   const hasValidData = parsedData && parsedData.length > 0;
+
+  const handleAddAdditionalSource = () => {
+    // Trigger file input for additional files
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = true;
+    fileInput.accept = '.csv,.json,.txt';
+    fileInput.onchange = (e) => {
+      if (e.target && (e.target as HTMLInputElement).files) {
+        const mockEvent = {
+          target: e.target as HTMLInputElement,
+          currentTarget: e.target as HTMLInputElement,
+          preventDefault: () => {},
+          stopPropagation: () => {},
+          nativeEvent: new Event('change'),
+          isDefaultPrevented: () => false,
+          isPropagationStopped: () => false,
+          persist: () => {},
+          bubbles: false,
+          cancelable: false,
+          defaultPrevented: false,
+          eventPhase: 0,
+          isTrusted: false,
+          timeStamp: Date.now(),
+          type: 'change'
+        } as React.ChangeEvent<HTMLInputElement>;
+        onFileChange(mockEvent);
+      }
+    };
+    fileInput.click();
+  };
 
   return (
     <div className="space-y-6">
@@ -102,39 +133,80 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
         </CardContent>
       </Card>
 
-      {/* Data Preview */}
+      {/* Data Successfully Processed Section */}
       {hasValidData && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
-              Data Successfully Processed
+              Data Sources Connected!
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              <p className="text-sm text-green-700 mb-4">
+                {parsedData.length} file{parsedData.length > 1 ? 's' : ''} uploaded successfully.
+              </p>
+              
               {parsedData.map((data, index) => (
-                <div key={index} className="border rounded-lg p-4 bg-green-50">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900">{data.name}</h4>
-                    <div className="text-sm text-gray-600">
-                      {data.rows} rows × {data.columns} columns
-                    </div>
+                <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <File className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-900">{data.name}</span>
+                    <span className="text-xs text-green-600">
+                      ({data.rows} rows × {data.columns} columns)
+                    </span>
                   </div>
-                  <p className="text-sm text-gray-600">
-                    Successfully processed and ready for analysis
-                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onRemoveFile(index)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    ×
+                  </Button>
                 </div>
               ))}
               
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <p className="text-blue-800 font-medium">
-                  ✅ Your data is ready! Continue to the next step to add context.
-                </p>
-              </div>
+              <p className="text-xs text-green-600">
+                Successfully processed and ready for analysis
+              </p>
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Add Additional Source Section */}
+      {hasValidData && (
+        <Card className="border-2 border-dashed border-gray-300">
+          <CardContent className="p-6 text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <Upload className="w-8 h-8 text-gray-400" />
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Want to add another data source?
+                </h3>
+              </div>
+              <Button
+                variant="outline"
+                onClick={handleAddAdditionalSource}
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Additional Source
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Success Message */}
+      {hasValidData && (
+        <div className="text-center p-4 bg-blue-50 rounded-lg">
+          <p className="text-blue-800 font-medium">
+            ✅ Your data is ready! Continue to the next step to add context.
+          </p>
+        </div>
       )}
 
       {/* Navigation */}
