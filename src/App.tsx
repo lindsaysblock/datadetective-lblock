@@ -1,80 +1,125 @@
-
-import React, { memo, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { Toaster } from '@/components/ui/sonner';
-import { performanceMonitor, trackMemory } from './utils/performance/performanceMonitor';
-
-// Lazy load components for better performance
-const NewProject = React.lazy(() => import('./pages/NewProject'));
-const QueryHistory = React.lazy(() => import('./pages/QueryHistory'));
-const Index = React.lazy(() => import('./pages/Index'));
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-
-// Create query client with optimized settings
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
-      retry: 1, // Reduce retries for better performance
-      refetchOnWindowFocus: false, // Prevent unnecessary refetches
-    },
-  },
-});
-
-// Memoized route components
-const MemoizedNewProject = memo(NewProject);
-const MemoizedQueryHistory = memo(QueryHistory);
-const MemoizedIndex = memo(Index);
-const MemoizedDashboard = memo(Dashboard);
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { useToast } from "@/hooks/use-toast"
+import { Toast } from "@/components/ui/toast"
+import DataUpload from './components/DataUpload';
+import DashboardContainer from './components/dashboard/DashboardContainer';
+import VisualizationReporting from './components/VisualizationReporting';
+import ProjectAnalysisView from './components/ProjectAnalysisView';
+import { Button } from "@/components/ui/button"
+import { Rocket } from "lucide-react"
+import { generateMockAnalysisResults } from './utils/mockDataGenerator';
+import { EnhancedAnalyticsProvider } from '@/contexts/EnhancedAnalyticsContext';
 
 function App() {
+  const [data, setData] = useState<any>(null);
+  const [analysisResults, setAnalysisResults] = useState<any>(null);
+  const [projectName, setProjectName] = useState('My Project');
+  const [researchQuestion, setResearchQuestion] = useState('What are the key trends in user behavior?');
+  const [additionalContext, setAdditionalContext] = useState('Analyzing user engagement metrics to improve retention.');
+  const [dataSource, setDataSource] = useState('Internal behavioral dataset');
+	const { toast } = useToast()
+
   useEffect(() => {
-    console.log('🚀 App component mounted');
-    // Performance monitoring setup
-    performanceMonitor.startMetric('App Initialization');
-    trackMemory();
-    
-    // Memory leak detection
-    const memoryInterval = setInterval(() => {
-      const snapshot = trackMemory();
-      if (snapshot && performanceMonitor.detectMemoryLeaks()) {
-        console.warn('🚨 Memory leak detected');
-      }
-    }, 60000); // Check every minute
-    
-    performanceMonitor.endMetric('App Initialization');
-    
-    return () => {
-      clearInterval(memoryInterval);
-      performanceMonitor.cleanup();
-    };
+    // Simulate initial data load and analysis
+    // generateSampleData();
   }, []);
 
+  const handleDataUpload = (parsedData: any) => {
+    setData(parsedData);
+		toast({
+			title: "Upload Complete!",
+			description: "Your data has been successfully uploaded.",
+		  })
+  };
+
+  const handleRunAnalysis = () => {
+    // Simulate running analysis and getting results
+    const mockResults = generateMockAnalysisResults();
+    setAnalysisResults(mockResults);
+		toast({
+			title: "Analysis Complete!",
+			description: "Your data has been successfully analyzed.",
+		  })
+  };
+
+  const handleBackToProject = () => {
+    setAnalysisResults(null);
+  };
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider delayDuration={300}>
-        <Toaster position="top-right" />
-        <BrowserRouter>
-          <React.Suspense fallback={
-            <div className="flex items-center justify-center min-h-screen">
-              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+    <EnhancedAnalyticsProvider
+      config={{
+        enableRealTime: true,
+        enableML: true,
+        enableCaching: true,
+        enableScheduling: true,
+        realTimeConfig: {
+          batchSize: 50,
+          processingInterval: 3000,
+          enableStreamProcessing: true
+        },
+        cacheConfig: {
+          maxSize: 200,
+          defaultTTL: 10 * 60 * 1000, // 10 minutes
+          enableCompression: true
+        }
+      }}
+    >
+      <Router>
+        <Routes>
+          <Route path="/" element={
+            <div className="container mx-auto mt-10">
+              <h1 className="text-3xl font-bold text-center mb-6">Data Analysis Tool</h1>
+              <DataUpload onDataUpload={handleDataUpload} />
+              {data && (
+                <div className="mt-6">
+                  <h2 className="text-xl font-semibold mb-3">Dashboard</h2>
+                   <DashboardContainer data={data} />
+                  {!analysisResults && (
+                    <div className="flex justify-center mt-6">
+                      <Button onClick={handleRunAnalysis}>
+                        <Rocket className="mr-2 h-4 w-4" />
+                        Run Analysis
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+							<Toast />
             </div>
-          }>
-            <Routes>
-              <Route path="/" element={<MemoizedIndex />} />
-              <Route path="/new-project" element={<MemoizedNewProject />} />
-              <Route path="/query-history" element={<MemoizedQueryHistory />} />
-              <Route path="/dashboard" element={<MemoizedDashboard />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </React.Suspense>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+          } />
+          <Route path="/reporting" element={<VisualizationReporting />} />
+          <Route
+            path="/project-analysis"
+            element={
+              analysisResults ? (
+                <ProjectAnalysisView
+                  projectName={projectName}
+                  analysisResults={analysisResults}
+                  onBackToProject={handleBackToProject}
+                  researchQuestion={researchQuestion}
+                  additionalContext={additionalContext}
+                  dataSource={dataSource}
+                />
+              ) : (
+                <div className="container mx-auto mt-10">
+                  <h1 className="text-3xl font-bold text-center mb-6">No Analysis Results</h1>
+                  <p className="text-center">Please run an analysis first.</p>
+                  <div className="flex justify-center mt-6">
+                    <Button onClick={handleRunAnalysis}>
+                      <Rocket className="mr-2 h-4 w-4" />
+                      Run Analysis
+                    </Button>
+                  </div>
+                </div>
+              )
+            }
+          />
+        </Routes>
+      </Router>
+    </EnhancedAnalyticsProvider>
   );
 }
 
-export default memo(App);
+export default App;
