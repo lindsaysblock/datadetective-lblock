@@ -50,6 +50,14 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
     setShowAddSource(false);
   };
 
+  const handleNext = () => {
+    if (!hasUploadedData) {
+      // Don't allow proceeding without data
+      return;
+    }
+    onNext();
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -79,6 +87,14 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
             onDatabaseConnect={handleDatabaseConnect}
             onPlatformConnect={handlePlatformConnect}
           />
+
+          {!hasUploadedData && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-amber-800 text-sm">
+                <strong>Data Required:</strong> You must upload a file, paste data, or connect a data source to proceed to the next step.
+              </p>
+            </div>
+          )}
         </div>
       ) : (
         <ConnectedDataSummary
@@ -100,10 +116,11 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
         </Button>
         
         <Button 
-          onClick={onNext}
-          className="bg-blue-600 hover:bg-blue-700"
+          onClick={handleNext}
+          disabled={!hasUploadedData}
+          className={hasUploadedData ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300 cursor-not-allowed"}
         >
-          {hasUploadedData ? 'Next: Business Context' : 'Skip to Business Context'}
+          {hasUploadedData ? 'Next: Business Context' : 'Upload Data to Continue'}
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </div>

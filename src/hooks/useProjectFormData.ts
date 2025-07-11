@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile, type ParsedData } from '@/utils/dataParser';
@@ -19,56 +20,46 @@ export const useProjectFormData = () => {
   };
 
   const removeFile = (index: number) => {
-    try {
-      console.log('Removing file at index:', index);
-      console.log('Current files:', files);
-      console.log('Current parsedData:', parsedData);
-      
-      // Check if we're trying to remove from parsedData when files array is different
-      const targetArray = parsedData.length > files.length ? parsedData : files;
-      const targetLength = Math.max(parsedData.length, files.length);
-      
-      if (index < 0 || index >= targetLength) {
-        console.error(`Invalid file index: ${index}. Valid range: 0-${targetLength - 1}`);
-        toast({
-          title: "Error",
-          description: "Unable to remove file: invalid file index.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Remove from both arrays, but handle cases where arrays might be different lengths
-      setFiles(prev => {
-        if (index < prev.length) {
-          const newFiles = prev.filter((_, i) => i !== index);
-          console.log('New files after removal:', newFiles);
-          return newFiles;
-        }
-        return prev;
-      });
-      
-      setParsedData(prev => {
-        if (index < prev.length) {
-          const newParsedData = prev.filter((_, i) => i !== index);
-          console.log('New parsedData after removal:', newParsedData);
-          return newParsedData;
-        }
-        return prev;
-      });
-
-      toast({
-        title: "File Removed",
-        description: "The selected file has been removed from your project.",
-      });
-    } catch (error) {
-      console.error('Error removing file:', error);
+    console.log('Removing file at index:', index);
+    console.log('Current files:', files.map(f => f.name));
+    console.log('Current parsedData:', parsedData.map(d => d.name || 'unnamed'));
+    
+    if (index < 0) {
+      console.error('Invalid file index:', index);
       toast({
         title: "Error",
-        description: "An error occurred while removing the file. Please try again.",
+        description: "Invalid file index.",
         variant: "destructive",
       });
+      return;
     }
+
+    // Remove from files array
+    setFiles(prev => {
+      if (index >= prev.length) {
+        console.error(`File index ${index} out of bounds for files array (length: ${prev.length})`);
+        return prev;
+      }
+      const newFiles = prev.filter((_, i) => i !== index);
+      console.log('New files after removal:', newFiles.map(f => f.name));
+      return newFiles;
+    });
+    
+    // Remove from parsedData array
+    setParsedData(prev => {
+      if (index >= prev.length) {
+        console.error(`File index ${index} out of bounds for parsedData array (length: ${prev.length})`);
+        return prev;
+      }
+      const newParsedData = prev.filter((_, i) => i !== index);
+      console.log('New parsedData after removal:', newParsedData.map(d => d.name || 'unnamed'));
+      return newParsedData;
+    });
+
+    toast({
+      title: "File Removed",
+      description: "The selected file has been removed from your project.",
+    });
   };
 
   const handleFileUpload = async () => {
