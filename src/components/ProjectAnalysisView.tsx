@@ -92,21 +92,15 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
           onBackToProject={onBackToProject}
         />
 
-        <AnalysisExportBar
-          onExportFindings={handleExportFindings}
-          onExportVisuals={handleExportVisuals}
-          onCreateRecurringReport={handleCreateRecurringReport}
-        />
-
-        {/* Analysis Results Card - Now at the top */}
+        {/* Analysis Results Card - At the top */}
         <div className="mb-8">
           <AnalysisResultsCard analysisResults={analysisResults} />
         </div>
 
-        {/* What's Next Section */}
+        {/* Let's Dig Deeper Section */}
         <div className="mb-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">🚀 What's Next?</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">🔍 Let's Dig Deeper</h2>
             <AnalysisActionBar
               onAskMoreQuestions={handleAskMoreQuestions}
               onShowAIRecommendations={handleShowAIRecommendations}
@@ -187,6 +181,15 @@ const ProjectAnalysisView: React.FC<ProjectAnalysisViewProps> = ({
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Export & Share at the bottom */}
+        <div className="mt-8">
+          <AnalysisExportBar
+            onExportFindings={handleExportFindings}
+            onExportVisuals={handleExportVisuals}
+            onCreateRecurringReport={handleCreateRecurringReport}
+          />
+        </div>
 
         <AskMoreQuestionsModal
           open={showAskMoreModal}

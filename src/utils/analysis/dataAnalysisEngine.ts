@@ -73,13 +73,6 @@ export class DataAnalysisEngine {
     const allResults: AnalysisResult[] = [];
     
     try {
-      // Use analytics manager for basic analysis - await the Promise
-      this.analyticsManager.runCompleteAnalysis(this.data).then(basicResults => {
-        allResults.push(...basicResults);
-      }).catch(error => {
-        console.error('Analytics manager error:', error);
-      });
-
       // Run specialized analyzers with error handling
       const analysisTypes = [
         { name: 'row count', method: () => this.analyzeRowCounts() },
@@ -94,7 +87,7 @@ export class DataAnalysisEngine {
           allResults.push(...results);
           
           if (this.config.enableLogging) {
-            console.log(`✅ ${name} analysis completed`);
+            console.log(`✅ ${name} analysis completed with ${results.length} results`);
           }
         } catch (error) {
           if (this.config.enableLogging) {
@@ -104,9 +97,26 @@ export class DataAnalysisEngine {
         }
       });
 
+      // Use analytics manager for additional analysis
+      this.analyticsManager.runCompleteAnalysis(this.data).then(basicResults => {
+        allResults.push(...basicResults);
+        if (this.config.enableLogging) {
+          console.log(`✅ Analytics manager added ${basicResults.length} results`);
+        }
+      }).catch(error => {
+        console.error('Analytics manager error:', error);
+      });
+
+      // Ensure we have at least some basic results
+      if (allResults.length === 0) {
+        allResults.push(this.createBasicDataSummary());
+      }
+
     } catch (criticalError) {
       console.error('❌ Critical analysis failure:', criticalError);
       allResults.push(this.createErrorResult('critical-analysis-error', criticalError));
+      // Still provide basic summary even on critical error
+      allResults.push(this.createBasicDataSummary());
     }
 
     if (this.config.enableLogging) {
@@ -139,6 +149,20 @@ export class DataAnalysisEngine {
       console.error(`${analysisName} analysis failed:`, error);
       return [this.createErrorResult(`${analysisName.replace(/\s+/g, '-')}-error`, error)];
     }
+  }
+
+  private createBasicDataSummary(): AnalysisResult {
+    const rowCount = this.data.rows?.length || 0;
+    const columnCount = this.data.columns?.length || 0;
+    
+    return {
+      id: 'data-summary',
+      title: 'Dataset Overview',
+      description: 'Basic information about your dataset',
+      value: { rows: rowCount, columns: columnCount },
+      insight: `Your dataset contains ${rowCount} rows and ${columnCount} columns. ${rowCount > 1000 ? 'This is a substantial dataset with good analysis potential.' : rowCount > 100 ? 'This dataset provides a good foundation for analysis.' : 'This is a smaller dataset which may limit some analysis capabilities.'}`,
+      confidence: rowCount > 100 ? 'high' : 'medium'
+    };
   }
 
   private createErrorResult(id: string, error: unknown): AnalysisResult {
