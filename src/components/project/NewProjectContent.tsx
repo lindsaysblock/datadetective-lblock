@@ -61,8 +61,11 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
           <AnalysisSummaryStep
             researchQuestion={formData.researchQuestion}
             additionalContext={formData.additionalContext}
-            files={formData.files}
             parsedData={formData.parsedData}
+            columnMapping={formData.columnMapping}
+            analysisResults={formData.analysisResults}
+            analysisCompleted={formData.analysisCompleted}
+            isProcessingAnalysis={formData.isProcessingAnalysis}
             onStartAnalysis={onStartAnalysis}
             onPrevious={formData.prevStep}
           />

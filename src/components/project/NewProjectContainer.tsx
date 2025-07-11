@@ -30,6 +30,17 @@ const NewProjectContainer = () => {
     dataFiles: formData.parsedData ? 1 : 0
   });
 
+  const handleStartAnalysisWrapper = (educationalMode: boolean = false) => {
+    console.log('Starting analysis with educational mode:', educationalMode);
+    handleStartAnalysis(
+      formData.researchQuestion,
+      formData.additionalContext,
+      educationalMode,
+      formData.parsedData,
+      formData.columnMapping
+    );
+  };
+
   if (formData.showAnalysisView) {
     console.log('Rendering analysis view');
     return (
@@ -62,7 +73,7 @@ const NewProjectContainer = () => {
           onProgressUpdate={handleProgressUpdate}
         />
         
-        <NewProjectContent onStartAnalysis={handleStartAnalysis} />
+        <NewProjectContent onStartAnalysis={handleStartAnalysisWrapper} />
       </div>
     </NewProjectLayout>
   );
