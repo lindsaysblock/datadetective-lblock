@@ -21,7 +21,12 @@ export class EnhancedTestSuite {
 
     try {
       // Run compliance check first
-      const complianceReport = await autoComplianceSystem.runComplianceCheck();
+      const complianceReports = await autoComplianceSystem.runComplianceCheck();
+      
+      // Calculate average compliance score from all reports
+      const averageComplianceScore = complianceReports.length > 0 
+        ? complianceReports.reduce((sum, report) => sum + report.overallScore, 0) / complianceReports.length
+        : 100;
       
       // Run security tests
       const securityResults = await EnhancedAnalyticsTests.runSecurityTests();
@@ -40,11 +45,11 @@ export class EnhancedTestSuite {
 
       console.log(`✅ Enhanced test suite completed in ${duration.toFixed(0)}ms`);
       console.log(`📊 Results: ${summary.passed}/${summary.total} tests passed`);
-      console.log(`🎯 Compliance Score: ${complianceReport.overallScore}%`);
+      console.log(`🎯 Compliance Score: ${averageComplianceScore.toFixed(1)}%`);
 
       return {
         results: allResults,
-        complianceScore: complianceReport.overallScore,
+        complianceScore: averageComplianceScore,
         summary
       };
     } catch (error) {

@@ -1,10 +1,9 @@
-
 import { PerformanceStandards } from './core/performanceStandards';
 import { SecurityStandards } from './core/securityStandards';
 import { TypeStandards } from './core/typeStandards';
 import { CodeQualityRule, ComplianceReport, CodingStandard, StandardViolation } from './types';
 
-export { ComplianceReport, StandardViolation, CodingStandard } from './types';
+export type { ComplianceReport, StandardViolation, CodingStandard } from './types';
 
 export class CodingStandards {
   private static allRules: CodeQualityRule[] = [
