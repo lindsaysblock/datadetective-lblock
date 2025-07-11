@@ -1,9 +1,8 @@
-
 import { DynamicCodebaseAnalyzer, FileAnalysis, ComponentAnalysis } from './dynamicCodebaseAnalyzer';
-import { RefactoringSuggestionGenerator, RefactoringSuggestion } from './refactoringSuggestionGenerator';
-import { RefactoringDecisionEngine, AutoRefactorDecision } from './refactoringDecisionEngine';
+import { RefactoringSuggestionGenerator, type RefactoringSuggestion } from './refactoringSuggestionGenerator';
+import { RefactoringDecisionEngine, type AutoRefactorDecision } from './refactoringDecisionEngine';
 
-export { RefactoringSuggestion, AutoRefactorDecision };
+export type { RefactoringSuggestion, AutoRefactorDecision };
 
 export class EnhancedAutoRefactor {
   private analyzer = new DynamicCodebaseAnalyzer();

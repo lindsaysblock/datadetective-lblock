@@ -1,14 +1,22 @@
 
 export interface PerformanceMetric {
   name: string;
+  duration?: number;
   startTime: number;
   endTime?: number;
-  duration?: number;
   metadata?: Record<string, any>;
+}
+
+export interface MemorySnapshot {
+  timestamp: number;
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
+  jsHeapSizeLimit: number;
 }
 
 export class MetricsCollector {
   private metrics: Map<string, PerformanceMetric> = new Map();
+  private completedMetrics: PerformanceMetric[] = [];
 
   startMetric(name: string, metadata?: Record<string, any>): void {
     const metric: PerformanceMetric = {
@@ -17,36 +25,36 @@ export class MetricsCollector {
       metadata
     };
     this.metrics.set(name, metric);
-    console.log(`⏱️ Started: ${name}`);
   }
 
   endMetric(name: string): number | null {
     const metric = this.metrics.get(name);
-    if (!metric) {
-      console.warn(`⚠️ Metric not found: ${name}`);
-      return null;
-    }
+    if (!metric) return null;
 
-    metric.endTime = performance.now();
-    metric.duration = metric.endTime - metric.startTime;
+    const endTime = performance.now();
+    const duration = endTime - metric.startTime;
     
-    console.log(`✅ Completed: ${name} - ${metric.duration.toFixed(2)}ms`);
+    const completedMetric: PerformanceMetric = {
+      ...metric,
+      endTime,
+      duration
+    };
     
-    // Log warning for slow operations
-    if (metric.duration > 1000) {
-      console.warn(`🐌 Slow operation detected: ${name} took ${metric.duration.toFixed(2)}ms`);
-    }
-
-    return metric.duration;
+    this.completedMetrics.push(completedMetric);
+    this.metrics.delete(name);
+    
+    return duration;
   }
 
   measureFunction<T>(name: string, fn: () => T, metadata?: Record<string, any>): T {
     this.startMetric(name, metadata);
     try {
       const result = fn();
-      return result;
-    } finally {
       this.endMetric(name);
+      return result;
+    } catch (error) {
+      this.endMetric(name);
+      throw error;
     }
   }
 
@@ -58,17 +66,20 @@ export class MetricsCollector {
     this.startMetric(name, metadata);
     try {
       const result = await fn();
-      return result;
-    } finally {
       this.endMetric(name);
+      return result;
+    } catch (error) {
+      this.endMetric(name);
+      throw error;
     }
   }
 
   getMetrics(): PerformanceMetric[] {
-    return Array.from(this.metrics.values()).filter(m => m.duration !== undefined);
+    return [...this.completedMetrics];
   }
 
   clearMetrics(): void {
     this.metrics.clear();
+    this.completedMetrics = [];
   }
 }

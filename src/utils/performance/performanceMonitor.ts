@@ -1,9 +1,9 @@
 
-import { MemoryManager, MemorySnapshot } from './memoryManager';
-import { MetricsCollector, PerformanceMetric } from './metricsCollector';
+import { MemoryManager } from './memoryManager';
+import { MetricsCollector, type PerformanceMetric, type MemorySnapshot } from './metricsCollector';
 import { PerformanceObservers } from './performanceObservers';
 
-export { PerformanceMetric, MemorySnapshot } from './metricsCollector';
+export type { PerformanceMetric, MemorySnapshot };
 
 export class PerformanceMonitor {
   private memoryManager = new MemoryManager();

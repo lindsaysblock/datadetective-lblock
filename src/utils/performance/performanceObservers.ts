@@ -3,57 +3,42 @@ export class PerformanceObservers {
   private observers: PerformanceObserver[] = [];
 
   initialize(): void {
-    this.initializeNavigationObserver();
-    this.initializeResourceObserver();
-    this.initializeLongTaskObserver();
-  }
-
-  private initializeNavigationObserver(): void {
-    try {
-      const navObserver = new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) {
-          console.log(`🚀 Navigation: ${entry.name} - ${entry.duration.toFixed(2)}ms`);
-        }
-      });
-      navObserver.observe({ entryTypes: ['navigation'] });
-      this.observers.push(navObserver);
-    } catch (error) {
-      console.warn('Navigation observer not supported:', error);
+    if (typeof PerformanceObserver === 'undefined') {
+      console.warn('PerformanceObserver not supported');
+      return;
     }
-  }
 
-  private initializeResourceObserver(): void {
     try {
-      const resourceObserver = new PerformanceObserver((list) => {
+      // Measure paint timing
+      const paintObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (entry.duration > 100) { // Only log slow resources
-            console.log(`📦 Slow Resource: ${entry.name} - ${entry.duration.toFixed(2)}ms`);
-          }
+          console.log(`${entry.name}: ${entry.startTime}ms`);
         }
       });
-      resourceObserver.observe({ entryTypes: ['resource'] });
-      this.observers.push(resourceObserver);
-    } catch (error) {
-      console.warn('Resource observer not supported:', error);
-    }
-  }
+      paintObserver.observe({ entryTypes: ['paint'] });
+      this.observers.push(paintObserver);
 
-  private initializeLongTaskObserver(): void {
-    try {
-      const taskObserver = new PerformanceObserver((list) => {
+      // Measure navigation timing
+      const navigationObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          console.warn(`⚠️ Long Task: ${entry.duration.toFixed(2)}ms - may block UI`);
+          console.log(`Navigation: ${entry.duration}ms`);
         }
       });
-      taskObserver.observe({ entryTypes: ['longtask'] });
-      this.observers.push(taskObserver);
+      navigationObserver.observe({ entryTypes: ['navigation'] });
+      this.observers.push(navigationObserver);
     } catch (error) {
-      console.warn('Long task observer not supported:', error);
+      console.warn('Failed to initialize performance observers:', error);
     }
   }
 
   cleanup(): void {
-    this.observers.forEach(observer => observer.disconnect());
+    this.observers.forEach(observer => {
+      try {
+        observer.disconnect();
+      } catch (error) {
+        console.warn('Failed to disconnect observer:', error);
+      }
+    });
     this.observers = [];
   }
 }

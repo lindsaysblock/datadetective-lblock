@@ -1,63 +1,62 @@
-export interface MemorySnapshot {
-  usedJSHeapSize: number;
-  totalJSHeapSize: number;
-  jsHeapSizeLimit: number;
-  timestamp: number;
-}
+import type { MemorySnapshot } from './metricsCollector';
 
 export class MemoryManager {
-  private memorySnapshots: MemorySnapshot[] = [];
-  private readonly MAX_SNAPSHOTS = 100;
+  private snapshots: MemorySnapshot[] = [];
+  private lastSnapshot: MemorySnapshot | null = null;
 
   takeSnapshot(): MemorySnapshot | null {
-    if ('memory' in performance) {
-      const memory = (performance as any).memory;
-      const snapshot: MemorySnapshot = {
-        usedJSHeapSize: memory.usedJSHeapSize,
-        totalJSHeapSize: memory.totalJSHeapSize,
-        jsHeapSizeLimit: memory.jsHeapSizeLimit,
-        timestamp: Date.now()
-      };
-      
-      this.memorySnapshots.push(snapshot);
-      
-      // Keep only last MAX_SNAPSHOTS snapshots
-      if (this.memorySnapshots.length > this.MAX_SNAPSHOTS) {
-        this.memorySnapshots.shift();
-      }
-      
-      return snapshot;
+    if (!('memory' in performance)) {
+      return null;
     }
-    return null;
+
+    const memory = (performance as any).memory;
+    const snapshot: MemorySnapshot = {
+      timestamp: Date.now(),
+      usedJSHeapSize: memory.usedJSHeapSize,
+      totalJSHeapSize: memory.totalJSHeapSize,
+      jsHeapSizeLimit: memory.jsHeapSizeLimit
+    };
+
+    this.snapshots.push(snapshot);
+    this.lastSnapshot = snapshot;
+    
+    // Keep only last 100 snapshots
+    if (this.snapshots.length > 100) {
+      this.snapshots = this.snapshots.slice(-100);
+    }
+
+    return snapshot;
   }
 
   getMemoryUsage(): number {
-    if ('memory' in performance) {
-      return (performance as any).memory.usedJSHeapSize / 1024 / 1024; // MB
+    if (!('memory' in performance)) {
+      return 0;
     }
-    return 0;
+
+    const memory = (performance as any).memory;
+    return memory.usedJSHeapSize / 1024 / 1024; // Convert to MB
   }
 
   detectMemoryLeaks(): boolean {
-    if (this.memorySnapshots.length < 10) return false;
-    
-    const recent = this.memorySnapshots.slice(-10);
-    const growth = recent[recent.length - 1].usedJSHeapSize - recent[0].usedJSHeapSize;
-    const growthMB = growth / 1024 / 1024;
-    
-    if (growthMB > 50) {
-      console.warn(`🚨 Potential memory leak detected: ${growthMB.toFixed(2)}MB growth in recent snapshots`);
-      return true;
-    }
-    
-    return false;
+    if (this.snapshots.length < 2) return false;
+
+    const recent = this.snapshots.slice(-10);
+    const trend = recent.reduce((acc, snapshot, index) => {
+      if (index === 0) return acc;
+      const prev = recent[index - 1];
+      return acc + (snapshot.usedJSHeapSize - prev.usedJSHeapSize);
+    }, 0);
+
+    // If memory usage is consistently increasing by more than 5MB
+    return trend > 5 * 1024 * 1024;
   }
 
   getSnapshots(): MemorySnapshot[] {
-    return [...this.memorySnapshots];
+    return [...this.snapshots];
   }
 
   clearSnapshots(): void {
-    this.memorySnapshots = [];
+    this.snapshots = [];
+    this.lastSnapshot = null;
   }
 }
