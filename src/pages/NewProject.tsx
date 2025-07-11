@@ -4,7 +4,7 @@ import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import ProjectNamingDialog from '@/components/data/upload/ProjectNamingDialog';
 import FormRecoveryDialog from '@/components/data/upload/FormRecoveryDialog';
 import ProjectAnalysisView from '@/components/ProjectAnalysisView';
-import AnalyzingIcon from '@/components/AnalyzingIcon';
+import AnalysisProgressView from '@/components/project/AnalysisProgressView';
 import { SignInModal } from '@/components/auth/SignInModal';
 import Header from '@/components/Header';
 import StepIndicator from '@/components/project/StepIndicator';
@@ -37,6 +37,7 @@ const NewProject = () => {
     email,
     password,
     educationalMode,
+    analysisCompleted,
     setEmail,
     setPassword,
     setResearchQuestion,
@@ -54,12 +55,13 @@ const NewProject = () => {
     handleSignIn,
     handleSignUp,
     setShowSignInModal,
-    setShowRecoveryDialog
+    setShowRecoveryDialog,
+    showResults
   } = useNewProjectForm();
 
   console.log('Current step:', step);
   console.log('Show analysis view:', showAnalysisView);
-  console.log('Show recovery dialog:', showRecoveryDialog);
+  console.log('Is processing analysis:', isProcessingAnalysis);
 
   if (showAnalysisView) {
     return (
@@ -153,17 +155,16 @@ const NewProject = () => {
         onSignIn={handleSignIn}
         onSignUp={handleSignUp}
       />
+
+      {/* Analysis Progress Overlay */}
+      <AnalysisProgressView
+        isAnalyzing={isProcessingAnalysis && !showProjectDialog}
+        onComplete={showResults}
+      />
       
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         <ProjectHeader />
         <StepIndicator currentStep={step} />
-        
-        {/* Analysis Progress */}
-        {isProcessingAnalysis && (
-          <div className="mb-8">
-            <AnalyzingIcon isAnalyzing={true} />
-          </div>
-        )}
         
         <div className="space-y-8">
           {renderCurrentStep()}

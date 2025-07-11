@@ -4,7 +4,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 
 interface AnalysisSummaryStepProps {
@@ -18,6 +17,7 @@ interface AnalysisSummaryStepProps {
 
 const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   researchQuestion,
+  files,
   additionalContext,
   isProcessingAnalysis,
   onPrevious,
@@ -33,22 +33,26 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     <Card className="w-full shadow-sm border-0 bg-white/80 backdrop-blur-sm">
       <CardContent className="p-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Analysis</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Analysis Summary</h2>
+          <p className="text-gray-600">Review your case details before starting the analysis</p>
         </div>
 
         <div className="space-y-6">
-          {/* Research Question Section */}
-          <div className="space-y-2">
-            <Label htmlFor="research-question" className="text-base font-medium text-gray-900">
-              Research Question
-            </Label>
-            <Textarea
-              id="research-question"
-              value={researchQuestion}
-              readOnly
-              className="min-h-[120px] bg-gray-50 border-gray-200 text-gray-700 resize-none"
-              placeholder="What do you want to discover from this data? (e.g., 'What are the main trends in sales over time?')"
-            />
+          {/* Research Question Summary */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-900 mb-2">Research Question</h3>
+            <p className="text-blue-800">{researchQuestion}</p>
+          </div>
+
+          {/* Data Source Summary */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h3 className="font-semibold text-green-900 mb-2">Data Source</h3>
+            <p className="text-green-800">
+              {files.length > 0 
+                ? `Data source confirmed: ${files.length} file${files.length > 1 ? 's' : ''} uploaded`
+                : 'Data source connected: Database connection'
+              }
+            </p>
           </div>
 
           {/* Educational Mode Toggle */}
@@ -56,7 +60,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="educational-mode" className="text-amber-800 font-semibold">
-                  Educational Mode
+                  Learn to Code
                 </Label>
                 <p className="text-amber-700 text-sm mt-1">
                   Learn how to code for data analysis with step-by-step explanations of the process
@@ -80,7 +84,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             {isProcessingAnalysis ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Processing...
+                Processing Analysis...
               </>
             ) : (
               <>
