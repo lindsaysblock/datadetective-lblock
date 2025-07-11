@@ -31,7 +31,7 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
   onDataUpdate
 }) => {
   const [activeTab, setActiveTab] = useState('insights');
-  const { currentData, handleDataUpdate } = useDashboardData(parsedData, onDataUpdate);
+  const { processedData, handleDataUpdate } = useDashboardData(parsedData);
   const {
     handleHypothesisUpdate,
     handleSelectVisualization,
@@ -39,14 +39,14 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
     handleShareFinding
   } = useDashboardActions(filename);
 
-  const recommendations = generateRecommendations(currentData);
+  const recommendations = generateRecommendations(processedData);
 
   return (
     <div>
       <DashboardHeader
         filename={filename}
-        totalRows={currentData.summary.totalRows}
-        totalColumns={currentData.summary.totalColumns}
+        totalRows={processedData.summary.totalRows}
+        totalColumns={processedData.summary.totalColumns}
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -68,7 +68,7 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
         <AuditTab />
         <QATab />
         <ManageTab 
-          data={currentData}
+          data={processedData}
           onDataUpdate={handleDataUpdate}
         />
       </Tabs>
