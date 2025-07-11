@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile, type ParsedData } from '@/utils/dataParser';
@@ -22,9 +21,9 @@ export const useProjectFormData = () => {
   const removeFile = (index: number) => {
     console.log('Removing file at index:', index);
     console.log('Current files:', files.map(f => f.name));
-    console.log('Current parsedData:', parsedData.map(d => d.name || 'unnamed'));
+    console.log('Current parsedData length:', parsedData.length);
     
-    if (index < 0) {
+    if (index < 0 || index >= files.length) {
       console.error('Invalid file index:', index);
       toast({
         title: "Error",
@@ -34,25 +33,16 @@ export const useProjectFormData = () => {
       return;
     }
 
-    // Remove from files array
+    // Remove from both arrays at the same index
     setFiles(prev => {
-      if (index >= prev.length) {
-        console.error(`File index ${index} out of bounds for files array (length: ${prev.length})`);
-        return prev;
-      }
       const newFiles = prev.filter((_, i) => i !== index);
       console.log('New files after removal:', newFiles.map(f => f.name));
       return newFiles;
     });
     
-    // Remove from parsedData array
     setParsedData(prev => {
-      if (index >= prev.length) {
-        console.error(`File index ${index} out of bounds for parsedData array (length: ${prev.length})`);
-        return prev;
-      }
       const newParsedData = prev.filter((_, i) => i !== index);
-      console.log('New parsedData after removal:', newParsedData.map(d => d.name || 'unnamed'));
+      console.log('New parsedData length after removal:', newParsedData.length);
       return newParsedData;
     });
 
