@@ -7,172 +7,140 @@ export class FileRemovalTestSuite {
   async runAllTests(): Promise<UnitTestResult[]> {
     const tests: UnitTestResult[] = [];
 
-    tests.push(await this.testRemoveFileBasicFunctionality());
-    tests.push(await this.testRemoveFileInvalidIndex());
-    tests.push(await this.testRemoveFileEmptyArray());
-    tests.push(await this.testRemoveFileUpdatesCorrectArrays());
-    tests.push(await this.testRemoveFileBoundaryConditions());
-    tests.push(await this.testRemoveFileErrorHandling());
-    tests.push(await this.testConnectedDataSummaryRendering());
-    tests.push(await this.testRemoveButtonInteraction());
+    tests.push(await this.testFileRemovalBasic());
+    tests.push(await this.testFileRemovalWithIndex());
+    tests.push(await this.testFileRemovalEdgeCases());
+    tests.push(await this.testFileRemovalCleanup());
+    tests.push(await this.testFileRemovalOptimization());
 
     return tests;
   }
 
-  private async testRemoveFileBasicFunctionality(): Promise<UnitTestResult> {
-    return this.testRunner.runTest('Remove File Basic Functionality', (assert: AssertionHelper) => {
-      // Mock the hook functionality
+  private async testFileRemovalBasic(): Promise<UnitTestResult> {
+    return this.testRunner.runTest('File Removal - Basic Functionality', (assert: AssertionHelper) => {
       const mockFiles = [
-        new File(['content1'], 'file1.csv', { type: 'text/csv' }),
-        new File(['content2'], 'file2.csv', { type: 'text/csv' })
+        { name: 'test1.csv', size: 1024 },
+        { name: 'test2.csv', size: 2048 },
+        { name: 'test3.csv', size: 4096 }
       ];
       
-      const mockParsedData = [
-        { id: '1', name: 'file1.csv', columns: [], rows: [] },
-        { id: '2', name: 'file2.csv', columns: [], rows: [] }
-      ];
-
-      // Simulate removing the first file (index 0)
-      const newFiles = mockFiles.filter((_, i) => i !== 0);
-      const newParsedData = mockParsedData.filter((_, i) => i !== 0);
-
-      assert.equal(newFiles.length, 1, 'Should have 1 file after removal');
-      assert.equal(newParsedData.length, 1, 'Should have 1 parsed data entry after removal');
-      assert.equal(newFiles[0].name, 'file2.csv', 'Remaining file should be file2.csv');
-    });
-  }
-
-  private async testRemoveFileInvalidIndex(): Promise<UnitTestResult> {
-    return this.testRunner.runTest('Remove File Invalid Index', (assert: AssertionHelper) => {
-      const mockFiles = [new File(['content'], 'file.csv', { type: 'text/csv' })];
-      
-      // Test negative index
-      const isValidIndex = (index: number, arrayLength: number) => 
-        index >= 0 && index < arrayLength;
-
-      assert.falsy(isValidIndex(-1, mockFiles.length), 'Negative index should be invalid');
-      assert.falsy(isValidIndex(5, mockFiles.length), 'Index beyond array length should be invalid');
-      assert.truthy(isValidIndex(0, mockFiles.length), 'Valid index should be accepted');
-    });
-  }
-
-  private async testRemoveFileEmptyArray(): Promise<UnitTestResult> {
-    return this.testRunner.runTest('Remove File From Empty Array', (assert: AssertionHelper) => {
-      const mockFiles: File[] = [];
-      const mockParsedData: any[] = [];
-
-      // Attempting to remove from empty array should be handled gracefully
-      const isValidOperation = mockFiles.length > 0;
-      
-      assert.falsy(isValidOperation, 'Should not allow removal from empty array');
-      assert.equal(mockFiles.length, 0, 'Array should remain empty');
-    });
-  }
-
-  private async testRemoveFileUpdatesCorrectArrays(): Promise<UnitTestResult> {
-    return this.testRunner.runTest('Remove File Updates Both Arrays', (assert: AssertionHelper) => {
-      const mockFiles = [
-        new File(['content1'], 'file1.csv'),
-        new File(['content2'], 'file2.csv'),
-        new File(['content3'], 'file3.csv')
-      ];
-      
-      const mockParsedData = [
-        { id: '1', name: 'file1.csv' },
-        { id: '2', name: 'file2.csv' },
-        { id: '3', name: 'file3.csv' }
-      ];
-
-      // Remove middle file (index 1)
-      const newFiles = mockFiles.filter((_, i) => i !== 1);
-      const newParsedData = mockParsedData.filter((_, i) => i !== 1);
-
-      assert.equal(newFiles.length, 2, 'Files array should have 2 items');
-      assert.equal(newParsedData.length, 2, 'ParsedData array should have 2 items');
-      assert.equal(newFiles[0].name, 'file1.csv', 'First file should remain');
-      assert.equal(newFiles[1].name, 'file3.csv', 'Third file should become second');
-      assert.equal(newParsedData[0].name, 'file1.csv', 'First parsed data should remain');
-      assert.equal(newParsedData[1].name, 'file3.csv', 'Third parsed data should become second');
-    });
-  }
-
-  private async testRemoveFileBoundaryConditions(): Promise<UnitTestResult> {
-    return this.testRunner.runTest('Remove File Boundary Conditions', (assert: AssertionHelper) => {
-      const singleFile = [new File(['content'], 'single.csv')];
-      const singleParsedData = [{ id: '1', name: 'single.csv' }];
-
-      // Remove the only file
-      const emptyFiles = singleFile.filter((_, i) => i !== 0);
-      const emptyParsedData = singleParsedData.filter((_, i) => i !== 0);
-
-      assert.equal(emptyFiles.length, 0, 'Should result in empty files array');
-      assert.equal(emptyParsedData.length, 0, 'Should result in empty parsed data array');
-    });
-  }
-
-  private async testRemoveFileErrorHandling(): Promise<UnitTestResult> {
-    return this.testRunner.runTest('Remove File Error Handling', (assert: AssertionHelper) => {
-      // Test error scenarios
-      const mockConsoleError = jest.fn();
-      const originalConsoleError = console.error;
-      console.error = mockConsoleError;
-
-      try {
-        // Simulate error condition
-        const errorOccurred = true; // This would be thrown in actual error scenario
-        
-        if (errorOccurred) {
-          console.error('Error removing file:', 'Mock error');
+      const removeFileAtIndex = (files: any[], index: number) => {
+        if (index >= 0 && index < files.length) {
+          return files.filter((_, i) => i !== index);
         }
-
-        assert.truthy(true, 'Error handling mechanism should be in place');
-      } finally {
-        console.error = originalConsoleError;
-      }
+        throw new Error('Invalid index');
+      };
+      
+      const result = removeFileAtIndex(mockFiles, 1);
+      
+      assert.equal(result.length, 2, 'Should have 2 files after removal');
+      assert.equal(result[0].name, 'test1.csv', 'First file should remain');
+      assert.equal(result[1].name, 'test3.csv', 'Third file should become second');
     });
   }
 
-  private async testConnectedDataSummaryRendering(): Promise<UnitTestResult> {
-    return this.testRunner.runTest('ConnectedDataSummary Renders Remove Button', (assert: AssertionHelper) => {
-      // Test that the component structure supports file removal
-      const mockProps = {
-        parsedData: [{ id: '1', name: 'test.csv', rows: [], columns: [] }],
-        onRemoveFile: jest.fn(),
-        onAddAdditionalSource: jest.fn()
+  private async testFileRemovalWithIndex(): Promise<UnitTestResult> {
+    return this.testRunner.runTest('File Removal - Index Handling', (assert: AssertionHelper) => {
+      const mockFiles = [
+        { name: 'file1.txt', size: 100 },
+        { name: 'file2.txt', size: 200 }
+      ];
+      
+      const removeFileAtIndex = (files: any[], index: number) => {
+        return files.filter((_, i) => i !== index);
       };
-
-      // Verify props are structured correctly for removal functionality
-      assert.truthy(typeof mockProps.onRemoveFile === 'function', 'onRemoveFile should be a function');
-      assert.truthy(Array.isArray(mockProps.parsedData), 'parsedData should be an array');
-      assert.truthy(mockProps.parsedData.length > 0, 'Should have data to remove');
+      
+      // Test removing first file
+      const result1 = removeFileAtIndex(mockFiles, 0);
+      assert.equal(result1.length, 1, 'Should have 1 file after removing first');
+      assert.equal(result1[0].name, 'file2.txt', 'Second file should remain');
+      
+      // Test removing last file
+      const result2 = removeFileAtIndex(mockFiles, 1);
+      assert.equal(result2.length, 1, 'Should have 1 file after removing last');
+      assert.equal(result2[0].name, 'file1.txt', 'First file should remain');
     });
   }
 
-  private async testRemoveButtonInteraction(): Promise<UnitTestResult> {
-    return this.testRunner.runTest('Remove Button Click Interaction', (assert: AssertionHelper) => {
-      // Test button click handler
-      let removedIndex = -1;
-      const mockOnRemoveFile = (index: number) => {
-        removedIndex = index;
+  private async testFileRemovalEdgeCases(): Promise<UnitTestResult> {
+    return this.testRunner.runTest('File Removal - Edge Cases', (assert: AssertionHelper) => {
+      const mockFiles = [{ name: 'single.csv', size: 1024 }];
+      
+      const removeFileAtIndex = (files: any[], index: number) => {
+        return files.filter((_, i) => i !== index);
       };
+      
+      // Test removing from single file array
+      const result = removeFileAtIndex(mockFiles, 0);
+      assert.equal(result.length, 0, 'Should have 0 files after removing only file');
+      
+      // Test removing from empty array (should not throw)
+      const emptyResult = removeFileAtIndex([], 0);
+      assert.equal(emptyResult.length, 0, 'Empty array should remain empty');
+    });
+  }
 
-      // Simulate button click for index 0
-      const handleRemoveFile = (index: number) => {
-        console.log('Removing file at index:', index);
-        mockOnRemoveFile(index);
+  private async testFileRemovalCleanup(): Promise<UnitTestResult> {
+    return this.testRunner.runTest('File Removal - Data Cleanup', (assert: AssertionHelper) => {
+      const mockFileState = {
+        files: [
+          { name: 'test1.csv', size: 1024 },
+          { name: 'test2.csv', size: 2048 }
+        ],
+        parsedData: [{ id: 1, name: 'test' }],
+        columnMapping: { name: 'string', id: 'number' }
       };
+      
+      const removeFileWithCleanup = (state: any, index: number) => {
+        const newFiles = state.files.filter((_: any, i: number) => i !== index);
+        
+        // If no files left, clear related data
+        if (newFiles.length === 0) {
+          return {
+            ...state,
+            files: newFiles,
+            parsedData: [],
+            columnMapping: {}
+          };
+        }
+        
+        return { ...state, files: newFiles };
+      };
+      
+      // Remove all files and check cleanup
+      let result = removeFileWithCleanup(mockFileState, 0);
+      result = removeFileWithCleanup(result, 0);
+      
+      assert.equal(result.files.length, 0, 'No files should remain');
+      assert.equal(result.parsedData.length, 0, 'Parsed data should be cleared');
+      assert.equal(Object.keys(result.columnMapping).length, 0, 'Column mapping should be cleared');
+    });
+  }
 
-      handleRemoveFile(0);
-
-      assert.equal(removedIndex, 0, 'Should call onRemoveFile with correct index');
+  private async testFileRemovalOptimization(): Promise<UnitTestResult> {
+    return this.testRunner.runTest('File Removal - Performance Optimization', (assert: AssertionHelper) => {
+      // Test with larger file list to ensure performance
+      const mockFiles = Array.from({ length: 100 }, (_, i) => ({
+        name: `file${i}.csv`,
+        size: 1024 * (i + 1)
+      }));
+      
+      const removeFileAtIndex = (files: any[], index: number) => {
+        // Optimized removal using filter
+        return files.filter((_, i) => i !== index);
+      };
+      
+      const startTime = performance.now();
+      const result = removeFileAtIndex(mockFiles, 50);
+      const endTime = performance.now();
+      
+      assert.equal(result.length, 99, 'Should have 99 files after removal');
+      assert.truthy(endTime - startTime < 10, 'Removal should be fast (< 10ms)');
+      
+      // Verify file at index 50 was removed
+      const removedFileName = `file${50}.csv`;
+      const fileExists = result.some(f => f.name === removedFileName);
+      assert.falsy(fileExists, 'Removed file should not exist in result');
     });
   }
 }
-
-// Mock jest functions for testing environment
-const jest = {
-  fn: () => {
-    const mockFn = (...args: any[]) => {};
-    return mockFn;
-  }
-};
