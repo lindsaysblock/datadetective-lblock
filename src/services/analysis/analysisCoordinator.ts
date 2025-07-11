@@ -1,4 +1,3 @@
-
 import { DataAnalysisContext } from '@/types/data';
 import { AnalysisReport } from '@/types/analysis';
 import { DataValidator } from '@/utils/analysis/dataValidator';
@@ -16,23 +15,29 @@ export class AnalysisCoordinator {
   }
 
   private async execute(context: DataAnalysisContext): Promise<AnalysisReport> {
-    console.log('🔍 AnalysisCoordinator starting execution with context:', {
+    console.log('🔍 AnalysisCoordinator executing REAL analysis with context:', {
       hasResearchQuestion: !!context.researchQuestion,
-      dataLength: context.parsedData?.length || 0,
-      dataType: typeof context.parsedData
+      dataFilesCount: context.parsedData?.length || 0,
+      firstFileStructure: context.parsedData?.[0] ? {
+        name: context.parsedData[0].name,
+        rows: context.parsedData[0].rows?.length || 0,
+        columns: context.parsedData[0].columns?.length || 0
+      } : 'No data'
     });
     
     try {
       // Validate input context
       this.validateContext(context);
 
-      // Convert parsedData array to ParsedData format if needed
-      const parsedData = this.normalizeParsedData(context.parsedData);
+      // Process the first data file (or combine multiple files if needed)
+      const primaryDataFile = context.parsedData[0];
+      const parsedData = this.normalizeParsedData(primaryDataFile);
 
-      console.log('📊 Analyzing data structure:', {
+      console.log('📊 Processing real data structure:', {
         rows: parsedData.rows?.length || 0,
         columns: parsedData.columns?.length || 0,
-        sampleRow: parsedData.rows?.[0] ? Object.keys(parsedData.rows[0]) : []
+        columnNames: parsedData.columns?.map(col => col.name).slice(0, 5) || [],
+        sampleRowKeys: parsedData.rows?.[0] ? Object.keys(parsedData.rows[0]).slice(0, 5) : []
       });
 
       // Validate data quality
@@ -40,21 +45,26 @@ export class AnalysisCoordinator {
       const validation = validator.validate();
       
       if (!validation.isValid) {
-        console.warn('⚠️ Data validation issues:', validation.errors);
+        console.warn('⚠️ Data validation issues found:', validation.errors);
       }
 
-      // Perform real analysis based on actual data
+      // Perform REAL analysis based on actual data content
+      console.log('🔬 Starting real data analysis...');
       const insights = await this.realDataAnalyzer.generateInsights(context, parsedData);
+      console.log('💡 Generated insights:', insights.length, 'insights');
+      
       const results = await this.resultsGenerator.generateResults(context, parsedData, insights);
+      console.log('📈 Generated results:', results.length, 'results');
+      
       const sqlQuery = this.generateSQLQuery(context, parsedData);
       
       const report: AnalysisReport = {
-        id: `analysis_${Date.now()}`,
+        id: `real_analysis_${Date.now()}`,
         timestamp: new Date(),
         context,
         results,
         insights,
-        confidence: validation.confidence,
+        confidence: this.calculateOverallConfidence(validation, results),
         recommendations: this.realDataAnalyzer.generateRecommendations(insights, validation, parsedData),
         sqlQuery,
         queryBreakdown: this.generateQueryBreakdown(sqlQuery),
@@ -66,16 +76,17 @@ export class AnalysisCoordinator {
         }
       };
 
-      console.log('✅ Real analysis completed successfully:', {
+      console.log('✅ REAL analysis completed successfully:', {
         resultsCount: results.length,
         insightsCount: insights.length,
-        confidence: report.confidence
+        confidence: report.confidence,
+        dataQuality: report.dataQuality.completeness.toFixed(1) + '%'
       });
 
       return report;
       
     } catch (error) {
-      console.error('❌ Analysis failed in coordinator:', error);
+      console.error('❌ Real analysis failed in coordinator:', error);
       return this.createErrorReport(context, error);
     }
   }
@@ -88,17 +99,89 @@ export class AnalysisCoordinator {
     if (!context.parsedData || !Array.isArray(context.parsedData) || context.parsedData.length === 0) {
       throw new Error('Valid parsed data is required for analysis');
     }
+
+    const firstFile = context.parsedData[0];
+    if (!firstFile.rows || !Array.isArray(firstFile.rows) || firstFile.rows.length === 0) {
+      throw new Error('No data rows found in uploaded file');
+    }
   }
 
-  private normalizeParsedData(parsedData: any): ParsedData {
-    return Array.isArray(parsedData) 
-      ? {
-          columns: parsedData.length > 0 ? Object.keys(parsedData[0]).map(key => ({ name: key, type: 'string' })) : [],
-          rows: parsedData,
-          rowCount: parsedData.length,
-          fileSize: JSON.stringify(parsedData).length
-        }
-      : parsedData;
+  private normalizeParsedData(dataFile: any): ParsedData {
+    // Convert data file format to ParsedData format
+    const columns = dataFile.columns || [];
+    const rows = dataFile.rows || [];
+    
+    return {
+      columns: typeof columns[0] === 'string' 
+        ? columns.map((name: string) => ({ name, type: this.inferColumnType(rows, name) }))
+        : columns,
+      rows,
+      rowCount: rows.length,
+      fileSize: JSON.stringify(rows).length,
+      summary: {
+        totalRows: rows.length,
+        totalColumns: columns.length,
+        possibleUserIdColumns: this.findUserIdColumns(columns),
+        possibleEventColumns: this.findEventColumns(columns),
+        possibleTimestampColumns: this.findTimestampColumns(columns, rows)
+      }
+    };
+  }
+
+  private inferColumnType(rows: any[], columnName: string): 'string' | 'number' | 'date' | 'boolean' {
+    const sampleValues = rows.slice(0, 10).map(row => row[columnName]).filter(val => val != null && val !== '');
+    
+    if (sampleValues.length === 0) return 'string';
+    
+    // Check for numbers
+    const numericCount = sampleValues.filter(val => !isNaN(Number(val)) && isFinite(Number(val))).length;
+    if (numericCount / sampleValues.length > 0.7) return 'number';
+    
+    // Check for dates
+    const dateCount = sampleValues.filter(val => {
+      const date = new Date(val);
+      return !isNaN(date.getTime());
+    }).length;
+    if (dateCount / sampleValues.length > 0.7) return 'date';
+    
+    return 'string';
+  }
+
+  private findUserIdColumns(columns: any[]): string[] {
+    const columnNames = typeof columns[0] === 'string' ? columns : columns.map(c => c.name || c);
+    return columnNames.filter((name: string) => 
+      /user|customer|client|account|member|person|id/i.test(name)
+    );
+  }
+
+  private findEventColumns(columns: any[]): string[] {
+    const columnNames = typeof columns[0] === 'string' ? columns : columns.map(c => c.name || c);
+    return columnNames.filter((name: string) => 
+      /event|action|activity|behavior|click|view|visit/i.test(name)
+    );
+  }
+
+  private findTimestampColumns(columns: any[], rows: any[]): string[] {
+    const columnNames = typeof columns[0] === 'string' ? columns : columns.map(c => c.name || c);
+    return columnNames.filter((name: string) => {
+      if (/time|date|timestamp|created|updated|when/i.test(name)) return true;
+      
+      // Check sample values
+      const sampleValues = rows.slice(0, 5).map(row => row[name]).filter(val => val != null);
+      const dateCount = sampleValues.filter(val => !isNaN(new Date(val).getTime())).length;
+      return dateCount / Math.max(sampleValues.length, 1) > 0.5;
+    });
+  }
+
+  private calculateOverallConfidence(validation: any, results: any[]): 'high' | 'medium' | 'low' {
+    if (!validation.isValid) return 'low';
+    
+    const highConfidenceResults = results.filter(r => r.confidence === 'high').length;
+    const totalResults = results.length;
+    
+    if (highConfidenceResults / Math.max(totalResults, 1) > 0.6) return 'high';
+    if (highConfidenceResults / Math.max(totalResults, 1) > 0.3) return 'medium';
+    return 'low';
   }
 
   private generateSQLQuery(context: DataAnalysisContext, data: ParsedData): string {
@@ -106,18 +189,15 @@ export class AnalysisCoordinator {
       const tableName = 'dataset';
       const columns = data.columns.map(col => col.name).join(', ');
       
-      let query = `-- Analysis query for: ${context.researchQuestion}\n`;
+      let query = `-- Real analysis query for: ${context.researchQuestion}\n`;
       query += `SELECT ${columns}\n`;
       query += `FROM ${tableName}\n`;
       
-      // Add WHERE clause based on research question
+      // Add WHERE clause based on research question and data
       if (context.researchQuestion.toLowerCase().includes('recent')) {
-        const dateColumns = data.columns.filter(col => 
-          /date|time|timestamp/i.test(col.name)
-        );
-        
+        const dateColumns = data.summary?.possibleTimestampColumns || [];
         if (dateColumns.length > 0) {
-          query += `WHERE ${dateColumns[0].name} >= DATE_SUB(NOW(), INTERVAL 30 DAY)\n`;
+          query += `WHERE ${dateColumns[0]} >= DATE_SUB(NOW(), INTERVAL 30 DAY)\n`;
         }
       }
       
@@ -126,7 +206,7 @@ export class AnalysisCoordinator {
       
       return query;
     } catch (error) {
-      return '-- Error generating SQL query';
+      return '-- Error generating SQL query for real data';
     }
   }
 
@@ -134,15 +214,15 @@ export class AnalysisCoordinator {
     const breakdown: string[] = [];
     
     if (sqlQuery.includes('SELECT')) {
-      breakdown.push('SELECT: Retrieves specified columns from the dataset');
+      breakdown.push('SELECT: Retrieves specified columns from the real dataset');
     }
     
     if (sqlQuery.includes('FROM')) {
-      breakdown.push('FROM: Specifies the source table/dataset');
+      breakdown.push('FROM: Specifies the source table containing your uploaded data');
     }
     
     if (sqlQuery.includes('WHERE')) {
-      breakdown.push('WHERE: Applies filters to narrow down the results');
+      breakdown.push('WHERE: Applies filters based on your research question');
     }
     
     if (sqlQuery.includes('ORDER BY')) {
@@ -150,7 +230,7 @@ export class AnalysisCoordinator {
     }
     
     if (sqlQuery.includes('LIMIT')) {
-      breakdown.push('LIMIT: Restricts the number of returned rows');
+      breakdown.push('LIMIT: Restricts the number of returned rows for performance');
     }
     
     return breakdown;
@@ -180,14 +260,14 @@ export class AnalysisCoordinator {
       timestamp: new Date(),
       context,
       results: [],
-      insights: [`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
+      insights: [`Real analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
       confidence: 'low',
       recommendations: [
         'Check your data format and ensure it contains valid information',
         'Verify that your file was uploaded correctly',
         'Try uploading a smaller sample of your data first'
       ],
-      sqlQuery: '-- Analysis failed',
+      sqlQuery: '-- Real analysis failed',
       queryBreakdown: [],
       dataQuality: {
         isValid: false,
