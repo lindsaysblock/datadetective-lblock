@@ -5,7 +5,11 @@ import { useDataUpload } from '@/hooks/useDataUpload';
 import DataUploadView from './DataUploadView';
 import DataUploadFlow from '../data/DataUploadFlow';
 
-const DataUploadContainer: React.FC = () => {
+interface DataUploadContainerProps {
+  onDataUpload?: (data: any) => void;
+}
+
+const DataUploadContainer: React.FC<DataUploadContainerProps> = ({ onDataUpload }) => {
   const [showUploadFlow, setShowUploadFlow] = useState(false);
   const { toast } = useToast();
   const uploadHook = useDataUpload();
@@ -20,7 +24,13 @@ const DataUploadContainer: React.FC = () => {
   const handleUpload = async () => {
     if (uploadHook.file) {
       try {
-        await uploadHook.handleFileUpload(uploadHook.file);
+        const parsedData = await uploadHook.handleFileUpload(uploadHook.file);
+        console.log('Parsed data in container:', parsedData);
+        
+        if (parsedData && onDataUpload) {
+          onDataUpload(parsedData);
+        }
+        
         toast({
           title: "Upload Successful",
           description: "Your file has been processed successfully.",

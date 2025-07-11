@@ -26,6 +26,15 @@ function App() {
     // generateSampleData();
   }, []);
 
+  const handleDataUpload = (parsedData: any) => {
+    console.log('Data uploaded to App:', parsedData);
+    setData(parsedData);
+    toast({
+      title: "Upload Complete!",
+      description: "Your data has been successfully uploaded.",
+    });
+  };
+
   const handleRunAnalysis = () => {
     // Simulate running analysis and getting results
     const mockResults = generateMockAnalysisResults();
@@ -64,7 +73,7 @@ function App() {
           <Route path="/" element={
             <div className="container mx-auto mt-10">
               <h1 className="text-3xl font-bold text-center mb-6">Data Analysis Tool</h1>
-              <DataUploadContainer />
+              <DataUploadContainer onDataUpload={handleDataUpload} />
               {data && (
                 <div className="mt-6">
                   <h2 className="text-xl font-semibold mb-3">Dashboard</h2>
