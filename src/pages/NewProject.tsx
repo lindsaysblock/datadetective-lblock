@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, ArrowRight, HelpCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, HelpCircle, CheckCircle, Plus, Upload } from 'lucide-react';
 import { useAuthState } from '@/hooks/useAuthState';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import ProjectNamingDialog from '@/components/data/upload/ProjectNamingDialog';
@@ -99,8 +99,11 @@ const NewProject = () => {
     </div>
   );
 
+  // Check if file is successfully uploaded (not uploading/parsing and has file)
+  const hasUploadedFile = file && !uploading && !parsing;
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Header />
       
       <FormRecoveryDialog
@@ -129,8 +132,8 @@ const NewProject = () => {
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </Link>
-          <h1 className="text-4xl font-bold text-purple-600 mb-2">Start New Project</h1>
-          <p className="text-lg text-blue-600">Let's explore your data together</p>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">Start New Project</h1>
+          <p className="text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Let's explore your data together</p>
         </div>
         
         {renderStepIndicator()}
@@ -144,10 +147,10 @@ const NewProject = () => {
         
         <div className="space-y-8">
           {/* Step 1: What's your question? */}
-          <Card className="w-full shadow-sm">
+          <Card className="w-full shadow-sm border-0 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
                   1
                 </div>
                 <div className="flex items-center gap-2">
@@ -163,7 +166,7 @@ const NewProject = () => {
                 placeholder="e.g., What are the main trends in customer behavior over time?"
                 value={researchQuestion}
                 onChange={(e) => setResearchQuestion(e.target.value)}
-                className="min-h-[120px] resize-none text-base border-gray-300 mb-6"
+                className="min-h-[120px] resize-none text-base border-gray-300 mb-6 bg-white"
               />
               
               {step === 1 && (
@@ -171,7 +174,7 @@ const NewProject = () => {
                   <Button 
                     onClick={nextStep}
                     disabled={!researchQuestion.trim()}
-                    className="bg-gray-900 hover:bg-gray-800 text-white px-6 flex items-center gap-2"
+                    className="bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 text-white px-6 flex items-center gap-2"
                   >
                     Next <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -182,11 +185,15 @@ const NewProject = () => {
 
           {/* Step 2: Connect Your Data */}
           {step >= 2 && (
-            <Card className="w-full shadow-sm">
+            <Card className="w-full shadow-sm border-0 bg-white/80 backdrop-blur-sm">
               <CardContent className="p-8">
                 <div className="flex items-start gap-4 mb-6">
-                  <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
-                    2
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1 ${
+                    hasUploadedFile 
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white' 
+                      : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+                  }`}>
+                    {hasUploadedFile ? <CheckCircle className="w-4 h-4" /> : '2'}
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900">Connect Your Data</h3>
@@ -194,24 +201,49 @@ const NewProject = () => {
                   </div>
                 </div>
 
-                <FileUploadSection
-                  file={file}
-                  uploading={uploading}
-                  parsing={parsing}
-                  onFileChange={handleFileChange}
-                  onFileUpload={handleFileUpload}
-                />
+                {hasUploadedFile ? (
+                  <div className="space-y-4">
+                    {/* Success state */}
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="w-6 h-6 text-green-600" />
+                        <div>
+                          <h4 className="text-lg font-semibold text-green-800">Data Source Connected!</h4>
+                          <p className="text-green-700">Your file "{file.name}" has been uploaded successfully.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Add additional source CTA */}
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50/50">
+                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-600 mb-3">Want to add another data source?</p>
+                      <Button variant="outline" className="flex items-center gap-2 bg-white hover:bg-gray-50">
+                        <Plus className="w-4 h-4" />
+                        Add Additional Source
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <FileUploadSection
+                    file={file}
+                    uploading={uploading}
+                    parsing={parsing}
+                    onFileChange={handleFileChange}
+                    onFileUpload={handleFileUpload}
+                  />
+                )}
 
                 {step === 2 && (
                   <div className="flex justify-between mt-6">
-                    <Button variant="outline" onClick={prevStep} className="flex items-center gap-2">
+                    <Button variant="outline" onClick={prevStep} className="flex items-center gap-2 bg-white hover:bg-gray-50">
                       <ArrowLeft className="w-4 h-4" />
                       Previous
                     </Button>
                     <Button 
                       onClick={nextStep}
-                      disabled={!file}
-                      className="bg-gray-900 hover:bg-gray-800 text-white px-6 flex items-center gap-2"
+                      disabled={!hasUploadedFile}
+                      className="bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 text-white px-6 flex items-center gap-2"
                     >
                       Next <ArrowRight className="w-4 h-4" />
                     </Button>
@@ -223,10 +255,10 @@ const NewProject = () => {
 
           {/* Step 3: Business Context */}
           {step >= 3 && (
-            <Card className="w-full shadow-sm">
+            <Card className="w-full shadow-sm border-0 bg-white/80 backdrop-blur-sm">
               <CardContent className="p-8">
                 <div className="flex items-start gap-4 mb-6">
-                  <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
                     3
                   </div>
                   <div>
@@ -239,18 +271,18 @@ const NewProject = () => {
                   placeholder="e.g., This data comes from our e-commerce platform and includes customer purchase history from the last 6 months..."
                   value={additionalContext}
                   onChange={(e) => setAdditionalContext(e.target.value)}
-                  className="min-h-[120px] resize-none text-base border-gray-300 mb-6"
+                  className="min-h-[120px] resize-none text-base border-gray-300 mb-6 bg-white"
                 />
                 
                 {step === 3 && (
                   <div className="flex justify-between">
-                    <Button variant="outline" onClick={prevStep} className="flex items-center gap-2">
+                    <Button variant="outline" onClick={prevStep} className="flex items-center gap-2 bg-white hover:bg-gray-50">
                       <ArrowLeft className="w-4 h-4" />
                       Previous
                     </Button>
                     <Button 
                       onClick={nextStep}
-                      className="bg-gray-900 hover:bg-gray-800 text-white px-6 flex items-center gap-2"
+                      className="bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 text-white px-6 flex items-center gap-2"
                     >
                       Next <ArrowRight className="w-4 h-4" />
                     </Button>
@@ -262,10 +294,10 @@ const NewProject = () => {
 
           {/* Step 4: Start Analysis */}
           {step >= 4 && (
-            <Card className="w-full shadow-sm">
+            <Card className="w-full shadow-sm border-0 bg-white/80 backdrop-blur-sm">
               <CardContent className="p-8">
                 <div className="flex items-start gap-4 mb-6">
-                  <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white flex items-center justify-center text-sm font-medium flex-shrink-0 mt-1">
                     4
                   </div>
                   <div>
@@ -274,7 +306,7 @@ const NewProject = () => {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg p-6 mb-6">
                   <h4 className="font-semibold mb-4 text-gray-900">Summary:</h4>
                   <div className="space-y-2 text-sm text-gray-600">
                     <p><span className="font-medium text-gray-900">Question:</span> {researchQuestion || 'Not specified'}</p>
@@ -286,14 +318,14 @@ const NewProject = () => {
                 </div>
 
                 <div className="flex justify-between">
-                  <Button variant="outline" onClick={prevStep} disabled={isProcessingAnalysis} className="flex items-center gap-2">
+                  <Button variant="outline" onClick={prevStep} disabled={isProcessingAnalysis} className="flex items-center gap-2 bg-white hover:bg-gray-50">
                     <ArrowLeft className="w-4 h-4" />
                     Previous
                   </Button>
                   <Button 
                     onClick={handleStartAnalysisClick}
                     disabled={!researchQuestion || !file || isProcessingAnalysis}
-                    className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 text-lg"
+                    className="bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 text-white px-8 py-3 text-lg"
                   >
                     {isProcessingAnalysis ? 'Starting Analysis...' : 'Start Analysis'}
                   </Button>
