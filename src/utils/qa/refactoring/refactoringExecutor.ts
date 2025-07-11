@@ -1,50 +1,37 @@
 
 export class RefactoringExecutor {
-  private autoRefactor: any;
-
-  constructor() {
-    // Will be injected by the calling system
-  }
-
-  async executeAutoRefactoring(decision: any): Promise<void> {
-    if (decision.suggestions.length === 0) return;
+  async executeAutoRefactoring(refactorDecision: any): Promise<void> {
+    console.log('🔧 Executing auto-refactoring...');
     
-    console.log(`🔧 Executing auto-refactoring for ${decision.suggestions.length} files...`);
-    
-    const refactoringMessages = decision.suggestions.map((suggestion: any) => ({
-      message: this.generateRefactoringMessage(suggestion),
-      label: `Auto-refactor ${suggestion.file.split('/').pop()}`,
-      autoExecute: true
-    }));
-    
-    const event = new CustomEvent('qa-auto-refactor-suggestions', {
-      detail: { 
-        suggestions: refactoringMessages,
-        metadata: {
-          confidence: decision.confidence,
-          reason: decision.reason,
-          totalFiles: decision.suggestions.length
-        }
-      }
-    });
-    window.dispatchEvent(event);
-    
-    // Mark files as refactored to prevent immediate re-triggering
-    for (const suggestion of decision.suggestions) {
-      if (this.autoRefactor) {
-        this.autoRefactor.markFileAsRefactored(suggestion.file);
+    for (const suggestion of refactorDecision.suggestions) {
+      if (suggestion.autoRefactor) {
+        await this.executeSingleRefactoring(suggestion);
       }
     }
+    
+    console.log('✅ Auto-refactoring completed');
+  }
+
+  private async executeSingleRefactoring(suggestion: any): Promise<void> {
+    console.log(`🔧 Refactoring ${suggestion.file}...`);
+    
+    // Create refactoring message for Lovable AI
+    const refactoringMessage = this.generateRefactoringMessage(suggestion);
+    
+    // Dispatch to Lovable system
+    const messageEvent = new CustomEvent('lovable-message', {
+      detail: { message: refactoringMessage }
+    });
+    
+    window.dispatchEvent(messageEvent);
+    
+    // Wait a bit before next refactoring
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
   private generateRefactoringMessage(suggestion: any): string {
-    const urgencyPrefix = suggestion.priority === 'critical' ? 'CRITICAL: ' : '';
-    const actionsText = suggestion.suggestedActions.slice(0, 3).join(', ');
+    const actions = suggestion.suggestedActions.slice(0, 2).join('. ');
     
-    return `${urgencyPrefix}Refactor ${suggestion.file} (${suggestion.currentLines} lines, ${suggestion.complexity} complexity, ${suggestion.maintainabilityIndex.toFixed(1)} maintainability) by ${actionsText}. Ensure functionality remains identical and clean up unused imports.`;
-  }
-
-  setAutoRefactor(autoRefactor: any) {
-    this.autoRefactor = autoRefactor;
+    return `Refactor ${suggestion.file}: ${suggestion.reason}. Please ${actions}. Priority: ${suggestion.priority}.`;
   }
 }

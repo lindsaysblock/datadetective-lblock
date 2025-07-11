@@ -2,61 +2,99 @@
 export interface DiscoveredFile {
   path: string;
   type: 'component' | 'hook' | 'utility' | 'page' | 'type';
+  size?: number;
+  lastModified?: Date;
 }
 
 export class FileDiscovery {
+  private knownFiles: DiscoveredFile[] = [
+    { path: 'src/components/App.tsx', type: 'component' },
+    { path: 'src/pages/NewProject.tsx', type: 'page' },
+    { path: 'src/pages/Dashboard.tsx', type: 'page' },
+    { path: 'src/pages/Home.tsx', type: 'page' },
+    { path: 'src/pages/Profile.tsx', type: 'page' },
+    { path: 'src/pages/QueryHistory.tsx', type: 'page' },
+    { path: 'src/components/QueryBuilder.tsx', type: 'component' },
+    { path: 'src/components/VisualizationReporting.tsx', type: 'component' },
+    { path: 'src/components/AnalysisDashboard.tsx', type: 'component' },
+    { path: 'src/components/DataSourceManager.tsx', type: 'component' },
+    { path: 'src/components/QARunner.tsx', type: 'component' },
+    { path: 'src/components/LoadTestRunner.tsx', type: 'component' },
+    { path: 'src/hooks/useNewProjectForm.ts', type: 'hook' },
+    { path: 'src/hooks/useAutoQA.ts', type: 'hook' },
+    { path: 'src/hooks/useE2ELoadTest.ts', type: 'hook' },
+    { path: 'src/utils/qaSystem.ts', type: 'utility' },
+    { path: 'src/utils/loadTesting.ts', type: 'utility' },
+    { path: 'src/utils/performance/performanceMonitor.ts', type: 'utility' }
+  ];
+
   getKnownFileList(): DiscoveredFile[] {
-    return [
-      { path: 'src/pages/NewProject.tsx', type: 'page' },
-      { path: 'src/components/QueryBuilder.tsx', type: 'component' },
-      { path: 'src/components/VisualizationReporting.tsx', type: 'component' },
-      { path: 'src/components/AnalysisDashboard.tsx', type: 'component' },
-      { path: 'src/utils/qaSystem.ts', type: 'utility' },
-      { path: 'src/utils/qa/qaTestSuites.ts', type: 'utility' },
-      { path: 'src/hooks/useAutoQA.ts', type: 'hook' },
-      { path: 'src/hooks/useAutoRefactor.ts', type: 'hook' },
-      { path: 'src/components/QARunner.tsx', type: 'component' },
-      { path: 'src/components/data/DataUploadFlow.tsx', type: 'component' }
-    ];
+    return [...this.knownFiles];
   }
 
   findReactFiberNodes(): any[] {
-    const nodes: any[] = [];
-    const reactElements = Array.from(document.querySelectorAll('*')).slice(0, 50);
+    const fiberNodes: any[] = [];
     
-    for (const element of reactElements) {
-      const fiberKey = Object.keys(element).find(key => 
-        key.startsWith('__reactFiber') || 
-        key.startsWith('__reactInternalInstance')
-      );
+    try {
+      const reactRoot = document.querySelector('#root')?._reactInternalFiber ||
+                       document.querySelector('#root')?._reactInternals;
       
-      if (fiberKey && (element as any)[fiberKey]) {
-        nodes.push((element as any)[fiberKey]);
+      if (reactRoot) {
+        this.traverseFiber(reactRoot, fiberNodes, 0, 10);
       }
+    } catch (error) {
+      console.warn('Could not traverse React fiber nodes:', error);
     }
     
-    return nodes;
+    return fiberNodes;
+  }
+
+  private traverseFiber(fiber: any, nodes: any[], depth: number, maxDepth: number): void {
+    if (depth > maxDepth || !fiber) return;
+    
+    if (fiber.type && typeof fiber.type === 'function' && fiber.type.name) {
+      nodes.push(fiber);
+    }
+    
+    if (fiber.child) {
+      this.traverseFiber(fiber.child, nodes, depth + 1, maxDepth);
+    }
+    
+    if (fiber.sibling) {
+      this.traverseFiber(fiber.sibling, nodes, depth, maxDepth);
+    }
   }
 
   inferFilePath(componentName: string): string | null {
-    if (componentName.includes('Page')) {
+    const knownMappings: Record<string, string> = {
+      'App': 'src/components/App.tsx',
+      'NewProject': 'src/pages/NewProject.tsx',
+      'Dashboard': 'src/pages/Dashboard.tsx',
+      'QueryBuilder': 'src/components/QueryBuilder.tsx',
+      'DataSourceManager': 'src/components/DataSourceManager.tsx',
+      'QARunner': 'src/components/QARunner.tsx',
+      'LoadTestRunner': 'src/components/LoadTestRunner.tsx'
+    };
+
+    if (knownMappings[componentName]) {
+      return knownMappings[componentName];
+    }
+
+    // Try to infer based on naming conventions
+    if (componentName.endsWith('Page')) {
       return `src/pages/${componentName}.tsx`;
-    }
-    if (componentName.startsWith('use')) {
+    } else if (componentName.startsWith('use')) {
       return `src/hooks/${componentName}.ts`;
+    } else {
+      return `src/components/${componentName}.tsx`;
     }
-    if (componentName.includes('Hook')) {
-      return `src/hooks/${componentName}.ts`;
-    }
-    return `src/components/${componentName}.tsx`;
   }
 
-  inferFileType(path: string): 'component' | 'hook' | 'utility' | 'page' | 'type' | 'unknown' {
+  inferFileType(path: string): 'component' | 'hook' | 'utility' | 'page' | 'type' {
     if (path.includes('/pages/')) return 'page';
-    if (path.includes('/hooks/') || path.includes('use')) return 'hook';
+    if (path.includes('/hooks/')) return 'hook';
     if (path.includes('/components/')) return 'component';
-    if (path.includes('/utils/')) return 'utility';
     if (path.includes('/types/') || path.endsWith('.d.ts')) return 'type';
-    return 'unknown';
+    return 'utility';
   }
 }
