@@ -1,5 +1,18 @@
 
-import { UnitTestResult, AssertionHelper } from './types';
+export interface UnitTestResult {
+  testName: string;
+  status: 'pass' | 'fail' | 'skip' | 'warning';
+  duration: number;
+  error?: string;
+  assertions: number;
+  passedAssertions: number;
+}
+
+export interface AssertionHelper {
+  equal: (actual: any, expected: any, message?: string) => void;
+  truthy: (value: any, message?: string) => void;
+  falsy: (value: any, message?: string) => void;
+}
 
 export class TestRunner {
   async runTest(testName: string, testFunction: (assert: AssertionHelper) => void): Promise<UnitTestResult> {

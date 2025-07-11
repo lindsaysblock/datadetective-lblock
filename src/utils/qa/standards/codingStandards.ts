@@ -2,7 +2,9 @@
 import { PerformanceStandards } from './core/performanceStandards';
 import { SecurityStandards } from './core/securityStandards';
 import { TypeStandards } from './core/typeStandards';
-import { CodeQualityRule, ComplianceReport } from './types';
+import { CodeQualityRule, ComplianceReport, CodingStandard, StandardViolation } from './types';
+
+export { ComplianceReport, StandardViolation, CodingStandard } from './types';
 
 export class CodingStandards {
   private static allRules: CodeQualityRule[] = [
@@ -25,7 +27,6 @@ export class CodingStandards {
     const failedRules = results.length - passedRules;
     const overallScore = Math.round((passedRules / results.length) * 100);
 
-    // Group by category
     const categories: { [key: string]: { score: number; passed: number; failed: number } } = {};
     
     for (const { rule, result } of results) {
@@ -40,35 +41,43 @@ export class CodingStandards {
       }
     }
 
-    // Calculate category scores
     for (const category in categories) {
       const total = categories[category].passed + categories[category].failed;
       categories[category].score = Math.round((categories[category].passed / total) * 100);
     }
 
-    const violations = results
+    const violations: StandardViolation[] = results
       .filter(r => !r.result.passed)
       .map(({ rule, result }) => ({
-        ruleId: rule.id,
+        standardId: rule.id,
         ruleName: rule.name,
-        severity: rule.severity,
+        severity: rule.severity === 'critical' ? 'error' : rule.severity === 'high' ? 'warning' : 'info',
         message: result.message,
+        line: 1,
+        autoFixable: rule.autoFix,
         suggestions: result.suggestions || []
       }));
 
     return {
+      filePath: filePath || 'unknown',
+      violations,
+      complianceScore: overallScore,
+      autoFixesApplied: 0,
+      manualFixesNeeded: violations.filter(v => !v.autoFixable).length,
       overallScore,
       totalRules: results.length,
       passedRules,
       failedRules,
-      categories,
-      violations
+      categories
     };
   }
 
   static getHighPriorityViolations(report: ComplianceReport) {
     return report.violations.filter(v => 
-      v.severity === 'critical' || v.severity === 'high'
+      v.severity === 'error' || v.severity === 'warning'
     );
   }
 }
+
+// Export the standards for backward compatibility
+export const CODING_STANDARDS: CodingStandard[] = [];

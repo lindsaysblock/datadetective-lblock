@@ -4,6 +4,13 @@ import { useToast } from '@/hooks/use-toast';
 import { DataGovernanceControls } from './DataGovernanceControls';
 import { ComplianceMetrics } from './ComplianceMetrics';
 
+interface Policy {
+  id: string;
+  name: string;
+  status: 'active' | 'inactive' | 'pending';
+  type: 'compliance' | 'privacy' | 'security';
+}
+
 interface DataGovernancePanelProps {
   onPolicyUpdate?: (policyId: string, action: string) => void;
 }
@@ -12,24 +19,24 @@ export const DataGovernancePanel: React.FC<DataGovernancePanelProps> = ({
   onPolicyUpdate
 }) => {
   const { toast } = useToast();
-  const [policies, setPolicies] = useState([
+  const [policies, setPolicies] = useState<Policy[]>([
     {
       id: '1',
       name: 'Data Retention Policy',
-      status: 'active' as const,
-      type: 'compliance' as const
+      status: 'active',
+      type: 'compliance'
     },
     {
       id: '2',
       name: 'PII Protection',
-      status: 'active' as const,
-      type: 'privacy' as const
+      status: 'active',
+      type: 'privacy'
     },
     {
       id: '3',
       name: 'Access Control',
-      status: 'pending' as const,
-      type: 'security' as const
+      status: 'pending',
+      type: 'security'
     }
   ]);
 
@@ -61,7 +68,7 @@ export const DataGovernancePanel: React.FC<DataGovernancePanelProps> = ({
     if (action === 'activate' || action === 'deactivate') {
       setPolicies(prev => prev.map(policy => 
         policy.id === policyId 
-          ? { ...policy, status: action === 'activate' ? 'active' : 'inactive' }
+          ? { ...policy, status: action === 'activate' ? 'active' as const : 'inactive' as const }
           : policy
       ));
       

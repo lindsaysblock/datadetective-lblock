@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { AlertTriangle, CheckCircle, Settings, Zap } from 'lucide-react';
 import { autoComplianceSystem } from '@/utils/qa/standards/autoComplianceSystem';
-import { ComplianceReport } from '@/utils/qa/standards/codingStandards';
+import { ComplianceReport } from '@/utils/qa/standards/types';
 
 const ComplianceDashboard: React.FC = () => {
   const [reports, setReports] = useState<ComplianceReport[]>([]);
@@ -20,7 +19,6 @@ const ComplianceDashboard: React.FC = () => {
     setIsEnabled(status.enabled);
     setLastCheck(status.lastCheck);
 
-    // Listen for compliance events
     const handleComplianceUpdate = (event: CustomEvent) => {
       const { reports: newReports } = event.detail;
       setReports(newReports);

@@ -1,6 +1,5 @@
 
-import { CodingStandards } from './codingStandards';
-import { ComplianceReport } from './types';
+import { CodingStandards, ComplianceReport } from './codingStandards';
 
 export class AutoComplianceSystem {
   private static instance: AutoComplianceSystem;
@@ -8,6 +7,8 @@ export class AutoComplianceSystem {
   private readonly CHECK_INTERVAL = 30000; // 30 seconds
   private monitoringActive = false;
   private intervalId: NodeJS.Timeout | null = null;
+  private enabled = true;
+  private lastCheck: Date | null = null;
 
   static getInstance(): AutoComplianceSystem {
     if (!this.instance) {
@@ -16,11 +17,28 @@ export class AutoComplianceSystem {
     return this.instance;
   }
 
-  async runComplianceCheck(): Promise<ComplianceReport> {
+  getComplianceStatus() {
+    return {
+      enabled: this.enabled,
+      lastCheck: this.lastCheck,
+      monitoring: this.monitoringActive
+    };
+  }
+
+  async enableAutoCompliance(): Promise<void> {
+    this.enabled = true;
+    this.startMonitoring();
+  }
+
+  disableAutoCompliance(): void {
+    this.enabled = false;
+    this.stopMonitoring();
+  }
+
+  async runComplianceCheck(): Promise<ComplianceReport[]> {
     console.log('🔍 Running comprehensive compliance check...');
     
     try {
-      // Mock file analysis - in a real implementation, this would scan actual files
       const mockFiles = this.getMockFileList();
       const reports: ComplianceReport[] = [];
 
@@ -29,16 +47,20 @@ export class AutoComplianceSystem {
         reports.push(report);
       }
 
-      const aggregatedReport = this.aggregateReports(reports);
-      
-      if (aggregatedReport.overallScore < this.COMPLIANCE_THRESHOLD) {
-        console.log(`⚠️ Compliance score (${aggregatedReport.overallScore}%) below threshold (${this.COMPLIANCE_THRESHOLD}%)`);
-        await this.triggerAutoFixes(aggregatedReport);
-      } else {
-        console.log(`✅ Compliance check passed: ${aggregatedReport.overallScore}%`);
+      this.lastCheck = new Date();
+
+      if (reports.length > 0) {
+        const avgScore = reports.reduce((sum, r) => sum + r.complianceScore, 0) / reports.length;
+        
+        if (avgScore < this.COMPLIANCE_THRESHOLD) {
+          console.log(`⚠️ Compliance score (${avgScore.toFixed(1)}%) below threshold (${this.COMPLIANCE_THRESHOLD}%)`);
+          await this.triggerAutoFixes(reports);
+        } else {
+          console.log(`✅ Compliance check passed: ${avgScore.toFixed(1)}%`);
+        }
       }
 
-      return aggregatedReport;
+      return reports;
     } catch (error) {
       console.error('❌ Compliance check failed:', error);
       throw error;
@@ -81,68 +103,17 @@ export class AutoComplianceSystem {
     ];
   }
 
-  private aggregateReports(reports: ComplianceReport[]): ComplianceReport {
-    if (reports.length === 0) {
-      return {
-        overallScore: 0,
-        totalRules: 0,
-        passedRules: 0,
-        failedRules: 0,
-        categories: {},
-        violations: []
-      };
-    }
-
-    const totalRules = reports.reduce((sum, report) => sum + report.totalRules, 0);
-    const passedRules = reports.reduce((sum, report) => sum + report.passedRules, 0);
-    const overallScore = Math.round((passedRules / totalRules) * 100);
-
-    const allViolations = reports.flatMap(report => report.violations);
-    const categories = this.mergeCategoryData(reports);
-
-    return {
-      overallScore,
-      totalRules,
-      passedRules,
-      failedRules: totalRules - passedRules,
-      categories,
-      violations: allViolations
-    };
-  }
-
-  private mergeCategoryData(reports: ComplianceReport[]) {
-    const merged: { [key: string]: { score: number; passed: number; failed: number } } = {};
-    
-    for (const report of reports) {
-      for (const [category, data] of Object.entries(report.categories)) {
-        if (!merged[category]) {
-          merged[category] = { score: 0, passed: 0, failed: 0 };
-        }
-        merged[category].passed += data.passed;
-        merged[category].failed += data.failed;
-      }
-    }
-
-    // Recalculate scores
-    for (const category in merged) {
-      const total = merged[category].passed + merged[category].failed;
-      merged[category].score = Math.round((merged[category].passed / total) * 100);
-    }
-
-    return merged;
-  }
-
-  private async triggerAutoFixes(report: ComplianceReport): Promise<void> {
-    const criticalViolations = CodingStandards.getHighPriorityViolations(report);
+  private async triggerAutoFixes(reports: ComplianceReport[]): Promise<void> {
+    const criticalViolations = reports.flatMap(report => 
+      CodingStandards.getHighPriorityViolations(report)
+    );
     
     console.log(`🔧 Triggering auto-fixes for ${criticalViolations.length} critical violations`);
     
     for (const violation of criticalViolations) {
       console.log(`🔧 Auto-fixing: ${violation.ruleName}`);
-      // In a real implementation, this would apply automated fixes
     }
   }
 }
 
-// Export singleton instance
 export const autoComplianceSystem = AutoComplianceSystem.getInstance();
