@@ -5,95 +5,81 @@ import ResearchQuestionStep from './ResearchQuestionStep';
 import DataSourceStep from './DataSourceStep';
 import BusinessContextStep from './BusinessContextStep';
 import AnalysisSummaryStep from './AnalysisSummaryStep';
-import { useProjectFormState } from '@/hooks/useProjectFormState';
+import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 
 interface NewProjectContentProps {
   onStartAnalysis: (researchQuestion: string, additionalContext: string, educational: boolean, parsedData?: any, columnMapping?: any) => void;
 }
 
 const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }) => {
-  const {
-    step,
-    researchQuestion,
-    additionalContext,
-    files,
-    uploading,
-    parsing,
-    parsedData,
-    columnMapping,
-    setResearchQuestion,
-    setAdditionalContext,
-    nextStep,
-    prevStep,
-    handleFileUpload,
-    addFile,
-    removeFile,
-    setColumnMapping
-  } = useProjectFormState();
+  const formData = useNewProjectForm();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
-    selectedFiles.forEach(file => addFile(file));
+    selectedFiles.forEach(file => formData.addFile(file));
   };
 
   const handleStartAnalysis = (educational: boolean = false) => {
     console.log('Starting analysis with:', {
-      researchQuestion,
-      additionalContext,
+      researchQuestion: formData.researchQuestion,
+      additionalContext: formData.additionalContext,
       educational,
-      parsedData,
-      columnMapping
+      parsedData: formData.parsedData,
+      columnMapping: formData.columnMapping
     });
-    onStartAnalysis(researchQuestion, additionalContext, educational, parsedData, columnMapping);
+    onStartAnalysis(formData.researchQuestion, formData.additionalContext, educational, formData.parsedData, formData.columnMapping);
   };
 
   const renderStepContent = () => {
-    switch (step) {
+    switch (formData.step) {
       case 1:
         return (
           <ResearchQuestionStep
-            researchQuestion={researchQuestion}
-            setResearchQuestion={setResearchQuestion}
-            onNext={nextStep}
+            researchQuestion={formData.researchQuestion}
+            setResearchQuestion={formData.setResearchQuestion}
+            onNext={formData.nextStep}
           />
         );
       case 2:
         return (
           <DataSourceStep
-            files={files}
-            uploading={uploading}
-            parsing={parsing}
-            parsedData={parsedData}
-            columnMapping={columnMapping}
+            files={formData.files}
+            uploading={formData.uploading}
+            parsing={formData.parsing}
+            parsedData={formData.parsedData}
+            columnMapping={formData.columnMapping}
             onFileChange={handleFileChange}
-            onFileUpload={handleFileUpload}
-            onRemoveFile={removeFile}
-            onColumnMapping={setColumnMapping}
-            onNext={nextStep}
-            onPrevious={prevStep}
+            onFileUpload={formData.handleFileUpload}
+            onRemoveFile={formData.removeFile}
+            onColumnMapping={formData.setColumnMapping}
+            onNext={formData.nextStep}
+            onPrevious={formData.prevStep}
           />
         );
       case 3:
         return (
           <BusinessContextStep
-            additionalContext={additionalContext}
-            setAdditionalContext={setAdditionalContext}
-            parsedData={parsedData}
-            columnMapping={columnMapping}
-            onColumnMapping={setColumnMapping}
-            onNext={nextStep}
-            onPrevious={prevStep}
+            additionalContext={formData.additionalContext}
+            setAdditionalContext={formData.setAdditionalContext}
+            parsedData={formData.parsedData}
+            columnMapping={formData.columnMapping}
+            onColumnMapping={formData.setColumnMapping}
+            onNext={formData.nextStep}
+            onPrevious={formData.prevStep}
           />
         );
       case 4:
         return (
           <AnalysisSummaryStep
-            researchQuestion={researchQuestion}
-            additionalContext={additionalContext}
-            parsedData={parsedData}
-            columnMapping={columnMapping}
+            researchQuestion={formData.researchQuestion}
+            additionalContext={formData.additionalContext}
+            parsedData={formData.parsedData}
+            columnMapping={formData.columnMapping}
+            analysisResults={formData.analysisResults}
+            analysisCompleted={formData.analysisCompleted}
+            isProcessingAnalysis={formData.isProcessingAnalysis}
             onStartAnalysis={handleStartAnalysis}
-            onPrevious={prevStep}
+            onPrevious={formData.prevStep}
           />
         );
       default:
@@ -103,7 +89,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <StepIndicator currentStep={step} />
+      <StepIndicator currentStep={formData.step} />
       {renderStepContent()}
     </div>
   );
