@@ -2,24 +2,54 @@
 import { ParsedData } from '../../dataParser';
 import { AnalysisResult } from '../types';
 
-export class RowCountAnalyzer {
-  private data: ParsedData;
-  private rows: Record<string, any>[];
+interface DataQualityMetrics {
+  completenessRate: number;
+  emptyFieldsCount: number;
+  totalFieldsCount: number;
+}
 
-  constructor(data: ParsedData) {
+export class RowCountAnalyzer {
+  private readonly data: ParsedData;
+  private readonly rows: Record<string, unknown>[];
+  private readonly enableLogging: boolean;
+
+  constructor(data: ParsedData, enableLogging = true) {
     this.data = data;
     this.rows = data.rows || [];
-    console.log('RowCountAnalyzer initialized with:', {
-      totalRows: this.rows.length,
-      columns: data.columns?.length || 0,
-      sampleRow: this.rows[0]
-    });
+    this.enableLogging = enableLogging;
+    
+    if (this.enableLogging) {
+      console.log('RowCountAnalyzer initialized with:', {
+        totalRows: this.rows.length,
+        columns: data.columns?.length || 0,
+        sampleRow: this.rows[0]
+      });
+    }
   }
 
   analyze(): AnalysisResult[] {
     const results: AnalysisResult[] = [];
 
-    // Basic row count - this should always work
+    // Core metrics that should always be available
+    results.push(...this.analyzeBasicMetrics());
+    
+    // Data quality analysis
+    results.push(...this.analyzeDataQuality());
+    
+    // Column-specific analysis
+    results.push(...this.analyzeKeyColumns());
+
+    if (this.enableLogging) {
+      console.log('RowCountAnalyzer results:', results.length, 'insights generated');
+    }
+
+    return results;
+  }
+
+  private analyzeBasicMetrics(): AnalysisResult[] {
+    const results: AnalysisResult[] = [];
+
+    // Total rows - always available
     results.push({
       id: 'total-rows',
       title: 'Total Rows',
@@ -30,12 +60,13 @@ export class RowCountAnalyzer {
     });
 
     // Column count
+    const columnCount = this.data.columns?.length || 0;
     results.push({
       id: 'total-columns',
       title: 'Total Columns',
       description: 'Total number of columns in the dataset',
-      value: this.data.columns?.length || 0,
-      insight: `Dataset has ${this.data.columns?.length || 0} columns`,
+      value: columnCount,
+      insight: `Dataset has ${columnCount} columns`,
       confidence: 'high'
     });
 
@@ -52,99 +83,169 @@ export class RowCountAnalyzer {
       });
     }
 
-    // Data completeness analysis
-    if (this.rows.length > 0 && this.data.columns) {
-      const totalCells = this.rows.length * this.data.columns.length;
-      let emptyCells = 0;
+    return results;
+  }
 
-      this.rows.forEach(row => {
-        this.data.columns!.forEach(col => {
-          const value = row[col.name];
-          if (value === null || value === undefined || value === '') {
-            emptyCells++;
-          }
-        });
-      });
+  private analyzeDataQuality(): AnalysisResult[] {
+    const results: AnalysisResult[] = [];
 
-      const completenessRate = ((totalCells - emptyCells) / totalCells * 100).toFixed(1);
+    if (this.rows.length === 0 || !this.data.columns) {
+      return results;
+    }
+
+    const qualityMetrics = this.calculateDataQualityMetrics();
+    
+    results.push({
+      id: 'data-completeness',
+      title: 'Data Completeness',
+      description: 'Percentage of non-empty cells in the dataset',
+      value: parseFloat(qualityMetrics.completenessRate.toFixed(1)),
+      insight: `${qualityMetrics.completenessRate.toFixed(1)}% of data cells contain values (${qualityMetrics.emptyFieldsCount.toLocaleString()} empty cells out of ${qualityMetrics.totalFieldsCount.toLocaleString()})`,
+      confidence: 'high'
+    });
+
+    return results;
+  }
+
+  private analyzeKeyColumns(): AnalysisResult[] {
+    const results: AnalysisResult[] = [];
+
+    if (!this.data.columns || this.rows.length === 0) {
+      return results;
+    }
+
+    // Session ID analysis
+    const sessionIdColumn = this.findColumnByPattern(['session', 'id'], ['session_id', 'sessionId']);
+    if (sessionIdColumn) {
+      const uniqueSessions = this.countUniqueValues(sessionIdColumn.name);
       results.push({
-        id: 'data-completeness',
-        title: 'Data Completeness',
-        description: 'Percentage of non-empty cells in the dataset',
-        value: parseFloat(completenessRate),
-        insight: `${completenessRate}% of data cells contain values (${emptyCells.toLocaleString()} empty cells out of ${totalCells.toLocaleString()})`,
+        id: 'unique-sessions',
+        title: 'Unique Sessions',
+        description: `Number of unique values in ${sessionIdColumn.name}`,
+        value: uniqueSessions,
+        insight: `${uniqueSessions.toLocaleString()} unique sessions identified`,
         confidence: 'high'
       });
     }
 
-    // Try to identify key columns that might exist
-    if (this.data.columns && this.rows.length > 0) {
-      // Check for session_ids
-      const sessionIdColumn = this.data.columns.find(col => 
-        col.name.toLowerCase().includes('session') && col.name.toLowerCase().includes('id')
-      );
-      if (sessionIdColumn) {
-        const sessionIds = new Set(this.rows.map(row => row[sessionIdColumn.name]).filter(Boolean));
-        results.push({
-          id: 'unique-sessions',
-          title: 'Unique Sessions',
-          description: `Number of unique values in ${sessionIdColumn.name}`,
-          value: sessionIds.size,
-          insight: `${sessionIds.size.toLocaleString()} unique sessions identified`,
-          confidence: 'high'
-        });
-      }
-
-      // Check for user_ids
-      const userIdColumn = this.data.columns.find(col => 
-        col.name.toLowerCase().includes('user') && col.name.toLowerCase().includes('id')
-      );
-      if (userIdColumn) {
-        const userIds = new Set(this.rows.map(row => row[userIdColumn.name]).filter(id => id && id !== 'unknown'));
-        results.push({
-          id: 'unique-users',
-          title: 'Unique Users',
-          description: `Number of unique values in ${userIdColumn.name}`,
-          value: userIds.size,
-          insight: `${userIds.size.toLocaleString()} unique users identified`,
-          confidence: 'high'
-        });
-      }
-
-      // Check for action/event columns
-      const actionColumn = this.data.columns.find(col => 
-        ['action', 'event', 'event_name', 'activity'].includes(col.name.toLowerCase())
-      );
-      if (actionColumn) {
-        const actions = this.rows.map(row => row[actionColumn.name]).filter(Boolean);
-        const uniqueActions = new Set(actions);
-        results.push({
-          id: 'unique-actions',
-          title: 'Unique Actions/Events',
-          description: `Number of different action types in ${actionColumn.name}`,
-          value: uniqueActions.size,
-          insight: `${uniqueActions.size} different action types: ${Array.from(uniqueActions).slice(0, 5).join(', ')}${uniqueActions.size > 5 ? '...' : ''}`,
-          confidence: 'high'
-        });
-
-        // Count specific actions if they exist
-        const purchaseRows = actions.filter(action => 
-          action && action.toString().toLowerCase().includes('purchase')
-        );
-        if (purchaseRows.length > 0) {
-          results.push({
-            id: 'purchase-count',
-            title: 'Purchase Events',
-            description: 'Total number of purchase actions',
-            value: purchaseRows.length,
-            insight: `${purchaseRows.length.toLocaleString()} purchase events recorded`,
-            confidence: 'high'
-          });
-        }
-      }
+    // User ID analysis
+    const userIdColumn = this.findColumnByPattern(['user', 'id'], ['user_id', 'userId']);
+    if (userIdColumn) {
+      const uniqueUsers = this.countUniqueNonUnknownValues(userIdColumn.name);
+      results.push({
+        id: 'unique-users',
+        title: 'Unique Users',
+        description: `Number of unique values in ${userIdColumn.name}`,
+        value: uniqueUsers,
+        insight: `${uniqueUsers.toLocaleString()} unique users identified`,
+        confidence: 'high'
+      });
     }
 
-    console.log('RowCountAnalyzer results:', results);
+    // Action/Event analysis
+    const actionColumn = this.findActionColumn();
+    if (actionColumn) {
+      const actionAnalysis = this.analyzeActionColumn(actionColumn.name);
+      results.push(...actionAnalysis);
+    }
+
     return results;
+  }
+
+  private calculateDataQualityMetrics(): DataQualityMetrics {
+    const totalFieldsCount = this.rows.length * (this.data.columns?.length || 0);
+    let emptyFieldsCount = 0;
+
+    this.rows.forEach(row => {
+      this.data.columns?.forEach(col => {
+        const value = row[col.name];
+        if (this.isEmptyValue(value)) {
+          emptyFieldsCount++;
+        }
+      });
+    });
+
+    const completenessRate = totalFieldsCount > 0 
+      ? ((totalFieldsCount - emptyFieldsCount) / totalFieldsCount * 100) 
+      : 0;
+
+    return {
+      completenessRate,
+      emptyFieldsCount,
+      totalFieldsCount
+    };
+  }
+
+  private findColumnByPattern(keywords: string[], exactMatches: string[] = []) {
+    return this.data.columns?.find(col => {
+      const lowerName = col.name.toLowerCase();
+      return exactMatches.includes(lowerName) || 
+             keywords.every(keyword => lowerName.includes(keyword));
+    });
+  }
+
+  private findActionColumn() {
+    const actionColumnNames = ['action', 'event', 'event_name', 'activity', 'event_type'];
+    return this.data.columns?.find(col => 
+      actionColumnNames.includes(col.name.toLowerCase())
+    );
+  }
+
+  private countUniqueValues(columnName: string): number {
+    const uniqueValues = new Set(
+      this.rows
+        .map(row => row[columnName])
+        .filter(value => !this.isEmptyValue(value))
+    );
+    return uniqueValues.size;
+  }
+
+  private countUniqueNonUnknownValues(columnName: string): number {
+    const uniqueValues = new Set(
+      this.rows
+        .map(row => row[columnName])
+        .filter(value => !this.isEmptyValue(value) && value !== 'unknown')
+    );
+    return uniqueValues.size;
+  }
+
+  private analyzeActionColumn(columnName: string): AnalysisResult[] {
+    const results: AnalysisResult[] = [];
+    const actions = this.rows
+      .map(row => row[columnName])
+      .filter(action => !this.isEmptyValue(action));
+    
+    const uniqueActions = new Set(actions);
+    
+    results.push({
+      id: 'unique-actions',
+      title: 'Unique Actions/Events',
+      description: `Number of different action types in ${columnName}`,
+      value: uniqueActions.size,
+      insight: `${uniqueActions.size} different action types: ${Array.from(uniqueActions).slice(0, 5).join(', ')}${uniqueActions.size > 5 ? '...' : ''}`,
+      confidence: 'high'
+    });
+
+    // Purchase event analysis
+    const purchaseEvents = actions.filter(action => 
+      action && String(action).toLowerCase().includes('purchase')
+    );
+    
+    if (purchaseEvents.length > 0) {
+      results.push({
+        id: 'purchase-count',
+        title: 'Purchase Events',
+        description: 'Total number of purchase actions',
+        value: purchaseEvents.length,
+        insight: `${purchaseEvents.length.toLocaleString()} purchase events recorded`,
+        confidence: 'high'
+      });
+    }
+
+    return results;
+  }
+
+  private isEmptyValue(value: unknown): boolean {
+    return value === null || value === undefined || value === '' || value === 'null';
   }
 }

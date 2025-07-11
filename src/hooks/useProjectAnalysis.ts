@@ -1,15 +1,43 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { DataAnalysisEngine, AnalysisResult } from '../utils/analysis/dataAnalysisEngine';
 import { ParsedData } from '../utils/dataParser';
 
+interface AnalysisResults {
+  insights: string;
+  confidence: 'high' | 'medium' | 'low';
+  recommendations: string[];
+  detailedResults: AnalysisResult[];
+  sqlQuery: string;
+  queryBreakdown?: {
+    steps: Array<{
+      step: number;
+      title: string;
+      description: string;
+      code: string;
+      explanation: string;
+    }>;
+  };
+}
+
+interface AnalysisState {
+  isProcessingAnalysis: boolean;
+  analysisResults: AnalysisResults | null;
+  analysisCompleted: boolean;
+  showAnalysisView: boolean;
+  educationalMode: boolean;
+  detailedResults: AnalysisResult[];
+}
+
 export const useProjectAnalysis = () => {
-  const [isProcessingAnalysis, setIsProcessingAnalysis] = useState(false);
-  const [analysisResults, setAnalysisResults] = useState<any>(null);
-  const [analysisCompleted, setAnalysisCompleted] = useState(false);
-  const [showAnalysisView, setShowAnalysisView] = useState(false);
-  const [educationalMode, setEducationalMode] = useState(false);
-  const [detailedResults, setDetailedResults] = useState<AnalysisResult[]>([]);
+  const [state, setState] = useState<AnalysisState>({
+    isProcessingAnalysis: false,
+    analysisResults: null,
+    analysisCompleted: false,
+    showAnalysisView: false,
+    educationalMode: false,
+    detailedResults: []
+  });
 
   const startAnalysis = useCallback((
     researchQuestion: string, 
@@ -17,7 +45,7 @@ export const useProjectAnalysis = () => {
     educational: boolean = false,
     parsedData?: ParsedData
   ) => {
-    console.log('🚀 Starting real analysis with:', { 
+    console.log('🚀 Starting analysis with:', { 
       researchQuestion, 
       additionalContext, 
       educational,
@@ -25,88 +53,67 @@ export const useProjectAnalysis = () => {
       dataRows: parsedData?.rows?.length || 0
     });
     
-    setIsProcessingAnalysis(true);
-    setEducationalMode(educational);
+    setState(prev => ({
+      ...prev,
+      isProcessingAnalysis: true,
+      educationalMode: educational,
+      analysisResults: null,
+      analysisCompleted: false
+    }));
     
-    // Simulate processing time with real analysis
+    // Simulate analysis processing
     setTimeout(() => {
-      let realResults: AnalysisResult[] = [];
-      let analysisInsights = "No data available for analysis";
-      let confidence = "low";
-      let recommendations: string[] = [];
+      const analysisResults = executeAnalysis(parsedData, researchQuestion, additionalContext, educational);
+      
+      setState(prev => ({
+        ...prev,
+        analysisResults,
+        detailedResults: analysisResults.detailedResults,
+        analysisCompleted: true
+      }));
 
-      if (parsedData && parsedData.rows && parsedData.rows.length > 0) {
-        console.log('📊 Running real data analysis on', parsedData.rows.length, 'rows...');
-        
-        try {
-          const engine = new DataAnalysisEngine(parsedData);
-          realResults = engine.runCompleteAnalysis();
-          
-          console.log('✅ Analysis completed with', realResults.length, 'results');
-          
-          // Generate insights based on real analysis
-          if (realResults.length > 0) {
-            analysisInsights = generateInsightsFromResults(realResults, researchQuestion);
-            confidence = "high";
-            recommendations = generateRecommendationsFromResults(realResults);
-          } else {
-            analysisInsights = "Analysis completed but no significant patterns were found in the data.";
-            confidence = "medium";
-            recommendations = ["Consider checking data quality", "Verify column names and data types"];
-          }
-        } catch (error) {
-          console.error('❌ Analysis failed:', error);
-          analysisInsights = `Analysis failed: ${error}. Please check your data format.`;
-          confidence = "low";
-          recommendations = ["Check data format and structure", "Ensure data has proper column headers"];
-        }
-      } else {
-        console.warn('⚠️ No valid data provided for analysis');
-        analysisInsights = "No valid data was provided for analysis. Please upload a dataset with rows and columns.";
-        recommendations = ["Upload a CSV or JSON file with data", "Ensure the file contains both headers and data rows"];
-      }
-
-      setDetailedResults(realResults);
-      setAnalysisCompleted(true);
-      setAnalysisResults({
-        insights: analysisInsights,
-        confidence,
-        recommendations,
-        detailedResults: realResults,
-        sqlQuery: generateSQLFromQuestion(researchQuestion, parsedData),
-        queryBreakdown: educational ? generateQueryBreakdown(researchQuestion) : null
-      });
-
-      console.log('🎯 Analysis results set:', {
-        insights: analysisInsights,
-        confidence,
-        recommendationsCount: recommendations.length,
-        detailedResultsCount: realResults.length
+      console.log('🎯 Analysis results generated:', {
+        insights: analysisResults.insights,
+        confidence: analysisResults.confidence,
+        recommendationsCount: analysisResults.recommendations.length,
+        detailedResultsCount: analysisResults.detailedResults.length
       });
     }, 3000);
   }, []);
 
   const showResults = useCallback(() => {
-    setShowAnalysisView(true);
-    setIsProcessingAnalysis(false);
+    setState(prev => ({
+      ...prev,
+      showAnalysisView: true,
+      isProcessingAnalysis: false
+    }));
   }, []);
 
   const resetAnalysis = useCallback(() => {
-    setIsProcessingAnalysis(false);
-    setAnalysisResults(null);
-    setAnalysisCompleted(false);
-    setShowAnalysisView(false);
-    setEducationalMode(false);
-    setDetailedResults([]);
+    setState({
+      isProcessingAnalysis: false,
+      analysisResults: null,
+      analysisCompleted: false,
+      showAnalysisView: false,
+      educationalMode: false,
+      detailedResults: []
+    });
   }, []);
 
+  const setShowAnalysisView = useCallback((show: boolean) => {
+    setState(prev => ({ ...prev, showAnalysisView: show }));
+  }, []);
+
+  // Memoized derived values
+  const memoizedValues = useMemo(() => ({
+    hasValidData: state.analysisResults !== null,
+    highConfidenceResults: state.detailedResults.filter(r => r.confidence === 'high').length,
+    totalInsights: state.detailedResults.length
+  }), [state.analysisResults, state.detailedResults]);
+
   return {
-    isProcessingAnalysis,
-    analysisResults,
-    analysisCompleted,
-    showAnalysisView,
-    educationalMode,
-    detailedResults,
+    ...state,
+    ...memoizedValues,
     startAnalysis,
     showResults,
     resetAnalysis,
@@ -114,53 +121,103 @@ export const useProjectAnalysis = () => {
   };
 };
 
-// Helper functions
+// Helper function to execute analysis
+function executeAnalysis(
+  parsedData: ParsedData | undefined,
+  researchQuestion: string,
+  additionalContext: string,
+  educational: boolean
+): AnalysisResults {
+  let realResults: AnalysisResult[] = [];
+  let analysisInsights = "No data available for analysis";
+  let confidence: 'high' | 'medium' | 'low' = 'low';
+  let recommendations: string[] = [];
+
+  if (parsedData && parsedData.rows && parsedData.rows.length > 0) {
+    console.log('📊 Running real data analysis on', parsedData.rows.length, 'rows...');
+    
+    try {
+      const engine = new DataAnalysisEngine(parsedData, { enableLogging: true });
+      realResults = engine.runCompleteAnalysis();
+      
+      console.log('✅ Analysis completed with', realResults.length, 'results');
+      
+      if (realResults.length > 0) {
+        analysisInsights = generateInsightsFromResults(realResults, researchQuestion);
+        confidence = determineOverallConfidence(realResults);
+        recommendations = generateRecommendationsFromResults(realResults);
+      } else {
+        analysisInsights = "Analysis completed but no significant patterns were found in the data.";
+        confidence = 'medium';
+        recommendations = ["Consider checking data quality", "Verify column names and data types"];
+      }
+    } catch (error) {
+      console.error('❌ Analysis failed:', error);
+      analysisInsights = `Analysis failed: ${error}. Please check your data format.`;
+      confidence = 'low';
+      recommendations = ["Check data format and structure", "Ensure data has proper column headers"];
+    }
+  } else {
+    console.warn('⚠️ No valid data provided for analysis');
+    analysisInsights = "No valid data was provided for analysis. Please upload a dataset with rows and columns.";
+    recommendations = ["Upload a CSV or JSON file with data", "Ensure the file contains both headers and data rows"];
+  }
+
+  return {
+    insights: analysisInsights,
+    confidence,
+    recommendations,
+    detailedResults: realResults,
+    sqlQuery: generateSQLFromQuestion(researchQuestion, parsedData),
+    queryBreakdown: educational ? generateQueryBreakdown(researchQuestion) : undefined
+  };
+}
+
 function generateInsightsFromResults(results: AnalysisResult[], researchQuestion: string): string {
   if (results.length === 0) {
     return "No analysis results available. Please ensure your data contains the expected columns.";
   }
 
-  // Get key findings from results
-  const keyFindings: string[] = [];
-  
-  results.forEach(result => {
-    if (result.confidence === 'high' && result.insight) {
-      keyFindings.push(result.insight);
-    }
-  });
+  const keyFindings = results
+    .filter(result => result.confidence === 'high' && result.insight)
+    .map(result => result.insight)
+    .slice(0, 5);
 
   if (keyFindings.length === 0) {
     keyFindings.push("Basic data structure analysis completed successfully.");
   }
 
-  const findings = keyFindings.slice(0, 5).join('. ');
+  const findings = keyFindings.join('. ');
   
   return `Based on your research question "${researchQuestion}" and comprehensive data analysis: ${findings}. ${keyFindings.length > 1 ? 'The analysis reveals important patterns that can inform strategic decisions.' : ''}`;
+}
+
+function determineOverallConfidence(results: AnalysisResult[]): 'high' | 'medium' | 'low' {
+  const highConfidenceCount = results.filter(r => r.confidence === 'high').length;
+  const confidenceRatio = highConfidenceCount / results.length;
+  
+  if (confidenceRatio >= 0.7) return 'high';
+  if (confidenceRatio >= 0.4) return 'medium';
+  return 'low';
 }
 
 function generateRecommendationsFromResults(results: AnalysisResult[]): string[] {
   const recommendations: string[] = [];
   
-  // Find specific issues and generate recommendations
   results.forEach(result => {
-    if (result.id === 'zero-value-purchases' && result.value > 0) {
-      recommendations.push(`Investigate ${result.value} zero-value purchases - possible data quality issue`);
-    }
-    
-    if (result.id === 'data-completeness' && result.value < 90) {
+    if (result.id === 'data-completeness' && typeof result.value === 'number' && result.value < 90) {
       recommendations.push(`Data completeness is ${result.value}% - consider improving data collection processes`);
     }
     
-    if (result.id === 'unique-users' && result.value > 100) {
+    if (result.id === 'unique-users' && typeof result.value === 'number' && result.value > 100) {
       recommendations.push('Consider user segmentation analysis with this user base size');
     }
     
-    if (result.id === 'total-rows' && result.value > 10000) {
+    if (result.id === 'total-rows' && typeof result.value === 'number' && result.value > 10000) {
       recommendations.push('Large dataset detected - consider implementing data sampling for faster analysis');
     }
   });
 
-  // Default recommendations if no specific insights
   if (recommendations.length === 0) {
     recommendations.push('Data analysis completed successfully');
     recommendations.push('Consider exploring specific business questions with this dataset');
@@ -179,10 +236,8 @@ function generateSQLFromQuestion(researchQuestion: string, parsedData?: ParsedDa
   const columns = parsedData.columns.map(col => col.name);
   const lowerQuestion = researchQuestion.toLowerCase();
 
-  // Basic query showing structure
   let query = `-- Analysis for: ${researchQuestion}\nSELECT\n`;
   
-  // Add first few columns
   const displayColumns = columns.slice(0, 5);
   query += displayColumns.map(col => `  ${col}`).join(',\n');
   if (columns.length > 5) {
@@ -191,7 +246,6 @@ function generateSQLFromQuestion(researchQuestion: string, parsedData?: ParsedDa
   
   query += `\nFROM ${tableName}`;
   
-  // Add WHERE clause based on question
   if (lowerQuestion.includes('purchase') || lowerQuestion.includes('buy')) {
     const actionCol = columns.find(col => col.toLowerCase().includes('action'));
     if (actionCol) {

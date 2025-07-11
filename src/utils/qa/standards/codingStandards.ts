@@ -29,6 +29,116 @@ export interface ComplianceReport {
 
 export const CODING_STANDARDS: CodingStandard[] = [
   {
+    id: 'analytics-error-handling',
+    name: 'Analytics Error Handling',
+    description: 'Analytics functions must have proper error handling',
+    category: 'maintainability',
+    severity: 'error',
+    autoFixable: false,
+    rule: (code: string, filePath: string) => {
+      const violations: StandardViolation[] = [];
+      
+      if (filePath.includes('/analysis/') || filePath.includes('Analytics')) {
+        const lines = code.split('\n');
+        let hasTryCatch = false;
+        let hasErrorHandling = false;
+        
+        lines.forEach((line, index) => {
+          if (line.includes('try {') || line.includes('catch')) {
+            hasTryCatch = true;
+          }
+          if (line.includes('createErrorResult') || line.includes('console.error')) {
+            hasErrorHandling = true;
+          }
+        });
+        
+        if (!hasTryCatch && !hasErrorHandling) {
+          violations.push({
+            standardId: 'analytics-error-handling',
+            line: 1,
+            column: 0,
+            message: 'Analytics files must include proper error handling',
+            severity: 'error',
+            autoFixable: false,
+            suggestedFix: 'Add try-catch blocks and error result creation'
+          });
+        }
+      }
+      
+      return violations;
+    }
+  },
+
+  {
+    id: 'analytics-logging',
+    name: 'Analytics Logging',
+    description: 'Analytics functions should include proper logging',
+    category: 'maintainability',
+    severity: 'warning',
+    autoFixable: true,
+    rule: (code: string, filePath: string) => {
+      const violations: StandardViolation[] = [];
+      
+      if (filePath.includes('/analysis/') && !code.includes('console.log')) {
+        violations.push({
+          standardId: 'analytics-logging',
+          line: 1,
+          column: 0,
+          message: 'Analytics functions should include logging for debugging',
+          severity: 'warning',
+          autoFixable: true,
+          suggestedFix: 'Add console.log statements for key operations'
+        });
+      }
+      
+      return violations;
+    },
+    autoFix: (code: string) => {
+      if (code.includes('analyze()') && !code.includes('console.log')) {
+        return code.replace(
+          'analyze(): AnalysisResult[] {',
+          'analyze(): AnalysisResult[] {\n    console.log(`${this.constructor.name} starting analysis...`);'
+        );
+      }
+      return code;
+    }
+  },
+
+  {
+    id: 'readonly-analytics-fields',
+    name: 'Readonly Analytics Fields',
+    description: 'Analytics class fields should be readonly when appropriate',
+    category: 'maintainability',
+    severity: 'warning',
+    autoFixable: true,
+    rule: (code: string, filePath: string) => {
+      const violations: StandardViolation[] = [];
+      
+      if (filePath.includes('/analyzers/')) {
+        const lines = code.split('\n');
+        lines.forEach((line, index) => {
+          if (line.includes('private ') && !line.includes('readonly') && 
+              (line.includes('data:') || line.includes('rows:'))) {
+            violations.push({
+              standardId: 'readonly-analytics-fields',
+              line: index + 1,
+              column: 0,
+              message: 'Analytics data fields should be readonly',
+              severity: 'warning',
+              autoFixable: true
+            });
+          }
+        });
+      }
+      
+      return violations;
+    },
+    autoFix: (code: string) => {
+      return code.replace(/private (data|rows):/g, 'private readonly $1:');
+    }
+  },
+
+  {
     id: 'file-size-limit',
     name: 'File Size Limit',
     description: 'Files should not exceed recommended line limits',
@@ -41,7 +151,8 @@ export const CODING_STANDARDS: CodingStandard[] = [
         component: 200,
         hook: 150,
         utility: 250,
-        page: 300
+        page: 300,
+        analyzer: 300
       };
       
       const fileType = getFileType(filePath);
@@ -283,14 +394,17 @@ export const CODING_STANDARDS: CodingStandard[] = [
       
       lines.forEach((line, index) => {
         // Check for inconsistent boolean naming
-        if (line.includes('const ') && line.includes('=') && !line.includes('is') && !line.includes('has') && !line.includes('should') && line.includes('true') || line.includes('false')) {
+        if (line.includes('const ') && line.includes('=') && 
+            (line.includes('true') || line.includes('false'))) {
           const varMatch = line.match(/const\s+(\w+)/);
-          if (varMatch && !varMatch[1].startsWith('is') && !varMatch[1].startsWith('has') && !varMatch[1].startsWith('should')) {
+          if (varMatch && !varMatch[1].startsWith('is') && 
+              !varMatch[1].startsWith('has') && !varMatch[1].startsWith('should') &&
+              !varMatch[1].startsWith('enable')) {
             violations.push({
               standardId: 'consistent-naming',
               line: index + 1,
               column: 0,
-              message: `Boolean variable '${varMatch[1]}' should start with 'is', 'has', or 'should'`,
+              message: `Boolean variable '${varMatch[1]}' should start with 'is', 'has', 'should', or 'enable'`,
               severity: 'info',
               autoFixable: false
             });
@@ -308,5 +422,6 @@ function getFileType(filePath: string): string {
   if (filePath.includes('/hooks/')) return 'hook';
   if (filePath.includes('/pages/')) return 'page';
   if (filePath.includes('/utils/')) return 'utility';
+  if (filePath.includes('/analyzers/')) return 'analyzer';
   return 'unknown';
 }

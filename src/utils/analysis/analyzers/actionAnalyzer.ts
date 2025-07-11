@@ -2,58 +2,196 @@
 import { ParsedData } from '../../dataParser';
 import { AnalysisResult } from '../types';
 
-export class ActionAnalyzer {
-  private rows: Record<string, any>[];
+interface ActionBreakdownData {
+  name: string;
+  value: number;
+  percentage: string;
+}
 
-  constructor(data: ParsedData) {
-    this.rows = data.rows;
+interface UserAuthenticationData {
+  loggedIn: number;
+  anonymous: number;
+}
+
+export class ActionAnalyzer {
+  private readonly rows: Record<string, unknown>[];
+  private readonly enableLogging: boolean;
+
+  constructor(data: ParsedData, enableLogging = true) {
+    this.rows = data.rows || [];
+    this.enableLogging = enableLogging;
   }
 
   analyze(): AnalysisResult[] {
+    if (this.rows.length === 0) {
+      return this.createEmptyDataResults();
+    }
+
     const results: AnalysisResult[] = [];
     
-    // Action type distribution
-    const actionCounts = this.rows.reduce((acc, row) => {
-      const action = row.action || 'unknown';
-      acc[action] = (acc[action] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    try {
+      // Action type distribution analysis
+      const actionDistribution = this.analyzeActionDistribution();
+      if (actionDistribution) {
+        results.push(actionDistribution);
+      }
 
-    const actionData = Object.entries(actionCounts).map(([action, count]) => ({
-      name: action,
-      value: count,
-      percentage: ((count / this.rows.length) * 100).toFixed(1)
-    }));
+      // User authentication analysis
+      const authenticationAnalysis = this.analyzeUserAuthentication();
+      if (authenticationAnalysis) {
+        results.push(authenticationAnalysis);
+      }
 
-    results.push({
+    } catch (error) {
+      if (this.enableLogging) {
+        console.error('ActionAnalyzer error:', error);
+      }
+      results.push(this.createErrorResult(error));
+    }
+
+    return results;
+  }
+
+  private analyzeActionDistribution(): AnalysisResult | null {
+    const actionCounts = this.calculateActionCounts();
+    
+    if (Object.keys(actionCounts).length === 0) {
+      return null;
+    }
+
+    const actionData = this.formatActionData(actionCounts);
+    const mostCommonAction = actionData[0];
+
+    return {
       id: 'action-breakdown',
       title: 'Action Type Distribution',
       description: 'Breakdown of user actions by type',
       value: actionCounts,
       chartType: 'pie',
       chartData: actionData,
-      insight: `Most common action: ${actionData[0]?.name} (${actionData[0]?.percentage}%)`,
+      insight: mostCommonAction 
+        ? `Most common action: ${mostCommonAction.name} (${mostCommonAction.percentage}%)`
+        : 'Action distribution analysis completed',
       confidence: 'high'
-    });
+    };
+  }
 
-    // Logged-in vs unknown users
-    const loggedInCount = this.rows.filter(row => row.user_id && row.user_id !== 'unknown').length;
-    const unknownCount = this.rows.length - loggedInCount;
+  private analyzeUserAuthentication(): AnalysisResult | null {
+    const authData = this.calculateAuthenticationData();
     
-    results.push({
+    if (authData.loggedIn === 0 && authData.anonymous === 0) {
+      return null;
+    }
+
+    const totalEvents = authData.loggedIn + authData.anonymous;
+    const loggedInPercentage = totalEvents > 0 
+      ? ((authData.loggedIn / totalEvents) * 100).toFixed(1)
+      : '0.0';
+
+    const chartData = [
+      { 
+        name: 'Logged-in', 
+        value: authData.loggedIn, 
+        percentage: loggedInPercentage 
+      },
+      { 
+        name: 'Anonymous', 
+        value: authData.anonymous, 
+        percentage: ((authData.anonymous / totalEvents) * 100).toFixed(1) 
+      }
+    ];
+
+    return {
       id: 'user-authentication',
       title: 'User Authentication Status',
       description: 'Logged-in vs anonymous user events',
-      value: { loggedIn: loggedInCount, unknown: unknownCount },
+      value: authData,
       chartType: 'pie',
-      chartData: [
-        { name: 'Logged-in', value: loggedInCount, percentage: ((loggedInCount / this.rows.length) * 100).toFixed(1) },
-        { name: 'Anonymous', value: unknownCount, percentage: ((unknownCount / this.rows.length) * 100).toFixed(1) }
-      ],
-      insight: `${((loggedInCount / this.rows.length) * 100).toFixed(1)}% of events from authenticated users`,
+      chartData,
+      insight: `${loggedInPercentage}% of events from authenticated users`,
       confidence: 'high'
+    };
+  }
+
+  private calculateActionCounts(): Record<string, number> {
+    const actionCounts: Record<string, number> = {};
+    
+    this.rows.forEach(row => {
+      const action = this.extractActionValue(row);
+      actionCounts[action] = (actionCounts[action] || 0) + 1;
     });
 
-    return results;
+    return actionCounts;
+  }
+
+  private calculateAuthenticationData(): UserAuthenticationData {
+    let loggedInCount = 0;
+    let anonymousCount = 0;
+
+    this.rows.forEach(row => {
+      const userId = row.user_id;
+      const isLoggedIn = userId && userId !== 'unknown' && userId !== '' && userId !== null;
+      
+      if (isLoggedIn) {
+        loggedInCount++;
+      } else {
+        anonymousCount++;
+      }
+    });
+
+    return {
+      loggedIn: loggedInCount,
+      anonymous: anonymousCount
+    };
+  }
+
+  private formatActionData(actionCounts: Record<string, number>): ActionBreakdownData[] {
+    const totalActions = Object.values(actionCounts).reduce((sum, count) => sum + count, 0);
+    
+    return Object.entries(actionCounts)
+      .map(([action, count]) => ({
+        name: action,
+        value: count,
+        percentage: totalActions > 0 ? ((count / totalActions) * 100).toFixed(1) : '0.0'
+      }))
+      .sort((a, b) => b.value - a.value);
+  }
+
+  private extractActionValue(row: Record<string, unknown>): string {
+    // Try common action field names
+    const actionFields = ['action', 'event', 'event_name', 'activity', 'event_type'];
+    
+    for (const field of actionFields) {
+      const value = row[field];
+      if (value && typeof value === 'string') {
+        return value;
+      }
+    }
+    
+    return 'unknown';
+  }
+
+  private createEmptyDataResults(): AnalysisResult[] {
+    return [{
+      id: 'action-no-data',
+      title: 'No Action Data',
+      description: 'No action data available for analysis',
+      value: 0,
+      insight: 'No rows available for action analysis',
+      confidence: 'low'
+    }];
+  }
+
+  private createErrorResult(error: unknown): AnalysisResult {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    return {
+      id: 'action-analysis-error',
+      title: 'Action Analysis Error',
+      description: 'Error occurred during action analysis',
+      value: 0,
+      insight: `Action analysis failed: ${errorMessage}`,
+      confidence: 'low'
+    };
   }
 }
