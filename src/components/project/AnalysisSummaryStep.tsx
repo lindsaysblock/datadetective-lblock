@@ -32,8 +32,6 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
 }) => {
   const [educationalMode, setEducationalMode] = useState(false);
   const hasData = parsedData && parsedData.length > 0;
-  const totalRows = hasData ? parsedData.reduce((sum, file) => sum + (file.rows || 0), 0) : 0;
-  const totalFiles = hasData ? parsedData.length : 0;
 
   // If analysis is completed, show the results
   if (analysisCompleted && analysisResults) {
@@ -119,18 +117,18 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="font-medium text-gray-900 mb-2">Data Source</h4>
               {hasData ? (
-                <div className="text-sm text-gray-700">
-                  <p>{totalFiles} file{totalFiles > 1 ? 's' : ''} with {totalRows.toLocaleString()} total rows</p>
-                  {columnMapping && (
-                    <div className="mt-2 space-y-1">
-                      {columnMapping.valueColumns?.length > 0 && (
-                        <p>• Numeric columns: {columnMapping.valueColumns.join(', ')}</p>
-                      )}
-                      {columnMapping.categoryColumns?.length > 0 && (
-                        <p>• Category columns: {columnMapping.categoryColumns.join(', ')}</p>
-                      )}
+                <div className="text-sm text-gray-700 space-y-2">
+                  {parsedData.map((data, index) => (
+                    <div key={index} className="flex items-center justify-between py-1">
+                      <span className="font-medium">
+                        {data.name || `File ${index + 1}`}
+                      </span>
+                      <span className="text-gray-500">
+                        {(data.summary?.totalRows || data.rowCount || 0).toLocaleString()} rows × {' '}
+                        {data.summary?.totalColumns || data.columns?.length || 0} columns
+                      </span>
                     </div>
-                  )}
+                  ))}
                 </div>
               ) : (
                 <p className="text-sm text-gray-700">Database connection or demo analysis</p>
