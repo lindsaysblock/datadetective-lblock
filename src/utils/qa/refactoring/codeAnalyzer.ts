@@ -1,3 +1,4 @@
+
 import { RefactoringSuggestion } from '../autoRefactorSystem';
 
 export class CodeAnalyzer {
@@ -97,7 +98,9 @@ export class CodeAnalyzer {
   private identifyIssues(file: any): string[] {
     const issues: string[] = [];
     
-    if (file.lines > file.type === 'component' ? 200 : 250) {
+    // Fixed the operator precedence issue
+    const threshold = file.type === 'component' ? 200 : 250;
+    if (file.lines > threshold) {
       issues.push('Large file size');
     }
     
