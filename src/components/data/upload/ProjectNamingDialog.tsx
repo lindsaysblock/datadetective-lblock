@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, FolderPlus } from 'lucide-react';
+import { Loader2, FolderPlus, Brain } from 'lucide-react';
 
 interface ProjectNamingDialogProps {
   open: boolean;
@@ -35,6 +35,7 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
     }
   };
 
+  // Prevent closing when analysis is in progress
   const handleClose = () => {
     if (!isProcessing) {
       onOpenChange(false);
@@ -44,14 +45,17 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => isProcessing && e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FolderPlus className="w-5 h-5 text-purple-600" />
             Name Your Project
           </DialogTitle>
           <DialogDescription>
-            Give your analysis project a memorable name to help you find it later.
+            {isProcessing ? 
+              "Analysis is in progress. Please name your project to continue." :
+              "Give your analysis project a memorable name to help you find it later."
+            }
           </DialogDescription>
         </DialogHeader>
         
@@ -63,39 +67,40 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
               placeholder="e.g., Sales Data Analysis, Customer Survey Insights..."
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
-              disabled={isProcessing}
+              disabled={false}
               autoFocus
             />
           </div>
           
           {isProcessing && (
             <div className="flex items-center gap-2 text-blue-600 bg-blue-50 p-3 rounded-lg">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Starting analysis...</span>
+              <Brain className="w-4 h-4 animate-pulse" />
+              <span className="text-sm">Analysis in progress...</span>
             </div>
           )}
           
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isProcessing}
-            >
-              Cancel
-            </Button>
+            {!isProcessing && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+              >
+                Cancel
+              </Button>
+            )}
             <Button
               type="submit"
-              disabled={!projectName.trim() || isProcessing}
+              disabled={!projectName.trim()}
               className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             >
               {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
+                  Waiting for Analysis...
                 </>
               ) : (
-                'Start Analysis'
+                'Create Project'
               )}
             </Button>
           </DialogFooter>

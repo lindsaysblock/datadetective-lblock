@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useToast } from '@/hooks/use-toast';
@@ -141,7 +140,10 @@ export const useNewProjectForm = () => {
       return;
     }
 
+    // Start analysis immediately
     analysis.startAnalysis(formState.researchQuestion, formState.additionalContext);
+    
+    // Show project naming dialog immediately (it will persist until analysis is complete)
     dialogs.setShowProjectDialog(true);
   };
 
@@ -150,10 +152,13 @@ export const useNewProjectForm = () => {
     formState.setCurrentProjectName(projectName);
     clearFormData();
     
+    // Check if analysis is complete
     if (analysis.analysisCompleted) {
+      // Analysis is done, show results immediately
       analysis.showResults();
       dialogs.setShowProjectDialog(false);
     } else {
+      // Analysis still running, keep dialog open and wait
       const checkAnalysis = setInterval(() => {
         if (analysis.analysisCompleted) {
           analysis.showResults();

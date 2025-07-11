@@ -2,6 +2,8 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
 
 interface AnalysisSummaryStepProps {
@@ -21,6 +23,8 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   onPrevious,
   onStartAnalysis
 }) => {
+  const [educationalMode, setEducationalMode] = React.useState(true);
+
   return (
     <Card className="w-full shadow-sm border-0 bg-white/80 backdrop-blur-sm">
       <CardContent className="p-8">
@@ -45,6 +49,25 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
           </div>
         </div>
 
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">Educational Mode</h4>
+              <p className="text-sm text-gray-600">Show detailed explanations and learning insights during analysis</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="educational-mode"
+                checked={educationalMode}
+                onCheckedChange={setEducationalMode}
+              />
+              <Label htmlFor="educational-mode" className="text-sm font-medium">
+                {educationalMode ? 'On' : 'Off'}
+              </Label>
+            </div>
+          </div>
+        </div>
+
         <div className="flex justify-between">
           <Button variant="outline" onClick={onPrevious} disabled={isProcessingAnalysis} className="flex items-center gap-2 bg-white hover:bg-gray-50">
             <ArrowLeft className="w-4 h-4" />
@@ -55,7 +78,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             disabled={!researchQuestion || !file || isProcessingAnalysis}
             className="bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 text-white px-8 py-3 text-lg"
           >
-            {isProcessingAnalysis ? 'Starting Analysis...' : 'Start Analysis'}
+            {isProcessingAnalysis ? 'Starting Analysis...' : 'Start the Case'}
           </Button>
         </div>
       </CardContent>
