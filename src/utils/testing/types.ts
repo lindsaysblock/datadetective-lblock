@@ -1,11 +1,25 @@
 
 export interface UnitTestResult {
   testName: string;
-  status: 'pass' | 'fail' | 'skip';
+  status: 'pass' | 'fail' | 'skip' | 'warning';
   duration: number;
   error?: string;
   assertions: number;
   passedAssertions: number;
+  message?: string;
+  category?: string;
+  executionTime?: number;
+}
+
+export interface TestResult {
+  testName: string;
+  status: 'pass' | 'fail' | 'skip' | 'warning';
+  message: string;
+  category?: string;
+  executionTime?: number;
+  performance?: number;
+  suggestions?: string[];
+  isDataRelated?: boolean;
 }
 
 export interface TestSuite {

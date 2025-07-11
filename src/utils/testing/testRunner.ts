@@ -1,5 +1,5 @@
 
-import { TestResult, TestSuite } from './types';
+import { TestResult, TestSuite, UnitTestResult } from './types';
 import { AnalyticsUnitTestSuite } from './suites/analyticsUnitTests';
 import { AnalyticsIntegrationTestSuite } from './suites/analyticsIntegrationTests';
 
@@ -23,7 +23,7 @@ export class TestRunner {
       const unitResults = await unitTests.runTests();
       testSuites.push({
         suiteName: 'Analytics Unit Tests',
-        tests: unitResults,
+        tests: this.convertTestResultsToUnitTestResults(unitResults),
         setupTime: 0,
         teardownTime: 0,
         totalDuration: unitResults.reduce((sum, test) => sum + (test.executionTime || 0), 0)
@@ -34,7 +34,7 @@ export class TestRunner {
       const integrationResults = await integrationTests.runTests();
       testSuites.push({
         suiteName: 'Analytics Integration Tests',
-        tests: integrationResults,
+        tests: this.convertTestResultsToUnitTestResults(integrationResults),
         setupTime: 0,
         teardownTime: 0,
         totalDuration: integrationResults.reduce((sum, test) => sum + (test.executionTime || 0), 0)
@@ -51,6 +51,10 @@ export class TestRunner {
         tests: [{
           testName: 'Test Suite Execution',
           status: 'fail',
+          duration: 0,
+          error: `Test execution failed: ${error}`,
+          assertions: 0,
+          passedAssertions: 0,
           message: `Test execution failed: ${error}`,
           category: 'system'
         }],
@@ -61,6 +65,20 @@ export class TestRunner {
     }
 
     return testSuites;
+  }
+
+  private convertTestResultsToUnitTestResults(testResults: TestResult[]): UnitTestResult[] {
+    return testResults.map(result => ({
+      testName: result.testName,
+      status: result.status,
+      duration: result.executionTime || 0,
+      error: result.status === 'fail' ? result.message : undefined,
+      assertions: 1,
+      passedAssertions: result.status === 'pass' ? 1 : 0,
+      message: result.message,
+      category: result.category,
+      executionTime: result.executionTime
+    }));
   }
 
   async runTest<T>(name: string, testFn: (assert: AssertFunctions) => T): Promise<TestResult> {
