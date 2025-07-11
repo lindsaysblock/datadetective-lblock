@@ -20,6 +20,16 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
     selectedFiles.forEach(file => formData.addFile(file));
   };
 
+  const handleFileUpload = async () => {
+    if (formData.files.length > 0) {
+      await formData.handleFileUpload(formData.files[0]);
+    }
+  };
+
+  const handleColumnMapping = (mapping: ColumnMapping) => {
+    formData.setColumnMapping(mapping);
+  };
+
   const handleStartAnalysis = async (educational: boolean = false) => {
     console.log('Starting analysis with:', {
       researchQuestion: formData.researchQuestion,
@@ -57,9 +67,9 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
             parsedData={formData.parsedData ? [formData.parsedData] : []}
             columnMapping={formData.columnMapping}
             onFileChange={handleFileChange}
-            onFileUpload={formData.handleFileUpload}
+            onFileUpload={handleFileUpload}
             onRemoveFile={formData.removeFile}
-            onColumnMapping={formData.setColumnMapping}
+            onColumnMapping={handleColumnMapping}
             onNext={formData.nextStep}
             onPrevious={formData.prevStep}
           />
@@ -71,7 +81,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
             setAdditionalContext={formData.setAdditionalContext}
             parsedData={formData.parsedData ? [formData.parsedData] : []}
             columnMapping={formData.columnMapping}
-            onColumnMapping={formData.setColumnMapping}
+            onColumnMapping={handleColumnMapping}
             onNext={formData.nextStep}
             onPrevious={formData.prevStep}
           />
