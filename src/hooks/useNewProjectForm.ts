@@ -20,7 +20,8 @@ export const useNewProjectForm = () => {
   console.log('Form state initialized:', {
     step: formState.step,
     researchQuestion: formState.researchQuestion,
-    files: formState.files?.length || 0
+    files: formState.files?.length || 0,
+    parsedData: formState.parsedData?.length || 0
   });
 
   const { saveFormData, getFormData, clearFormData, hasStoredData } = useFormDataPersistence(
@@ -57,6 +58,7 @@ export const useNewProjectForm = () => {
   };
 
   console.log('useNewProjectForm returning step:', returnValue.step);
+  console.log('useNewProjectForm parsedData:', returnValue.parsedData?.length || 0);
   
   return returnValue;
 };
