@@ -60,18 +60,20 @@ export const useProjectAnalysis = () => {
       analysisCompleted: false
     }));
     
-    // Simulate analysis processing
+    // Simulate analysis processing with more realistic timing
     setTimeout(() => {
+      console.log('🎯 Analysis processing complete, generating results...');
       const analysisResults = executeAnalysis(parsedData, researchQuestion, additionalContext, educational);
       
       setState(prev => ({
         ...prev,
         analysisResults,
         detailedResults: analysisResults.detailedResults,
-        analysisCompleted: true
+        analysisCompleted: true,
+        isProcessingAnalysis: false // Set to false when analysis is complete
       }));
 
-      console.log('🎯 Analysis results generated:', {
+      console.log('✅ Analysis results generated and state updated:', {
         insights: analysisResults.insights,
         confidence: analysisResults.confidence,
         recommendationsCount: analysisResults.recommendations.length,
@@ -81,12 +83,16 @@ export const useProjectAnalysis = () => {
   }, []);
 
   const showResults = useCallback(() => {
+    console.log('🎯 Showing results, current state:', {
+      analysisCompleted: state.analysisCompleted,
+      hasResults: !!state.analysisResults
+    });
     setState(prev => ({
       ...prev,
       showAnalysisView: true,
       isProcessingAnalysis: false
     }));
-  }, []);
+  }, [state.analysisCompleted, state.analysisResults]);
 
   const resetAnalysis = useCallback(() => {
     setState({
@@ -143,6 +149,8 @@ function executeAnalysis(
   if (parsedData && parsedData.rows && isRowCountQuestion) {
     const rowCount = parsedData.rows.length;
     const columnCount = parsedData.columns?.length || 0;
+    
+    console.log('✅ Row count question detected, returning direct answer:', { rowCount, columnCount });
     
     return {
       insights: `Your dataset contains **${rowCount.toLocaleString()} rows** and ${columnCount} columns. ${rowCount > 10000 ? 'This is a substantial dataset that provides excellent statistical power for analysis.' : rowCount > 1000 ? 'This is a good-sized dataset for meaningful analysis.' : 'This is a smaller dataset - results may have limited statistical significance.'}`,
@@ -209,7 +217,7 @@ function executeAnalysis(
     recommendations = ["Upload a CSV or JSON file with data", "Ensure the file contains both headers and data rows"];
   }
 
-  return {
+  const finalResults = {
     insights: analysisInsights,
     confidence,
     recommendations,
@@ -217,6 +225,15 @@ function executeAnalysis(
     sqlQuery: generateSQLFromQuestion(researchQuestion, parsedData),
     queryBreakdown: educational ? generateQueryBreakdown(researchQuestion) : undefined
   };
+
+  console.log('📋 Final analysis results:', {
+    insightsLength: finalResults.insights.length,
+    confidence: finalResults.confidence,
+    recommendationsCount: finalResults.recommendations.length,
+    detailedResultsCount: finalResults.detailedResults.length
+  });
+
+  return finalResults;
 }
 
 function generateInsightsFromResults(results: AnalysisResult[], researchQuestion: string): string {
