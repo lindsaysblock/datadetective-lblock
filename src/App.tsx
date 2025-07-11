@@ -30,6 +30,7 @@ const MemoizedIndex = memo(Index);
 
 function App() {
   useEffect(() => {
+    console.log('🚀 App component mounted');
     // Performance monitoring setup
     performanceMonitor.startMetric('App Initialization');
     trackMemory();
