@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import ProjectNamingDialog from '@/components/data/upload/ProjectNamingDialog';
@@ -43,6 +44,7 @@ const NewProject = () => {
     setPassword,
     setResearchQuestion,
     setAdditionalContext,
+    setShowProjectDialog,
     nextStep,
     prevStep,
     handleFileChange,
@@ -202,7 +204,7 @@ const NewProject = () => {
           onOpenChange={(open) => {
             // Only allow closing if analysis is not running or is complete
             if (!isProcessingAnalysis || analysisCompleted) {
-              dialogs.setShowProjectDialog(open);
+              setShowProjectDialog(open);
             }
           }}
           onConfirm={handleProjectConfirm}
