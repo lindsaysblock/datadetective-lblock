@@ -1,16 +1,22 @@
-
 import { QAReport } from '../types';
 import { QATestSuites } from '../qaTestSuites';
 import { TestOrchestrator } from '../testOrchestrator';
 import { EnhancedQASystem } from '../enhancedQASystem';
 import { PerformanceOptimizer } from '../performance/performanceOptimizer';
+import { TestRunner } from '../testRunner';
 
 export class QAOrchestrator {
-  private qaTestSuites = new QATestSuites();
-  private testOrchestrator = new TestOrchestrator(this.qaTestSuites);
+  private qaTestSuites: QATestSuites;
+  private testOrchestrator: TestOrchestrator;
   private enhancedQASystem = new EnhancedQASystem();
   private performanceOptimizer = new PerformanceOptimizer();
   private useEnhancedMode: boolean = true;
+
+  constructor() {
+    const testRunner = new TestRunner();
+    this.qaTestSuites = new QATestSuites(testRunner);
+    this.testOrchestrator = new TestOrchestrator(this.qaTestSuites);
+  }
 
   async runFullQA(): Promise<QAReport> {
     console.log('🔍 Starting QA testing with enhanced dynamic analysis...');

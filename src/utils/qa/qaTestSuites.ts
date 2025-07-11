@@ -1,3 +1,4 @@
+
 import { QATestResult } from './types';
 import { TestRunner } from './testRunner';
 import { EnhancedDataValidationTests } from '../testing/suites/enhancedDataValidationTests';
@@ -6,8 +7,8 @@ export class QATestSuites {
   private testRunner: TestRunner;
   private results: QATestResult[] = [];
 
-  constructor(testRunner: TestRunner) {
-    this.testRunner = testRunner;
+  constructor(testRunner?: TestRunner) {
+    this.testRunner = testRunner || new TestRunner(this);
   }
 
   addTestResult(result: QATestResult): void {
@@ -33,7 +34,7 @@ export class QATestSuites {
       [...dataQualityResults, ...relationshipResults, ...recommendationResults].forEach(result => {
         this.addTestResult({
           testName: result.testName,
-          status: result.status,
+          status: result.status === 'skip' ? 'warning' : result.status,
           message: result.message,
           suggestions: result.status === 'fail' ? [
             'Review data quality validation logic',
@@ -61,7 +62,7 @@ export class QATestSuites {
       columnResults.forEach(result => {
         this.addTestResult({
           testName: result.testName,
-          status: result.status,
+          status: result.status === 'skip' ? 'warning' : result.status,
           message: result.message,
           suggestions: result.status === 'fail' ? [
             'Improve column type detection algorithms',

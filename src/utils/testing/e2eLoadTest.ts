@@ -1,12 +1,17 @@
-
 import { LoadTestingSystem } from './loadTesting/loadTestingSystem';
 import { UnitTestingSystem } from '../unitTesting';
 import { QATestSuites } from '../qa/qaTestSuites';
+import { TestRunner } from '../qa/testRunner';
 
 export class E2ELoadTest {
   private loadTestingSystem = new LoadTestingSystem();
   private unitTestingSystem = new UnitTestingSystem();
-  private qaTestSuites = new QATestSuites();
+  private qaTestSuites: QATestSuites;
+
+  constructor() {
+    const testRunner = new TestRunner();
+    this.qaTestSuites = new QATestSuites(testRunner);
+  }
 
   async runComprehensiveLoadTest(): Promise<void> {
     console.log('🚀 Starting comprehensive E2E load test with analytics...');

@@ -6,9 +6,13 @@ import { QATestSuites } from './qaTestSuites';
 export class TestRunner {
   private loadTestingSystem = new LoadTestingSystem();
   private unitTestingSystem = new UnitTestingSystem();
-  private qaTestSuites: QATestSuites;
+  private qaTestSuites?: QATestSuites;
 
-  constructor(qaTestSuites: QATestSuites) {
+  constructor(qaTestSuites?: QATestSuites) {
+    this.qaTestSuites = qaTestSuites;
+  }
+
+  setQATestSuites(qaTestSuites: QATestSuites): void {
     this.qaTestSuites = qaTestSuites;
   }
 
@@ -47,6 +51,11 @@ export class TestRunner {
   }
 
   async runLoadTests(): Promise<void> {
+    if (!this.qaTestSuites) {
+      console.error('QATestSuites not set for TestRunner');
+      return;
+    }
+
     console.log('🚀 Running optimized load testing suite...');
     
     const loadTestConfigs: LoadTestConfig[] = [

@@ -1,15 +1,20 @@
-
 import { QAReport } from '../types';
 import { QATestSuites } from '../qaTestSuites';
 import { AutoFixSystem } from '../autoFixSystem';
 import { EnhancedQASystem } from '../enhancedQASystem';
+import { TestRunner } from '../testRunner';
 
 export class QASystemCore {
-  private qaTestSuites = new QATestSuites();
+  private qaTestSuites: QATestSuites;
   private autoFixSystem = new AutoFixSystem();
   private enhancedQASystem = new EnhancedQASystem();
   private startTime: number = 0;
   private useEnhancedMode: boolean = true;
+
+  constructor() {
+    const testRunner = new TestRunner();
+    this.qaTestSuites = new QATestSuites(testRunner);
+  }
 
   async runFullQA(): Promise<QAReport> {
     console.log('🔍 Starting QA testing with enhanced dynamic analysis...');
