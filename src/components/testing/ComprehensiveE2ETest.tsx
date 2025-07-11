@@ -257,7 +257,13 @@ const ComprehensiveE2ETest: React.FC = () => {
         const mockContext = {
           researchQuestion: 'Test question',
           additionalContext: '',
-          parsedData: [{ name: 'John', age: 25 }],
+          parsedData: [{
+            id: 'test-1',
+            name: 'test.csv',
+            rows: [{ name: 'John', age: 25 }],
+            columns: ['name', 'age'],
+            rowCount: 1
+          }],
           educationalMode: false
         };
         
@@ -280,7 +286,13 @@ const ComprehensiveE2ETest: React.FC = () => {
         const mockContext = {
           researchQuestion: 'Test analysis',
           additionalContext: '',
-          parsedData: [{ name: 'John', age: 25 }],
+          parsedData: [{
+            id: 'test-1',
+            name: 'test.csv',
+            rows: [{ name: 'John', age: 25 }],
+            columns: ['name', 'age'],
+            rowCount: 1
+          }],
           educationalMode: false
         };
         

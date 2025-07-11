@@ -11,7 +11,7 @@ export class AnalysisEngine {
       
       // Transform new format to legacy format for backward compatibility
       return {
-        insights: report.insights,
+        insights: report.insights.join(' '),
         confidence: report.confidence,
         recommendations: report.recommendations,
         detailedResults: report.results.map(result => ({
@@ -23,7 +23,15 @@ export class AnalysisEngine {
           confidence: result.confidence
         })),
         sqlQuery: report.sqlQuery || '-- No query generated',
-        queryBreakdown: report.queryBreakdown
+        queryBreakdown: report.queryBreakdown ? {
+          steps: report.queryBreakdown.map((step, index) => ({
+            step: index + 1,
+            title: `Step ${index + 1}`,
+            description: step,
+            code: step,
+            explanation: step
+          }))
+        } : undefined
       };
     } catch (error) {
       console.error('❌ AnalysisEngine error:', error);

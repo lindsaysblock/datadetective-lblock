@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { DataAnalysisContext } from '@/types/data';
+import { DataAnalysisContext, ColumnMapping } from '@/types/data';
 import StepIndicator from './StepIndicator';
 import ResearchQuestionStep from './ResearchQuestionStep';
 import DataSourceStep from './DataSourceStep';
@@ -57,9 +57,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
             parsedData={formData.parsedData ? [formData.parsedData] : []}
             columnMapping={formData.columnMapping}
             onFileChange={handleFileChange}
-            onFileUpload={async (file: File) => {
-              await formData.handleFileUpload(file);
-            }}
+            onFileUpload={formData.handleFileUpload}
             onRemoveFile={formData.removeFile}
             onColumnMapping={formData.setColumnMapping}
             onNext={formData.nextStep}
