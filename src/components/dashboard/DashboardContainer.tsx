@@ -16,11 +16,25 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({ data }) => {
 
   console.log('📊 Processed data:', processedData);
 
+  // Ensure the data has the required structure with all ParsedData properties
+  const normalizedData: ParsedData = {
+    columns: processedData?.columns || [],
+    rows: processedData?.rows || [],
+    rowCount: processedData?.rows?.length || 0,
+    fileSize: processedData?.fileSize || 0,
+    summary: processedData?.summary || {
+      totalRows: processedData?.rows?.length || 0,
+      totalColumns: processedData?.columns?.length || 0
+    }
+  };
+
+  console.log('✅ Normalized data:', normalizedData);
+
   return (
     <DashboardView
       activeTab={activeTab}
       onTabChange={setActiveTab}
-      data={processedData}
+      data={normalizedData}
       findings={findings}
       recommendations={recommendations}
     />
