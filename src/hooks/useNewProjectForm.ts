@@ -52,9 +52,18 @@ export const useNewProjectForm = () => {
     }, 3000);
   };
 
+  const handleProjectConfirm = (projectName: string) => {
+    console.log('Project named:', projectName);
+    setCurrentProjectName(projectName);
+    
+    // Don't close dialog yet - wait for analysis completion
+    // The dialog will handle the waiting state and progress display
+  };
+
   const showResults = () => {
     console.log('Showing analysis results');
     setShowAnalysisView(true);
+    setShowProjectDialog(false);
   };
 
   const handleBackToProject = () => {
@@ -72,6 +81,7 @@ export const useNewProjectForm = () => {
     educationalMode,
     setShowProjectDialog,
     setCurrentProjectName,
+    handleProjectConfirm,
     startAnalysis,
     showResults,
     handleBackToProject
