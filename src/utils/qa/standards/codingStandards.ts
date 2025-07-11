@@ -1,427 +1,74 @@
-export interface CodingStandard {
-  id: string;
-  name: string;
-  description: string;
-  category: 'structure' | 'performance' | 'maintainability' | 'security' | 'accessibility';
-  severity: 'error' | 'warning' | 'info';
-  autoFixable: boolean;
-  rule: (code: string, filePath: string) => StandardViolation[];
-  autoFix?: (code: string, violations: StandardViolation[]) => string;
-}
 
-export interface StandardViolation {
-  standardId: string;
-  line: number;
-  column: number;
-  message: string;
-  severity: 'error' | 'warning' | 'info';
-  autoFixable: boolean;
-  suggestedFix?: string;
-}
+import { PerformanceStandards } from './core/performanceStandards';
+import { SecurityStandards } from './core/securityStandards';
+import { TypeStandards } from './core/typeStandards';
+import { CodeQualityRule, ComplianceReport } from './types';
 
-export interface ComplianceReport {
-  filePath: string;
-  violations: StandardViolation[];
-  complianceScore: number;
-  autoFixesApplied: number;
-  manualFixesNeeded: number;
-}
+export class CodingStandards {
+  private static allRules: CodeQualityRule[] = [
+    ...PerformanceStandards.getPerformanceRules(),
+    ...SecurityStandards.getSecurityRules(),
+    ...TypeStandards.getTypeRules()
+  ];
 
-export const CODING_STANDARDS: CodingStandard[] = [
-  {
-    id: 'analytics-error-handling',
-    name: 'Analytics Error Handling',
-    description: 'Analytics functions must have proper error handling',
-    category: 'maintainability',
-    severity: 'error',
-    autoFixable: false,
-    rule: (code: string, filePath: string) => {
-      const violations: StandardViolation[] = [];
-      
-      if (filePath.includes('/analysis/') || filePath.includes('Analytics')) {
-        const lines = code.split('\n');
-        let hasTryCatch = false;
-        let hasErrorHandling = false;
-        
-        lines.forEach((line, index) => {
-          if (line.includes('try {') || line.includes('catch')) {
-            hasTryCatch = true;
-          }
-          if (line.includes('createErrorResult') || line.includes('console.error')) {
-            hasErrorHandling = true;
-          }
-        });
-        
-        if (!hasTryCatch && !hasErrorHandling) {
-          violations.push({
-            standardId: 'analytics-error-handling',
-            line: 1,
-            column: 0,
-            message: 'Analytics files must include proper error handling',
-            severity: 'error',
-            autoFixable: false,
-            suggestedFix: 'Add try-catch blocks and error result creation'
-          });
-        }
-      }
-      
-      return violations;
-    }
-  },
-
-  {
-    id: 'analytics-logging',
-    name: 'Analytics Logging',
-    description: 'Analytics functions should include proper logging',
-    category: 'maintainability',
-    severity: 'warning',
-    autoFixable: true,
-    rule: (code: string, filePath: string) => {
-      const violations: StandardViolation[] = [];
-      
-      if (filePath.includes('/analysis/') && !code.includes('console.log')) {
-        violations.push({
-          standardId: 'analytics-logging',
-          line: 1,
-          column: 0,
-          message: 'Analytics functions should include logging for debugging',
-          severity: 'warning',
-          autoFixable: true,
-          suggestedFix: 'Add console.log statements for key operations'
-        });
-      }
-      
-      return violations;
-    },
-    autoFix: (code: string) => {
-      if (code.includes('analyze()') && !code.includes('console.log')) {
-        return code.replace(
-          'analyze(): AnalysisResult[] {',
-          'analyze(): AnalysisResult[] {\n    console.log(`${this.constructor.name} starting analysis...`);'
-        );
-      }
-      return code;
-    }
-  },
-
-  {
-    id: 'readonly-analytics-fields',
-    name: 'Readonly Analytics Fields',
-    description: 'Analytics class fields should be readonly when appropriate',
-    category: 'maintainability',
-    severity: 'warning',
-    autoFixable: true,
-    rule: (code: string, filePath: string) => {
-      const violations: StandardViolation[] = [];
-      
-      if (filePath.includes('/analyzers/')) {
-        const lines = code.split('\n');
-        lines.forEach((line, index) => {
-          if (line.includes('private ') && !line.includes('readonly') && 
-              (line.includes('data:') || line.includes('rows:'))) {
-            violations.push({
-              standardId: 'readonly-analytics-fields',
-              line: index + 1,
-              column: 0,
-              message: 'Analytics data fields should be readonly',
-              severity: 'warning',
-              autoFixable: true
-            });
-          }
-        });
-      }
-      
-      return violations;
-    },
-    autoFix: (code: string) => {
-      return code.replace(/private (data|rows):/g, 'private readonly $1:');
-    }
-  },
-
-  {
-    id: 'file-size-limit',
-    name: 'File Size Limit',
-    description: 'Files should not exceed recommended line limits',
-    category: 'maintainability',
-    severity: 'warning',
-    autoFixable: false,
-    rule: (code: string, filePath: string) => {
-      const lines = code.split('\n').length;
-      const thresholds = {
-        component: 200,
-        hook: 150,
-        utility: 250,
-        page: 300,
-        analyzer: 300
-      };
-      
-      const fileType = getFileType(filePath);
-      const threshold = thresholds[fileType as keyof typeof thresholds] || 200;
-      
-      if (lines > threshold) {
-        return [{
-          standardId: 'file-size-limit',
-          line: lines,
-          column: 0,
-          message: `File has ${lines} lines, exceeds ${threshold} line threshold for ${fileType}`,
-          severity: 'warning' as const,
-          autoFixable: false,
-          suggestedFix: `Consider splitting into smaller, focused modules`
-        }];
-      }
-      return [];
-    }
-  },
-  
-  {
-    id: 'no-unused-imports',
-    name: 'No Unused Imports',
-    description: 'Remove unused import statements',
-    category: 'maintainability',
-    severity: 'warning',
-    autoFixable: true,
-    rule: (code: string) => {
-      const violations: StandardViolation[] = [];
-      const lines = code.split('\n');
-      
-      lines.forEach((line, index) => {
-        if (line.trim().startsWith('import') && !line.includes('type')) {
-          const importMatch = line.match(/import\s+{([^}]+)}\s+from/);
-          if (importMatch) {
-            const imports = importMatch[1].split(',').map(i => i.trim());
-            imports.forEach(importName => {
-              const cleanImport = importName.replace(/\s+as\s+\w+/, '');
-              if (!code.includes(cleanImport) || code.indexOf(cleanImport) === code.indexOf(line)) {
-                violations.push({
-                  standardId: 'no-unused-imports',
-                  line: index + 1,
-                  column: 0,
-                  message: `Unused import: ${importName}`,
-                  severity: 'warning',
-                  autoFixable: true
-                });
-              }
-            });
-          }
-        }
-      });
-      
-      return violations;
-    },
-    autoFix: (code: string, violations: StandardViolation[]) => {
-      let fixedCode = code;
-      const lines = code.split('\n');
-      
-      violations.forEach(violation => {
-        if (violation.standardId === 'no-unused-imports') {
-          const lineIndex = violation.line - 1;
-          const line = lines[lineIndex];
-          
-          if (line.includes('{') && line.includes('}')) {
-            const beforeBrace = line.substring(0, line.indexOf('{') + 1);
-            const afterBrace = line.substring(line.indexOf('}'));
-            const imports = line.substring(line.indexOf('{') + 1, line.indexOf('}')).split(',');
-            
-            const usedImports = imports.filter(imp => {
-              const cleanImp = imp.trim().replace(/\s+as\s+\w+/, '');
-              return code.split('\n').some((codeLine, idx) => 
-                idx !== lineIndex && codeLine.includes(cleanImp)
-              );
-            });
-            
-            if (usedImports.length === 0) {
-              lines[lineIndex] = '';
-            } else {
-              lines[lineIndex] = beforeBrace + usedImports.join(', ') + afterBrace;
-            }
-          }
-        }
-      });
-      
-      return lines.join('\n').replace(/\n\s*\n\s*\n/g, '\n\n');
-    }
-  },
-  
-  {
-    id: 'react-performance',
-    name: 'React Performance Optimization',
-    description: 'Ensure React components use performance best practices',
-    category: 'performance',
-    severity: 'info',
-    autoFixable: true,
-    rule: (code: string, filePath: string) => {
-      const violations: StandardViolation[] = [];
-      
-      if (filePath.includes('components') && code.includes('useState') && !code.includes('useMemo')) {
-        const lines = code.split('\n');
-        lines.forEach((line, index) => {
-          if (line.includes('useState') && !line.includes('useMemo')) {
-            violations.push({
-              standardId: 'react-performance',
-              line: index + 1,
-              column: 0,
-              message: 'Consider using useMemo for expensive computations',
-              severity: 'info',
-              autoFixable: false,
-              suggestedFix: 'Add useMemo for computed values or expensive operations'
-            });
-          }
-        });
-      }
-      
-      return violations;
-    }
-  },
-  
-  {
-    id: 'tailwind-semantic-tokens',
-    name: 'Use Semantic Tailwind Tokens',
-    description: 'Use semantic color tokens instead of direct colors',
-    category: 'maintainability',
-    severity: 'warning',
-    autoFixable: true,
-    rule: (code: string) => {
-      const violations: StandardViolation[] = [];
-      const directColorPattern = /bg-(red|blue|green|yellow|purple|pink|indigo|gray)-\d+/g;
-      const lines = code.split('\n');
-      
-      lines.forEach((line, index) => {
-        const matches = line.matchAll(directColorPattern);
-        for (const match of matches) {
-          violations.push({
-            standardId: 'tailwind-semantic-tokens',
-            line: index + 1,
-            column: match.index || 0,
-            message: `Use semantic tokens instead of direct color: ${match[0]}`,
-            severity: 'warning',
-            autoFixable: true,
-            suggestedFix: 'Replace with semantic tokens like bg-primary, bg-secondary, etc.'
-          });
-        }
-      });
-      
-      return violations;
-    },
-    autoFix: (code: string, violations: StandardViolation[]) => {
-      let fixedCode = code;
-      const colorMappings: Record<string, string> = {
-        'bg-blue-500': 'bg-primary',
-        'bg-blue-600': 'bg-primary/90',
-        'bg-red-500': 'bg-destructive',
-        'bg-green-500': 'bg-primary',
-        'bg-gray-100': 'bg-muted',
-        'bg-gray-200': 'bg-muted/80',
-        'text-blue-600': 'text-primary',
-        'text-red-600': 'text-destructive',
-        'text-gray-600': 'text-muted-foreground'
-      };
-      
-      Object.entries(colorMappings).forEach(([direct, semantic]) => {
-        fixedCode = fixedCode.replace(new RegExp(direct, 'g'), semantic);
-      });
-      
-      return fixedCode;
-    }
-  },
-  
-  {
-    id: 'typescript-strict',
-    name: 'TypeScript Strict Mode',
-    description: 'Use proper TypeScript types and avoid any',
-    category: 'maintainability',
-    severity: 'error',
-    autoFixable: false,
-    rule: (code: string) => {
-      const violations: StandardViolation[] = [];
-      const lines = code.split('\n');
-      
-      lines.forEach((line, index) => {
-        if (line.includes(': any') || line.includes('<any>')) {
-          violations.push({
-            standardId: 'typescript-strict',
-            line: index + 1,
-            column: line.indexOf('any'),
-            message: 'Avoid using "any" type, use specific types instead',
-            severity: 'error',
-            autoFixable: false,
-            suggestedFix: 'Define proper TypeScript interfaces or use unknown/object'
-          });
-        }
-      });
-      
-      return violations;
-    }
-  },
-  {
-    id: 'react-hooks-deps',
-    name: 'React Hooks Dependencies',
-    description: 'Ensure useEffect and other hooks have proper dependency arrays',
-    category: 'maintainability',
-    severity: 'warning',
-    autoFixable: false,
-    rule: (code: string) => {
-      const violations: StandardViolation[] = [];
-      const lines = code.split('\n');
-      
-      lines.forEach((line, index) => {
-        if (line.includes('useEffect') && line.includes('[]') && line.includes('async')) {
-          violations.push({
-            standardId: 'react-hooks-deps',
-            line: index + 1,
-            column: 0,
-            message: 'useEffect with async function should include proper dependencies',
-            severity: 'warning',
-            autoFixable: false,
-            suggestedFix: 'Add all dependencies used inside useEffect to the dependency array'
-          });
-        }
-      });
-      
-      return violations;
-    }
-  },
-
-  {
-    id: 'consistent-naming',
-    name: 'Consistent Naming Convention',
-    description: 'Use consistent naming conventions for variables and functions',
-    category: 'maintainability',
-    severity: 'info',
-    autoFixable: false,
-    rule: (code: string) => {
-      const violations: StandardViolation[] = [];
-      const lines = code.split('\n');
-      
-      lines.forEach((line, index) => {
-        // Check for inconsistent boolean naming
-        if (line.includes('const ') && line.includes('=') && 
-            (line.includes('true') || line.includes('false'))) {
-          const varMatch = line.match(/const\s+(\w+)/);
-          if (varMatch && !varMatch[1].startsWith('is') && 
-              !varMatch[1].startsWith('has') && !varMatch[1].startsWith('should') &&
-              !varMatch[1].startsWith('enable')) {
-            violations.push({
-              standardId: 'consistent-naming',
-              line: index + 1,
-              column: 0,
-              message: `Boolean variable '${varMatch[1]}' should start with 'is', 'has', 'should', or 'enable'`,
-              severity: 'info',
-              autoFixable: false
-            });
-          }
-        }
-      });
-      
-      return violations;
-    }
+  static getAllRules(): CodeQualityRule[] {
+    return this.allRules;
   }
-];
 
-function getFileType(filePath: string): string {
-  if (filePath.includes('/components/')) return 'component';
-  if (filePath.includes('/hooks/')) return 'hook';
-  if (filePath.includes('/pages/')) return 'page';
-  if (filePath.includes('/utils/')) return 'utility';
-  if (filePath.includes('/analyzers/')) return 'analyzer';
-  return 'unknown';
+  static checkCompliance(code: string, filePath?: string): ComplianceReport {
+    const results = this.allRules.map(rule => ({
+      rule,
+      result: rule.check(code)
+    }));
+
+    const passedRules = results.filter(r => r.result.passed).length;
+    const failedRules = results.length - passedRules;
+    const overallScore = Math.round((passedRules / results.length) * 100);
+
+    // Group by category
+    const categories: { [key: string]: { score: number; passed: number; failed: number } } = {};
+    
+    for (const { rule, result } of results) {
+      if (!categories[rule.category]) {
+        categories[rule.category] = { score: 0, passed: 0, failed: 0 };
+      }
+      
+      if (result.passed) {
+        categories[rule.category].passed++;
+      } else {
+        categories[rule.category].failed++;
+      }
+    }
+
+    // Calculate category scores
+    for (const category in categories) {
+      const total = categories[category].passed + categories[category].failed;
+      categories[category].score = Math.round((categories[category].passed / total) * 100);
+    }
+
+    const violations = results
+      .filter(r => !r.result.passed)
+      .map(({ rule, result }) => ({
+        ruleId: rule.id,
+        ruleName: rule.name,
+        severity: rule.severity,
+        message: result.message,
+        suggestions: result.suggestions || []
+      }));
+
+    return {
+      overallScore,
+      totalRules: results.length,
+      passedRules,
+      failedRules,
+      categories,
+      violations
+    };
+  }
+
+  static getHighPriorityViolations(report: ComplianceReport) {
+    return report.violations.filter(v => 
+      v.severity === 'critical' || v.severity === 'high'
+    );
+  }
 }
