@@ -1,213 +1,179 @@
 
 import { DataAnalysisContext } from '@/types/data';
-import { AnalysisResult } from '@/types/analysis';
+import { AnalysisResult } from '@/utils/analysis/types';
 import { ParsedData } from '@/utils/dataParser';
+import { DataTypeAnalyzer } from './dataTypeAnalyzer';
+import { StatisticalAnalyzer } from './statisticalAnalyzer';
 
 export class AnalysisResultsGenerator {
   async generateResults(context: DataAnalysisContext, data: ParsedData, insights: string[]): Promise<AnalysisResult[]> {
     const results: AnalysisResult[] = [];
     
     try {
-      console.log('📈 Generating REAL analysis results from actual data');
+      console.log('📈 Generating analysis results from actual data');
       
-      // Dataset overview result with real numbers
-      results.push({
-        id: 'dataset-overview',
-        title: 'Dataset Overview',
-        description: `Comprehensive analysis of your uploaded dataset`,
-        value: `${data.rowCount.toLocaleString()} rows × ${data.columns.length} columns`,
-        confidence: 'high',
-        type: 'summary',
-        timestamp: new Date().toISOString()
-      });
+      // Dataset overview result
+      results.push(this.createDatasetOverview(data));
       
-      // Analyze REAL numerical columns
-      const numericalColumns = this.identifyNumericalColumns(data);
-      console.log('🔢 Found numerical columns:', numericalColumns.length);
+      // Analyze column types
+      const columnTypes = DataTypeAnalyzer.analyzeColumns(data);
       
-      // Generate actual statistics for top numerical columns
-      for (const col of numericalColumns.slice(0, 3)) {
-        const stats = this.calculateActualStatistics(data.rows, col.name);
+      // Generate numerical analysis results
+      results.push(...this.generateNumericalResults(data, columnTypes.numericalColumns));
+      
+      // Generate categorical analysis results
+      results.push(...this.generateCategoricalResults(data, columnTypes.categoricalColumns));
+      
+      // Generate temporal analysis results
+      results.push(...this.generateTemporalResults(data, columnTypes.temporalColumns));
+      
+      // Data quality analysis
+      results.push(this.generateDataQualityResult(data));
+      
+      // Research-specific results
+      results.push(...this.generateResearchSpecificResults(context, data, columnTypes));
+      
+    } catch (error) {
+      console.warn('Error generating results:', error);
+      results.push(this.createFallbackResult(data));
+    }
+    
+    console.log('📈 Generated analysis results:', results.length, 'results');
+    return results;
+  }
+
+  private createDatasetOverview(data: ParsedData): AnalysisResult {
+    return {
+      id: 'dataset-overview',
+      title: 'Dataset Overview',
+      description: 'Comprehensive analysis of your uploaded dataset',
+      value: `${data.rowCount.toLocaleString()} rows × ${data.columns.length} columns`,
+      insight: `Dataset contains ${data.rowCount.toLocaleString()} records across ${data.columns.length} fields`,
+      confidence: 'high',
+      type: 'summary',
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  private generateNumericalResults(data: ParsedData, numericalColumns: any[]): AnalysisResult[] {
+    const results: AnalysisResult[] = [];
+    
+    for (const col of numericalColumns.slice(0, 3)) {
+      const stats = StatisticalAnalyzer.calculateNumericalStatistics(data.rows, col.name);
+      
+      if (stats && stats.count > 0) {
+        results.push({
+          id: `numerical_analysis_${col.name}`,
+          title: `${col.name} Statistical Analysis`,
+          description: `Statistical analysis of the ${col.name} column`,
+          value: `Average: ${stats.average.toFixed(2)}, Range: ${stats.minimum} to ${stats.maximum}`,
+          insight: `${col.name} has an average of ${stats.average.toFixed(2)} with standard deviation of ${stats.standardDeviation.toFixed(2)}`,
+          confidence: stats.count > 10 ? 'high' : 'medium',
+          type: 'statistical',
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
+    return results;
+  }
+
+  private generateCategoricalResults(data: ParsedData, categoricalColumns: any[]): AnalysisResult[] {
+    const results: AnalysisResult[] = [];
+    
+    for (const col of categoricalColumns.slice(0, 2)) {
+      const distribution = StatisticalAnalyzer.analyzeCategoricalDistribution(data.rows, col.name);
+      
+      if (distribution && distribution.uniqueCategories > 1) {
+        results.push({
+          id: `categorical_analysis_${col.name}`,
+          title: `${col.name} Category Distribution`,
+          description: `Categorical breakdown of ${col.name}`,
+          value: `${distribution.uniqueCategories} unique categories, top: ${distribution.topCategory}`,
+          insight: `${col.name} has ${distribution.uniqueCategories} unique categories with ${distribution.topCategory} being most common`,
+          confidence: distribution.totalRecords > 5 ? 'high' : 'medium',
+          type: 'categorical',
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
+    return results;
+  }
+
+  private generateTemporalResults(data: ParsedData, temporalColumns: any[]): AnalysisResult[] {
+    const results: AnalysisResult[] = [];
+    
+    for (const col of temporalColumns.slice(0, 1)) {
+      const timeAnalysis = StatisticalAnalyzer.analyzeTemporalDistribution(data.rows, col.name);
+      
+      if (timeAnalysis) {
+        results.push({
+          id: `temporal_analysis_${col.name}`,
+          title: `${col.name} Time Distribution`,
+          description: `Temporal distribution analysis of ${col.name} column`,
+          value: `Time span: ${timeAnalysis.earliestDate} to ${timeAnalysis.latestDate}`,
+          insight: `${col.name} spans ${timeAnalysis.timeSpan} with ${timeAnalysis.validDateCount} valid dates`,
+          confidence: timeAnalysis.validDateCount > 5 ? 'high' : 'medium',
+          type: 'distribution',
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
+    return results;
+  }
+
+  private generateDataQualityResult(data: ParsedData): AnalysisResult {
+    const qualityMetrics = this.calculateDataQuality(data);
+    
+    return {
+      id: 'data_quality_assessment',
+      title: 'Data Quality Assessment',
+      description: 'Data quality metrics for your dataset',
+      value: `Completeness: ${qualityMetrics.completeness.toFixed(1)}%`,
+      insight: `Data is ${qualityMetrics.completeness.toFixed(1)}% complete with ${qualityMetrics.duplicates} potential duplicates`,
+      confidence: 'high',
+      type: 'summary',
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  private generateResearchSpecificResults(context: DataAnalysisContext, data: ParsedData, columnTypes: any): AnalysisResult[] {
+    const results: AnalysisResult[] = [];
+    const questionLower = context.researchQuestion.toLowerCase();
+    
+    if (questionLower.includes('correlation') || questionLower.includes('relationship')) {
+      const numericalColumns = columnTypes.numericalColumns;
+      if (numericalColumns.length >= 2) {
+        const correlation = StatisticalAnalyzer.calculateCorrelation(
+          data.rows, 
+          numericalColumns[0].name, 
+          numericalColumns[1].name
+        );
         
-        if (stats && stats.count > 0) {
+        if (correlation !== null) {
+          const strength = Math.abs(correlation) > 0.7 ? 'Strong' : Math.abs(correlation) > 0.3 ? 'Moderate' : 'Weak';
+          const direction = correlation > 0 ? 'positive' : 'negative';
+          
           results.push({
-            id: `numerical_analysis_${col.name}`,
-            title: `${col.name} Statistical Analysis`,
-            description: `Real statistical analysis of the ${col.name} column`,
-            value: `Average: ${stats.avg.toFixed(2)}, Range: ${stats.min} to ${stats.max}, Std Dev: ${stats.stdDev.toFixed(2)} (${stats.count} records)`,
-            confidence: stats.count > 10 ? 'high' : 'medium',
+            id: 'correlation_analysis',
+            title: `Statistical Relationship: ${numericalColumns[0].name} vs ${numericalColumns[1].name}`,
+            description: 'Statistical correlation analysis between key variables',
+            value: `Correlation: ${correlation.toFixed(3)} (${strength} ${direction})`,
+            insight: `${strength} ${direction} relationship detected between ${numericalColumns[0].name} and ${numericalColumns[1].name}`,
+            confidence: 'high',
             type: 'statistical',
             timestamp: new Date().toISOString()
           });
         }
       }
-      
-      // Analyze REAL categorical columns
-      const categoricalColumns = this.identifyTextColumns(data);
-      console.log('📊 Found categorical columns:', categoricalColumns.length);
-      
-      for (const col of categoricalColumns.slice(0, 2)) {
-        const distribution = this.analyzeCategoricalDistribution(data.rows, col.name);
-        
-        if (distribution.uniqueCount > 1) {
-          const categories = distribution.topCategories.map((cat, index) => ({
-            name: cat.name,
-            count: cat.count,
-            percentage: Math.round((cat.count / distribution.totalCount) * 100)
-          }));
-
-          results.push({
-            id: `categorical_analysis_${col.name}`,
-            title: `${col.name} Category Distribution`,
-            description: `Real categorical breakdown of ${col.name}`,
-            value: distribution.topCategory,
-            confidence: distribution.totalCount > 5 ? 'high' : 'medium',
-            type: 'categorical',
-            categories,
-            timestamp: new Date().toISOString()
-          });
-        }
-      }
-      
-      // Time-based analysis for date columns
-      const dateColumns = this.identifyDateColumns(data);
-      console.log('📅 Found date columns:', dateColumns.length);
-      
-      for (const col of dateColumns.slice(0, 1)) {
-        const timeAnalysis = this.analyzeTimeColumn(data.rows, col.name);
-        
-        if (timeAnalysis) {
-          results.push({
-            id: `distribution_analysis_${col.name}`,
-            title: `${col.name} Time Distribution`,
-            description: `Real temporal distribution analysis of ${col.name} column`,
-            value: `Time span: ${timeAnalysis.earliest} to ${timeAnalysis.latest} (${timeAnalysis.daySpan} days, ${timeAnalysis.validDateCount} valid dates)`,
-            confidence: timeAnalysis.validDateCount > 5 ? 'high' : 'medium',
-            type: 'distribution',
-            timestamp: new Date().toISOString()
-          });
-        }
-      }
-      
-      // Data quality analysis
-      const qualityMetrics = this.calculateDataQuality(data);
-      results.push({
-        id: 'data_quality_assessment',
-        title: 'Data Quality Assessment',
-        description: 'Real data quality metrics for your dataset',
-        value: `Completeness: ${qualityMetrics.completeness.toFixed(1)}%, Consistency: ${qualityMetrics.consistency.toFixed(1)}%, Duplicates: ${qualityMetrics.duplicates}`,
-        confidence: 'high',
-        type: 'summary',
-        timestamp: new Date().toISOString()
-      });
-      
-      // Research question specific analysis
-      const researchResults = this.generateResearchSpecificResults(context, data);
-      results.push(...researchResults);
-      
-    } catch (error) {
-      console.warn('Error generating real results:', error);
-      // Fallback to basic summary if detailed analysis fails
-      results.push({
-        id: 'basic-analysis',
-        title: 'Basic Data Summary',
-        description: 'Basic information extracted from your dataset',
-        value: `${data.rowCount} rows processed successfully`,
-        confidence: 'medium',
-        type: 'summary',
-        timestamp: new Date().toISOString()
-      });
     }
     
-    console.log('📈 Generated real analysis results:', results.length, 'results');
     return results;
   }
 
-  private identifyNumericalColumns(data: ParsedData) {
-    return data.columns.filter(col => {
-      const sampleValues = data.rows.slice(0, 20).map(row => row[col.name]).filter(val => val != null && val !== '');
-      const numericCount = sampleValues.filter(val => {
-        const num = Number(val);
-        return !isNaN(num) && isFinite(num);
-      }).length;
-      return numericCount / Math.max(sampleValues.length, 1) > 0.7;
-    });
-  }
-
-  private identifyTextColumns(data: ParsedData) {
-    return data.columns.filter(col => {
-      const sampleValues = data.rows.slice(0, 20).map(row => row[col.name]).filter(val => val != null && val !== '');
-      const numericCount = sampleValues.filter(val => !isNaN(Number(val))).length;
-      return numericCount / Math.max(sampleValues.length, 1) < 0.3;
-    });
-  }
-
-  private identifyDateColumns(data: ParsedData) {
-    return data.columns.filter(col => {
-      if (/date|time|timestamp|created|updated|when/i.test(col.name)) return true;
-      
-      const sampleValues = data.rows.slice(0, 10).map(row => row[col.name]).filter(val => val != null && val !== '');
-      const dateCount = sampleValues.filter(val => {
-        const date = new Date(val);
-        return !isNaN(date.getTime()) && date.getFullYear() > 1900;
-      }).length;
-      return dateCount / Math.max(sampleValues.length, 1) > 0.7;
-    });
-  }
-
-  private calculateActualStatistics(rows: any[], columnName: string) {
-    const values = rows.map(row => Number(row[columnName])).filter(val => !isNaN(val) && isFinite(val));
-    
-    if (values.length === 0) return null;
-    
-    const avg = values.reduce((sum, val) => sum + val, 0) / values.length;
-    const variance = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / values.length;
-    const stdDev = Math.sqrt(variance);
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    
-    return { avg, stdDev, min, max, count: values.length };
-  }
-
-  private analyzeCategoricalDistribution(rows: any[], columnName: string) {
-    const values = rows.map(row => row[columnName]).filter(val => val != null && val !== '');
-    const distribution = new Map<string, number>();
-    
-    values.forEach(val => {
-      const key = String(val);
-      distribution.set(key, (distribution.get(key) || 0) + 1);
-    });
-    
-    const entries = Array.from(distribution.entries()).sort((a, b) => b[1] - a[1]);
-    const topCategories = entries.slice(0, 5).map(([name, count]) => ({ name, count }));
-    
-    return {
-      uniqueCount: distribution.size,
-      topCategory: entries[0]?.[0] || '',
-      topCount: entries[0]?.[1] || 0,
-      totalCount: values.length,
-      topCategories
-    };
-  }
-
-  private analyzeTimeColumn(rows: any[], columnName: string) {
-    const dates = rows.map(row => new Date(row[columnName])).filter(date => !isNaN(date.getTime()));
-    
-    if (dates.length === 0) return null;
-    
-    const earliest = new Date(Math.min(...dates.map(d => d.getTime())));
-    const latest = new Date(Math.max(...dates.map(d => d.getTime())));
-    const daySpan = Math.ceil((latest.getTime() - earliest.getTime()) / (1000 * 60 * 60 * 24));
-    
-    return {
-      earliest: earliest.toISOString().split('T')[0],
-      latest: latest.toISOString().split('T')[0],
-      daySpan,
-      validDateCount: dates.length
-    };
-  }
-
-  private calculateDataQuality(data: ParsedData) {
+  private calculateDataQuality(data: ParsedData): { completeness: number; duplicates: number } {
     const totalCells = data.rows.length * data.columns.length;
     let filledCells = 0;
     let duplicateRows = 0;
@@ -222,7 +188,7 @@ export class AnalysisResultsGenerator {
       });
     });
     
-    // Check for duplicate rows (simple check on first few columns)
+    // Check for duplicate rows
     const rowHashes = new Set();
     data.rows.forEach(row => {
       const firstCols = data.columns.slice(0, 3).map(col => row[col.name]).join('|');
@@ -235,53 +201,20 @@ export class AnalysisResultsGenerator {
     
     return {
       completeness: (filledCells / totalCells) * 100,
-      consistency: Math.max(0, 100 - (duplicateRows / data.rows.length * 100)),
       duplicates: duplicateRows
     };
   }
 
-  private generateResearchSpecificResults(context: DataAnalysisContext, data: ParsedData): AnalysisResult[] {
-    const results: AnalysisResult[] = [];
-    const questionLower = context.researchQuestion.toLowerCase();
-    
-    // Correlation analysis for correlation-related questions
-    if (questionLower.includes('correlation') || questionLower.includes('relationship')) {
-      const numericalColumns = this.identifyNumericalColumns(data);
-      if (numericalColumns.length >= 2) {
-        const correlation = this.calculateSimpleCorrelation(data.rows, numericalColumns[0].name, numericalColumns[1].name);
-        if (correlation !== null) {
-          results.push({
-            id: 'statistical_correlation',
-            title: `Statistical Relationship: ${numericalColumns[0].name} vs ${numericalColumns[1].name}`,
-            description: `Statistical correlation analysis between key variables`,
-            value: `Correlation coefficient: ${correlation.toFixed(3)} (${Math.abs(correlation) > 0.7 ? 'Strong' : Math.abs(correlation) > 0.3 ? 'Moderate' : 'Weak'} ${correlation > 0 ? 'positive' : 'negative'} relationship)`,
-            confidence: 'high',
-            type: 'statistical',
-            timestamp: new Date().toISOString()
-          });
-        }
-      }
-    }
-    
-    return results;
-  }
-
-  private calculateSimpleCorrelation(rows: any[], col1: string, col2: string): number | null {
-    const pairs = rows.map(row => [Number(row[col1]), Number(row[col2])])
-      .filter(([a, b]) => !isNaN(a) && !isNaN(b) && isFinite(a) && isFinite(b));
-    
-    if (pairs.length < 5) return null;
-    
-    const n = pairs.length;
-    const sumX = pairs.reduce((sum, [x]) => sum + x, 0);
-    const sumY = pairs.reduce((sum, [, y]) => sum + y, 0);
-    const sumXY = pairs.reduce((sum, [x, y]) => sum + x * y, 0);
-    const sumX2 = pairs.reduce((sum, [x]) => sum + x * x, 0);
-    const sumY2 = pairs.reduce((sum, [, y]) => sum + y * y, 0);
-    
-    const numerator = n * sumXY - sumX * sumY;
-    const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-    
-    return denominator === 0 ? 0 : numerator / denominator;
+  private createFallbackResult(data: ParsedData): AnalysisResult {
+    return {
+      id: 'basic-analysis',
+      title: 'Basic Data Summary',
+      description: 'Basic information extracted from your dataset',
+      value: `${data.rowCount} rows processed successfully`,
+      insight: 'Dataset structure has been analyzed and is ready for further exploration',
+      confidence: 'medium',
+      type: 'summary',
+      timestamp: new Date().toISOString()
+    };
   }
 }

@@ -13,6 +13,13 @@ export interface AnalysisResult {
     percentage?: string;
   }>;
   metadata?: Record<string, any>;
+  type?: 'numeric' | 'categorical' | 'chart' | 'summary' | 'statistical' | 'distribution';
+  timestamp?: string;
+  categories?: Array<{
+    name: string;
+    count: number;
+    percentage: number;
+  }>;
 }
 
 export interface AnalysisSummary {
@@ -27,4 +34,27 @@ export interface AnalysisConfig {
   maxRetries?: number;
   timeoutMs?: number;
   qualityThreshold?: number;
+}
+
+export interface StatisticalMetrics {
+  average: number;
+  minimum: number;
+  maximum: number;
+  standardDeviation: number;
+  count: number;
+}
+
+export interface CategoricalMetrics {
+  uniqueCategories: number;
+  totalRecords: number;
+  topCategory: string;
+  topCategoryCount: number;
+  diversity: number;
+}
+
+export interface TemporalMetrics {
+  timeSpan: string;
+  earliestDate: string;
+  latestDate: string;
+  validDateCount: number;
 }
