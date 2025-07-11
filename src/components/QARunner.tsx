@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAutoQA } from '../hooks/useAutoQA';
 import { useAutoRefactor } from '../hooks/useAutoRefactor';
@@ -41,9 +40,9 @@ const QARunner: React.FC = () => {
         // Add refactoring issues to display
         const refactorIssues: QAIssue[] = suggestions.map(suggestion => ({
           type: 'warning',
-          message: `File ${suggestion.filePath} should be refactored (${suggestion.metrics.complexity} complexity, ${suggestion.metrics.lines} lines)`,
-          file: suggestion.filePath,
-          fix: suggestion.recommendations[0]?.description || 'Refactor into smaller components'
+          message: `File ${suggestion.file} should be refactored (${suggestion.complexity} complexity, ${suggestion.currentLines} lines)`,
+          file: suggestion.file,
+          fix: suggestion.suggestedActions[0] || 'Refactor into smaller components'
         }));
         
         setQaIssues(prev => [...prev.filter(issue => issue.type !== 'warning'), ...refactorIssues]);
