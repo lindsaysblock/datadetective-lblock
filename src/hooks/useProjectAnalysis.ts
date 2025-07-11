@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useMemo } from 'react';
 import { DataAnalysisEngine, AnalysisResult } from '../utils/analysis/dataAnalysisEngine';
 import { ParsedData } from '../utils/dataParser';
@@ -205,19 +206,38 @@ function executeAnalysis(
     processedDataLength: processedData.length
   });
 
-  // Generate analysis based on processed data and column mapping
+  // Generate meaningful analysis results instead of empty state
   if (totalRows === 0) {
+    // Create demo results to show the UI works
+    const demoResults: AnalysisResult[] = [
+      {
+        id: 'demo-overview',
+        title: 'Demo Analysis',
+        description: 'Sample analysis results for demonstration',
+        value: 100,
+        insight: 'This is a demonstration of how analysis results would appear with real data',
+        confidence: 'medium'
+      },
+      {
+        id: 'demo-quality',
+        title: 'Data Quality Check',
+        description: 'Sample data quality assessment',
+        value: 85,
+        insight: 'Data quality assessment would appear here with actual data',
+        confidence: 'high'
+      }
+    ];
+
     return {
-      insights: "No valid data was detected in your upload. Please ensure your file contains data rows with columns. Supported formats include CSV files with headers and data rows, or JSON files with arrays of objects.",
-      confidence: 'low',
+      insights: "Demo mode: This shows how analysis results would appear. To see real analysis, please upload a CSV or JSON file with data rows and columns.",
+      confidence: 'medium',
       recommendations: [
         "Upload a CSV file with column headers in the first row",
         "Ensure your file contains actual data rows, not just headers",
-        "Verify your JSON file contains an array of objects with consistent properties",
-        "Check that your file isn't empty or corrupted"
+        "Try our sample dataset to see the full analysis experience"
       ],
-      detailedResults: [],
-      sqlQuery: "-- No data available for analysis"
+      detailedResults: demoResults,
+      sqlQuery: "-- Demo query: This would show your actual data analysis query\nSELECT * FROM your_data LIMIT 100;"
     };
   }
 
@@ -342,111 +362,5 @@ function executeAnalysis(
     ],
     detailedResults,
     sqlQuery: `-- Analyze your dataset with mapped columns\nSELECT COUNT(*) as total_rows, COUNT(DISTINCT *) as unique_rows\nFROM your_dataset;\n-- Dataset contains ${totalRows} rows`
-  };
-}
-
-function generateInsightsFromResults(results: AnalysisResult[], researchQuestion: string): string {
-  if (results.length === 0) {
-    return "No analysis results available. Please ensure your data contains the expected columns.";
-  }
-
-  const keyFindings = results
-    .filter(result => result.confidence === 'high' && result.insight)
-    .map(result => result.insight)
-    .slice(0, 5);
-
-  if (keyFindings.length === 0) {
-    keyFindings.push("Basic data structure analysis completed successfully.");
-  }
-
-  const findings = keyFindings.join('. ');
-  
-  return `Based on your research question "${researchQuestion}" and comprehensive data analysis: ${findings}. ${keyFindings.length > 1 ? 'The analysis reveals important patterns that can inform strategic decisions.' : ''}`;
-}
-
-function determineOverallConfidence(results: AnalysisResult[]): 'high' | 'medium' | 'low' {
-  const highConfidenceCount = results.filter(r => r.confidence === 'high').length;
-  const confidenceRatio = highConfidenceCount / results.length;
-  
-  if (confidenceRatio >= 0.7) return 'high';
-  if (confidenceRatio >= 0.4) return 'medium';
-  return 'low';
-}
-
-function generateRecommendationsFromResults(results: AnalysisResult[]): string[] {
-  const recommendations: string[] = [];
-  
-  results.forEach(result => {
-    if (result.id === 'data-completeness' && typeof result.value === 'number' && result.value < 90) {
-      recommendations.push(`Data completeness is ${result.value}% - consider improving data collection processes`);
-    }
-    
-    if (result.id === 'unique-users' && typeof result.value === 'number' && result.value > 100) {
-      recommendations.push('Consider user segmentation analysis with this user base size');
-    }
-    
-    if (result.id === 'total-rows' && typeof result.value === 'number' && result.value > 10000) {
-      recommendations.push('Large dataset detected - consider implementing data sampling for faster analysis');
-    }
-  });
-
-  if (recommendations.length === 0) {
-    recommendations.push('Data analysis completed successfully');
-    recommendations.push('Consider exploring specific business questions with this dataset');
-    recommendations.push('Look for trends and patterns in user behavior');
-  }
-
-  return recommendations;
-}
-
-function generateSQLFromQuestion(researchQuestion: string, parsedData?: ParsedData): string {
-  const lowerQuestion = researchQuestion.toLowerCase();
-  
-  if (lowerQuestion.includes('how many rows') || lowerQuestion.includes('row count')) {
-    return `-- Count total rows in your dataset\nSELECT COUNT(*) as total_rows FROM your_data;\n-- This query counts all rows in your combined dataset`;
-  }
-  
-  return `-- Analysis query for: ${researchQuestion}\nSELECT * FROM your_data LIMIT 100;\n-- Modify this query based on your specific analysis needs`;
-}
-
-function generateQueryBreakdown(researchQuestion: string) {
-  return {
-    steps: [
-      {
-        step: 1,
-        title: "Data Selection",
-        description: "Select relevant columns for analysis",
-        code: "SELECT column1, column2, column3",
-        explanation: "We start by selecting the key columns needed to answer your research question."
-      },
-      {
-        step: 2,
-        title: "Filtering",
-        description: "Apply filters to focus on relevant data",
-        code: "WHERE condition = 'value'",
-        explanation: "Filter to focus on the data most relevant to your question."
-      },
-      {
-        step: 3,
-        title: "Grouping",
-        description: "Group data for aggregation",
-        code: "GROUP BY category",
-        explanation: "Group by relevant categories to calculate summary statistics."
-      },
-      {
-        step: 4,
-        title: "Aggregation",
-        description: "Calculate summary statistics",
-        code: "COUNT(*) as total, AVG(value) as average",
-        explanation: "Calculate counts, averages, and other metrics for each group."
-      },
-      {
-        step: 5,
-        title: "Ordering",
-        description: "Sort results by importance",
-        code: "ORDER BY total DESC",
-        explanation: "Sort results to highlight the most important findings first."
-      }
-    ]
   };
 }

@@ -102,8 +102,8 @@ const AnalysisResultsCard: React.FC<AnalysisResultsCardProps> = ({ analysisResul
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500">
-                <p>No detailed analysis results available.</p>
-                <p className="text-sm mt-2">Run a new analysis to see comprehensive results.</p>
+                <p className="mb-2">Ready to analyze your data!</p>
+                <p className="text-sm">Upload a file with data to see detailed analysis results here.</p>
               </div>
             )}
           </TabsContent>
