@@ -18,7 +18,6 @@ interface AnalysisSummaryStepProps {
 
 const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   researchQuestion,
-  files,
   additionalContext,
   isProcessingAnalysis,
   onPrevious,
@@ -60,7 +59,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
                   Educational Mode
                 </Label>
                 <p className="text-amber-700 text-sm mt-1">
-                  Enable to see step-by-step explanations of how the analysis is performed
+                  Learn how to code for data analysis with step-by-step explanations of the process
                 </p>
               </div>
               <Switch
