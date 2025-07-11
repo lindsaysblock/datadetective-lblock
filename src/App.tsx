@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast"
@@ -24,14 +25,6 @@ function App() {
     // Simulate initial data load and analysis
     // generateSampleData();
   }, []);
-
-  const handleDataUpload = (parsedData: any) => {
-    setData(parsedData);
-		toast({
-			title: "Upload Complete!",
-			description: "Your data has been successfully uploaded.",
-		  })
-  };
 
   const handleRunAnalysis = () => {
     // Simulate running analysis and getting results
@@ -71,7 +64,7 @@ function App() {
           <Route path="/" element={
             <div className="container mx-auto mt-10">
               <h1 className="text-3xl font-bold text-center mb-6">Data Analysis Tool</h1>
-              <DataUploadContainer onDataUpload={handleDataUpload} />
+              <DataUploadContainer />
               {data && (
                 <div className="mt-6">
                   <h2 className="text-xl font-semibold mb-3">Dashboard</h2>
