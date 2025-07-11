@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import ProjectNamingDialog from '@/components/data/upload/ProjectNamingDialog';
 import FormRecoveryDialog from '@/components/data/upload/FormRecoveryDialog';
@@ -16,6 +15,8 @@ import AnalysisSummaryStep from '@/components/project/AnalysisSummaryStep';
 
 const NewProject = () => {
   console.log('NewProject component rendering');
+  
+  const [analysisProgress, setAnalysisProgress] = useState(0);
   
   const {
     step,
@@ -62,6 +63,18 @@ const NewProject = () => {
   console.log('Current step:', step);
   console.log('Show analysis view:', showAnalysisView);
   console.log('Is processing analysis:', isProcessingAnalysis);
+  console.log('Analysis completed:', analysisCompleted);
+
+  const handleAnalysisComplete = () => {
+    // Only show results and close dialog when analysis is truly complete
+    if (analysisCompleted) {
+      showResults();
+    }
+  };
+
+  const handleProgressUpdate = (progress: number) => {
+    setAnalysisProgress(progress);
+  };
 
   if (showAnalysisView) {
     console.log('Showing analysis view');
@@ -169,10 +182,11 @@ const NewProject = () => {
         onSignUp={handleSignUp}
       />
 
-      {/* Analysis Progress Overlay */}
+      {/* Analysis Progress Overlay - only show when not in project dialog */}
       <AnalysisProgressView
         isAnalyzing={isProcessingAnalysis && !showProjectDialog}
-        onComplete={showResults}
+        onComplete={handleAnalysisComplete}
+        onProgressUpdate={handleProgressUpdate}
       />
       
       <div className="container mx-auto px-6 py-8 max-w-4xl">
@@ -185,9 +199,16 @@ const NewProject = () => {
 
         <ProjectNamingDialog
           open={showProjectDialog}
-          onOpenChange={(open) => {}}
+          onOpenChange={(open) => {
+            // Only allow closing if analysis is not running or is complete
+            if (!isProcessingAnalysis || analysisCompleted) {
+              dialogs.setShowProjectDialog(open);
+            }
+          }}
           onConfirm={handleProjectConfirm}
           isProcessing={isProcessingAnalysis}
+          analysisProgress={analysisProgress}
+          analysisCompleted={analysisCompleted}
         />
       </div>
     </div>

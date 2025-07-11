@@ -87,7 +87,7 @@ export const useProjectFormActions = (
     }
 
     // Start analysis immediately with educational mode
-    analysis.startAnalysis(formState.researchQuestion, formState.additionalContext, educationalMode);
+    analysis.startAnalysis(formState.researchQuestion, formState.additionalContext, educationalMode, formState.parsedData);
     
     // Show project naming dialog immediately (it will persist until analysis is complete)
     dialogs.setShowProjectDialog(true);
@@ -96,23 +96,9 @@ export const useProjectFormActions = (
   const handleProjectConfirm = (projectName: string) => {
     console.log('Project named:', projectName);
     formState.setCurrentProjectName(projectName);
-    clearFormData();
     
-    // Check if analysis is complete
-    if (analysis.analysisCompleted) {
-      // Analysis is done, show results immediately
-      analysis.showResults();
-      dialogs.setShowProjectDialog(false);
-    } else {
-      // Analysis still running, keep dialog open and wait
-      const checkAnalysis = setInterval(() => {
-        if (analysis.analysisCompleted) {
-          analysis.showResults();
-          dialogs.setShowProjectDialog(false);
-          clearInterval(checkAnalysis);
-        }
-      }, 500);
-    }
+    // Don't clear form data or navigate yet - wait for analysis completion
+    // The dialog will handle the waiting state and progress display
   };
 
   const handleBackToProject = () => {

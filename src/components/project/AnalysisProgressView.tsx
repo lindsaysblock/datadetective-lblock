@@ -7,11 +7,13 @@ import { Database, Brain, BarChart3, CheckCircle } from 'lucide-react';
 interface AnalysisProgressViewProps {
   isAnalyzing: boolean;
   onComplete: () => void;
+  onProgressUpdate?: (progress: number) => void;
 }
 
 const AnalysisProgressView: React.FC<AnalysisProgressViewProps> = ({
   isAnalyzing,
-  onComplete
+  onComplete,
+  onProgressUpdate
 }) => {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -25,11 +27,16 @@ const AnalysisProgressView: React.FC<AnalysisProgressViewProps> = ({
   ];
 
   useEffect(() => {
-    if (!isAnalyzing) return;
+    if (!isAnalyzing) {
+      setProgress(0);
+      setCurrentStep(0);
+      setTimeRemaining(45);
+      return;
+    }
 
     const interval = setInterval(() => {
       setProgress((prev) => {
-        const newProgress = prev + 2;
+        const newProgress = Math.min(prev + 2, 100);
         
         // Update current step based on progress
         const stepIndex = Math.floor((newProgress / 100) * analysisSteps.length);
@@ -37,6 +44,11 @@ const AnalysisProgressView: React.FC<AnalysisProgressViewProps> = ({
         
         // Update time remaining
         setTimeRemaining(Math.max(0, Math.floor(45 * (1 - newProgress / 100))));
+        
+        // Notify parent of progress update
+        if (onProgressUpdate) {
+          onProgressUpdate(newProgress);
+        }
         
         if (newProgress >= 100) {
           clearInterval(interval);
@@ -49,7 +61,7 @@ const AnalysisProgressView: React.FC<AnalysisProgressViewProps> = ({
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isAnalyzing, onComplete]);
+  }, [isAnalyzing, onComplete, onProgressUpdate]);
 
   if (!isAnalyzing) return null;
 
