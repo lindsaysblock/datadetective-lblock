@@ -2,7 +2,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { BarChart3, LineChart, PieChart, Scatter } from 'lucide-react';
+import { BarChart3, LineChart, PieChart, ScatterChart } from 'lucide-react';
 
 interface CreateVisualsModalProps {
   open: boolean;
@@ -33,7 +33,7 @@ const CreateVisualsModal: React.FC<CreateVisualsModalProps> = ({
       recommended: false
     },
     {
-      icon: Scatter,
+      icon: ScatterChart,
       title: "Scatter Plot",
       description: "Explore relationships between variables",
       recommended: true
