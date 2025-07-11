@@ -22,7 +22,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
 
   const handleFileUpload = async () => {
     if (formData.files.length > 0) {
-      await formData.handleFileUpload(formData.files[0]);
+      await formData.handleFileUpload();
     }
   };
 
