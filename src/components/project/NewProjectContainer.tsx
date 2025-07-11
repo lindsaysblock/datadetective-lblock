@@ -81,49 +81,51 @@ const NewProjectContainer = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Header />
       
-      <FormRecoveryDialog
-        open={formData.showRecoveryDialog}
-        onOpenChange={formData.setShowRecoveryDialog}
-        onRestore={formData.handleRestoreData}
-        onStartFresh={formData.handleStartFresh}
-        lastSaved={formData.lastSaved}
-      />
+      <div className="container mx-auto px-4 py-8">
+        <FormRecoveryDialog
+          open={formData.showRecoveryDialog}
+          onOpenChange={formData.setShowRecoveryDialog}
+          onRestore={formData.handleRestoreData}
+          onStartFresh={formData.handleStartFresh}
+          lastSaved={formData.lastSaved}
+        />
 
-      <SignInModal
-        open={formData.showSignInModal}
-        onOpenChange={formData.setShowSignInModal}
-        email={formData.email}
-        password={formData.password}
-        loading={formData.authLoading}
-        setEmail={formData.setEmail}
-        setPassword={formData.setPassword}
-        onSignIn={formData.handleSignIn}
-        onSignUp={formData.handleSignUp}
-      />
+        <SignInModal
+          open={formData.showSignInModal}
+          onOpenChange={formData.setShowSignInModal}
+          email={formData.email}
+          password={formData.password}
+          loading={formData.authLoading}
+          setEmail={formData.setEmail}
+          setPassword={formData.setPassword}
+          onSignIn={formData.handleSignIn}
+          onSignUp={formData.handleSignUp}
+        />
 
-      {/* Analysis Progress Overlay - only show when not in project dialog */}
-      <AnalysisProgressView
-        isAnalyzing={formData.isProcessingAnalysis && !formData.showProjectDialog}
-        onComplete={handleAnalysisComplete}
-        onProgressUpdate={handleProgressUpdate}
-      />
-      
-      <NewProjectContent {...formData} onStartAnalysis={handleStartAnalysis} />
+        {/* Analysis Progress Overlay - only show when not in project dialog */}
+        <AnalysisProgressView
+          isAnalyzing={formData.isProcessingAnalysis && !formData.showProjectDialog}
+          onComplete={handleAnalysisComplete}
+          onProgressUpdate={handleProgressUpdate}
+        />
+        
+        <NewProjectContent {...formData} onStartAnalysis={handleStartAnalysis} />
 
-      <ProjectNamingDialog
-        open={formData.showProjectDialog}
-        onOpenChange={(open) => {
-          // Only allow closing if analysis is not running or is complete
-          if (!formData.isProcessingAnalysis || formData.analysisCompleted) {
-            formData.setShowProjectDialog(open);
-          }
-        }}
-        onConfirm={formData.handleProjectConfirm}
-        onViewResults={handleViewResults}
-        isProcessing={formData.isProcessingAnalysis}
-        analysisProgress={analysisProgress}
-        analysisCompleted={formData.analysisCompleted}
-      />
+        <ProjectNamingDialog
+          open={formData.showProjectDialog}
+          onOpenChange={(open) => {
+            // Only allow closing if analysis is not running or is complete
+            if (!formData.isProcessingAnalysis || formData.analysisCompleted) {
+              formData.setShowProjectDialog(open);
+            }
+          }}
+          onConfirm={formData.handleProjectConfirm}
+          onViewResults={handleViewResults}
+          isProcessing={formData.isProcessingAnalysis}
+          analysisProgress={analysisProgress}
+          analysisCompleted={formData.analysisCompleted}
+        />
+      </div>
     </div>
   );
 };
