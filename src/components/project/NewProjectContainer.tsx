@@ -36,6 +36,13 @@ const NewProjectContainer = () => {
     setAnalysisProgress(progress);
   };
 
+  const handleViewResults = () => {
+    console.log('View Results clicked');
+    if (formData.analysisCompleted && formData.analysisResults) {
+      formData.showResults();
+    }
+  };
+
   if (formData.showAnalysisView) {
     console.log('Showing analysis view');
     return (
@@ -95,6 +102,7 @@ const NewProjectContainer = () => {
           }
         }}
         onConfirm={formData.handleProjectConfirm}
+        onViewResults={handleViewResults}
         isProcessing={formData.isProcessingAnalysis}
         analysisProgress={analysisProgress}
         analysisCompleted={formData.analysisCompleted}

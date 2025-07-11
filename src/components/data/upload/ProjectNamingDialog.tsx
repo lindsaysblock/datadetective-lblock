@@ -18,6 +18,7 @@ interface ProjectNamingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (projectName: string) => void;
+  onViewResults?: () => void;
   isProcessing?: boolean;
   analysisProgress?: number;
   analysisCompleted?: boolean;
@@ -27,6 +28,7 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
   open,
   onOpenChange,
   onConfirm,
+  onViewResults,
   isProcessing = false,
   analysisProgress = 0,
   analysisCompleted = false
@@ -36,6 +38,13 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (analysisCompleted && projectSaved && onViewResults) {
+      // If analysis is complete and we want to view results, close dialog and show results
+      onViewResults();
+      onOpenChange(false);
+      return;
+    }
+    
     if (projectName.trim() && !projectSaved) {
       // Save project name but don't close dialog if analysis is still running
       onConfirm(projectName.trim());
@@ -149,7 +158,7 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
             )}
             <Button
               type="submit"
-              disabled={!projectName.trim() || (projectSaved && !analysisCompleted)}
+              disabled={!projectName.trim() && !analysisCompleted}
               className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             >
               {getButtonIcon()}
