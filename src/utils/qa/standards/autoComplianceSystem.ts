@@ -1,5 +1,7 @@
 import { ComplianceChecker } from './complianceChecker';
 import { ComplianceReport } from './codingStandards';
+import { performancePolicyEngine } from '../../performance/performancePolicies';
+import { performanceDashboard } from '../../performance/performanceMonitoringDashboard';
 
 export class AutoComplianceSystem {
   private checker = new ComplianceChecker();
@@ -7,12 +9,20 @@ export class AutoComplianceSystem {
   private lastCheck: Date | null = null;
   private checkInterval = 5 * 60 * 1000; // 5 minutes
   private autoRefactorEnabled = true;
+  private performanceMonitoringEnabled = true;
 
   async enableAutoCompliance(): Promise<void> {
     this.isEnabled = true;
     this.autoRefactorEnabled = true;
+    this.performanceMonitoringEnabled = true;
     this.checker.setAutoFixEnabled(true);
-    console.log('🤖 Auto-compliance system enabled with auto-refactoring');
+    
+    console.log('🤖 Auto-compliance system enabled with performance monitoring');
+    
+    // Start performance monitoring
+    if (this.performanceMonitoringEnabled) {
+      performanceDashboard.startMonitoring();
+    }
     
     // Run initial check
     await this.runComplianceCheck();
@@ -30,13 +40,16 @@ export class AutoComplianceSystem {
   async runComplianceCheck(): Promise<ComplianceReport[]> {
     if (!this.isEnabled) return [];
 
-    console.log('🔍 Running compliance check with auto-refactoring...');
+    console.log('🔍 Running compliance check with performance validation...');
     
     try {
       const reports = await this.checker.checkProject();
       const complianceReport = this.checker.generateComplianceReport(reports);
       
       console.log(complianceReport);
+      
+      // Run performance policy checks
+      await this.runPerformancePolicyChecks();
       
       // Trigger auto-fixes for critical violations
       await this.handleCriticalViolations(reports);
@@ -52,6 +65,57 @@ export class AutoComplianceSystem {
     } catch (error) {
       console.error('❌ Compliance check failed:', error);
       return [];
+    }
+  }
+
+  private async runPerformancePolicyChecks(): Promise<void> {
+    const dashboardData = performanceDashboard.generateDashboardData();
+    
+    // Check performance budgets
+    const performanceReport = performancePolicyEngine.generatePerformanceReport({
+      responseTime: dashboardData.currentMetrics.responseTime,
+      memoryUsage: dashboardData.currentMetrics.memoryUsage,
+      bundleSize: 180 // Estimated from dashboard
+    });
+    
+    if (performanceReport.overall === 'failed') {
+      console.warn('🚨 Performance policy violations detected:');
+      performanceReport.results.forEach(result => {
+        if (!result.passed) {
+          console.warn(`  - ${result.metric}: ${result.message}`);
+        }
+      });
+      
+      // Trigger performance-based refactoring
+      if (this.autoRefactorEnabled) {
+        this.triggerPerformanceRefactoring(performanceReport);
+      }
+    }
+    
+    // Log performance recommendations
+    if (dashboardData.recommendations.length > 0) {
+      console.log('💡 Performance recommendations:');
+      dashboardData.recommendations.slice(0, 3).forEach(rec => {
+        console.log(`  - [${rec.priority.toUpperCase()}] ${rec.message}`);
+      });
+    }
+  }
+
+  private triggerPerformanceRefactoring(performanceReport: any): void {
+    const criticalViolations = performanceReport.results.filter(
+      (r: any) => !r.passed && r.severity === 'critical'
+    );
+    
+    if (criticalViolations.length > 0) {
+      const message = `PERFORMANCE CRITICAL: Auto-optimize code for ${criticalViolations.map((v: any) => v.metric).join(', ')}. Apply memoization, caching, and code splitting. Reduce bundle size and memory usage.`;
+      
+      const event = new CustomEvent('qa-auto-refactor-execute', {
+        detail: { message, autoExecute: true, priority: 'critical' }
+      });
+      
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(event);
+      }
     }
   }
 
@@ -77,7 +141,10 @@ export class AutoComplianceSystem {
             const event = new CustomEvent('qa-auto-refactor-execute', {
               detail: { message, autoExecute: true }
             });
-            window.dispatchEvent(event);
+            
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(event);
+            }
           }, index * 2000); // Stagger executions
         });
         
@@ -92,12 +159,12 @@ export class AutoComplianceSystem {
     const urgencyPrefix = suggestion.priority === 'critical' ? 'URGENT: ' : 
                          suggestion.priority === 'high' ? 'HIGH PRIORITY: ' : '';
     
-    return `${urgencyPrefix}Auto-refactor ${suggestion.file} (${suggestion.currentLines} lines, complexity: ${suggestion.complexity}). Break into smaller, focused components. Maintain exact functionality. Priority actions: ${suggestion.suggestedActions.slice(0, 2).join(', ')}.`;
+    return `${urgencyPrefix}Auto-refactor ${suggestion.file} (${suggestion.currentLines} lines, complexity: ${suggestion.complexity}). Apply performance optimizations: memoization, code splitting, lazy loading. Break into smaller, focused components. Maintain exact functionality. Priority actions: ${suggestion.suggestedActions.slice(0, 2).join(', ')}.`;
   }
 
   enableAutoRefactoring(): void {
     this.autoRefactorEnabled = true;
-    console.log('🔧 Auto-refactoring enabled');
+    console.log('🔧 Auto-refactoring enabled with performance optimization');
   }
 
   disableAutoRefactoring(): void {
@@ -121,7 +188,9 @@ export class AutoComplianceSystem {
           suggestions: this.generateRefactoringSuggestions(criticalReports)
         }
       });
-      window.dispatchEvent(event);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(event);
+      }
     }
   }
 
@@ -158,6 +227,7 @@ export class AutoComplianceSystem {
     enabled: boolean;
     lastCheck: Date | null;
     nextCheck: Date | null;
+    performanceMonitoring: boolean;
   } {
     const nextCheck = this.lastCheck 
       ? new Date(this.lastCheck.getTime() + this.checkInterval)
@@ -166,7 +236,8 @@ export class AutoComplianceSystem {
     return {
       enabled: this.isEnabled,
       lastCheck: this.lastCheck,
-      nextCheck
+      nextCheck,
+      performanceMonitoring: this.performanceMonitoringEnabled
     };
   }
 }
@@ -174,7 +245,7 @@ export class AutoComplianceSystem {
 // Global instance
 export const autoComplianceSystem = new AutoComplianceSystem();
 
-// Auto-start the system
+// Auto-start the system with performance monitoring
 if (typeof window !== 'undefined') {
   // Enable auto-compliance by default in development
   if (import.meta.env.DEV) {

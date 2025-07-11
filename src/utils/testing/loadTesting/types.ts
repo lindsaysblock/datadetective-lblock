@@ -1,27 +1,32 @@
+
 export interface LoadTestConfig {
   concurrentUsers: number;
   duration: number;
   rampUpTime: number;
-  testType: 'component' | 'data-processing' | 'ui-interaction' | 'api' | 'research-question' | 'context-processing';
+  testType: 'component' | 'data-processing' | 'ui-interaction' | 'api' | 'research-question' | 'context-processing' | 'analytics-processing' | 'analytics-concurrent';
 }
 
 export interface LoadTestResult {
-  testId: string;
-  config: LoadTestConfig;
-  startTime: Date;
-  endTime: Date;
-  totalRequests: number;
-  successfulRequests: number;
-  failedRequests: number;
+  testType: string;
+  duration: number;
+  concurrentUsers: number;
   averageResponseTime: number;
-  maxResponseTime: number;
-  minResponseTime: number;
-  throughput: number;
   errorRate: number;
+  throughput: number;
   memoryUsage: {
     initial: number;
     peak: number;
     final: number;
   };
-  cpuUtilization: number[];
+  cpuUsage: number;
+  successfulRequests: number;
+  failedRequests: number;
+}
+
+export interface LoadTestMetrics {
+  timestamp: number;
+  responseTime: number;
+  success: boolean;
+  memoryUsage: number;
+  cpuUsage: number;
 }

@@ -1,7 +1,7 @@
 
 import { QATestResult } from '../types';
 import { DataAnalysisEngine } from '../../analysis/dataAnalysisEngine';
-import { ParsedData } from '../../dataParser';
+import { ParsedData, DataColumn } from '../../dataParser';
 
 export class AnalyticsLoadTestSuite {
   async runLoadTests(): Promise<QATestResult[]> {
@@ -23,18 +23,22 @@ export class AnalyticsLoadTestSuite {
       // Create multiple analysis engines running concurrently
       for (let i = 0; i < 5; i++) {
         const mockData: ParsedData = {
-          columns: ['action', 'user_id', 'product_name'],
+          columns: [
+            { name: 'action', type: 'string' },
+            { name: 'user_id', type: 'string' },
+            { name: 'product_name', type: 'string' }
+          ],
           rows: Array.from({ length: 1000 }, (_, j) => ({
             action: j % 2 === 0 ? 'view' : 'purchase',
             user_id: `user${j % 50}`,
             product_name: `Product ${j % 20}`
           })),
-          totalRows: 1000,
+          rowCount: 1000,
           fileSize: 50000
         };
         
         const engine = new DataAnalysisEngine(mockData);
-        concurrentPromises.push(engine.runCompleteAnalysis());
+        concurrentPromises.push(Promise.resolve(engine.runCompleteAnalysis()));
       }
       
       const results = await Promise.all(concurrentPromises);
@@ -75,9 +79,18 @@ export class AnalyticsLoadTestSuite {
       }));
       
       const mockData: ParsedData = {
-        columns: ['action', 'user_id', 'session_id', 'product_name', 'timestamp', 'total_order_value', 'cost', 'quantity'],
+        columns: [
+          { name: 'action', type: 'string' },
+          { name: 'user_id', type: 'string' },
+          { name: 'session_id', type: 'string' },
+          { name: 'product_name', type: 'string' },
+          { name: 'timestamp', type: 'string' },
+          { name: 'total_order_value', type: 'number' },
+          { name: 'cost', type: 'number' },
+          { name: 'quantity', type: 'number' }
+        ],
         rows: largeRows,
-        totalRows: largeRows.length,
+        rowCount: largeRows.length,
         fileSize: largeRows.length * 300
       };
       
@@ -111,14 +124,19 @@ export class AnalyticsLoadTestSuite {
       const maxDuration = 15000; // 15 seconds
       
       const mockData: ParsedData = {
-        columns: ['action', 'user_id', 'product_name', 'timestamp'],
+        columns: [
+          { name: 'action', type: 'string' },
+          { name: 'user_id', type: 'string' },
+          { name: 'product_name', type: 'string' },
+          { name: 'timestamp', type: 'string' }
+        ],
         rows: Array.from({ length: 5000 }, (_, i) => ({
           action: ['view', 'purchase'][i % 2],
           user_id: `user${i % 200}`,
           product_name: `Product ${i % 50}`,
           timestamp: new Date(Date.now() - i * 1000).toISOString()
         })),
-        totalRows: 5000,
+        rowCount: 5000,
         fileSize: 250000
       };
       
@@ -162,13 +180,17 @@ export class AnalyticsLoadTestSuite {
         const testStart = performance.now();
         
         const mockData: ParsedData = {
-          columns: ['action', 'user_id', 'product_name'],
+          columns: [
+            { name: 'action', type: 'string' },
+            { name: 'user_id', type: 'string' },
+            { name: 'product_name', type: 'string' }
+          ],
           rows: Array.from({ length: size }, (_, i) => ({
             action: ['view', 'add_to_cart', 'purchase'][i % 3],
             user_id: `user${i % 100}`,
             product_name: `Product ${i % 30}`
           })),
-          totalRows: size,
+          rowCount: size,
           fileSize: size * 100
         };
         
@@ -183,7 +205,6 @@ export class AnalyticsLoadTestSuite {
       }
       
       const avgThroughput = throughputResults.reduce((sum, val) => sum + val, 0) / throughputResults.length;
-      const totalDuration = performance.now() - startTime;
       
       return {
         testName: 'Data Processing Throughput Test',
