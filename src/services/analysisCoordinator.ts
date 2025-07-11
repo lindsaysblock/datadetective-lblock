@@ -1,4 +1,3 @@
-
 import { DataAnalysisContext } from '@/types/data';
 import { AnalysisReport, AnalysisResult } from '@/types/analysis';
 import { DataValidator } from '@/utils/analysis/dataValidator';
@@ -6,7 +5,11 @@ import { parseFile, ParsedData } from '@/utils/dataParser';
 
 export class AnalysisCoordinator {
   static async executeAnalysis(context: DataAnalysisContext): Promise<AnalysisReport> {
-    console.log('🔍 AnalysisCoordinator starting execution');
+    console.log('🔍 AnalysisCoordinator starting execution with context:', {
+      hasResearchQuestion: !!context.researchQuestion,
+      dataLength: context.parsedData?.length || 0,
+      dataType: typeof context.parsedData
+    });
     
     try {
       // Validate input context
@@ -28,17 +31,23 @@ export class AnalysisCoordinator {
           }
         : context.parsedData;
 
+      console.log('📊 Analyzing data structure:', {
+        rows: parsedData.rows?.length || 0,
+        columns: parsedData.columns?.length || 0,
+        sampleRow: parsedData.rows?.[0] ? Object.keys(parsedData.rows[0]) : []
+      });
+
       // Validate data quality
       const validator = new DataValidator(parsedData);
       const validation = validator.validate();
       
       if (!validation.isValid) {
-        console.warn('Data validation issues:', validation.errors);
+        console.warn('⚠️ Data validation issues:', validation.errors);
       }
 
-      // Perform analysis
-      const insights = await this.generateInsights(context, parsedData);
-      const results = await this.generateResults(context, parsedData, insights);
+      // Perform real analysis based on actual data
+      const insights = await this.generateRealInsights(context, parsedData);
+      const results = await this.generateRealResults(context, parsedData, insights);
       const sqlQuery = this.generateSQLQuery(context, parsedData);
       
       const report: AnalysisReport = {
@@ -48,7 +57,7 @@ export class AnalysisCoordinator {
         results,
         insights,
         confidence: validation.confidence,
-        recommendations: this.generateRecommendations(insights, validation),
+        recommendations: this.generateRealRecommendations(insights, validation, parsedData),
         sqlQuery,
         queryBreakdown: this.generateQueryBreakdown(sqlQuery),
         dataQuality: {
@@ -59,7 +68,7 @@ export class AnalysisCoordinator {
         }
       };
 
-      console.log('✅ Analysis completed successfully:', {
+      console.log('✅ Real analysis completed successfully:', {
         resultsCount: results.length,
         insightsCount: insights.length,
         confidence: report.confidence
@@ -70,7 +79,6 @@ export class AnalysisCoordinator {
     } catch (error) {
       console.error('❌ Analysis failed in coordinator:', error);
       
-      // Return error report
       return {
         id: `error_${Date.now()}`,
         timestamp: new Date(),
@@ -79,9 +87,9 @@ export class AnalysisCoordinator {
         insights: [`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
         confidence: 'low',
         recommendations: [
-          'Check your data format',
-          'Ensure all required fields are present',
-          'Try with a smaller dataset first'
+          'Check your data format and ensure it contains valid information',
+          'Verify that your file was uploaded correctly',
+          'Try uploading a smaller sample of your data first'
         ],
         sqlQuery: '-- Analysis failed',
         queryBreakdown: [],
@@ -95,117 +103,218 @@ export class AnalysisCoordinator {
     }
   }
 
-  private static async generateInsights(context: DataAnalysisContext, data: ParsedData): Promise<string[]> {
+  private static async generateRealInsights(context: DataAnalysisContext, data: ParsedData): Promise<string[]> {
     const insights: string[] = [];
     
     try {
-      // Basic data insights
-      insights.push(`Dataset contains ${data.rowCount} records with ${data.columns.length} columns`);
+      const actualRows = data.rows?.length || 0;
+      const actualColumns = data.columns?.length || 0;
       
-      // Column analysis
-      const numericalColumns = data.columns.filter(col => 
-        col.type === 'number' || this.isNumericalColumn(col.name, data.rows)
-      );
+      console.log('🔍 Generating insights for real data:', { actualRows, actualColumns });
       
+      // Basic data insights based on actual data
+      insights.push(`Your dataset contains ${actualRows} records across ${actualColumns} different fields`);
+      
+      if (actualRows === 0) {
+        insights.push('No data rows were found - please check your file format');
+        return insights;
+      }
+
+      // Analyze actual column types and content
+      const numericalColumns: string[] = [];
+      const textColumns: string[] = [];
+      const dateColumns: string[] = [];
+      
+      data.columns.forEach(col => {
+        const sampleValues = data.rows.slice(0, 10).map(row => row[col.name]).filter(val => val != null && val !== '');
+        
+        if (sampleValues.length > 0) {
+          const numericCount = sampleValues.filter(val => !isNaN(Number(val)) && isFinite(Number(val))).length;
+          const dateCount = sampleValues.filter(val => {
+            const dateVal = new Date(val);
+            return !isNaN(dateVal.getTime());
+          }).length;
+          
+          if (numericCount / sampleValues.length > 0.7) {
+            numericalColumns.push(col.name);
+          } else if (dateCount / sampleValues.length > 0.7) {
+            dateColumns.push(col.name);
+          } else {
+            textColumns.push(col.name);
+          }
+        }
+      });
+
       if (numericalColumns.length > 0) {
-        insights.push(`Identified ${numericalColumns.length} numerical columns for quantitative analysis`);
+        insights.push(`Found ${numericalColumns.length} numerical columns (${numericalColumns.slice(0, 3).join(', ')}) suitable for quantitative analysis`);
+        
+        // Calculate actual statistics for numerical columns
+        numericalColumns.slice(0, 2).forEach(colName => {
+          const values = data.rows.map(row => Number(row[colName])).filter(val => !isNaN(val));
+          if (values.length > 0) {
+            const avg = values.reduce((sum, val) => sum + val, 0) / values.length;
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            insights.push(`${colName}: average ${avg.toFixed(2)}, ranging from ${min} to ${max}`);
+          }
+        });
+      }
+      
+      if (textColumns.length > 0) {
+        insights.push(`Identified ${textColumns.length} text-based columns for categorical analysis`);
+      }
+      
+      if (dateColumns.length > 0) {
+        insights.push(`Found ${dateColumns.length} date/time columns enabling temporal trend analysis`);
       }
       
       // Research question specific insights
       const questionLower = context.researchQuestion.toLowerCase();
       
       if (questionLower.includes('trend') || questionLower.includes('time')) {
-        const timeColumns = data.columns.filter(col => 
-          /date|time|timestamp|created|updated/i.test(col.name)
-        );
-        
-        if (timeColumns.length > 0) {
-          insights.push(`Found ${timeColumns.length} time-based columns for trend analysis`);
+        if (dateColumns.length > 0) {
+          insights.push(`Time-based analysis is possible using columns: ${dateColumns.join(', ')}`);
         } else {
-          insights.push('No time-based columns detected - consider adding timestamp data for trend analysis');
+          insights.push('No clear time-based columns detected for trend analysis');
         }
       }
       
-      if (questionLower.includes('correlation') || questionLower.includes('relationship')) {
-        if (numericalColumns.length >= 2) {
-          insights.push(`${numericalColumns.length} numerical columns available for correlation analysis`);
-        }
+      if (questionLower.includes('correlation') && numericalColumns.length >= 2) {
+        insights.push(`Correlation analysis can be performed between ${numericalColumns.length} numerical variables`);
       }
       
-      // Data quality insights
+      // Data quality insights based on actual data
       const completeness = this.calculateCompleteness(data);
-      if (completeness < 90) {
-        insights.push(`Data completeness is ${completeness.toFixed(1)}% - some analysis may be limited`);
+      if (completeness < 95) {
+        insights.push(`Data completeness is ${completeness.toFixed(1)}% - some fields contain missing values`);
+      } else {
+        insights.push('Data quality is excellent with minimal missing values');
       }
       
     } catch (error) {
-      console.warn('Error generating insights:', error);
+      console.warn('Error generating real insights:', error);
       insights.push('Basic data structure analysis completed');
     }
     
     return insights;
   }
 
-  private static async generateResults(context: DataAnalysisContext, data: ParsedData, insights: string[]): Promise<AnalysisResult[]> {
+  private static async generateRealResults(context: DataAnalysisContext, data: ParsedData, insights: string[]): Promise<AnalysisResult[]> {
     const results: AnalysisResult[] = [];
     
     try {
-      // Summary result
+      // Data overview result
       results.push({
-        id: 'summary',
-        title: 'Data Summary',
-        description: `Analysis of ${data.rowCount} records across ${data.columns.length} dimensions`,
+        id: 'data-overview',
+        title: 'Dataset Overview',
+        description: `Comprehensive analysis of your uploaded data`,
         value: `${data.rowCount} rows × ${data.columns.length} columns`,
         confidence: 'high',
         type: 'summary',
         timestamp: new Date().toISOString()
       });
       
-      // Column analysis results
-      const numericalColumns = data.columns.filter(col => 
-        this.isNumericalColumn(col.name, data.rows)
-      );
+      // Analyze actual numerical columns
+      const numericalColumns = data.columns.filter(col => {
+        const sampleValues = data.rows.slice(0, 10).map(row => row[col.name]).filter(val => val != null && val !== '');
+        const numericCount = sampleValues.filter(val => !isNaN(Number(val)) && isFinite(Number(val))).length;
+        return numericCount / Math.max(sampleValues.length, 1) > 0.7;
+      });
       
-      for (const col of numericalColumns.slice(0, 3)) { // Limit to first 3 numerical columns
-        const values = data.rows
-          .map(row => parseFloat(row[col.name]))
-          .filter(val => !isNaN(val));
-          
+      // Generate statistics for top numerical columns
+      numericalColumns.slice(0, 3).forEach(col => {
+        const values = data.rows.map(row => Number(row[col.name])).filter(val => !isNaN(val) && isFinite(val));
+        
         if (values.length > 0) {
           const avg = values.reduce((sum, val) => sum + val, 0) / values.length;
           const min = Math.min(...values);
           const max = Math.max(...values);
+          const variance = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / values.length;
+          const stdDev = Math.sqrt(variance);
           
           results.push({
             id: `stats_${col.name}`,
-            title: `${col.name} Statistics`,
-            description: `Statistical analysis of ${col.name} column`,
-            value: `Avg: ${avg.toFixed(2)}, Range: ${min} - ${max}`,
+            title: `${col.name} Analysis`,
+            description: `Statistical analysis of the ${col.name} column`,
+            value: `Avg: ${avg.toFixed(2)} ± ${stdDev.toFixed(2)}`,
             confidence: 'high',
             type: 'statistical',
             timestamp: new Date().toISOString()
           });
         }
-      }
+      });
       
-      // Research question specific results
-      if (context.researchQuestion.toLowerCase().includes('distribution')) {
+      // Generate categorical analysis for text columns
+      const textColumns = data.columns.filter(col => {
+        const sampleValues = data.rows.slice(0, 10).map(row => row[col.name]).filter(val => val != null && val !== '');
+        const numericCount = sampleValues.filter(val => !isNaN(Number(val))).length;
+        return numericCount / Math.max(sampleValues.length, 1) < 0.3;
+      });
+      
+      textColumns.slice(0, 2).forEach(col => {
+        const values = data.rows.map(row => row[col.name]).filter(val => val != null && val !== '');
+        const uniqueValues = [...new Set(values)];
+        
         results.push({
-          id: 'distribution',
-          title: 'Data Distribution',
-          description: 'Analysis of data distribution patterns',
-          value: `${numericalColumns.length} columns analyzed for distribution patterns`,
+          id: `categorical_${col.name}`,
+          title: `${col.name} Categories`,
+          description: `Categorical breakdown of ${col.name}`,
+          value: `${uniqueValues.length} unique values in ${values.length} records`,
           confidence: 'medium',
-          type: 'distribution',
+          type: 'categorical',
           timestamp: new Date().toISOString()
         });
-      }
+      });
       
     } catch (error) {
-      console.warn('Error generating results:', error);
+      console.warn('Error generating real results:', error);
+      results.push({
+        id: 'basic-summary',
+        title: 'Basic Summary',
+        description: 'Basic information about your dataset',
+        value: `${data.rowCount} rows processed`,
+        confidence: 'medium',
+        type: 'summary',
+        timestamp: new Date().toISOString()
+      });
     }
     
     return results;
+  }
+
+  private static generateRealRecommendations(insights: string[], validation: any, data: ParsedData): string[] {
+    const recommendations: string[] = [];
+    
+    // Data quality recommendations
+    if (!validation.isValid) {
+      recommendations.push('Address data quality issues identified in the validation report');
+    }
+    
+    const completeness = this.calculateCompleteness(data);
+    if (completeness < 90) {
+      recommendations.push('Consider cleaning missing data values for more accurate analysis');
+    }
+    
+    // Column-specific recommendations
+    const numericalColumns = data.columns.filter(col => {
+      const sampleValues = data.rows.slice(0, 5).map(row => row[col.name]).filter(val => val != null);
+      const numericCount = sampleValues.filter(val => !isNaN(Number(val))).length;
+      return numericCount / Math.max(sampleValues.length, 1) > 0.7;
+    });
+    
+    if (numericalColumns.length >= 2) {
+      recommendations.push('Explore correlations between numerical variables for deeper insights');
+    }
+    
+    if (numericalColumns.length > 0) {
+      recommendations.push('Create visualizations (histograms, scatter plots) to understand data distributions');
+    }
+    
+    // General recommendations
+    recommendations.push('Export detailed results for further analysis in specialized tools');
+    recommendations.push('Consider segmenting your data by key categories for targeted insights');
+    
+    return recommendations;
   }
 
   private static generateSQLQuery(context: DataAnalysisContext, data: ParsedData): string {
@@ -261,23 +370,6 @@ export class AnalysisCoordinator {
     }
     
     return breakdown;
-  }
-
-  private static generateRecommendations(insights: string[], validation: any): string[] {
-    const recommendations: string[] = [];
-    
-    if (!validation.isValid) {
-      recommendations.push('Address data quality issues before proceeding with analysis');
-    }
-    
-    if (validation.warnings.length > 0) {
-      recommendations.push('Review data completeness warnings for better insights');
-    }
-    
-    recommendations.push('Consider visualizing key metrics for better understanding');
-    recommendations.push('Export results for further analysis in specialized tools');
-    
-    return recommendations;
   }
 
   private static isNumericalColumn(columnName: string, rows: any[]): boolean {
