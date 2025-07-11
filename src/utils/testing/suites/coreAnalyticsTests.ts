@@ -1,5 +1,5 @@
 
-import { TestSuite, TestResult } from '../types';
+import { TestSuite, UnitTestResult } from '../types';
 import { TestRunner } from '../testRunner';
 import { ParsedData } from '../../dataParser';
 import { AnalyticsValidator } from '../../analytics/analyticsValidator';
@@ -9,7 +9,7 @@ export class CoreAnalyticsTestSuite {
 
   async run(): Promise<TestSuite> {
     const suiteStart = performance.now();
-    const tests: TestResult[] = [];
+    const tests: UnitTestResult[] = [];
 
     // Core validation tests
     tests.push(await this.testRunner.runTest('Data validation logic', (assert) => {

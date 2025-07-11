@@ -1,3 +1,4 @@
+
 import { ParsedData } from '../dataParser';
 import { AnalysisResult, AnalysisConfig, AnalysisSummary } from './types';
 import { AnalyticsEngineManager } from '../analytics/analyticsEngineManager';
@@ -72,9 +73,12 @@ export class DataAnalysisEngine {
     const allResults: AnalysisResult[] = [];
     
     try {
-      // Use analytics manager for basic analysis
-      const basicResults = this.analyticsManager.runCompleteAnalysis(this.data);
-      allResults.push(...basicResults);
+      // Use analytics manager for basic analysis - await the Promise
+      this.analyticsManager.runCompleteAnalysis(this.data).then(basicResults => {
+        allResults.push(...basicResults);
+      }).catch(error => {
+        console.error('Analytics manager error:', error);
+      });
 
       // Run specialized analyzers with error handling
       const analysisTypes = [

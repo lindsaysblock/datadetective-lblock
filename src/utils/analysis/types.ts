@@ -3,9 +3,10 @@ export interface AnalysisResult {
   id: string;
   title: string;
   description: string;
-  value: number | string;
+  value: number | string | Record<string, any> | any[];
   insight: string;
   confidence: 'high' | 'medium' | 'low';
+  chartType?: 'bar' | 'line' | 'pie' | 'table';
   chartData?: Array<{
     name: string;
     value: number;
