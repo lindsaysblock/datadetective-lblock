@@ -30,7 +30,14 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   const isProcessing = uploading || parsing;
 
   const handleUpload = async () => {
+    console.log('FileUploadSection handleUpload called with files:', files.length);
+    if (files.length === 0) {
+      console.log('No files to upload in FileUploadSection');
+      return;
+    }
+    
     await onFileUpload();
+    
     if (onUploadComplete && hasData) {
       onUploadComplete();
     }
@@ -40,6 +47,11 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
     if (index < parsedData.length) return 'success';
     if (isProcessing) return 'processing';
     return 'pending';
+  };
+
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('File input changed');
+    onFileChange(event);
   };
 
   return (
@@ -55,7 +67,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             </p>
             <input
               type="file"
-              onChange={onFileChange}
+              onChange={handleFileInputChange}
               multiple
               accept=".csv,.json,.xlsx,.xls,.txt"
               className="hidden"
@@ -81,7 +93,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
           {files.map((file, index) => {
             const status = getFileStatus(index);
             return (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+              <div key={`${file.name}-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center">
                     {status === 'success' && <CheckCircle className="w-5 h-5 text-green-600" />}
@@ -147,7 +159,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
       {files.length > 0 && !hasData && !isProcessing && (
         <Button
           onClick={handleUpload}
-          disabled={isProcessing}
+          disabled={isProcessing || files.length === 0}
           className="w-full bg-blue-600 hover:bg-blue-700"
         >
           Process Files ({files.length})

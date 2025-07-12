@@ -52,8 +52,10 @@ export const useProjectFormData = () => {
   };
 
   const handleFileUpload = async () => {
+    console.log('handleFileUpload called with files:', files.length);
+    
     if (files.length === 0) {
-      console.log('No files to upload');
+      console.log('No files to upload - files array is empty');
       toast({
         title: "No files selected",
         description: "Please select at least one file to upload.",
@@ -119,6 +121,25 @@ export const useProjectFormData = () => {
     }
   };
 
+  // Updated file change handler to ensure files are properly added
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('handleFileChange called');
+    const selectedFiles = event.target.files;
+    
+    if (!selectedFiles || selectedFiles.length === 0) {
+      console.log('No files selected in event');
+      return;
+    }
+
+    console.log('Files selected:', Array.from(selectedFiles).map(f => f.name));
+    Array.from(selectedFiles).forEach(file => {
+      addFile(file);
+    });
+
+    // Clear the input value to allow re-uploading the same file
+    event.target.value = '';
+  };
+
   const nextStep = () => {
     console.log('Moving to next step from:', step);
     setStep(prev => Math.min(prev + 1, 4));
@@ -127,6 +148,18 @@ export const useProjectFormData = () => {
   const prevStep = () => {
     console.log('Moving to previous step from:', step);
     setStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const resetForm = () => {
+    console.log('Resetting form');
+    setStep(1);
+    setResearchQuestion('');
+    setAdditionalContext('');
+    setFiles([]);
+    setParsedData([]);
+    setColumnMapping({});
+    setUploading(false);
+    setParsing(false);
   };
 
   return {
@@ -143,8 +176,10 @@ export const useProjectFormData = () => {
     setColumnMapping,
     addFile,
     removeFile,
+    handleFileChange,
     handleFileUpload,
     nextStep,
-    prevStep
+    prevStep,
+    resetForm
   };
 };
