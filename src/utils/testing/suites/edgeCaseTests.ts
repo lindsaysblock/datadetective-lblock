@@ -196,17 +196,17 @@ export class EdgeCaseTests {
         }
       };
 
-      const startMemory = performance.memory?.usedJSHeapSize || 0;
+      const startMemory = this.getMemoryUsage();
       const validator = new DataValidator(memoryIntensiveData);
       const validation = validator.validate();
-      const endMemory = performance.memory?.usedJSHeapSize || 0;
+      const endMemory = this.getMemoryUsage();
 
       assert.truthy(validation.isValid, 'Should handle memory-intensive data');
-      assert.truthy((endMemory - startMemory) < 50000000, 'Memory usage should remain reasonable'); // Less than 50MB increase
+      assert.truthy((endMemory - startMemory) < 50, 'Memory usage should remain reasonable'); // Less than 50MB increase
     }));
 
     // Test concurrent processing
-    tests.push(await this.testRunner.runTest('Concurrent Processing', (assert) => {
+    tests.push(await this.testRunner.runTest('Concurrent Processing', async (assert) => {
       const promises = [];
       
       for (let i = 0; i < 5; i++) {
@@ -248,5 +248,13 @@ export class EdgeCaseTests {
       teardownTime,
       totalDuration: performance.now() - suiteStart
     };
+  }
+
+  private getMemoryUsage(): number {
+    if (typeof performance !== 'undefined' && 'memory' in performance) {
+      const memory = (performance as any).memory;
+      return memory.usedJSHeapSize / 1024 / 1024; // Convert to MB
+    }
+    return 0;
   }
 }

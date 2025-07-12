@@ -81,17 +81,17 @@ export class ComprehensiveTestSuite {
     }));
 
     tests.push(await this.testRunner.runTest('Memory Usage Optimization', (assert) => {
-      const initialMemory = performance.memory?.usedJSHeapSize || 0;
+      const initialMemory = this.getMemoryUsage();
       
       // Simulate memory-intensive operation
       const data = Array.from({ length: 10000 }, (_, i) => ({ id: i, value: Math.random() }));
       const processed = data.filter(item => item.value > 0.5);
       
-      const finalMemory = performance.memory?.usedJSHeapSize || 0;
+      const finalMemory = this.getMemoryUsage();
       const memoryIncrease = finalMemory - initialMemory;
       
       assert.truthy(processed.length > 0, 'Should process data successfully');
-      assert.truthy(memoryIncrease < 10000000, 'Memory increase should be reasonable (< 10MB)');
+      assert.truthy(memoryIncrease < 10, 'Memory increase should be reasonable (< 10MB)');
     }));
 
     tests.push(await this.testRunner.runTest('Concurrent Data Source Processing', (assert) => {
@@ -188,5 +188,13 @@ export class ComprehensiveTestSuite {
       teardownTime,
       totalDuration: performance.now() - suiteStart
     };
+  }
+
+  private getMemoryUsage(): number {
+    if (typeof performance !== 'undefined' && 'memory' in performance) {
+      const memory = (performance as any).memory;
+      return memory.usedJSHeapSize / 1024 / 1024; // Convert to MB
+    }
+    return 0;
   }
 }
