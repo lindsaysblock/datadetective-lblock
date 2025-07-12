@@ -119,7 +119,7 @@ const AutoE2ETestRunner: React.FC = () => {
       // Step 4: Data Pipeline Testing
       setCurrentStep('Testing Data Pipeline...');
       try {
-        await this.testDataPipeline();
+        await testDataPipeline();
         setTestResults(prev => [...prev, {
           step: 'Data Pipeline Testing',
           status: 'success',
@@ -145,7 +145,7 @@ const AutoE2ETestRunner: React.FC = () => {
       
       for (const errorResult of errorResults) {
         try {
-          const appliedFixes = await this.applyAutoFixes(errorResult);
+          const appliedFixes = await applyAutoFixes(errorResult);
           fixes.push(...appliedFixes);
         } catch (fixError) {
           console.warn(`Failed to auto-fix ${errorResult.step}:`, fixError);
@@ -211,7 +211,7 @@ const AutoE2ETestRunner: React.FC = () => {
     
     // Test CSV parsing
     const Papa = await import('papaparse');
-    const parseResult = Papa.parse(testFile, { header: true });
+    const parseResult = Papa.parse(await testFile.text(), { header: true });
     
     if (!parseResult.data || parseResult.data.length === 0) {
       throw new Error('CSV parsing failed - no data returned');
