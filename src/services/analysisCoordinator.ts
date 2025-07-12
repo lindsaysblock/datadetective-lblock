@@ -33,6 +33,9 @@ export class AnalysisCoordinator {
       const validator = new DataValidator(parsedDataForValidation[0], context.educationalMode);
       const validationResult = validator.validate();
       
+      // Calculate completeness if not provided
+      const completeness = validationResult.completeness ?? this.calculateCompleteness(parsedDataForValidation[0]);
+      
       if (!validationResult.isValid && validationResult.errors.length > 0) {
         console.warn('⚠️ Data validation issues found:', validationResult.errors);
       }
@@ -67,7 +70,7 @@ export class AnalysisCoordinator {
           isValid: validationResult.isValid,
           errors: validationResult.errors,
           warnings: validationResult.warnings,
-          completeness: validationResult.completeness || 0
+          completeness
         }
       };
 
@@ -78,5 +81,25 @@ export class AnalysisCoordinator {
       console.error('❌ AnalysisCoordinator: Analysis failed:', error);
       throw error;
     }
+  }
+
+  private static calculateCompleteness(data: ParsedData): number {
+    if (!data.rows || !data.columns || data.rows.length === 0 || data.columns.length === 0) {
+      return 0;
+    }
+
+    const totalCells = data.rows.length * data.columns.length;
+    let filledCells = 0;
+
+    data.rows.forEach(row => {
+      data.columns.forEach(col => {
+        const value = row[col.name];
+        if (value !== null && value !== undefined && value !== '') {
+          filledCells++;
+        }
+      });
+    });
+
+    return (filledCells / totalCells) * 100;
   }
 }

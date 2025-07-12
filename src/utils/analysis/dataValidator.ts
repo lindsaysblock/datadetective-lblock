@@ -1,4 +1,3 @@
-
 import { ParsedData } from '../dataParser';
 
 export interface ValidationResult {
@@ -6,6 +5,7 @@ export interface ValidationResult {
   errors: string[];
   warnings: string[];
   confidence: 'high' | 'medium' | 'low';
+  completeness?: number;
 }
 
 export class DataValidator {

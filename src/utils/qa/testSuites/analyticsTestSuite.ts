@@ -1,6 +1,8 @@
+
 import { QATestResult } from '../types';
 import { DataAnalysisEngine } from '../../analysis/dataAnalysisEngine';
 import { ParsedData } from '../../dataParser';
+import { createDataColumn } from '../../dataColumnHelper';
 
 export class AnalyticsTestSuite {
   async runTests(): Promise<QATestResult[]> {
@@ -133,10 +135,10 @@ export class AnalyticsTestSuite {
   private createTestData(size: number): ParsedData {
     return {
       columns: [
-        { name: 'action', type: 'string', samples: ['view', 'purchase'] },
-        { name: 'user_id', type: 'string', samples: ['user1', 'user2'] },
-        { name: 'product_name', type: 'string', samples: ['Product A', 'Product B'] },
-        { name: 'timestamp', type: 'string', samples: ['2024-01-01T10:00:00Z'] }
+        createDataColumn('action', 'string', ['view', 'purchase']),
+        createDataColumn('user_id', 'string', ['user1', 'user2']),
+        createDataColumn('product_name', 'string', ['Product A', 'Product B']),
+        createDataColumn('timestamp', 'string', ['2024-01-01T10:00:00Z'])
       ],
       rows: Array.from({ length: size }, (_, i) => ({
         action: i % 2 === 0 ? 'view' : 'purchase',
@@ -153,11 +155,11 @@ export class AnalyticsTestSuite {
   private createLargeTestData(size: number): ParsedData {
     return {
       columns: [
-        { name: 'action', type: 'string' },
-        { name: 'user_id', type: 'string' },
-        { name: 'session_id', type: 'string' },
-        { name: 'order_id', type: 'string' },
-        { name: 'total_order_value', type: 'number' }
+        createDataColumn('action', 'string'),
+        createDataColumn('user_id', 'string'),
+        createDataColumn('session_id', 'string'),
+        createDataColumn('order_id', 'string'),
+        createDataColumn('total_order_value', 'number')
       ],
       rows: Array.from({ length: size }, (_, i) => ({
         action: i % 3 === 0 ? 'purchase' : 'view',
@@ -175,9 +177,9 @@ export class AnalyticsTestSuite {
   private createTimeSeriesData(size: number): ParsedData {
     return {
       columns: [
-        { name: 'action', type: 'string' },
-        { name: 'user_id', type: 'string' },
-        { name: 'timestamp', type: 'string' }
+        createDataColumn('action', 'string'),
+        createDataColumn('user_id', 'string'),
+        createDataColumn('timestamp', 'string')
       ],
       rows: Array.from({ length: size }, (_, i) => ({
         action: 'purchase',
@@ -193,12 +195,12 @@ export class AnalyticsTestSuite {
   private createProductData(size: number): ParsedData {
     return {
       columns: [
-        { name: 'action', type: 'string' },
-        { name: 'user_id', type: 'string' },
-        { name: 'product_name', type: 'string' },
-        { name: 'total_order_value', type: 'number' },
-        { name: 'cost', type: 'number' },
-        { name: 'quantity', type: 'number' }
+        createDataColumn('action', 'string'),
+        createDataColumn('user_id', 'string'),
+        createDataColumn('product_name', 'string'),
+        createDataColumn('total_order_value', 'number'),
+        createDataColumn('cost', 'number'),
+        createDataColumn('quantity', 'number')
       ],
       rows: Array.from({ length: size }, (_, i) => ({
         action: i % 4 === 0 ? 'purchase' : 'view',
@@ -217,13 +219,13 @@ export class AnalyticsTestSuite {
   private createQualityTestData(): ParsedData {
     return {
       columns: [
-        { name: 'action', type: 'string' },
-        { name: 'user_id', type: 'string' },
-        { name: 'product_name', type: 'string' },
-        { name: 'timestamp', type: 'string' },
-        { name: 'total_order_value', type: 'number' },
-        { name: 'cost', type: 'number' },
-        { name: 'quantity', type: 'number' }
+        createDataColumn('action', 'string'),
+        createDataColumn('user_id', 'string'),
+        createDataColumn('product_name', 'string'),
+        createDataColumn('timestamp', 'string'),
+        createDataColumn('total_order_value', 'number'),
+        createDataColumn('cost', 'number'),
+        createDataColumn('quantity', 'number')
       ],
       rows: [
         { action: 'purchase', user_id: 'user1', product_name: 'Product A', timestamp: '2024-01-01T10:00:00Z', total_order_value: 100, cost: 30, quantity: 2 },
