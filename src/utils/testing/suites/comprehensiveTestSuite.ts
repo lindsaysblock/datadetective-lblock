@@ -5,6 +5,8 @@ import { DataPipelineIntegrationTests } from './dataPipelineIntegrationTests';
 import { EdgeCaseTests } from './edgeCaseTests';
 import { AnalyticsIntegrationTests } from './analyticsIntegrationTests';
 import { AnalyticsUnitTestSuite } from './analyticsUnitTests';
+import { createTestParsedData, createLargeTestDataset } from '../testFixtures';
+import { measurePerformance, getMemoryUsage } from '../testUtils';
 
 export class ComprehensiveTestSuite {
   private testRunner = new TestRunner();
@@ -64,37 +66,34 @@ export class ComprehensiveTestSuite {
     const suiteStart = performance.now();
     const tests = [];
 
-    tests.push(await this.testRunner.runTest('File Processing Performance', (assert) => {
-      const startTime = performance.now();
+    tests.push(await this.testRunner.runTest('File Processing Performance', async (assert) => {
+      const testData = createLargeTestDataset(1000);
       
-      // Simulate file processing
-      const largeFile = {
-        size: 10000000, // 10MB
-        rows: 50000,
-        columns: 20
-      };
+      const { duration } = await measurePerformance(async () => {
+        // Simulate file processing
+        const processed = testData.rows.filter(row => row.active === true);
+        return processed;
+      });
       
-      const processingTime = performance.now() - startTime;
-      
-      assert.truthy(processingTime < 2000, 'Large file processing should complete within 2 seconds');
-      assert.truthy(largeFile.rows > 0, 'Should process all rows');
+      assert.truthy(duration < 2000, 'Large file processing should complete within 2 seconds');
+      assert.truthy(testData.rows.length > 0, 'Should process all rows');
     }));
 
-    tests.push(await this.testRunner.runTest('Memory Usage Optimization', (assert) => {
-      const initialMemory = this.getMemoryUsage();
+    tests.push(await this.testRunner.runTest('Memory Usage Optimization', async (assert) => {
+      const initialMemory = getMemoryUsage();
       
       // Simulate memory-intensive operation
       const data = Array.from({ length: 10000 }, (_, i) => ({ id: i, value: Math.random() }));
       const processed = data.filter(item => item.value > 0.5);
       
-      const finalMemory = this.getMemoryUsage();
+      const finalMemory = getMemoryUsage();
       const memoryIncrease = finalMemory - initialMemory;
       
       assert.truthy(processed.length > 0, 'Should process data successfully');
       assert.truthy(memoryIncrease < 10, 'Memory increase should be reasonable (< 10MB)');
     }));
 
-    tests.push(await this.testRunner.runTest('Concurrent Data Source Processing', (assert) => {
+    tests.push(await this.testRunner.runTest('Concurrent Data Source Processing', async (assert) => {
       const startTime = performance.now();
       
       const promises = Array.from({ length: 10 }, (_, i) => 
@@ -103,12 +102,11 @@ export class ComprehensiveTestSuite {
         })
       );
       
-      return Promise.all(promises).then(results => {
-        const processingTime = performance.now() - startTime;
-        
-        assert.equal(results.length, 10, 'Should process all data sources');
-        assert.truthy(processingTime < 500, 'Concurrent processing should be faster than sequential');
-      });
+      const results = await Promise.all(promises);
+      const processingTime = performance.now() - startTime;
+      
+      assert.equal(results.length, 10, 'Should process all data sources');
+      assert.truthy(processingTime < 500, 'Concurrent processing should be faster than sequential');
     }));
 
     const teardownStart = performance.now();
@@ -130,21 +128,7 @@ export class ComprehensiveTestSuite {
     const tests = [];
 
     tests.push(await this.testRunner.runTest('ParsedData Type Compliance', (assert) => {
-      const parsedData = {
-        columns: [
-          { name: 'test_col', type: 'string' as const, samples: ['sample1', 'sample2'] }
-        ],
-        rows: [{ test_col: 'value' }],
-        rowCount: 1,
-        fileSize: 100,
-        summary: {
-          totalRows: 1,
-          totalColumns: 1,
-          possibleUserIdColumns: [],
-          possibleEventColumns: [],
-          possibleTimestampColumns: []
-        }
-      };
+      const parsedData = createTestParsedData();
 
       assert.truthy(parsedData.columns.length > 0, 'Should have valid columns structure');
       assert.truthy(parsedData.columns[0].samples, 'Should have samples property');
@@ -152,14 +136,13 @@ export class ComprehensiveTestSuite {
     }));
 
     tests.push(await this.testRunner.runTest('DataColumn Type Safety', (assert) => {
-      const stringColumn = { name: 'text', type: 'string' as const, samples: ['a', 'b'] };
-      const numberColumn = { name: 'num', type: 'number' as const, samples: [1, 2] };
-      const dateColumn = { name: 'date', type: 'date' as const, samples: ['2024-01-01'] };
+      const testData = createTestParsedData();
+      const stringColumn = testData.columns.find(col => col.type === 'string');
+      const numberColumn = testData.columns.find(col => col.type === 'number');
 
-      assert.equal(stringColumn.type, 'string', 'String column should have correct type');
-      assert.equal(numberColumn.type, 'number', 'Number column should have correct type');
-      assert.equal(dateColumn.type, 'date', 'Date column should have correct type');
-      assert.truthy(Array.isArray(stringColumn.samples), 'Should have samples array');
+      assert.truthy(stringColumn, 'Should have string column');
+      assert.truthy(numberColumn, 'Should have number column');
+      assert.truthy(Array.isArray(stringColumn?.samples), 'Should have samples array');
     }));
 
     tests.push(await this.testRunner.runTest('Validation Result Type Safety', (assert) => {
@@ -188,13 +171,5 @@ export class ComprehensiveTestSuite {
       teardownTime,
       totalDuration: performance.now() - suiteStart
     };
-  }
-
-  private getMemoryUsage(): number {
-    if (typeof performance !== 'undefined' && 'memory' in performance) {
-      const memory = (performance as any).memory;
-      return memory.usedJSHeapSize / 1024 / 1024; // Convert to MB
-    }
-    return 0;
   }
 }
