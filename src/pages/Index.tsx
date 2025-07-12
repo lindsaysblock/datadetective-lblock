@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, History } from 'lucide-react';
+import { Plus, History, BarChart3, Play } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
@@ -134,6 +133,20 @@ const Index = () => {
                   </Button>
                 </Link>
 
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4" />
+                    Dashboard
+                  </Button>
+                </Link>
+
+                <Link to="/test-runner">
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <Play className="w-4 h-4" />
+                    Test Runner
+                  </Button>
+                </Link>
+
                 <HelpMenu />
                 
                 <Button onClick={() => setShowSignInModal(true)}>
@@ -183,6 +196,20 @@ const Index = () => {
                 <History className="w-4 h-4" />
                 Projects
               </Button>
+
+              <Link to="/dashboard">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  Dashboard
+                </Button>
+              </Link>
+
+              <Link to="/test-runner">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <Play className="w-4 h-4" />
+                  Test Runner
+                </Button>
+              </Link>
 
               <HelpMenu />
               

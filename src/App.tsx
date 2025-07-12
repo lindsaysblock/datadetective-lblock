@@ -8,6 +8,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import NewProject from "./pages/NewProject";
 import TestRunner from "./pages/TestRunner";
+import Dashboard from "./pages/Dashboard";
+import QueryHistory from "./pages/QueryHistory";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +23,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/new-project" element={<NewProject />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/query-history" element={<QueryHistory />} />
             <Route path="/test-runner" element={<TestRunner />} />
           </Routes>
         </BrowserRouter>
