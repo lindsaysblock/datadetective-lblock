@@ -8,18 +8,26 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [showSignInModal, setShowSignInModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading true
   const { toast } = useToast();
 
   useEffect(() => {
+    let mounted = true;
+    
     // Get initial session
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user || null);
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user || null);
+          setIsLoading(false);
+        }
       } catch (error) {
         console.error('Error getting session:', error);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -28,11 +36,17 @@ export const useAuth = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event, session?.user?.email);
-      setSession(session);
-      setUser(session?.user || null);
+      if (mounted) {
+        setSession(session);
+        setUser(session?.user || null);
+        setIsLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -71,8 +85,13 @@ export const useAuth = () => {
 
   const signOut = useCallback(async () => {
     try {
+      setIsLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      // Clear state immediately
+      setUser(null);
+      setSession(null);
       
       toast({
         title: "Signed Out",
@@ -85,6 +104,8 @@ export const useAuth = () => {
         description: "Failed to sign out",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   }, [toast]);
 

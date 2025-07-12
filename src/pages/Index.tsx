@@ -171,6 +171,11 @@ const Index = () => {
               {user ? (
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">{user.email}</span>
+                  <Link to="/profile">
+                    <Button variant="ghost" size="sm">
+                      Profile
+                    </Button>
+                  </Link>
                   <Button variant="outline" size="sm" onClick={signOut}>
                     Sign Out
                   </Button>

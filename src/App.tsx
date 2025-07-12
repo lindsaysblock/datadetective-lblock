@@ -10,6 +10,7 @@ import NewProject from "./pages/NewProject";
 import TestRunner from "./pages/TestRunner";
 import Dashboard from "./pages/Dashboard";
 import QueryHistory from "./pages/QueryHistory";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/query-history" element={<QueryHistory />} />
             <Route path="/test-runner" element={<TestRunner />} />
+            <Route path="/profile" element={<Profile />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
