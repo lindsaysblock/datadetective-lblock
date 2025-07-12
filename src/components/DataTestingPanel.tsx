@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,7 +34,7 @@ const DataTestingPanel: React.FC = () => {
       ];
       
       const jsonString = JSON.stringify(combinedData, null, 2);
-      const parsedResult = parseRawText(jsonString);
+      const parsedResult = await parseRawText(jsonString, 'json');
       
       setTestResults(prev => [...prev, {
         type: 'JSON',
@@ -43,7 +42,7 @@ const DataTestingPanel: React.FC = () => {
         message: 'JSON import successful',
         dataSize: combinedData.length,
         columns: parsedResult.columns.length,
-        insights: parsedResult.summary.possibleUserIdColumns.length > 0 ? 
+        insights: parsedResult.summary.possibleUserIdColumns && parsedResult.summary.possibleUserIdColumns.length > 0 ? 
           [`Found ${parsedResult.summary.possibleUserIdColumns.length} user ID columns`] : []
       }]);
       
@@ -64,7 +63,7 @@ const DataTestingPanel: React.FC = () => {
     try {
       // Generate mock CSV data
       const csvContent = generateMockCSVContent();
-      const parsedResult = parseRawText(csvContent);
+      const parsedResult = await parseRawText(csvContent, 'csv');
       
       setTestResults(prev => [...prev, {
         type: 'CSV',

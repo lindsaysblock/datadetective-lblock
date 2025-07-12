@@ -1,3 +1,4 @@
+
 import { ParsedData, DataColumn } from './dataParser';
 
 export type DataSourceType = 'sample_web_analytics' | 'sample_customer_behavior' | 'csv_upload';
@@ -167,3 +168,54 @@ export const getDataSourceMetadata = (source: DataSourceType): DataSourceMetadat
       return baseMetadata;
   }
 };
+
+// Create DataConnectors class for backward compatibility
+export class DataConnectors {
+  static async processPastedData(data: string): Promise<ParsedData> {
+    const { parseRawText } = await import('./dataParser');
+    
+    // Try to determine format
+    try {
+      JSON.parse(data);
+      return await parseRawText(data, 'json');
+    } catch {
+      return await parseRawText(data, 'csv');
+    }
+  }
+
+  static async connectDatabase(config: any): Promise<ParsedData> {
+    // Mock database connection
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return generateSampleWebAnalyticsData();
+  }
+
+  static async connectAmplitude(config: any): Promise<ParsedData> {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    return generateCustomerBehaviorData();
+  }
+
+  static async connectLooker(config: any): Promise<ParsedData> {
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    return generateSampleWebAnalyticsData();
+  }
+
+  static async connectPowerBI(config: any): Promise<ParsedData> {
+    await new Promise(resolve => setTimeout(resolve, 1300));
+    return generateCustomerBehaviorData();
+  }
+
+  static async connectTableau(config: any): Promise<ParsedData> {
+    await new Promise(resolve => setTimeout(resolve, 1100));
+    return generateSampleWebAnalyticsData();
+  }
+
+  static async connectSnowflake(config: any): Promise<ParsedData> {
+    await new Promise(resolve => setTimeout(resolve, 1400));
+    return generateCustomerBehaviorData();
+  }
+
+  static async connectBigQuery(config: any): Promise<ParsedData> {
+    await new Promise(resolve => setTimeout(resolve, 1600));
+    return generateSampleWebAnalyticsData();
+  }
+}
