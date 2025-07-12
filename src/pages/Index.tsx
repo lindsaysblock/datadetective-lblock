@@ -11,7 +11,7 @@ import HelpMenu from '@/components/HelpMenu';
 import DatasetsGrid from '@/components/data/DatasetsGrid';
 import { useIndexPageState } from '@/hooks/useIndexPageState';
 import { SignInModal } from '@/components/auth/SignInModal';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthState } from '@/hooks/useAuthState';
 
 const Index = () => {
   const {
@@ -19,16 +19,8 @@ const Index = () => {
     datasetsLoading,
   } = useIndexPageState();
 
-  const {
-    user,
-    isLoading: authLoading,
-    showSignInModal,
-    setShowSignInModal,
-    signIn,
-    signUp,
-    signOut
-  } = useAuth();
-
+  const { user, loading: authLoading } = useAuthState();
+  const [showSignInModal, setShowSignInModal] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { toast } = useToast();
@@ -42,21 +34,86 @@ const Index = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast({
+        title: "Signed Out",
+        description: "You have been signed out successfully.",
+      });
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
+    }
+  };
+
   const signInWithEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signIn(email, password);
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          title: "Sign In Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+
+      if (data.user) {
+        setShowSignInModal(false);
+        toast({
+          title: "Signed In Successfully",
+          description: `Welcome back!`,
+        });
+      }
     } catch (error) {
-      // Error is already handled in the hook
+      console.error('Sign in error:', error);
     }
   };
 
   const signUpWithEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signUp(email, password);
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Sign Up Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+
+      if (data.user) {
+        setShowSignInModal(false);
+        toast({
+          title: "Account Created",
+          description: "Check your email for the confirmation link!",
+        });
+      }
     } catch (error) {
-      // Error is already handled in the hook
+      console.error('Sign up error:', error);
     }
   };
 
@@ -176,7 +233,7 @@ const Index = () => {
                       Profile
                     </Button>
                   </Link>
-                  <Button variant="outline" size="sm" onClick={signOut}>
+                  <Button variant="outline" size="sm" onClick={handleSignOut}>
                     Sign Out
                   </Button>
                 </div>

@@ -8,18 +8,18 @@ import Header from '@/components/Header';
 import { useAuthState } from '@/hooks/useAuthState';
 
 const Profile = () => {
-  const { user, handleUserChange } = useAuthState();
+  const { user } = useAuthState();
 
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <Header user={user} onUserChange={handleUserChange} />
+        <Header />
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Please Sign In</h2>
             <p className="text-gray-600 mb-6">You need to be signed in to view your profile.</p>
-            <Link to="/auth">
-              <Button>Sign In</Button>
+            <Link to="/">
+              <Button>Go Back to Home</Button>
             </Link>
           </div>
         </div>
@@ -29,7 +29,7 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <Header user={user} onUserChange={handleUserChange} />
+      <Header />
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex items-center gap-4 mb-8">
