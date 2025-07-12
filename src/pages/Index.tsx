@@ -1,9 +1,9 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate, Link } from 'react-router-dom';
 import { Plus, History, BarChart3, Play } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import DataDetectiveLogo from '@/components/DataDetectiveLogo';
@@ -11,18 +11,24 @@ import HelpMenu from '@/components/HelpMenu';
 import DatasetsGrid from '@/components/data/DatasetsGrid';
 import { useIndexPageState } from '@/hooks/useIndexPageState';
 import { SignInModal } from '@/components/auth/SignInModal';
+import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
   const {
-    user,
-    loading,
-    handleUserChange,
     datasets,
     datasetsLoading,
   } = useIndexPageState();
 
-  const [showSignInModal, setShowSignInModal] = useState(false);
-  const [authLoading, setAuthLoading] = useState(false);
+  const {
+    user,
+    isLoading: authLoading,
+    showSignInModal,
+    setShowSignInModal,
+    signIn,
+    signUp,
+    signOut
+  } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { toast } = useToast();
@@ -39,73 +45,22 @@ const Index = () => {
   const signInWithEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setAuthLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Welcome back!",
-          description: "You have been signed in successfully.",
-        });
-        setShowSignInModal(false);
-      }
+      await signIn(email, password);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setAuthLoading(false);
+      // Error is already handled in the hook
     }
   };
 
   const signUpWithEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setAuthLoading(true);
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/new-project`
-        }
-      });
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Check your email for the confirmation link!",
-        });
-        setShowSignInModal(false);
-      }
+      await signUp(email, password);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setAuthLoading(false);
+      // Error is already handled in the hook
     }
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         {/* Updated Header */}
@@ -213,9 +168,18 @@ const Index = () => {
 
               <HelpMenu />
               
-              <Button onClick={() => setShowSignInModal(true)}>
-                Sign In / Sign Up
-              </Button>
+              {user ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">{user.email}</span>
+                  <Button variant="outline" size="sm" onClick={signOut}>
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <Button onClick={() => setShowSignInModal(true)}>
+                  Sign In / Sign Up
+                </Button>
+              )}
             </div>
           </div>
         </div>
