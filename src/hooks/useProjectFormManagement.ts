@@ -16,6 +16,7 @@ interface ProjectFormState {
   currentProjectName: string;
   analysisCompleted: boolean;
   analysisResults: AnalysisResults | null;
+  analysisError: string | null;
 }
 
 export const useProjectFormManagement = () => {
@@ -30,7 +31,8 @@ export const useProjectFormManagement = () => {
     parsing: false,
     currentProjectName: '',
     analysisCompleted: false,
-    analysisResults: null
+    analysisResults: null,
+    analysisError: null
   });
 
   const { toast } = useToast();
@@ -173,7 +175,8 @@ export const useProjectFormManagement = () => {
       parsing: false,
       currentProjectName: '',
       analysisCompleted: false,
-      analysisResults: null
+      analysisResults: null,
+      analysisError: null
     });
   }, []);
 
