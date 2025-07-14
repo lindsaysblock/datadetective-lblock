@@ -7,10 +7,12 @@ import ProjectHeader from './ProjectHeader';
 import NewProjectLayout from './NewProjectLayout';
 import ProjectDialogs from './ProjectDialogs';
 import { useProjectContainer } from '@/hooks/useProjectContainer';
+import { useAuth } from '@/hooks/useAuth';
 
 const NewProjectContainer = () => {
   console.log('NewProjectContainer component rendering');
   
+  const { user, isLoading: authLoading } = useAuth();
   const {
     formData,
     analysisProgress,
@@ -27,7 +29,9 @@ const NewProjectContainer = () => {
     analysisCompleted: formData.analysisCompleted,
     hasAnalysisResults: !!formData.analysisResults,
     hasData: !!formData.parsedData && formData.parsedData.length > 0,
-    dataFiles: formData.parsedData?.length || 0
+    dataFiles: formData.parsedData?.length || 0,
+    user: user?.email,
+    authLoading
   });
 
   const handleStartAnalysisWrapper = (educationalMode: boolean = false) => {
@@ -35,12 +39,17 @@ const NewProjectContainer = () => {
     console.log('Form data for analysis:', {
       researchQuestion: formData.researchQuestion?.slice(0, 50) + '...',
       hasAdditionalContext: !!formData.additionalContext,
+      educationalMode,
       hasData: !!formData.parsedData && formData.parsedData.length > 0,
-      dataStructure: formData.parsedData?.[0] ? {
-        rows: formData.parsedData[0].rows?.length || 0,
-        columns: formData.parsedData[0].columns?.length || 0
-      } : null
+      dataCount: formData.parsedData?.length || 0,
+      user: user?.email
     });
+    
+    // Check if user is authenticated before starting analysis
+    if (!user && !authLoading) {
+      formData.setShowSignInModal(true);
+      return;
+    }
     
     handleStartAnalysis(
       formData.researchQuestion,

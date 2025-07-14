@@ -9,6 +9,8 @@ import NewProject from "./pages/NewProject";
 import Dashboard from "./pages/Dashboard";
 import QueryHistory from "./pages/QueryHistory";
 import Admin from "./pages/Admin";
+import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -20,9 +22,11 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/new-project" element={<NewProject />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/query-history" element={<QueryHistory />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
       </BrowserRouter>

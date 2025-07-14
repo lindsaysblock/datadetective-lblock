@@ -1,83 +1,44 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuthState } from '@/hooks/useAuthState';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 export const useProjectAuth = () => {
-  const [showSignInModal, setShowSignInModal] = useState(false);
-  const [authLoading, setAuthLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { toast } = useToast();
-  const { user } = useAuthState();
+  const { 
+    user, 
+    signIn, 
+    signUp, 
+    isLoading: authLoading, 
+    showSignInModal, 
+    setShowSignInModal 
+  } = useAuth();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setAuthLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Welcome back!",
-          description: "You have been signed in successfully.",
-        });
-        setShowSignInModal(false);
-      }
+      await signIn(email, password);
+      // Reset form on success
+      setEmail('');
+      setPassword('');
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setAuthLoading(false);
+      // Error handling is already done in useAuth
+      console.error('Sign in failed:', error);
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setAuthLoading(true);
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/new-project`
-        }
-      });
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Check your email for the confirmation link!",
-        });
-        setShowSignInModal(false);
-      }
+      await signUp(email, password);
+      // Reset form on success
+      setEmail('');
+      setPassword('');
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setAuthLoading(false);
+      // Error handling is already done in useAuth
+      console.error('Sign up failed:', error);
     }
   };
 
