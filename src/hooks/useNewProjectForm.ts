@@ -4,40 +4,34 @@ import { useToast } from '@/hooks/use-toast';
 import { parseFile } from '@/utils/dataParser';
 
 export const useNewProjectForm = () => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({
-    researchQuestion: '',
-    businessContext: '',
-    projectName: '',
-    files: [] as File[],
-    parsedData: [] as any[]
-  });
+  const [step, setStep] = useState(1);
+  const [researchQuestion, setResearchQuestion] = useState('');
+  const [additionalContext, setAdditionalContext] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
+  const [parsedData, setParsedData] = useState<any[]>([]);
+  const [columnMapping, setColumnMapping] = useState<any>({});
+  const [analysisResults, setAnalysisResults] = useState<any>(null);
+  const [analysisCompleted, setAnalysisCompleted] = useState(false);
+  const [isProcessingAnalysis, setIsProcessingAnalysis] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const { toast } = useToast();
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(event.target.files || []);
-    console.log('handleFileChange called with files:', selectedFiles.map(f => f.name));
-    
-    if (selectedFiles.length > 0) {
-      selectedFiles.forEach(file => {
-        console.log('Adding file:', file.name);
-      });
-      
-      setFormData(prev => ({
-        ...prev,
-        files: [...prev.files, ...selectedFiles]
-      }));
-      
-      console.log('Files updated in formData');
-    }
+  const addFile = (file: File) => {
+    console.log('Adding file:', file.name);
+    setFiles(prev => [...prev, file]);
+  };
+
+  const removeFile = (index: number) => {
+    console.log('Removing file at index:', index);
+    setFiles(prev => prev.filter((_, i) => i !== index));
+    setParsedData(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleFileUpload = async () => {
-    console.log('handleFileUpload called with files:', formData.files.length);
+    console.log('handleFileUpload called with files:', files.length);
     
-    if (formData.files.length === 0) {
+    if (files.length === 0) {
       console.log('No files to upload - files array is empty');
       toast({
         title: "No files selected",
@@ -51,7 +45,7 @@ export const useNewProjectForm = () => {
     setParsing(false);
 
     try {
-      console.log('Starting file upload process for files:', formData.files.map(f => f.name));
+      console.log('Starting file upload process for files:', files.map(f => f.name));
       
       // Small delay to show uploading state
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -61,7 +55,7 @@ export const useNewProjectForm = () => {
       
       const parsedResults = [];
       
-      for (const file of formData.files) {
+      for (const file of files) {
         try {
           console.log('Parsing file:', file.name);
           const parsed = await parseFile(file);
@@ -85,10 +79,7 @@ export const useNewProjectForm = () => {
       }
       
       if (parsedResults.length > 0) {
-        setFormData(prev => ({
-          ...prev,
-          parsedData: parsedResults
-        }));
+        setParsedData(parsedResults);
         
         console.log('All files parsed successfully:', parsedResults.length);
         
@@ -110,47 +101,45 @@ export const useNewProjectForm = () => {
     }
   };
 
-  const handleRemoveFile = (index: number) => {
-    console.log('Removing file at index:', index);
-    setFormData(prev => ({
-      ...prev,
-      files: prev.files.filter((_, i) => i !== index),
-      parsedData: prev.parsedData.filter((_, i) => i !== index)
-    }));
+  const nextStep = () => {
+    console.log('Moving to next step from:', step);
+    setStep(prev => prev + 1);
   };
 
-  const handleNext = () => {
-    console.log('Moving to next step from:', currentStep);
-    setCurrentStep(prev => prev + 1);
-  };
-
-  const handlePrevious = () => {
-    console.log('Moving to previous step from:', currentStep);
-    setCurrentStep(prev => prev - 1);
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const prevStep = () => {
+    console.log('Moving to previous step from:', step);
+    setStep(prev => prev - 1);
   };
 
   console.log('useNewProjectForm hook called');
-  console.log('useNewProjectForm returning step:', currentStep);
-  console.log('useNewProjectForm parsedData:', formData.parsedData.length > 0 ? 'has data' : 'no data');
-  console.log('useNewProjectForm files count:', formData.files.length);
+  console.log('useNewProjectForm returning step:', step);
+  console.log('useNewProjectForm parsedData:', parsedData.length > 0 ? 'has data' : 'no data');
+  console.log('useNewProjectForm files count:', files.length);
 
   return {
-    currentStep,
-    formData,
+    step,
+    researchQuestion,
+    setResearchQuestion,
+    additionalContext,
+    setAdditionalContext,
+    files,
+    setFiles,
+    parsedData,
+    setParsedData,
+    columnMapping,
+    setColumnMapping,
+    analysisResults,
+    setAnalysisResults,
+    analysisCompleted,
+    setAnalysisCompleted,
+    isProcessingAnalysis,
+    setIsProcessingAnalysis,
     uploading,
     parsing,
-    handleFileChange,
+    addFile,
+    removeFile,
     handleFileUpload,
-    handleRemoveFile,
-    handleNext,
-    handlePrevious,
-    handleInputChange
+    nextStep,
+    prevStep
   };
 };
