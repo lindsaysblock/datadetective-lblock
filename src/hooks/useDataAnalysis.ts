@@ -21,9 +21,11 @@ export const useDataAnalysis = () => {
       hasData: !!context.parsedData?.length,
       dataCount: context.parsedData?.length || 0,
       dataStructure: context.parsedData?.[0] ? {
-        rows: context.parsedData[0].rows?.length || 0,
-        columns: context.parsedData[0].columns?.length || 0,
-        sampleColumns: context.parsedData[0].columns?.slice(0, 3) || []
+        rows: Array.isArray(context.parsedData[0].data) ? context.parsedData[0].data.length : context.parsedData[0].rows,
+        columns: context.parsedData[0].columns,
+        sampleColumns: Array.isArray(context.parsedData[0].columnInfo) 
+          ? context.parsedData[0].columnInfo.slice(0, 3).map(col => col.name || col) 
+          : []
       } : 'No data structure'
     });
 
@@ -51,7 +53,7 @@ export const useDataAnalysis = () => {
     }
 
     const dataFile = context.parsedData[0];
-    if (!dataFile?.rows || !Array.isArray(dataFile.rows) || dataFile.rows.length === 0) {
+    if (!dataFile?.data || !Array.isArray(dataFile.data) || dataFile.data.length === 0) {
       const error = 'No data rows found in uploaded file';
       setAnalysisError(error);
       toast({
@@ -62,7 +64,7 @@ export const useDataAnalysis = () => {
       return null;
     }
 
-    if (!dataFile?.columns || !Array.isArray(dataFile.columns) || dataFile.columns.length === 0) {
+    if (!dataFile?.columnInfo || !Array.isArray(dataFile.columnInfo) || dataFile.columnInfo.length === 0) {
       const error = 'No data columns found in uploaded file';
       setAnalysisError(error);
       toast({

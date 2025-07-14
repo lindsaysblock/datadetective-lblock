@@ -22,16 +22,16 @@ interface PipelineReviewResult {
 
 // Helper function to convert ParsedDataFile to ParsedData
 const convertToParseData = (dataFile: ParsedDataFile): ParsedData => {
-  const columnNames = dataFile.data.length > 0 ? Object.keys(dataFile.data[0]) : [];
+  const columnNames = Array.isArray(dataFile.data) && dataFile.data.length > 0 ? Object.keys(dataFile.data[0]) : [];
   const columns: DataColumn[] = columnNames.map(columnName => ({
     name: columnName,
     type: 'string', // Default type, could be inferred from data
-    samples: dataFile.data.slice(0, 5).map(row => row[columnName])
+    samples: Array.isArray(dataFile.data) ? dataFile.data.slice(0, 5).map(row => row[columnName]) : []
   }));
 
   return {
     columns,
-    rows: dataFile.data,
+    rows: Array.isArray(dataFile.data) ? dataFile.data : [],
     rowCount: dataFile.rows,
     fileSize: 1000000, // Default file size
     summary: {
@@ -159,7 +159,7 @@ const AnalyticsPipelineReview: React.FC = () => {
 
     for (const dataset of testDatasets) {
       try {
-        if (dataset.data.length > 0 && dataset.columns > 0) {
+        if (Array.isArray(dataset.data) && dataset.data.length > 0 && dataset.columns > 0) {
           successCount++;
         }
       } catch (error) {
@@ -295,7 +295,7 @@ const AnalyticsPipelineReview: React.FC = () => {
     if (memoryIncrease > 50000000) { // 50MB
       recommendations.push('Implement memory cleanup for large datasets');
     }
-    if (testData.rows.length > 5000) {
+    if (Array.isArray(testData.data) && testData.data.length > 5000) {
       recommendations.push('Consider data pagination for large datasets');
     }
 
