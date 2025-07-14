@@ -116,6 +116,7 @@ export const useNewProjectForm = () => {
   console.log('useNewProjectForm parsedData:', parsedData.length > 0 ? 'has data' : 'no data');
   console.log('useNewProjectForm files count:', files.length);
 
+  // Return the structure that NewProjectContent.tsx expects
   return {
     step,
     researchQuestion,
