@@ -1,95 +1,71 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, File, Plus, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileText, Upload, X, CheckCircle } from 'lucide-react';
 
 interface ConnectedDataSectionProps {
   parsedData: any[];
+  files: File[];
   onRemoveFile: (index: number) => void;
-  onContinueToColumnId: () => void;
-  onAddAdditionalSource: () => void;
+  onAddMore: () => void;
 }
 
 const ConnectedDataSection: React.FC<ConnectedDataSectionProps> = ({
   parsedData,
+  files,
   onRemoveFile,
-  onContinueToColumnId,
-  onAddAdditionalSource
+  onAddMore
 }) => {
   return (
-    <>
-      <Card className="bg-green-50 border-green-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-green-700">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            Data Sources Connected!
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-green-700 mb-4">
-            {parsedData.length} file{parsedData.length > 1 ? 's' : ''} uploaded successfully.
+    <Card className="bg-green-50 border-green-200">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-green-700">
+          <CheckCircle className="w-5 h-5" />
+          Data Connected Successfully!
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="text-center mb-4">
+          <p className="text-green-700 mb-4">
+            {parsedData.length} data source{parsedData.length > 1 ? 's' : ''} ready for analysis
           </p>
-
-          {parsedData.map((data, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-green-100 rounded-lg">
-              <div className="flex items-center gap-2">
-                <File className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-900">{data.name}</span>
-                <span className="text-xs text-green-600">
-                  ({data.rows} rows × {data.columns} columns)
-                </span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onRemoveFile(index)}
-                className="text-red-600 hover:text-red-700"
-              >
-                ×
-              </Button>
+        </div>
+        
+        {parsedData.map((data, index) => (
+          <div key={index} className="flex items-center justify-between p-3 bg-green-100 rounded-lg">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-medium text-green-900">
+                {data.name || files[index]?.name || `Dataset ${index + 1}`}
+              </span>
+              <span className="text-xs text-green-600">
+                ({data.summary?.totalRows || data.rows?.length || 0} rows × {data.summary?.totalColumns || data.columns?.length || 0} columns)
+              </span>
             </div>
-          ))}
-          
-          <p className="text-xs text-green-600">
-            Successfully processed and ready for analysis
-          </p>
-          
-          {/* Column Identification Button */}
-          <div className="pt-2 space-y-2">
             <Button
-              onClick={onContinueToColumnId}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              variant="ghost"
+              size="sm"
+              onClick={() => onRemoveFile(index)}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
             >
-              <Settings className="w-4 h-4" />
-              Identify Column Types
-            </Button>
-            <p className="text-xs text-blue-600">
-              Help us understand your data structure for better analysis recommendations
-            </p>
-          </div>
-          
-          {/* Add Additional Source Button */}
-          <div className="pt-2">
-            <Button
-              variant="outline"
-              onClick={onAddAdditionalSource}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Additional Source
+              <X className="w-4 h-4" />
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        ))}
 
-      {/* Success Message */}
-      <div className="text-center p-4 bg-blue-50 rounded-lg">
-        <p className="text-blue-800 font-medium">
-          ✅ Your data is ready! Continue to add context or identify column types for better analysis.
-        </p>
-      </div>
-    </>
+        <div className="pt-2 border-t border-green-200">
+          <Button
+            variant="outline"
+            onClick={onAddMore}
+            className="flex items-center gap-2 text-green-700 border-green-300 hover:bg-green-100"
+          >
+            <Upload className="w-4 h-4" />
+            Add More Data
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
