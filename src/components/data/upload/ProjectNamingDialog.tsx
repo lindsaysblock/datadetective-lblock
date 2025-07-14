@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, FolderPlus, Brain, CheckCircle } from 'lucide-react';
+import { Loader2, FolderPlus, Brain, CheckCircle, Clock } from 'lucide-react';
 
 interface ProjectNamingDialogProps {
   open: boolean;
@@ -102,6 +102,14 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
     return null;
   };
 
+  const getEstimatedTime = () => {
+    if (analysisProgress < 25) return '45-60 seconds remaining';
+    if (analysisProgress < 50) return '30-45 seconds remaining';
+    if (analysisProgress < 75) return '15-30 seconds remaining';
+    if (analysisProgress < 90) return '5-15 seconds remaining';
+    return 'Almost done...';
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => isProcessing && !analysisCompleted && e.preventDefault()}>
@@ -134,30 +142,51 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
           </div>
           
           {(isProcessing || analysisCompleted) && projectSaved && (
-            <div className="space-y-3">
-              <div className={`flex items-center gap-2 p-3 rounded-lg ${
-                analysisCompleted ? 'text-green-600 bg-green-50' : 'text-blue-600 bg-blue-50'
+            <div className="space-y-4">
+              <div className={`flex items-center gap-3 p-4 rounded-lg ${
+                analysisCompleted ? 'text-green-600 bg-green-50 border border-green-200' : 'text-blue-600 bg-blue-50 border border-blue-200'
               }`}>
                 {analysisCompleted ? (
-                  <CheckCircle className="w-4 h-4" />
+                  <CheckCircle className="w-5 h-5" />
                 ) : (
-                  <Brain className="w-4 h-4 animate-pulse" />
+                  <Brain className="w-5 h-5 animate-pulse" />
                 )}
-                <span className="text-sm">
-                  {analysisCompleted ? 'Analysis complete!' : 'Analyzing your data...'}
-                </span>
+                <div className="flex-1">
+                  <span className="text-sm font-medium">
+                    {analysisCompleted ? 'Analysis complete!' : 'Analyzing your data...'}
+                  </span>
+                  {!analysisCompleted && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Clock className="w-3 h-3" />
+                      <span className="text-xs">{getEstimatedTime()}</span>
+                    </div>
+                  )}
+                </div>
               </div>
               
               {!analysisCompleted && (
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Analysis Progress</span>
-                    <span className="text-sm text-gray-500">{Math.round(analysisProgress)}%</span>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">Analysis Progress</span>
+                      <span className="text-sm text-gray-500">{Math.round(analysisProgress)}%</span>
+                    </div>
+                    <Progress value={analysisProgress} className="h-3" />
                   </div>
-                  <Progress value={analysisProgress} className="h-2" />
-                  <p className="text-xs text-gray-500 text-center">
-                    This usually takes 30-60 seconds
-                  </p>
+                  
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex gap-1">
+                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                      <span className="text-xs font-medium text-gray-600">Processing your data</span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Finding patterns, generating insights, and preparing visualizations...
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
