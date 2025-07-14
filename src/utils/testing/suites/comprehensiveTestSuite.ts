@@ -1,10 +1,10 @@
-
 import { TestSuite } from '../types';
 import { TestRunner } from '../testRunner';
 import { DataPipelineIntegrationTests } from './dataPipelineIntegrationTests';
 import { EdgeCaseTests } from './edgeCaseTests';
 import { AnalyticsIntegrationTests } from './analyticsIntegrationTests';
 import { AnalyticsUnitTestSuite } from './analyticsUnitTests';
+import { BuildValidationTestSuite } from './buildValidationTests';
 import { createTestParsedData, createLargeTestDataset } from '../testFixtures';
 import { measurePerformance, getMemoryUsage } from '../testUtils';
 
@@ -17,6 +17,11 @@ export class ComprehensiveTestSuite {
     const suites: TestSuite[] = [];
     
     try {
+      // Build Validation Tests (should run first to catch compilation errors)
+      console.log('🔨 Running Build Validation Tests...');
+      const buildTests = new BuildValidationTestSuite();
+      suites.push(await buildTests.run());
+
       // Data Pipeline Tests
       console.log('📊 Running Data Pipeline Integration Tests...');
       const pipelineTests = new DataPipelineIntegrationTests();
