@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Plus, BarChart3, History, Settings, Database, Upload } from 'lucide-react';
+import { ArrowRight, Plus, BarChart3, History, Database, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 
@@ -81,26 +82,6 @@ const Index = () => {
               </CardContent>
             </Link>
           </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link to="/admin">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="w-5 h-5 text-orange-600" />
-                  System Administration
-                </CardTitle>
-                <CardDescription>
-                  Comprehensive testing and pipeline management
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center text-orange-600 font-medium">
-                  Admin Panel
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </div>
-              </CardContent>
-            </Link>
-          </Card>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border p-8 mb-8">
@@ -131,7 +112,7 @@ const Index = () => {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Settings className="w-5 h-5 text-orange-600 mt-1" />
+                <BarChart3 className="w-5 h-5 text-orange-600 mt-1" />
                 <div>
                   <h3 className="font-medium">System Monitoring</h3>
                   <p className="text-sm text-gray-600">Real-time performance monitoring and optimization</p>
