@@ -15,6 +15,13 @@ interface NewProjectContentProps {
 const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }) => {
   const formData = useNewProjectForm();
 
+  console.log('NewProjectContent formData:', {
+    step: formData.step,
+    researchQuestion: formData.researchQuestion,
+    hasResearchQuestion: !!formData.researchQuestion,
+    researchQuestionLength: formData.researchQuestion?.length || 0
+  });
+
   const renderStepContent = () => {
     switch (formData.step) {
       case 1:
