@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useProjectFormManagement } from '@/hooks/useProjectFormManagement';
 import { useAnalysisCoordination } from '@/hooks/useAnalysisCoordination';
 import { useProjectFormPersistence } from '@/hooks/useProjectFormPersistence';
@@ -13,6 +13,9 @@ export const useProjectContainer = () => {
   const [recoveryDialogDismissed, setRecoveryDialogDismissed] = useState(false);
   const [educationalMode, setEducationalMode] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  
+  // Use ref to track if component is mounted
+  const isMountedRef = useRef(true);
 
   const formManagement = useProjectFormManagement();
   const analysisCoordination = useAnalysisCoordination();
@@ -20,16 +23,23 @@ export const useProjectContainer = () => {
   const projectAuth = useProjectAuth();
   const { toast } = useToast();
 
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   // Check for stored data on mount
   useEffect(() => {
-    if (hasStoredData() && !recoveryDialogDismissed) {
+    if (hasStoredData() && !recoveryDialogDismissed && isMountedRef.current) {
       setShowRecoveryDialog(true);
     }
   }, [hasStoredData, recoveryDialogDismissed]);
 
   // Auto-save form data
   useEffect(() => {
-    if (formManagement.formState.step > 1 || formManagement.formState.researchQuestion) {
+    if (isMountedRef.current && (formManagement.formState.step > 1 || formManagement.formState.researchQuestion)) {
       saveFormData({
         ...formManagement.formState,
         currentStep: formManagement.formState.step
@@ -44,6 +54,8 @@ export const useProjectContainer = () => {
     parsedData: any[],
     columnMapping: any
   ) => {
+    if (!isMountedRef.current) return;
+    
     console.log('🚀 handleStartAnalysis called with:', {
       researchQuestion: researchQuestion?.slice(0, 50) + '...',
       hasAdditionalContext: !!additionalContext,
@@ -73,13 +85,17 @@ export const useProjectContainer = () => {
       parsedData,
       columnMapping,
       (progress: number) => {
-        console.log('📊 Analysis progress:', progress + '%');
-        setAnalysisProgress(progress);
+        if (isMountedRef.current) {
+          console.log('📊 Analysis progress:', progress + '%');
+          setAnalysisProgress(progress);
+        }
       }
     );
   }, [projectAuth.user, toast, analysisCoordination]);
 
   const handleAnalysisComplete = useCallback(() => {
+    if (!isMountedRef.current) return;
+    
     console.log('✅ Analysis completed in container');
     setAnalysisProgress(100);
     
@@ -92,10 +108,14 @@ export const useProjectContainer = () => {
   }, [analysisCoordination.analysisState.analysisResults, formManagement]);
 
   const handleProgressUpdate = useCallback((progress: number) => {
-    setAnalysisProgress(progress);
+    if (isMountedRef.current) {
+      setAnalysisProgress(progress);
+    }
   }, []);
 
   const handleViewResults = useCallback(() => {
+    if (!isMountedRef.current) return;
+    
     console.log('📊 Viewing analysis results');
     setShowAnalysisView(true);
     setShowProjectDialog(false);
@@ -105,6 +125,8 @@ export const useProjectContainer = () => {
   }, []);
 
   const handleBackToProject = useCallback(() => {
+    if (!isMountedRef.current) return;
+    
     console.log('🔙 Returning to project form');
     setShowAnalysisView(false);
     analysisCoordination.resetAnalysis();
@@ -113,6 +135,8 @@ export const useProjectContainer = () => {
   }, [analysisCoordination, formManagement]);
 
   const handleProjectConfirm = useCallback((projectName: string) => {
+    if (!isMountedRef.current) return;
+    
     console.log('✅ Project confirmed:', projectName);
     formManagement.updateFormState({ currentProjectName: projectName });
     
@@ -120,6 +144,8 @@ export const useProjectContainer = () => {
   }, [formManagement]);
 
   const handleRestoreData = useCallback(() => {
+    if (!isMountedRef.current) return;
+    
     try {
       const savedData = getFormData();
       console.log('🔄 Restoring saved data:', savedData);
@@ -150,6 +176,8 @@ export const useProjectContainer = () => {
   }, [getFormData, formManagement, toast]);
 
   const handleStartFresh = useCallback(() => {
+    if (!isMountedRef.current) return;
+    
     console.log('🆕 Starting fresh');
     clearFormData();
     formManagement.resetForm();
