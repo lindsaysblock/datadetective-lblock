@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Plus, BarChart3, History, Settings, Database, FileUpload } from 'lucide-react';
+import { ArrowRight, Plus, BarChart3, History, Settings, Database, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 
@@ -109,7 +108,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <FileUpload className="w-5 h-5 text-blue-600 mt-1" />
+                <Upload className="w-5 h-5 text-blue-600 mt-1" />
                 <div>
                   <h3 className="font-medium">Multi-Format Data Upload</h3>
                   <p className="text-sm text-gray-600">Support for CSV, JSON, Excel, and direct data input</p>
