@@ -1,0 +1,147 @@
+import React, { useState } from 'react';
+
+// 🔥 --- CONFIG + TYPES ---
+type Option = { value: string; label: string; next?: string };
+type Question = {
+  id: string;
+  question: string;
+  type: "single-choice" | "multi-choice" | "date-range";
+  options?: Option[];
+};
+
+type Config = {
+  decisionTree: Question[];
+  flows: Record<string, Question[]>;
+  universal: Question[];
+};
+
+const dataDetectiveConfig: Config = {
+  decisionTree: [
+    {
+      id: "q1",
+      question: "What do you want to analyze?",
+      type: "single-choice",
+      options: [
+        { value: "products", label: "Products", next: "productsFlow" },
+        { value: "customers", label: "Customers", next: "customersFlow" },
+        { value: "sales_orders", label: "Sales / Orders", next: "salesFlow" },
+        { value: "campaigns", label: "Campaigns / Channels", next: "campaignsFlow" }
+      ]
+    }
+  ],
+  flows: {
+    productsFlow: [
+      { id: "products_q2", question: "What about products?", type: "single-choice",
+        options: [
+          { value: "top_selling", label: "Top selling" },
+          { value: "most_returned", label: "Most returned" }
+        ]
+      },
+      { id: "products_q3", question: "Over what time period?", type: "date-range" }
+    ],
+    customersFlow: [
+      { id: "customers_q2", question: "Explore customers?", type: "single-choice",
+        options: [
+          { value: "new_vs_repeat", label: "New vs repeat" },
+          { value: "lifetime_value", label: "Lifetime value" }
+        ]
+      }
+    ],
+    salesFlow: [
+      { id: "sales_q2", question: "What about sales?", type: "single-choice",
+        options: [
+          { value: "total_sales", label: "Total sales" },
+          { value: "aov", label: "Average order value" }
+        ]
+      }
+    ],
+    campaignsFlow: [
+      { id: "campaigns_q2", question: "What about campaigns?", type: "single-choice",
+        options: [
+          { value: "roi", label: "ROI" },
+          { value: "cac", label: "Customer acquisition cost" }
+        ]
+      }
+    ]
+  },
+  universal: [
+    { id: "compare_over_time", question: "Compare over time?", type: "single-choice",
+      options: [{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]
+    },
+    { id: "result_view", question: "How to see results?", type: "single-choice",
+      options: [
+        { value: "table", label: "Table" },
+        { value: "bar_chart", label: "Bar chart" }
+      ]
+    }
+  ]
+};
+
+// 🔥 --- HOOK ---
+type AnswerMap = Record<string, string | string[]>;
+
+export function useDataDetectiveFlow() {
+  const [answers, setAnswers] = useState<AnswerMap>({});
+  const [currentFlow, setCurrentFlow] = useState<string[]>([dataDetectiveConfig.decisionTree[0].id]);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
+  const getQuestion = (id: string): Question | undefined => {
+    return dataDetectiveConfig.decisionTree.find(q => q.id === id)
+      || Object.values(dataDetectiveConfig.flows).flat().find(q => q.id === id)
+      || dataDetectiveConfig.universal.find(q => q.id === id);
+  };
+
+  const currentQuestion = getQuestion(currentFlow[currentStepIndex]);
+
+  const answerQuestion = (id: string, value: string | string[]) => {
+    setAnswers(prev => ({ ...prev, [id]: value }));
+    const question = getQuestion(id);
+    const selected = (question?.options || []).find(opt => opt.value === value);
+    if (selected?.next) {
+      setCurrentFlow([
+        ...dataDetectiveConfig.flows[selected.next].map(q => q.id),
+        ...dataDetectiveConfig.universal.map(q => q.id)
+      ]);
+      setCurrentStepIndex(0);
+    } else {
+      setCurrentStepIndex(i => Math.min(i + 1, currentFlow.length - 1));
+    }
+  };
+
+  const goBack = () => setCurrentStepIndex(i => Math.max(i - 1, 0));
+
+  return { currentQuestion, answers, answerQuestion, goBack, isFinished: currentStepIndex >= currentFlow.length };
+}
+
+// 🔥 --- COMPONENT ---
+export default function DataDetective() {
+  const { currentQuestion, answers, answerQuestion, goBack, isFinished } = useDataDetectiveFlow();
+
+  if (!currentQuestion) return <div>Loading...</div>;
+
+  return (
+    <div className="p-6">
+      <h2 className="text-lg font-bold mb-4">{currentQuestion.question}</h2>
+      <div className="space-y-2">
+        {currentQuestion.type === "single-choice" && currentQuestion.options?.map(opt => (
+          <button key={opt.value}
+            onClick={() => answerQuestion(currentQuestion.id, opt.value)}
+            className="border px-4 py-2 rounded hover:bg-gray-100">
+            {opt.label}
+          </button>
+        ))}
+      </div>
+      <div className="mt-4">
+        <button onClick={goBack} disabled={currentStepIndex === 0} className="text-sm underline">
+          Back
+        </button>
+      </div>
+      {isFinished && (
+        <div className="mt-6 p-4 border rounded">
+          <h3 className="font-semibold mb-2">Summary:</h3>
+          <pre className="text-sm bg-gray-50 p-2 rounded">{JSON.stringify(answers, null, 2)}</pre>
+        </div>
+      )}
+    </div>
+  );
+}
