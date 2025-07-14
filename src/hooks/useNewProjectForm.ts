@@ -1,146 +1,146 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { parseFile } from '@/utils/dataParser';
+import { parseCSVFile, parseJSONFile } from '@/utils/dataParser';
 
 export const useNewProjectForm = () => {
   const [step, setStep] = useState(1);
   const [researchQuestion, setResearchQuestion] = useState('');
   const [additionalContext, setAdditionalContext] = useState('');
   const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [parsing, setParsing] = useState(false);
   const [parsedData, setParsedData] = useState<any[]>([]);
   const [columnMapping, setColumnMapping] = useState<any>({});
   const [analysisResults, setAnalysisResults] = useState<any>(null);
   const [analysisCompleted, setAnalysisCompleted] = useState(false);
   const [isProcessingAnalysis, setIsProcessingAnalysis] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [parsing, setParsing] = useState(false);
+  const [currentProjectName, setCurrentProjectName] = useState('');
+  const [educationalMode, setEducationalMode] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  
   const { toast } = useToast();
 
-  const addFile = (file: File) => {
-    console.log('Adding file:', file.name);
-    setFiles(prev => [...prev, file]);
-  };
+  const nextStep = useCallback(() => {
+    setStep(prev => Math.min(prev + 1, 4));
+  }, []);
 
-  const removeFile = (index: number) => {
-    console.log('Removing file at index:', index);
+  const prevStep = useCallback(() => {
+    setStep(prev => Math.max(prev - 1, 1));
+  }, []);
+
+  const addFile = useCallback((file: File) => {
+    setFiles(prev => [...prev, file]);
+  }, []);
+
+  const removeFile = useCallback((index: number) => {
     setFiles(prev => prev.filter((_, i) => i !== index));
     setParsedData(prev => prev.filter((_, i) => i !== index));
-  };
+  }, []);
 
-  const handleFileUpload = async () => {
-    console.log('handleFileUpload called with files:', files.length);
-    
+  const handleFileUpload = useCallback(async () => {
     if (files.length === 0) {
-      console.log('No files to upload - files array is empty');
-      toast({
-        title: "No files selected",
-        description: "Please select at least one file to upload.",
-        variant: "destructive",
-      });
       return;
     }
 
     setUploading(true);
-    setParsing(false);
-
+    setParsing(true);
+    
     try {
-      console.log('Starting file upload process for files:', files.map(f => f.name));
-      
-      // Small delay to show uploading state
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setUploading(false);
-      setParsing(true);
-      
-      const parsedResults = [];
+      const newParsedData = [];
       
       for (const file of files) {
-        try {
-          console.log('Parsing file:', file.name);
-          const parsed = await parseFile(file);
-          console.log('File parsed successfully:', file.name, parsed);
-          
-          parsedResults.push({
-            name: file.name,
-            summary: parsed.summary,
-            columns: parsed.columns,
-            rows: parsed.rows,
-            totalRows: parsed.rowCount
-          });
-        } catch (error) {
-          console.error('Error parsing file:', file.name, error);
-          toast({
-            title: "Parsing Error",
-            description: `Failed to parse ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            variant: "destructive",
+        console.log('Processing file:', file.name, file.type);
+        
+        let fileData;
+        if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+          fileData = await parseCSVFile(file);
+        } else if (file.type === 'application/json' || file.name.endsWith('.json')) {
+          fileData = await parseJSONFile(file);
+        } else {
+          // Try to parse as CSV for other text files
+          fileData = await parseCSVFile(file);
+        }
+        
+        if (fileData) {
+          newParsedData.push({
+            ...fileData,
+            name: file.name
           });
         }
       }
       
-      if (parsedResults.length > 0) {
-        setParsedData(parsedResults);
-        
-        console.log('All files parsed successfully:', parsedResults.length);
-        
+      setParsedData(newParsedData);
+      
+      if (newParsedData.length > 0) {
         toast({
-          title: "Files Processed",
-          description: `Successfully processed ${parsedResults.length} file(s).`,
+          title: "Files Processed Successfully",
+          description: `${newParsedData.length} file(s) have been processed and are ready for analysis.`,
         });
       }
       
     } catch (error) {
-      console.error('Error in file upload:', error);
+      console.error('Error processing files:', error);
       toast({
         title: "Upload Failed",
-        description: `Failed to process files: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description: "There was an error processing your files. Please try again.",
         variant: "destructive",
       });
     } finally {
+      setUploading(false);
       setParsing(false);
     }
-  };
+  }, [files, toast]);
 
-  const nextStep = () => {
-    console.log('Moving to next step from:', step);
-    setStep(prev => prev + 1);
-  };
+  const resetForm = useCallback(() => {
+    setStep(1);
+    setResearchQuestion('');
+    setAdditionalContext('');
+    setFiles([]);
+    setUploading(false);
+    setParsing(false);
+    setParsedData([]);
+    setColumnMapping({});
+    setAnalysisResults(null);
+    setAnalysisCompleted(false);
+    setIsProcessingAnalysis(false);
+    setCurrentProjectName('');
+    setEducationalMode(false);
+    setAnalysisError(null);
+  }, []);
 
-  const prevStep = () => {
-    console.log('Moving to previous step from:', step);
-    setStep(prev => prev - 1);
-  };
-
-  console.log('useNewProjectForm hook called');
-  console.log('useNewProjectForm returning step:', step);
-  console.log('useNewProjectForm parsedData:', parsedData.length > 0 ? 'has data' : 'no data');
-  console.log('useNewProjectForm files count:', files.length);
-
-  // Return the structure that NewProjectContent.tsx expects
   return {
     step,
     researchQuestion,
-    setResearchQuestion,
     additionalContext,
-    setAdditionalContext,
     files,
-    setFiles,
-    parsedData,
-    setParsedData,
-    columnMapping,
-    setColumnMapping,
-    analysisResults,
-    setAnalysisResults,
-    analysisCompleted,
-    setAnalysisCompleted,
-    isProcessingAnalysis,
-    setIsProcessingAnalysis,
     uploading,
     parsing,
+    parsedData,
+    columnMapping,
+    analysisResults,
+    analysisCompleted,
+    isProcessingAnalysis,
+    currentProjectName,
+    educationalMode,
+    analysisError,
+    setStep,
+    setResearchQuestion,
+    setAdditionalContext,
+    setFiles,
+    setParsedData,
+    setColumnMapping,
+    setAnalysisResults,
+    setAnalysisCompleted,
+    setIsProcessingAnalysis,
+    setCurrentProjectName,
+    setEducationalMode,
+    setAnalysisError,
+    nextStep,
+    prevStep,
     addFile,
     removeFile,
     handleFileUpload,
-    nextStep,
-    prevStep
+    resetForm
   };
 };

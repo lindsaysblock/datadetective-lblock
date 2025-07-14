@@ -36,12 +36,13 @@ const NewProjectContainer = () => {
     analysisProgress
   });
 
-  const handleStartAnalysisWrapper = (educationalMode: boolean = false) => {
-    console.log('Starting analysis with educational mode:', educationalMode);
+  const handleStartAnalysisWrapper = (educationalMode: boolean = false, projectName: string = '') => {
+    console.log('Starting analysis with:', { educationalMode, projectName });
     console.log('Form data for analysis:', {
       researchQuestion: formData.researchQuestion?.slice(0, 50) + '...',
       hasAdditionalContext: !!formData.additionalContext,
       educationalMode,
+      projectName,
       hasData: !!formData.parsedData && formData.parsedData.length > 0,
       dataCount: formData.parsedData?.length || 0,
       user: user?.email
@@ -52,14 +53,26 @@ const NewProjectContainer = () => {
       formData.setShowSignInModal(true);
       return;
     }
+
+    // Set the project name first
+    if (projectName) {
+      formData.setCurrentProjectName(projectName);
+    }
     
-    handleStartAnalysis(
-      formData.researchQuestion,
-      formData.additionalContext,
-      educationalMode,
-      formData.parsedData,
-      formData.columnMapping
-    );
+    // Start analysis with proper error handling
+    try {
+      handleStartAnalysis(
+        formData.researchQuestion,
+        formData.additionalContext,
+        educationalMode,
+        formData.parsedData,
+        formData.columnMapping
+      );
+    } catch (error) {
+      console.error('Error starting analysis:', error);
+      // Show error to user instead of navigating away
+      formData.setAnalysisError('We encountered an issue while analyzing your data. This could be due to data format issues or temporary processing problems.');
+    }
   };
 
   if (formData.showAnalysisView) {
@@ -104,6 +117,42 @@ const NewProjectContainer = () => {
                   ></div>
                 </div>
                 <p className="text-sm text-gray-500">{Math.round(analysisProgress)}% complete</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Show error state if analysis failed */}
+        {formData.analysisError && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto">
+                  <div className="text-yellow-600 text-2xl">⚠️</div>
+                </div>
+                <h3 className="text-xl font-semibold">Analysis Error</h3>
+                <p className="text-gray-600">{formData.analysisError}</p>
+                <div className="flex gap-3 justify-center">
+                  <button 
+                    onClick={() => {
+                      formData.setAnalysisError(null);
+                      // Retry analysis
+                      handleStartAnalysisWrapper(formData.educationalMode, formData.currentProjectName);
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Try Again
+                  </button>
+                  <button 
+                    onClick={() => {
+                      formData.setAnalysisError(null);
+                      formData.resetForm();
+                    }}
+                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                  >
+                    Start New Project
+                  </button>
+                </div>
               </div>
             </div>
           </div>

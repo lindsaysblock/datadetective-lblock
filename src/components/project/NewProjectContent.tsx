@@ -9,7 +9,7 @@ import AnalysisSummaryStep from './AnalysisSummaryStep';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 
 interface NewProjectContentProps {
-  onStartAnalysis: (educationalMode?: boolean) => void;
+  onStartAnalysis: (educationalMode?: boolean, projectName?: string) => void;
 }
 
 const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }) => {
@@ -21,6 +21,11 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
     hasResearchQuestion: !!formData.researchQuestion,
     researchQuestionLength: formData.researchQuestion?.length || 0
   });
+
+  const handleStartAnalysisWrapper = (educationalMode: boolean = false, projectName: string = '') => {
+    console.log('NewProjectContent starting analysis:', { educationalMode, projectName });
+    onStartAnalysis(educationalMode, projectName);
+  };
 
   const renderStepContent = () => {
     switch (formData.step) {
@@ -76,7 +81,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
             analysisResults={formData.analysisResults}
             analysisCompleted={formData.analysisCompleted}
             isProcessingAnalysis={formData.isProcessingAnalysis}
-            onStartAnalysis={onStartAnalysis}
+            onStartAnalysis={handleStartAnalysisWrapper}
             onPrevious={formData.prevStep}
           />
         );

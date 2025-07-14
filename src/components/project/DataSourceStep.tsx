@@ -180,8 +180,8 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
             </Card>
           )}
 
-          {/* Show selected files info */}
-          {files && files.length > 0 && !uploading && !parsing && (
+          {/* Show selected files info - ONLY if files are selected but not yet processed */}
+          {files && files.length > 0 && !uploading && !parsing && !hasValidData && (
             <Card className="bg-gray-50 border-gray-200">
               <CardContent className="p-4">
                 <h4 className="font-medium text-gray-900 mb-2">Selected Files:</h4>
