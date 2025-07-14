@@ -34,26 +34,35 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
   const hasUploadedData = parsedData && parsedData.length > 0;
 
   const handleFileUpload = async (uploadedFiles: File[]) => {
-    console.log('handleFileUpload called with files:', uploadedFiles);
+    console.log('DataSourceStep handleFileUpload called with files:', uploadedFiles);
     
     if (uploadedFiles.length === 0) {
+      console.log('No files provided, returning early');
       return;
     }
 
     try {
-      // Create a mock file input event with the uploaded files
-      const dataTransfer = new DataTransfer();
-      uploadedFiles.forEach(file => dataTransfer.items.add(file));
-      
+      // Create a proper FileList-like object
+      const fileList = Object.assign(uploadedFiles, {
+        item: (index: number) => uploadedFiles[index] || null,
+        length: uploadedFiles.length
+      }) as FileList;
+
+      // Create a proper mock event that mimics a real file input change
       const mockEvent = {
         target: {
-          files: dataTransfer.files,
-          value: ''
-        } as HTMLInputElement,
-        currentTarget: {} as HTMLInputElement,
+          files: fileList,
+          value: '',
+          type: 'file'
+        },
+        currentTarget: {
+          files: fileList,
+          value: '',
+          type: 'file'
+        },
         preventDefault: () => {},
         stopPropagation: () => {},
-        nativeEvent: new Event('change'),
+        nativeEvent: {} as Event,
         isDefaultPrevented: () => false,
         isPropagationStopped: () => false,
         persist: () => {},
@@ -66,44 +75,48 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
         type: 'change'
       } as React.ChangeEvent<HTMLInputElement>;
 
-      // Call the file change handler
+      console.log('Calling onFileChange with mock event for files:', uploadedFiles.map(f => f.name));
+      
+      // Call the file change handler immediately
       onFileChange(mockEvent);
       
-      // Trigger file upload after a short delay
-      setTimeout(() => {
-        onFileUpload();
-      }, 100);
+      // Trigger file upload processing
+      console.log('Triggering onFileUpload');
+      onFileUpload();
       
     } catch (error) {
-      console.error('Error processing files:', error);
+      console.error('Error processing files in DataSourceStep:', error);
     }
   };
 
   const handleDataPaste = async (data: string) => {
+    console.log('DataSourceStep handleDataPaste called with data length:', data.length);
     try {
       // Create a mock CSV file from pasted data
       const mockFile = new File([data], 'pasted-data.csv', { type: 'text/csv' });
-      handleFileUpload([mockFile]);
+      await handleFileUpload([mockFile]);
     } catch (error) {
       console.error('Error processing pasted data:', error);
     }
   };
 
   const handleDatabaseConnect = async (config: any) => {
+    console.log('DataSourceStep handleDatabaseConnect called with config:', config);
     try {
       // Create a mock file to represent database connection
       const mockFile = new File(['database'], 'database-connection', { type: 'application/json' });
-      handleFileUpload([mockFile]);
+      await handleFileUpload([mockFile]);
     } catch (error) {
       console.error('Database connection error:', error);
     }
   };
 
   const handlePlatformConnect = async (platform: string, config: any) => {
+    console.log('DataSourceStep handlePlatformConnect called for platform:', platform);
     try {
       // Create a mock file to represent platform connection
       const mockFile = new File(['platform'], `${platform}-connection`, { type: 'application/json' });
-      handleFileUpload([mockFile]);
+      await handleFileUpload([mockFile]);
     } catch (error) {
       console.error('Platform connection error:', error);
     }
@@ -111,8 +124,10 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
 
   const handleNext = () => {
     if (!hasUploadedData) {
+      console.log('No uploaded data, cannot proceed to next step');
       return;
     }
+    console.log('Proceeding to next step with data:', parsedData);
     onNext();
   };
 
