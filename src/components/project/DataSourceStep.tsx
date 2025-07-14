@@ -39,7 +39,11 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
     handleDataPaste,
     handleDatabaseConnect,
     handlePlatformConnect
-  } = useDataSourceHandlers(onFileChange, onFileUpload, () => {});
+  } = useDataSourceHandlers(
+    onFileChange,
+    onFileUpload,
+    () => {} // setShowAddSource not needed here
+  );
 
   const handleNext = () => {
     if (!hasUploadedData) {
