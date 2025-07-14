@@ -19,7 +19,8 @@ const NewProjectContainer = () => {
     handleAnalysisComplete,
     handleProgressUpdate,
     handleViewResults,
-    handleStartAnalysis
+    handleStartAnalysis,
+    handleProjectConfirm
   } = useProjectContainer();
 
   console.log('Current form state:', {
@@ -84,6 +85,7 @@ const NewProjectContainer = () => {
           formData={formData}
           analysisProgress={analysisProgress}
           onViewResults={handleViewResults}
+          onProjectConfirm={handleProjectConfirm}
         />
 
         <AnalysisProgressView

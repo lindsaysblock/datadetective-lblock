@@ -8,12 +8,14 @@ interface ProjectDialogsProps {
   formData: any;
   analysisProgress: number;
   onViewResults: () => void;
+  onProjectConfirm: (projectName: string) => void;
 }
 
 const ProjectDialogs: React.FC<ProjectDialogsProps> = ({ 
   formData, 
   analysisProgress, 
-  onViewResults 
+  onViewResults,
+  onProjectConfirm
 }) => {
   console.log('ProjectDialogs rendering');
 
@@ -46,7 +48,7 @@ const ProjectDialogs: React.FC<ProjectDialogsProps> = ({
             formData.setShowProjectDialog(open);
           }
         }}
-        onConfirm={formData.handleProjectConfirm}
+        onConfirm={onProjectConfirm}
         onViewResults={onViewResults}
         isProcessing={formData.isProcessingAnalysis}
         analysisProgress={analysisProgress}
