@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuthState } from '@/hooks/useAuthState';
@@ -19,6 +19,7 @@ import {
 
 const Header: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, loading } = useAuthState();
   const { toast } = useToast();
 
@@ -39,6 +40,11 @@ const Header: React.FC = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleSignInClick = () => {
+    console.log('Sign in button clicked, navigating to /auth');
+    navigate('/auth');
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -151,7 +157,11 @@ const Header: React.FC = () => {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="sm">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleSignInClick}
+                >
                   Sign In / Sign Up
                 </Button>
               </div>
