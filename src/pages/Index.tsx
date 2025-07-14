@@ -1,239 +1,156 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { useNavigate, Link } from 'react-router-dom';
-import { Plus, History, BarChart3, Settings, TestTube } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import DatasetsGrid from '@/components/data/DatasetsGrid';
-import { useIndexPageState } from '@/hooks/useIndexPageState';
-import { SignInModal } from '@/components/auth/SignInModal';
-import { useAuthState } from '@/hooks/useAuthState';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowRight, Plus, BarChart3, History, Settings, Database, FileUpload } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import Header from '@/components/Header';
 
 const Index = () => {
-  const {
-    datasets,
-    datasetsLoading,
-  } = useIndexPageState();
-
-  const { user, loading: authLoading } = useAuthState();
-  const [showSignInModal, setShowSignInModal] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const { toast } = useToast();
-  const navigate = useNavigate();
-
-  const handleContinueExistingProject = () => {
-    if (!user) {
-      setShowSignInModal(true);
-    } else {
-      navigate('/query-history');
-    }
-  };
-
-  const signInWithEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const { supabase } = await import('@/integrations/supabase/client');
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast({
-          title: "Sign In Failed",
-          description: error.message,
-          variant: "destructive",
-        });
-        throw error;
-      }
-
-      if (data.user) {
-        setShowSignInModal(false);
-        toast({
-          title: "Signed In Successfully",
-          description: `Welcome back!`,
-        });
-      }
-    } catch (error) {
-      console.error('Sign in error:', error);
-    }
-  };
-
-  const signUpWithEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const { supabase } = await import('@/integrations/supabase/client');
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`
-        }
-      });
-
-      if (error) {
-        toast({
-          title: "Sign Up Failed",
-          description: error.message,
-          variant: "destructive",
-        });
-        throw error;
-      }
-
-      if (data.user) {
-        setShowSignInModal(false);
-        toast({
-          title: "Account Created",
-          description: "Check your email for the confirmation link!",
-        });
-      }
-    } catch (error) {
-      console.error('Sign up error:', error);
-    }
-  };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="space-y-8">
-          {/* Welcome Section */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              {user ? 'Welcome Back, Detective!' : 'Welcome to Data Detective'}
-            </h1>
-            <p className="text-gray-600">
-              {user 
-                ? 'What would you like to investigate today?' 
-                : 'Discover insights from your data with AI-powered analysis'
-              }
-            </p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <Header />
+      
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
+            Analytics Intelligence Platform
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Transform your data into actionable insights with our comprehensive analytics platform.
+            Upload, analyze, and discover patterns in your data with AI-powered intelligence.
+          </p>
+        </div>
 
-          {/* Main Action Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            <Card 
-              className="p-8 bg-gradient-to-br from-green-50 to-blue-50 border-green-200 hover:shadow-lg transition-all cursor-pointer group"
-              onClick={() => navigate('/new-project')}
-            >
-              <div className="text-center">
-                <div className="p-4 bg-green-500 rounded-full w-16 h-16 mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <Plus className="w-8 h-8 text-white" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Link to="/new-project">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-blue-600" />
+                  Start New Analysis
+                </CardTitle>
+                <CardDescription>
+                  Upload your data and begin comprehensive analytics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center text-blue-600 font-medium">
+                  Get Started
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </div>
-                <h3 className="font-semibold text-xl text-gray-800 mb-2">Start New Project</h3>
-                <p className="text-gray-600">Upload fresh data and begin a new investigation</p>
+              </CardContent>
+            </Link>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Link to="/dashboard">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-green-600" />
+                  Analytics Dashboard
+                </CardTitle>
+                <CardDescription>
+                  View real-time insights and analytics results
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center text-green-600 font-medium">
+                  View Dashboard
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </div>
+              </CardContent>
+            </Link>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Link to="/query-history">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="w-5 h-5 text-purple-600" />
+                  Query History
+                </CardTitle>
+                <CardDescription>
+                  Access previous analyses and results
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center text-purple-600 font-medium">
+                  View History
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </div>
+              </CardContent>
+            </Link>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Link to="/admin">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-orange-600" />
+                  System Administration
+                </CardTitle>
+                <CardDescription>
+                  Comprehensive testing and pipeline management
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center text-orange-600 font-medium">
+                  Admin Panel
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </div>
+              </CardContent>
+            </Link>
+          </Card>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Platform Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <FileUpload className="w-5 h-5 text-blue-600 mt-1" />
+                <div>
+                  <h3 className="font-medium">Multi-Format Data Upload</h3>
+                  <p className="text-sm text-gray-600">Support for CSV, JSON, Excel, and direct data input</p>
+                </div>
               </div>
-            </Card>
-
-            <Card 
-              className="p-8 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 hover:shadow-lg transition-all cursor-pointer group"
-              onClick={handleContinueExistingProject}
-            >
-              <div className="text-center">
-                <div className="p-4 bg-purple-500 rounded-full w-16 h-16 mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <History className="w-8 h-8 text-white" />
+              <div className="flex items-start gap-3">
+                <BarChart3 className="w-5 h-5 text-green-600 mt-1" />
+                <div>
+                  <h3 className="font-medium">AI-Powered Analytics</h3>
+                  <p className="text-sm text-gray-600">Intelligent pattern recognition and insight generation</p>
                 </div>
-                <h3 className="font-semibold text-xl text-gray-800 mb-2">Continue Existing Project</h3>
-                <p className="text-gray-600">Resume analysis on your saved datasets</p>
               </div>
-            </Card>
-
-            <Card 
-              className="p-8 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg transition-all cursor-pointer group"
-              onClick={() => navigate('/dashboard')}
-            >
-              <div className="text-center">
-                <div className="p-4 bg-blue-500 rounded-full w-16 h-16 mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <BarChart3 className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="font-semibold text-xl text-gray-800 mb-2">Analytics Dashboard</h3>
-                <p className="text-gray-600">View comprehensive data analytics and insights</p>
-              </div>
-            </Card>
-          </div>
-
-          {/* Admin and Testing Section */}
-          {user && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              <Card 
-                className="p-6 bg-gradient-to-br from-orange-50 to-red-50 border-orange-200 hover:shadow-lg transition-all cursor-pointer group"
-                onClick={() => navigate('/admin')}
-              >
-                <div className="text-center">
-                  <div className="p-3 bg-orange-500 rounded-full w-12 h-12 mx-auto mb-3 group-hover:scale-110 transition-transform">
-                    <Settings className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="font-semibold text-lg text-gray-800 mb-2">Admin Panel</h3>
-                  <p className="text-gray-600">System administration and QA tools</p>
-                </div>
-              </Card>
-
-              <Card 
-                className="p-6 bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200 hover:shadow-lg transition-all cursor-pointer group"
-                onClick={() => navigate('/pipeline-review')}
-              >
-                <div className="text-center">
-                  <div className="p-3 bg-teal-500 rounded-full w-12 h-12 mx-auto mb-3 group-hover:scale-110 transition-transform">
-                    <TestTube className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="font-semibold text-lg text-gray-800 mb-2">Pipeline Review</h3>
-                  <p className="text-gray-600">Analytics pipeline testing and optimization</p>
-                </div>
-              </Card>
             </div>
-          )}
-
-          {/* Recent Activity Section - Only show for authenticated users */}
-          {user && datasets && datasets.length > 0 && (
-            <div className="max-w-6xl mx-auto">
-              <Card className="border-blue-300">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold">Recent Projects</CardTitle>
-                  <CardDescription className="text-gray-600">
-                    Quick access to your latest investigations
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <DatasetsGrid datasets={datasets?.slice(0, 3) || []} loading={datasetsLoading} />
-                  {datasets && datasets.length > 3 && (
-                    <div className="text-center mt-4">
-                      <Button variant="outline" onClick={() => navigate('/query-history')}>
-                        View All Projects
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <Database className="w-5 h-5 text-purple-600 mt-1" />
+                <div>
+                  <h3 className="font-medium">Comprehensive Testing</h3>
+                  <p className="text-sm text-gray-600">Built-in QA, load testing, and pipeline optimization</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Settings className="w-5 h-5 text-orange-600 mt-1" />
+                <div>
+                  <h3 className="font-medium">System Monitoring</h3>
+                  <p className="text-sm text-gray-600">Real-time performance monitoring and optimization</p>
+                </div>
+              </div>
             </div>
-          )}
+          </div>
+        </div>
+
+        <div className="text-center">
+          <Link to="/new-project">
+            <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+              <Plus className="w-5 h-5 mr-2" />
+              Start Your First Analysis
+            </Button>
+          </Link>
         </div>
       </div>
-
-      <SignInModal
-        open={showSignInModal}
-        onOpenChange={setShowSignInModal}
-        email={email}
-        password={password}
-        loading={authLoading}
-        setEmail={setEmail}
-        setPassword={setPassword}
-        onSignIn={signInWithEmail}
-        onSignUp={signUpWithEmail}
-      />
     </div>
   );
 };

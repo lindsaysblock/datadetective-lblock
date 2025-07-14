@@ -9,8 +9,6 @@ import NewProject from "./pages/NewProject";
 import Dashboard from "./pages/Dashboard";
 import QueryHistory from "./pages/QueryHistory";
 import Admin from "./pages/Admin";
-import TestRunner from "./pages/TestRunner";
-import PipelineReview from "./pages/PipelineReview";
 
 const queryClient = new QueryClient();
 
@@ -26,8 +24,6 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/query-history" element={<QueryHistory />} />
           <Route path="/admin" element={<Admin />} />
-          <Route path="/test-runner" element={<TestRunner />} />
-          <Route path="/pipeline-review" element={<PipelineReview />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
