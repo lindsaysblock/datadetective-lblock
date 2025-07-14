@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { useProjectFormManagement } from '@/hooks/useProjectFormManagement';
 import { useAnalysisCoordination } from '@/hooks/useAnalysisCoordination';
@@ -92,6 +93,9 @@ export const useProjectContainer = () => {
     console.log('📊 Viewing analysis results');
     setShowAnalysisView(true);
     setShowProjectDialog(false);
+    
+    // Clear any progress state
+    setAnalysisProgress(0);
   }, []);
 
   const handleBackToProject = useCallback(() => {
@@ -99,18 +103,15 @@ export const useProjectContainer = () => {
     setShowAnalysisView(false);
     analysisCoordination.resetAnalysis();
     formManagement.updateFormState({ currentProjectName: '' });
+    setAnalysisProgress(0);
   }, [analysisCoordination, formManagement]);
 
   const handleProjectConfirm = useCallback((projectName: string) => {
     console.log('✅ Project confirmed:', projectName);
     formManagement.updateFormState({ currentProjectName: projectName });
     
-    // If analysis is complete, show results, otherwise keep dialog open
-    if (analysisCoordination.analysisState.analysisCompleted) {
-      setShowProjectDialog(false);
-      setShowAnalysisView(true);
-    }
-  }, [formManagement, analysisCoordination.analysisState.analysisCompleted]);
+    // Don't automatically show results - let the dialog handle the progress and routing
+  }, [formManagement]);
 
   const handleRestoreData = useCallback(() => {
     try {

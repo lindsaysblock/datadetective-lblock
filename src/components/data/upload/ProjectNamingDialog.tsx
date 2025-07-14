@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -38,15 +38,16 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (analysisCompleted && projectSaved && onViewResults) {
-      // If analysis is complete and we want to view results, close dialog and show results
+      // Analysis is complete, close dialog and view results
       onViewResults();
       onOpenChange(false);
       return;
     }
     
     if (projectName.trim() && !projectSaved) {
-      // Save project name but don't close dialog if analysis is still running
+      // Save project name and start showing progress
       onConfirm(projectName.trim());
       setProjectSaved(true);
     }
@@ -62,23 +63,33 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
   };
 
   // Reset saved state when dialog opens
-  React.useEffect(() => {
+  useEffect(() => {
     if (open && !projectSaved) {
       setProjectSaved(false);
     }
   }, [open, projectSaved]);
+
+  // Auto-navigate to results when analysis completes
+  useEffect(() => {
+    if (analysisCompleted && projectSaved && onViewResults) {
+      setTimeout(() => {
+        onViewResults();
+        onOpenChange(false);
+      }, 1500); // Give user a moment to see completion message
+    }
+  }, [analysisCompleted, projectSaved, onViewResults, onOpenChange]);
 
   const getButtonText = () => {
     if (analysisCompleted) {
       return 'View Results';
     }
     if (projectSaved && isProcessing) {
-      return 'Analysis in Progress...';
+      return 'Analyzing...';
     }
     if (projectSaved) {
-      return 'Project Saved';
+      return 'Analysis Starting...';
     }
-    return 'Save Project Name';
+    return 'Save & Start Analysis';
   };
 
   const getButtonIcon = () => {
@@ -97,14 +108,14 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FolderPlus className="w-5 h-5 text-purple-600" />
-            {projectSaved ? 'Analysis in Progress' : 'Name Your Project'}
+            {analysisCompleted ? 'Analysis Complete!' : projectSaved ? 'Analysis in Progress' : 'Name Your Project'}
           </DialogTitle>
           <DialogDescription>
             {analysisCompleted ? 
-              "Analysis complete! Your project is ready to view." :
+              "Your analysis is ready! Redirecting to results..." :
               projectSaved ? 
-                "Your project has been saved. Please wait while we analyze your data." :
-                "Give your analysis project a memorable name to help you find it later."
+                "Your project has been saved. Analyzing your data now..." :
+                "Give your analysis project a memorable name."
             }
           </DialogDescription>
         </DialogHeader>
@@ -122,27 +133,33 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
             />
           </div>
           
-          {isProcessing && projectSaved && (
+          {(isProcessing || analysisCompleted) && projectSaved && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-blue-600 bg-blue-50 p-3 rounded-lg">
-                <Brain className="w-4 h-4 animate-pulse" />
-                <span className="text-sm">Analyzing your data...</span>
+              <div className={`flex items-center gap-2 p-3 rounded-lg ${
+                analysisCompleted ? 'text-green-600 bg-green-50' : 'text-blue-600 bg-blue-50'
+              }`}>
+                {analysisCompleted ? (
+                  <CheckCircle className="w-4 h-4" />
+                ) : (
+                  <Brain className="w-4 h-4 animate-pulse" />
+                )}
+                <span className="text-sm">
+                  {analysisCompleted ? 'Analysis complete!' : 'Analyzing your data...'}
+                </span>
               </div>
               
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Progress</span>
-                  <span className="text-sm text-gray-500">{Math.round(analysisProgress)}%</span>
+              {!analysisCompleted && (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Analysis Progress</span>
+                    <span className="text-sm text-gray-500">{Math.round(analysisProgress)}%</span>
+                  </div>
+                  <Progress value={analysisProgress} className="h-2" />
+                  <p className="text-xs text-gray-500 text-center">
+                    This usually takes 30-60 seconds
+                  </p>
                 </div>
-                <Progress value={analysisProgress} className="h-2" />
-              </div>
-            </div>
-          )}
-          
-          {analysisCompleted && (
-            <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg">
-              <CheckCircle className="w-4 h-4" />
-              <span className="text-sm">Analysis complete! Ready to view results.</span>
+              )}
             </div>
           )}
           
@@ -158,7 +175,7 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
             )}
             <Button
               type="submit"
-              disabled={!projectName.trim() && !analysisCompleted}
+              disabled={(!projectName.trim() && !analysisCompleted) || (isProcessing && !analysisCompleted)}
               className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             >
               {getButtonIcon()}

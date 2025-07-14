@@ -4,8 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Play, BookOpen, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, Play, BookOpen } from 'lucide-react';
 import AnalysisResultsCard from '@/components/analysis/AnalysisResultsCard';
 
 interface AnalysisSummaryStepProps {
@@ -36,7 +35,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   const hasResearchQuestion = researchQuestion && researchQuestion.trim().length > 0;
 
   console.log('AnalysisSummaryStep props:', {
-    researchQuestion,
+    researchQuestion: researchQuestion?.slice(0, 50) + '...',
     hasResearchQuestion,
     researchQuestionLength: researchQuestion?.length || 0,
     additionalContext: additionalContext?.slice(0, 50) + '...',
@@ -100,16 +99,6 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
         <p className="text-gray-600">Review your setup and start the case</p>
       </div>
 
-      {/* Show error if no research question */}
-      {!hasResearchQuestion && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Research Question Required - Please provide a research question before starting analysis.
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* Summary Card */}
       <Card className="w-full shadow-sm border-0 bg-white/80 backdrop-blur-sm">
         <CardContent className="p-8">
@@ -120,16 +109,16 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             <div>
               <h3 className="text-xl font-semibold text-gray-900">Analysis Summary</h3>
               <p className="text-gray-500 text-sm mt-1">
-                {hasResearchQuestion ? 'Everything looks good - ready to analyze!' : 'Please complete all required fields'}
+                Everything looks good - ready to analyze!
               </p>
             </div>
           </div>
 
           <div className="space-y-4 mb-8">
-            <div className={`p-4 rounded-lg ${hasResearchQuestion ? 'bg-gray-50' : 'bg-red-50 border border-red-200'}`}>
+            <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="font-medium text-gray-900 mb-2">Research Question</h4>
-              <p className={`text-sm ${hasResearchQuestion ? 'text-gray-700' : 'text-red-600'}`}>
-                {hasResearchQuestion ? researchQuestion : 'Please go back and provide a research question'}
+              <p className="text-sm text-gray-700">
+                {hasResearchQuestion ? researchQuestion : 'No research question provided'}
               </p>
             </div>
 
