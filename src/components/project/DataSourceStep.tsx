@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
@@ -31,7 +30,20 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
   onNext,
   onPrevious
 }) => {
+  // Check if we have data - either files selected OR data already parsed
   const hasUploadedData = parsedData && parsedData.length > 0;
+  const hasSelectedFiles = files && files.length > 0;
+  const hasAnyData = hasUploadedData || hasSelectedFiles;
+
+  console.log('DataSourceStep state:', {
+    filesCount: files?.length || 0,
+    parsedDataCount: parsedData?.length || 0,
+    hasUploadedData,
+    hasSelectedFiles,
+    hasAnyData,
+    uploading,
+    parsing
+  });
 
   const handleFileUpload = async (uploadedFiles: File[]) => {
     console.log('DataSourceStep handleFileUpload called with files:', uploadedFiles);
@@ -125,11 +137,15 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
   };
 
   const handleNext = () => {
-    if (!hasUploadedData) {
-      console.log('No uploaded data, cannot proceed to next step');
+    // Updated validation logic - check for either uploaded data OR selected files
+    if (!hasAnyData) {
+      console.log('No data available, cannot proceed to next step');
       return;
     }
-    console.log('Proceeding to next step with data:', parsedData);
+    console.log('Proceeding to next step with data:', { 
+      parsedDataCount: parsedData?.length || 0,
+      filesCount: files?.length || 0 
+    });
     onNext();
   };
 
@@ -165,7 +181,7 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
           )}
 
           {/* Show selected files info */}
-          {files.length > 0 && !uploading && !parsing && (
+          {hasSelectedFiles && !uploading && !parsing && (
             <Card className="bg-gray-50 border-gray-200">
               <CardContent className="p-4">
                 <h4 className="font-medium text-gray-900 mb-2">Selected Files:</h4>
@@ -228,10 +244,10 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
         
         <Button 
           onClick={handleNext}
-          disabled={!hasUploadedData}
-          className={hasUploadedData ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300 cursor-not-allowed"}
+          disabled={!hasAnyData}
+          className={hasAnyData ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300 cursor-not-allowed"}
         >
-          {hasUploadedData ? 'Next: Add Context' : 'Connect Data to Continue'}
+          {hasAnyData ? 'Next: Add Context' : 'Connect Data to Continue'}
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </div>
