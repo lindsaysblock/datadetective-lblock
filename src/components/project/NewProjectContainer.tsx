@@ -33,7 +33,8 @@ const NewProjectContainer = () => {
     dataFiles: formData.parsedData?.length || 0,
     user: user?.email,
     authLoading,
-    analysisProgress
+    analysisProgress,
+    analysisError: formData.analysisError
   });
 
   const handleStartAnalysisWrapper = (educationalMode: boolean = false, projectName: string = '') => {
@@ -53,6 +54,9 @@ const NewProjectContainer = () => {
       formData.setShowSignInModal(true);
       return;
     }
+
+    // Clear any previous errors
+    formData.setAnalysisError(null);
 
     // Set the project name first
     if (projectName) {
@@ -122,8 +126,8 @@ const NewProjectContainer = () => {
           </div>
         )}
 
-        {/* Show error state if analysis failed */}
-        {formData.analysisError && (
+        {/* Show error state only if analysis failed AND not completed */}
+        {formData.analysisError && !formData.analysisCompleted && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
               <div className="text-center space-y-4">

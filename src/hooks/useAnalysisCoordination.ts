@@ -85,10 +85,11 @@ export const useAnalysisCoordination = () => {
       
       onProgress?.(100);
 
+      // Set successful completion state
       setAnalysisState({
         isProcessingAnalysis: false,
         analysisResults,
-        analysisError: null,
+        analysisError: null, // Explicitly clear any previous errors
         analysisCompleted: true
       });
 
@@ -96,6 +97,8 @@ export const useAnalysisCoordination = () => {
       
     } catch (error) {
       console.error('❌ Analysis coordination failed:', error);
+      
+      // Only set error state if analysis truly failed
       setAnalysisState({
         isProcessingAnalysis: false,
         analysisResults: null,
