@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthState } from '@/hooks/useAuthState';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import DataDetectiveLogo from '@/components/DataDetectiveLogo';
 import { 
   BarChart3, 
   Plus, 
@@ -48,9 +49,8 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo and Navigation */}
           <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center space-x-2">
-              <BarChart3 className="w-8 h-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">Analytics Pro</span>
+            <Link to="/" className="flex items-center">
+              <DataDetectiveLogo size="sm" showText={true} />
             </Link>
             
             <nav className="hidden md:flex space-x-6">
