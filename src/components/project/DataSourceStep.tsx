@@ -54,15 +54,15 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
           files: fileList,
           value: '',
           type: 'file'
-        },
+        } as HTMLInputElement,
         currentTarget: {
           files: fileList,
           value: '',
           type: 'file'
-        },
+        } as HTMLInputElement,
         preventDefault: () => {},
         stopPropagation: () => {},
-        nativeEvent: {} as Event,
+        nativeEvent: new Event('change'),
         isDefaultPrevented: () => false,
         isPropagationStopped: () => false,
         persist: () => {},
@@ -77,12 +77,14 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
 
       console.log('Calling onFileChange with mock event for files:', uploadedFiles.map(f => f.name));
       
-      // Call the file change handler immediately
+      // Call the file change handler to update state
       onFileChange(mockEvent);
       
-      // Trigger file upload processing
-      console.log('Triggering onFileUpload');
-      onFileUpload();
+      // Wait a bit for state to update, then trigger upload
+      setTimeout(() => {
+        console.log('Triggering onFileUpload after state update');
+        onFileUpload();
+      }, 100);
       
     } catch (error) {
       console.error('Error processing files in DataSourceStep:', error);
@@ -158,6 +160,29 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
                 <p className="text-blue-600 text-sm mt-2">
                   This may take a few moments depending on your data size
                 </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Show selected files info */}
+          {files.length > 0 && !uploading && !parsing && (
+            <Card className="bg-gray-50 border-gray-200">
+              <CardContent className="p-4">
+                <h4 className="font-medium text-gray-900 mb-2">Selected Files:</h4>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  {files.map((file, index) => (
+                    <li key={index} className="flex items-center justify-between">
+                      <span>{file.name}</span>
+                      <span className="text-xs">({(file.size / 1024).toFixed(1)} KB)</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  onClick={onFileUpload}
+                  className="w-full mt-3 bg-blue-600 hover:bg-blue-700"
+                >
+                  Process {files.length} File{files.length !== 1 ? 's' : ''}
+                </Button>
               </CardContent>
             </Card>
           )}
