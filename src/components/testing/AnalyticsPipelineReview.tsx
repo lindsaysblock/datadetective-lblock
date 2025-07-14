@@ -9,6 +9,7 @@ import { Play, CheckCircle, AlertTriangle, XCircle, Zap, BarChart3, Settings } f
 import { AnalyticsPipelineManager } from '@/utils/analytics/pipelineManager';
 import { DataAnalysisEngine } from '@/utils/analysis/dataAnalysisEngine';
 import { generateTestDataset } from '@/utils/testDataGenerator';
+import { ParsedData } from '@/utils/dataParser';
 
 interface PipelineReviewResult {
   stage: string;
@@ -53,42 +54,42 @@ const AnalyticsPipelineReview: React.FC = () => {
 
       // Stage 1: Data Parsing & Validation Review
       setCurrentStage('Reviewing Data Parsing & Validation...');
-      const parsingResults = await this.reviewDataParsing();
-      cumulativeProgress += stages[0].weight;
+      const parsingResults = await reviewDataParsing();
+      cumulativeProgress += stages[0]?.weight || 0;
       setProgress(cumulativeProgress);
       setReviewResults(prev => [...prev, parsingResults]);
 
       // Stage 2: Analysis Engine Performance
       setCurrentStage('Analyzing Engine Performance...');
-      const engineResults = await this.reviewAnalysisEngine();
-      cumulativeProgress += stages[1].weight;
+      const engineResults = await reviewAnalysisEngine();
+      cumulativeProgress += stages[1]?.weight || 0;
       setProgress(cumulativeProgress);
       setReviewResults(prev => [...prev, engineResults]);
 
       // Stage 3: Pipeline Efficiency
       setCurrentStage('Evaluating Pipeline Efficiency...');
-      const pipelineResults = await this.reviewPipelineEfficiency();
-      cumulativeProgress += stages[2].weight;
+      const pipelineResults = await reviewPipelineEfficiency();
+      cumulativeProgress += stages[2]?.weight || 0;
       setProgress(cumulativeProgress);
       setReviewResults(prev => [...prev, pipelineResults]);
 
       // Stage 4: Memory & Resource Usage
       setCurrentStage('Checking Memory & Resource Usage...');
-      const memoryResults = await this.reviewMemoryUsage();
-      cumulativeProgress += stages[3].weight;
+      const memoryResults = await reviewMemoryUsage();
+      cumulativeProgress += stages[3]?.weight || 0;
       setProgress(cumulativeProgress);
       setReviewResults(prev => [...prev, memoryResults]);
 
       // Stage 5: Error Handling & Recovery
       setCurrentStage('Testing Error Handling & Recovery...');
-      const errorResults = await this.reviewErrorHandling();
-      cumulativeProgress += stages[4].weight;
+      const errorResults = await reviewErrorHandling();
+      cumulativeProgress += stages[4]?.weight || 0;
       setProgress(cumulativeProgress);
       setReviewResults(prev => [...prev, errorResults]);
 
       // Stage 6: Apply Optimizations
       setCurrentStage('Applying Optimizations...');
-      const optimizations = await this.applyOptimizations();
+      const optimizations = await applyOptimizations();
       setOptimizationsApplied(optimizations);
       setProgress(100);
       
@@ -123,12 +124,12 @@ const AnalyticsPipelineReview: React.FC = () => {
 
   const reviewDataParsing = async (): Promise<PipelineReviewResult> => {
     const testDatasets = [
-      generateTestDataset('csv', 1000),
-      generateTestDataset('json', 500),
+      generateTestDataset('ecommerce', 1000),
+      generateTestDataset('behavioral', 500),
       generateTestDataset('mixed', 2000)
     ];
 
-    const startTime = performance.now();
+    const startTime = window.performance.now();
     let successCount = 0;
     const recommendations: string[] = [];
 
@@ -142,8 +143,8 @@ const AnalyticsPipelineReview: React.FC = () => {
       }
     }
 
-    const processingTime = performance.now() - startTime;
-    const performance = Math.min(100, Math.max(0, 100 - (processingTime / 10)));
+    const processingTime = window.performance.now() - startTime;
+    const performanceScore = Math.min(100, Math.max(0, 100 - (processingTime / 10)));
 
     if (processingTime > 500) {
       recommendations.push('Consider implementing streaming for large datasets');
@@ -155,7 +156,7 @@ const AnalyticsPipelineReview: React.FC = () => {
     return {
       stage: 'Data Parsing & Validation',
       status: successCount === testDatasets.length ? 'pass' : 'warning',
-      performance,
+      performance: performanceScore,
       recommendations,
       optimizations: ['Added streaming support', 'Enhanced validation'],
       timestamp: new Date()
@@ -163,19 +164,33 @@ const AnalyticsPipelineReview: React.FC = () => {
   };
 
   const reviewAnalysisEngine = async (): Promise<PipelineReviewResult> => {
-    const testData = generateTestDataset('analytics', 5000);
-    const startTime = performance.now();
+    const testData = generateTestDataset('behavioral', 5000);
+    
+    // Convert to ParsedData format
+    const parsedData: ParsedData = {
+      ...testData,
+      fileSize: 1000000,
+      summary: {
+        totalRows: testData.rows.length,
+        totalColumns: testData.columns.length,
+        possibleUserIdColumns: [],
+        possibleEventColumns: [],
+        possibleTimestampColumns: []
+      }
+    };
+
+    const startTime = window.performance.now();
     
     try {
-      const engine = new DataAnalysisEngine(testData, {
+      const engine = new DataAnalysisEngine(parsedData, {
         enableLogging: false,
         maxRetries: 1,
         timeoutMs: 10000
       });
 
       const results = engine.runCompleteAnalysis();
-      const processingTime = performance.now() - startTime;
-      const performance = Math.min(100, Math.max(0, 100 - (processingTime / 50)));
+      const processingTime = window.performance.now() - startTime;
+      const performanceScore = Math.min(100, Math.max(0, 100 - (processingTime / 50)));
 
       const recommendations: string[] = [];
       if (processingTime > 2000) {
@@ -188,7 +203,7 @@ const AnalyticsPipelineReview: React.FC = () => {
       return {
         stage: 'Analysis Engine Performance',
         status: results.length > 0 ? 'pass' : 'warning',
-        performance,
+        performance: performanceScore,
         recommendations,
         optimizations: ['Added result caching', 'Optimized analysis algorithms'],
         timestamp: new Date()
@@ -206,11 +221,25 @@ const AnalyticsPipelineReview: React.FC = () => {
   };
 
   const reviewPipelineEfficiency = async (): Promise<PipelineReviewResult> => {
-    const testData = generateTestDataset('pipeline', 3000);
-    const startTime = performance.now();
+    const testData = generateTestDataset('financial', 3000);
+    
+    // Convert to ParsedData format
+    const parsedData: ParsedData = {
+      ...testData,
+      fileSize: 2000000,
+      summary: {
+        totalRows: testData.rows.length,
+        totalColumns: testData.columns.length,
+        possibleUserIdColumns: [],
+        possibleEventColumns: [],
+        possibleTimestampColumns: []
+      }
+    };
+
+    const startTime = window.performance.now();
     
     try {
-      const pipelineManager = new AnalyticsPipelineManager(testData, {
+      const pipelineManager = new AnalyticsPipelineManager(parsedData, {
         enableValidation: true,
         enableErrorRecovery: true,
         maxRetries: 2,
@@ -218,8 +247,8 @@ const AnalyticsPipelineReview: React.FC = () => {
       });
 
       const pipeline = await pipelineManager.runPipeline();
-      const processingTime = performance.now() - startTime;
-      const performance = Math.min(100, Math.max(0, 100 - (processingTime / 30)));
+      const processingTime = window.performance.now() - startTime;
+      const performanceScore = Math.min(100, Math.max(0, 100 - (processingTime / 30)));
 
       const recommendations: string[] = [];
       if (pipeline.status === 'failed') {
@@ -232,7 +261,7 @@ const AnalyticsPipelineReview: React.FC = () => {
       return {
         stage: 'Pipeline Efficiency',
         status: pipeline.status === 'completed' ? 'pass' : 'warning',
-        performance,
+        performance: performanceScore,
         recommendations,
         optimizations: ['Parallelized pipeline stages', 'Optimized data flow'],
         timestamp: new Date()
@@ -250,17 +279,17 @@ const AnalyticsPipelineReview: React.FC = () => {
   };
 
   const reviewMemoryUsage = async (): Promise<PipelineReviewResult> => {
-    const initialMemory = (performance as any).memory?.usedJSHeapSize || 0;
+    const initialMemory = (window.performance as any).memory?.usedJSHeapSize || 0;
     
     // Simulate memory-intensive operations
-    const testData = generateTestDataset('memory', 10000);
+    const testData = generateTestDataset('ecommerce', 10000);
     const largeArrays = Array.from({ length: 100 }, () => new Array(1000).fill(0));
     
     await new Promise(resolve => setTimeout(resolve, 100));
     
-    const finalMemory = (performance as any).memory?.usedJSHeapSize || 0;
+    const finalMemory = (window.performance as any).memory?.usedJSHeapSize || 0;
     const memoryIncrease = finalMemory - initialMemory;
-    const performance = Math.min(100, Math.max(0, 100 - (memoryIncrease / 1000000)));
+    const performanceScore = Math.min(100, Math.max(0, 100 - (memoryIncrease / 1000000)));
 
     const recommendations: string[] = [];
     if (memoryIncrease > 50000000) { // 50MB
@@ -273,7 +302,7 @@ const AnalyticsPipelineReview: React.FC = () => {
     return {
       stage: 'Memory & Resource Usage',
       status: memoryIncrease < 50000000 ? 'pass' : 'warning',
-      performance,
+      performance: performanceScore,
       recommendations,
       optimizations: ['Added memory cleanup', 'Implemented data pagination'],
       timestamp: new Date()
@@ -299,9 +328,9 @@ const AnalyticsPipelineReview: React.FC = () => {
       }
     }
 
-    const performance = (recoveredCount / errorScenarios.length) * 100;
+    const performanceScore = (recoveredCount / errorScenarios.length) * 100;
     
-    if (performance < 100) {
+    if (performanceScore < 100) {
       recommendations.push('Improve error recovery mechanisms');
     }
     if (recoveredCount < errorScenarios.length) {
@@ -310,8 +339,8 @@ const AnalyticsPipelineReview: React.FC = () => {
 
     return {
       stage: 'Error Handling & Recovery',
-      status: performance === 100 ? 'pass' : 'warning',
-      performance,
+      status: performanceScore === 100 ? 'pass' : 'warning',
+      performance: performanceScore,
       recommendations,
       optimizations: ['Enhanced error recovery', 'Added graceful degradation'],
       timestamp: new Date()

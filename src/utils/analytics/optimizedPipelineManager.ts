@@ -232,8 +232,8 @@ export class OptimizedPipelineManager {
     this.cache.clear();
     
     // Garbage collection hint
-    if (global.gc) {
-      global.gc();
+    if ((global as any).gc) {
+      (global as any).gc();
     }
     
     // Update performance metrics
