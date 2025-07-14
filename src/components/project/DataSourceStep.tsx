@@ -5,7 +5,6 @@ import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import DataSourceOptions from './steps/DataSourceOptions';
 import ConnectedDataSection from './steps/ConnectedDataSection';
-import { useDataSourceHandlers } from '@/hooks/useDataSourceHandlers';
 
 interface DataSourceStepProps {
   files: File[];
@@ -34,16 +33,81 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
 }) => {
   const hasUploadedData = parsedData && parsedData.length > 0;
 
-  const {
-    handleFileUpload,
-    handleDataPaste,
-    handleDatabaseConnect,
-    handlePlatformConnect
-  } = useDataSourceHandlers(
-    onFileChange,
-    onFileUpload,
-    () => {} // setShowAddSource not needed here
-  );
+  const handleFileUpload = async (uploadedFiles: File[]) => {
+    console.log('handleFileUpload called with files:', uploadedFiles);
+    
+    if (uploadedFiles.length === 0) {
+      return;
+    }
+
+    try {
+      // Create a mock file input event with the uploaded files
+      const dataTransfer = new DataTransfer();
+      uploadedFiles.forEach(file => dataTransfer.items.add(file));
+      
+      const mockEvent = {
+        target: {
+          files: dataTransfer.files,
+          value: ''
+        } as HTMLInputElement,
+        currentTarget: {} as HTMLInputElement,
+        preventDefault: () => {},
+        stopPropagation: () => {},
+        nativeEvent: new Event('change'),
+        isDefaultPrevented: () => false,
+        isPropagationStopped: () => false,
+        persist: () => {},
+        bubbles: false,
+        cancelable: false,
+        defaultPrevented: false,
+        eventPhase: 0,
+        isTrusted: false,
+        timeStamp: Date.now(),
+        type: 'change'
+      } as React.ChangeEvent<HTMLInputElement>;
+
+      // Call the file change handler
+      onFileChange(mockEvent);
+      
+      // Trigger file upload after a short delay
+      setTimeout(() => {
+        onFileUpload();
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error processing files:', error);
+    }
+  };
+
+  const handleDataPaste = async (data: string) => {
+    try {
+      // Create a mock CSV file from pasted data
+      const mockFile = new File([data], 'pasted-data.csv', { type: 'text/csv' });
+      handleFileUpload([mockFile]);
+    } catch (error) {
+      console.error('Error processing pasted data:', error);
+    }
+  };
+
+  const handleDatabaseConnect = async (config: any) => {
+    try {
+      // Create a mock file to represent database connection
+      const mockFile = new File(['database'], 'database-connection', { type: 'application/json' });
+      handleFileUpload([mockFile]);
+    } catch (error) {
+      console.error('Database connection error:', error);
+    }
+  };
+
+  const handlePlatformConnect = async (platform: string, config: any) => {
+    try {
+      // Create a mock file to represent platform connection
+      const mockFile = new File(['platform'], `${platform}-connection`, { type: 'application/json' });
+      handleFileUpload([mockFile]);
+    } catch (error) {
+      console.error('Platform connection error:', error);
+    }
+  };
 
   const handleNext = () => {
     if (!hasUploadedData) {
