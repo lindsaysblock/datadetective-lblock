@@ -121,7 +121,7 @@ export const useProjectFormData = () => {
     }
   }, [files, toast]);
 
-  // Fixed file change handler to ensure files are properly added
+  // Fixed file change handler - removed problematic auto-upload
   const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     console.log('handleFileChange called');
     const selectedFiles = event.target.files;
@@ -133,22 +133,14 @@ export const useProjectFormData = () => {
 
     console.log('Files selected:', Array.from(selectedFiles).map(f => f.name));
     
-    // Process files immediately instead of waiting
+    // Add files to state
     Array.from(selectedFiles).forEach(file => {
       addFile(file);
     });
 
     // Clear the input value to allow re-uploading the same file
     event.target.value = '';
-    
-    // Auto-trigger upload after files are added
-    setTimeout(() => {
-      if (files.length > 0) {
-        console.log('Auto-triggering file upload');
-        handleFileUpload();
-      }
-    }, 100);
-  }, [addFile, files.length, handleFileUpload]);
+  }, [addFile]);
 
   const nextStep = useCallback(() => {
     console.log('Moving to next step from:', step);

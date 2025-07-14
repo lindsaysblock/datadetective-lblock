@@ -36,16 +36,6 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
     }
   }, [hasData, onUploadComplete, isProcessing]);
 
-  const handleUpload = async () => {
-    console.log('FileUploadSection handleUpload called with files:', files.length);
-    if (files.length === 0) {
-      console.log('No files to upload in FileUploadSection');
-      return;
-    }
-    
-    await onFileUpload();
-  };
-
   const getFileStatus = (index: number) => {
     if (index < parsedData.length) return 'success';
     if (isProcessing) return 'processing';
@@ -158,10 +148,10 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
         </Card>
       )}
 
-      {/* Manual Upload Button - Only show if files exist but not processing and no data */}
+      {/* Manual Upload Button - Show when files exist but no data and not processing */}
       {files.length > 0 && !hasData && !isProcessing && (
         <Button
-          onClick={handleUpload}
+          onClick={onFileUpload}
           disabled={isProcessing || files.length === 0}
           className="w-full bg-blue-600 hover:bg-blue-700"
         >
