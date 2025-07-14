@@ -39,7 +39,10 @@ export const useProjectFlowManager = () => {
         additionalContext,
         educationalMode,
         parsedData,
-        columnMapping: {}
+        columnMapping: {
+          valueColumns: [],
+          categoryColumns: []
+        }
       };
 
       // Step 3: Set project name and start analysis

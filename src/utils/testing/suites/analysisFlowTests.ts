@@ -10,7 +10,7 @@ export class AnalysisFlowTests {
     const tests: TestResult[] = [];
 
     // Test 1: Data Pipeline Processing
-    tests.push(await this.testRunner.runTest('Data Pipeline File Processing', (assert) => {
+    const test1 = await this.testRunner.runTest('Data Pipeline File Processing', (assert) => {
       // Mock file processing
       const mockFile = new File(['name,age\nJohn,25\nJane,30'], 'test.csv', { type: 'text/csv' });
       
@@ -38,10 +38,14 @@ export class AnalysisFlowTests {
       assert.equal(mockParsedData.columns, 2, 'Should identify 2 columns');
       assert.truthy(mockParsedData.data.length > 0, 'Should have data rows');
       assert.equal(mockParsedData.name, 'test.csv', 'Should preserve filename');
-    }));
+    });
+    tests.push({
+      ...test1,
+      message: test1.message || 'Data Pipeline File Processing test completed'
+    });
 
     // Test 2: Analysis Context Creation
-    tests.push(await this.testRunner.runTest('Analysis Context Creation', (assert) => {
+    const test2 = await this.testRunner.runTest('Analysis Context Creation', (assert) => {
       const mockContext = {
         researchQuestion: 'What is the average age?',
         additionalContext: 'Sample context',
@@ -57,10 +61,14 @@ export class AnalysisFlowTests {
       assert.truthy(mockContext.researchQuestion.length > 0, 'Should have research question');
       assert.truthy(mockContext.parsedData.length > 0, 'Should have parsed data');
       assert.equal(typeof mockContext.educationalMode, 'boolean', 'Should have boolean educational mode');
-    }));
+    });
+    tests.push({
+      ...test2,
+      message: test2.message || 'Analysis Context Creation test completed'
+    });
 
     // Test 3: Analysis Progress Tracking
-    tests.push(await this.testRunner.runTest('Analysis Progress Tracking', (assert) => {
+    const test3 = await this.testRunner.runTest('Analysis Progress Tracking', (assert) => {
       const progressSteps = [0, 25, 50, 75, 100];
       let currentStep = 0;
 
@@ -75,10 +83,14 @@ export class AnalysisFlowTests {
       });
 
       assert.equal(currentStep, 5, 'Should have completed all progress steps');
-    }));
+    });
+    tests.push({
+      ...test3,
+      message: test3.message || 'Analysis Progress Tracking test completed'
+    });
 
     // Test 4: Analysis Results Validation
-    tests.push(await this.testRunner.runTest('Analysis Results Validation', (assert) => {
+    const test4 = await this.testRunner.runTest('Analysis Results Validation', (assert) => {
       const mockResults = {
         insights: 'The average age is 25 years.',
         confidence: 'high' as const,
@@ -107,10 +119,14 @@ export class AnalysisFlowTests {
       assert.truthy(mockResults.recommendations.length > 0, 'Should have recommendations');
       assert.truthy(mockResults.detailedResults.length > 0, 'Should have detailed results');
       assert.equal(mockResults.confidence, 'high', 'Should have confidence level');
-    }));
+    });
+    tests.push({
+      ...test4,
+      message: test4.message || 'Analysis Results Validation test completed'
+    });
 
     // Test 5: Error Handling and Recovery
-    tests.push(await this.testRunner.runTest('Error Handling and Recovery', (assert) => {
+    const test5 = await this.testRunner.runTest('Error Handling and Recovery', (assert) => {
       const scenarios = [
         { input: '', error: 'Research question is required' },
         { input: null, error: 'Data is required' },
@@ -129,10 +145,14 @@ export class AnalysisFlowTests {
         }
         assert.truthy(errorCaught, `Scenario ${index + 1} should catch error`);
       });
-    }));
+    });
+    tests.push({
+      ...test5,
+      message: test5.message || 'Error Handling and Recovery test completed'
+    });
 
     // Test 6: Flow State Management
-    tests.push(await this.testRunner.runTest('Flow State Management', (assert) => {
+    const test6 = await this.testRunner.runTest('Flow State Management', (assert) => {
       const mockFlowState = {
         showAnalysisView: false,
         currentProjectName: '',
@@ -159,7 +179,11 @@ export class AnalysisFlowTests {
       mockFlowState.showAnalysisView = true;
       assert.equal(mockFlowState.analysisCompleted, true, 'Should mark analysis as completed');
       assert.equal(mockFlowState.showAnalysisView, true, 'Should show analysis view when completed');
-    }));
+    });
+    tests.push({
+      ...test6,
+      message: test6.message || 'Flow State Management test completed'
+    });
 
     return {
       suiteName: 'Analysis Flow Tests',

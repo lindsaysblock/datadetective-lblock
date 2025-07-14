@@ -1,3 +1,4 @@
+
 export interface ParsedDataRow {
   [key: string]: any;
 }
@@ -5,11 +6,22 @@ export interface ParsedDataRow {
 export interface ParsedDataFile {
   id: string;
   name: string;
-  rows: ParsedDataRow[];
-  columns: string[];
-  rowCount: number;
+  rows: number;
+  columns: number;
   preview?: ParsedDataRow[];
-  data?: ParsedDataRow[];
+  data: ParsedDataRow[];
+  columnInfo?: Array<{
+    name: string;
+    type: 'string' | 'number' | 'date' | 'boolean';
+    samples?: any[];
+  }>;
+  summary?: {
+    totalRows: number;
+    totalColumns: number;
+    possibleUserIdColumns: string[];
+    possibleEventColumns: string[];
+    possibleTimestampColumns: string[];
+  };
 }
 
 export interface DataAnalysisContext {
