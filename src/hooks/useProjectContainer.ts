@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useProjectFormManagement } from '@/hooks/useProjectFormManagement';
 import { useAnalysisCoordination } from '@/hooks/useAnalysisCoordination';
 import { useProjectFormPersistence } from '@/hooks/useProjectFormPersistence';
-import { useAuth } from '@/hooks/useAuth';
+import { useProjectAuth } from '@/hooks/useProjectAuth';
 import { useToast } from '@/hooks/use-toast';
 
 export const useProjectContainer = () => {
@@ -17,7 +17,7 @@ export const useProjectContainer = () => {
   const formManagement = useProjectFormManagement();
   const analysisCoordination = useAnalysisCoordination();
   const { saveFormData, clearFormData, getFormData, hasStoredData } = useProjectFormPersistence();
-  const { user } = useAuth();
+  const projectAuth = useProjectAuth();
   const { toast } = useToast();
 
   // Check for stored data on mount
@@ -52,7 +52,7 @@ export const useProjectContainer = () => {
       dataCount: parsedData?.length || 0
     });
 
-    if (!user) {
+    if (!projectAuth.user) {
       toast({
         title: "Authentication Required",
         description: "Please sign in to start analysis.",
@@ -71,7 +71,7 @@ export const useProjectContainer = () => {
       parsedData,
       columnMapping
     );
-  }, [user, toast, analysisCoordination]);
+  }, [projectAuth.user, toast, analysisCoordination]);
 
   const handleAnalysisComplete = useCallback(() => {
     console.log('✅ Analysis completed in container');
@@ -154,11 +154,14 @@ export const useProjectContainer = () => {
   const formData = {
     ...formManagement.formState,
     ...analysisCoordination.analysisState,
+    ...projectAuth, // Include all auth properties including setShowSignInModal
     showAnalysisView,
     showProjectDialog,
     showRecoveryDialog,
     educationalMode,
     handleBackToProject,
+    handleRestoreData,
+    handleStartFresh,
     files: formManagement.formState.files || [],
     setResearchQuestion: (value: string) => formManagement.updateFormState({ researchQuestion: value }),
     setAdditionalContext: (value: string) => formManagement.updateFormState({ additionalContext: value }),
@@ -167,7 +170,9 @@ export const useProjectContainer = () => {
     handleFileUpload: formManagement.processFiles,
     setColumnMapping: (mapping: any) => formManagement.updateFormState({ columnMapping: mapping }),
     nextStep: formManagement.navigationActions.nextStep,
-    prevStep: formManagement.navigationActions.prevStep
+    prevStep: formManagement.navigationActions.prevStep,
+    setShowProjectDialog,
+    setShowRecoveryDialog
   };
 
   return {
