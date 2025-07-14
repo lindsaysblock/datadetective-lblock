@@ -1,0 +1,100 @@
+✨ Product Summary
+
+Data Detective is a business-user-friendly data exploration tool. It helps users uncover insights by guiding them through step-by-step questions that dynamically build SQL queries, without requiring them to know the underlying database schemas or write code. It also provides smart suggestions to refine or expand searches for more complete answers.
+
+⸻
+
+🎯 Goals & Objectives
+	•	Empower non-technical users to explore and analyze data independently.
+	•	Reduce dependency on data analysts/engineers for basic and intermediate data queries.
+	•	Increase speed to insight for business teams by 50%.
+	•	Provide guided, conversational interfaces to ensure data exploration is intuitive.
+	•	Offer recommendations to deepen or broaden analysis, increasing user confidence and data literacy.
+Key Personas:
+- Business user with limited familiarity of databases and data architecture
+- Business user overwhelmed by numerous business sources
+- Business leader setting strategy for upcoming quarter
+- Business user looking to learn how to code for data analytics
+
+⸻
+
+🖼️ Use Cases
+	1.	Marketing Manager wants to know:
+“What are the top 10 most purchased products by new customers in the last 90 days?”
+	2.	eCommerce Operations Lead wants to understand:
+“Where are we losing most of our repeat customers? What was their last purchase category?”
+	3.	Finance Analyst curious about:
+“What’s the average order value for loyalty members vs non-members over the past year?”
+  4. Go-To-Market Manager interested in:
+"How do I turn data into insights and explain them to regional stakeholders?"
+
+All without writing a line of SQL or knowing table joins.
+
+⸻
+
+🚀 Key Features
+
+1. Guided Query Builder
+	•	Interactive, conversational step-by-step prompts (like a decision tree or chat assistant).
+	•	Questions adapt based on available data. Example:
+	•	“What do you want to analyze? (Sales, Customers, Products)”
+	•	“Over what time period?”
+	•	“Do you want to compare by any segments (location, customer type, campaign)?”
+	•	Each choice dynamically shapes the final SQL.
+
+2. Recommendations & Enhancements
+	•	Suggest “you might also want to know…” follow-ups.
+E.g., after an AOV query → “Would you like to see this broken down by marketing channel?”
+	•	Suggest filters or groupings based on patterns in the data.
+
+3. Natural Language Layer
+	•	Optionally type “What are our best-selling products this quarter?”
+→ Parsed to structured selections under the hood, still transparent with what’s being built.
+
+4. Transparency Panel
+	•	Always show the generated SQL for transparency and optional export.
+	•	Let technical users tweak it if they wish.
+
+5. Result Exploration
+	•	View results in tables, with easy toggles for charts (bar, line, pie).
+	•	Drill-down capability on any metric.
+
+6. Data Dictionary Reference
+	•	Inline tooltips explaining data fields (pulled from database schema comments or a metadata config).
+
+⸻
+
+💡 Out of Scope (for MVP)
+	•	Data ingestion / ETL pipeline management.
+	•	Predictive analytics (this is pure descriptive/diagnostic to start).
+	•	Building dashboards (this is exploratory, ad-hoc insights).
+
+⸻
+
+🔍 Success Metrics
+	•	80% of users create queries without external help after first login.
+	•	Reduce average time to build a query from 30 min (traditional) to under 5 min.
+	•	At least 50% of sessions result in users accepting a suggested follow-up query.
+	•	NPS of at least +30 among early adopters.
+
+⸻
+
+🏗️ Technical Requirements (High Level)
+	•	Connects to existing SQL-compatible database (Postgres, Snowflake, BigQuery, etc.).
+	•	Uses introspection to load schema (tables, columns, relationships).
+	•	NLP layer (or rules-based parser) to translate natural language into structured query tree.
+	•	Backend to build SQL statements safely (parameterized).
+	•	React (or similar) front-end with multi-step dynamic forms.
+	•	Optional logging for auditability of generated queries.
+
+⸻
+
+🎨 UX Considerations
+	•	Keep UI minimal, with a progress indicator (“Step 2 of 5”).
+	•	Provide a “Why am I being asked this?” tooltip at each step.
+	•	Show preview of data sample as they build the query.
+	•	Allow going back and changing earlier answers easily.
+
+⸻
+
+🚦 Risks & Mitigations
