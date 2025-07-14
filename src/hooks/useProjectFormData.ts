@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile, type ParsedData } from '@/utils/dataParser';
 
@@ -14,7 +14,7 @@ export const useProjectFormData = () => {
   const [parsing, setParsing] = useState(false);
   const { toast } = useToast();
 
-  const addFile = (file: File) => {
+  const addFile = useCallback((file: File) => {
     console.log('Adding file:', file.name);
     setFiles(prev => {
       const exists = prev.some(f => f.name === file.name && f.size === file.size);
@@ -27,9 +27,9 @@ export const useProjectFormData = () => {
       }
       return [...prev, file];
     });
-  };
+  }, [toast]);
 
-  const removeFile = (index: number) => {
+  const removeFile = useCallback((index: number) => {
     console.log('Removing file at index:', index);
     
     if (index < 0 || index >= files.length) {
@@ -49,9 +49,9 @@ export const useProjectFormData = () => {
       title: "File Removed",
       description: "The selected file has been removed from your project.",
     });
-  };
+  }, [files.length, toast]);
 
-  const handleFileUpload = async () => {
+  const handleFileUpload = useCallback(async () => {
     console.log('handleFileUpload called with files:', files.length);
     
     if (files.length === 0) {
@@ -119,10 +119,10 @@ export const useProjectFormData = () => {
       setUploading(false);
       setParsing(false);
     }
-  };
+  }, [files, toast]);
 
-  // Updated file change handler to ensure files are properly added
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Fixed file change handler to ensure files are properly added
+  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     console.log('handleFileChange called');
     const selectedFiles = event.target.files;
     
@@ -132,25 +132,35 @@ export const useProjectFormData = () => {
     }
 
     console.log('Files selected:', Array.from(selectedFiles).map(f => f.name));
+    
+    // Process files immediately instead of waiting
     Array.from(selectedFiles).forEach(file => {
       addFile(file);
     });
 
     // Clear the input value to allow re-uploading the same file
     event.target.value = '';
-  };
+    
+    // Auto-trigger upload after files are added
+    setTimeout(() => {
+      if (files.length > 0) {
+        console.log('Auto-triggering file upload');
+        handleFileUpload();
+      }
+    }, 100);
+  }, [addFile, files.length, handleFileUpload]);
 
-  const nextStep = () => {
+  const nextStep = useCallback(() => {
     console.log('Moving to next step from:', step);
     setStep(prev => Math.min(prev + 1, 4));
-  };
+  }, [step]);
 
-  const prevStep = () => {
+  const prevStep = useCallback(() => {
     console.log('Moving to previous step from:', step);
     setStep(prev => Math.max(prev - 1, 1));
-  };
+  }, [step]);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     console.log('Resetting form');
     setStep(1);
     setResearchQuestion('');
@@ -160,7 +170,7 @@ export const useProjectFormData = () => {
     setColumnMapping({});
     setUploading(false);
     setParsing(false);
-  };
+  }, []);
 
   return {
     step,

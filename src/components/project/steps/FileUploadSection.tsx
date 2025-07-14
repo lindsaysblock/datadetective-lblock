@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Upload, File, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, File, X, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface FileUploadSectionProps {
@@ -29,6 +29,13 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   const hasData = parsedData && parsedData.length > 0;
   const isProcessing = uploading || parsing;
 
+  // Auto-trigger upload completion callback when data is available
+  useEffect(() => {
+    if (hasData && onUploadComplete && !isProcessing) {
+      onUploadComplete();
+    }
+  }, [hasData, onUploadComplete, isProcessing]);
+
   const handleUpload = async () => {
     console.log('FileUploadSection handleUpload called with files:', files.length);
     if (files.length === 0) {
@@ -37,10 +44,6 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
     }
     
     await onFileUpload();
-    
-    if (onUploadComplete && hasData) {
-      onUploadComplete();
-    }
   };
 
   const getFileStatus = (index: number) => {
@@ -155,7 +158,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
         </Card>
       )}
 
-      {/* Upload Button */}
+      {/* Manual Upload Button - Only show if files exist but not processing and no data */}
       {files.length > 0 && !hasData && !isProcessing && (
         <Button
           onClick={handleUpload}

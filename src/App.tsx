@@ -1,41 +1,60 @@
 
+import { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import Header from "./components/Header";
+import { AuthProvider } from './contexts/AuthContext';
+import { EnhancedAnalyticsProvider } from './contexts/EnhancedAnalyticsContext';
 import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
 import NewProject from "./pages/NewProject";
 import QueryHistory from "./pages/QueryHistory";
-import Profile from "./pages/Profile";
-import Admin from "./pages/Admin";
+import { LazyAdmin } from './components/LazyComponents';
+import { preloadCriticalComponents } from './components/LazyComponents';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+    },
+  },
+});
+
+// Preload critical components after initial render
+setTimeout(preloadCriticalComponents, 100);
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <div className="min-h-screen bg-background">
-              <Header />
-              <main>
+        <EnhancedAnalyticsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <ErrorBoundary>
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/new-project" element={<NewProject />} />
                   <Route path="/query-history" element={<QueryHistory />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/admin" element={<Admin />} />
+                  <Route 
+                    path="/admin" 
+                    element={
+                      <Suspense fallback={<div className="p-8">Loading admin panel...</div>}>
+                        <LazyAdmin />
+                      </Suspense>
+                    } 
+                  />
                 </Routes>
-              </main>
-            </div>
-          </BrowserRouter>
-        </TooltipProvider>
+              </ErrorBoundary>
+            </BrowserRouter>
+          </TooltipProvider>
+        </EnhancedAnalyticsProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
