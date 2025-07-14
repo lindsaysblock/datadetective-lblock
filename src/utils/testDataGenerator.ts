@@ -3,9 +3,16 @@ import { ParsedDataFile } from '@/types/data';
 
 export type DatasetType = 'ecommerce' | 'behavioral' | 'financial' | 'mixed';
 
+export interface TestScenario {
+  name: string;
+  question: string;
+  data: ParsedDataFile;
+}
+
 export const generateTestDataset = (type: DatasetType, rowCount: number = 1000): ParsedDataFile => {
   const baseData = {
     id: `test-${type}-${Date.now()}`,
+    name: `test-${type}-data.csv`,
     filename: `test-${type}-data.csv`,
     rowCount,
     columns: [] as string[],
@@ -68,4 +75,34 @@ export const generateTestDataset = (type: DatasetType, rowCount: number = 1000):
   }
 
   return baseData;
+};
+
+export const runAnalysisSimulationTest = async (): Promise<TestScenario[]> => {
+  console.log('🔧 Generating test scenarios for analysis simulation...');
+  
+  const scenarios: TestScenario[] = [
+    {
+      name: 'E-commerce Sales Analysis',
+      question: 'What are the top-selling product categories and their revenue trends?',
+      data: generateTestDataset('ecommerce', 500)
+    },
+    {
+      name: 'User Behavior Patterns',
+      question: 'How do users navigate through different pages and what are the most common user journeys?',
+      data: generateTestDataset('behavioral', 300)
+    },
+    {
+      name: 'Financial Transaction Analysis',
+      question: 'What are the transaction patterns and potential fraud indicators?',
+      data: generateTestDataset('financial', 400)
+    },
+    {
+      name: 'Mixed Data Insights',
+      question: 'What are the key patterns and correlations in this dataset?',
+      data: generateTestDataset('mixed', 250)
+    }
+  ];
+  
+  console.log(`✅ Generated ${scenarios.length} test scenarios`);
+  return scenarios;
 };
