@@ -1,6 +1,7 @@
 
 import React from 'react';
 import Header from '@/components/Header';
+import LegalFooter from '@/components/LegalFooter';
 
 interface NewProjectLayoutProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ const NewProjectLayout: React.FC<NewProjectLayoutProps> = ({ children }) => {
       <div className="flex-1">
         {children}
       </div>
+      <LegalFooter />
     </div>
   );
 };
