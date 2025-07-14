@@ -52,6 +52,9 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
           <BusinessContextStep
             additionalContext={formData.additionalContext}
             setAdditionalContext={formData.setAdditionalContext}
+            parsedData={formData.parsedData}
+            columnMapping={formData.columnMapping}
+            onColumnMapping={formData.setColumnMapping}
             onNext={formData.nextStep}
             onPrevious={formData.prevStep}
           />

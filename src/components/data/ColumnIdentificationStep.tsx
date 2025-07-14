@@ -35,8 +35,8 @@ const ColumnIdentificationStep: React.FC<ColumnIdentificationStepProps> = ({
   });
 
   // Get all available columns from the first file
-  const availableColumns = parsedData.length > 0 && parsedData[0].data && parsedData[0].data.length > 0 
-    ? Object.keys(parsedData[0].data[0]) 
+  const availableColumns = parsedData.length > 0 && parsedData[0].columns 
+    ? parsedData[0].columns.map(col => col.name)
     : [];
 
   const handleMappingChange = (key: keyof ColumnMapping, value: string | string[]) => {
@@ -46,16 +46,16 @@ const ColumnIdentificationStep: React.FC<ColumnIdentificationStepProps> = ({
   };
 
   const getColumnSample = (columnName: string) => {
-    if (parsedData.length > 0 && parsedData[0].data && parsedData[0].data.length > 0) {
-      const sample = parsedData[0].data[0][columnName];
+    if (parsedData.length > 0 && parsedData[0].rows && parsedData[0].rows.length > 0) {
+      const sample = parsedData[0].rows[0][columnName];
       return sample?.toString().substring(0, 50) || 'N/A';
     }
     return 'N/A';
   };
 
   const isNumericColumn = (columnName: string) => {
-    if (parsedData.length > 0 && parsedData[0].data && parsedData[0].data.length > 0) {
-      const samples = parsedData[0].data.slice(0, 5).map(row => row[columnName]);
+    if (parsedData.length > 0 && parsedData[0].rows && parsedData[0].rows.length > 0) {
+      const samples = parsedData[0].rows.slice(0, 5).map(row => row[columnName]);
       const numericSamples = samples.filter(sample => {
         const num = Number(sample);
         return !isNaN(num) && isFinite(num) && sample !== '' && sample !== null;
