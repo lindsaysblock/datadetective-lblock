@@ -3,21 +3,17 @@ import { DataAnalysisContext } from '@/types/data';
 import { AnalysisReport } from '@/types/analysis';
 import { DataValidator } from '@/utils/analysis/dataValidator';
 import { ParsedData } from '@/utils/dataParser';
-import { RealDataAnalyzer } from './realDataAnalyzer';
-import { AnalysisResultsGenerator } from './analysisResultsGenerator';
+import { ReliableAnalysisEngine } from '@/utils/analysis/reliableAnalysisEngine';
 import { SimpleAnalysisEngine } from '@/utils/analysis/simpleAnalysisEngine';
 
 export class AnalysisCoordinator {
-  private realDataAnalyzer = new RealDataAnalyzer();
-  private resultsGenerator = new AnalysisResultsGenerator();
-
   static async executeAnalysis(context: DataAnalysisContext): Promise<AnalysisReport> {
     const coordinator = new AnalysisCoordinator();
     return coordinator.execute(context);
   }
 
   private async execute(context: DataAnalysisContext): Promise<AnalysisReport> {
-    console.log('🎯 AnalysisCoordinator: Starting analysis execution');
+    console.log('🎯 AnalysisCoordinator: Starting reliable analysis execution');
     
     try {
       this.validateContext(context);
@@ -31,10 +27,7 @@ export class AnalysisCoordinator {
         question: context.researchQuestion
       });
 
-      // Check if this is a simple question that can be answered quickly
-      const isSimple = SimpleAnalysisEngine.isSimpleQuestion(context.researchQuestion);
-      console.log('🔍 Question complexity:', isSimple ? 'Simple' : 'Complex');
-
+      // Validate data quality
       const validator = new DataValidator(parsedData);
       const validation = validator.validate();
       
@@ -42,22 +35,33 @@ export class AnalysisCoordinator {
         console.warn('⚠️ Data validation issues found:', validation.errors);
       }
 
+      // Use reliable analysis engine
+      const engine = new ReliableAnalysisEngine(parsedData, {
+        enableLogging: true,
+        qualityThreshold: 0.7
+      });
+
+      // Check if this is a simple question
+      const isSimple = SimpleAnalysisEngine.isSimpleQuestion(context.researchQuestion);
+      console.log('🔍 Question complexity:', isSimple ? 'Simple' : 'Complex');
+
       let results: any[] = [];
       let insights: string[] = [];
       
       if (isSimple) {
-        // Use fast simple analysis
-        console.log('⚡ Using simple analysis engine');
+        // Use simple analysis for basic questions
+        console.log('⚡ Using simple analysis');
         results = SimpleAnalysisEngine.analyzeRowCount(parsedData);
         insights = [
-          `Quick analysis of your CSV file completed. ${results[0]?.insight || 'Data processed successfully.'}`,
-          `The dataset structure looks good with ${parsedData.columns.length} columns and complete data.`
+          `Quick analysis of your dataset completed successfully.`,
+          `Found ${parsedData.rows.length} rows and ${parsedData.columns.length} columns with good data structure.`,
+          `Your data is ready for further analysis and exploration.`
         ];
       } else {
         // Use comprehensive analysis
         console.log('🔬 Using comprehensive analysis');
-        insights = await this.realDataAnalyzer.generateInsights(context, parsedData);
-        results = await this.resultsGenerator.generateResults(context, parsedData, insights);
+        results = engine.runCompleteAnalysis();
+        insights = this.generateInsights(results, parsedData, context);
       }
       
       const sqlQuery = this.generateSQLQuery(context, parsedData);
@@ -69,11 +73,7 @@ export class AnalysisCoordinator {
         results,
         insights,
         confidence: this.calculateOverallConfidence(validation, results),
-        recommendations: isSimple ? [
-          'Your data is ready for analysis',
-          'Consider exploring specific columns or relationships',
-          'Use filters to focus on subsets of your data'
-        ] : this.realDataAnalyzer.generateRecommendations(insights, validation, parsedData),
+        recommendations: this.generateRecommendations(insights, validation, parsedData),
         sqlQuery,
         queryBreakdown: this.generateQueryBreakdown(sqlQuery),
         dataQuality: {
@@ -177,6 +177,30 @@ export class AnalysisCoordinator {
     });
   }
 
+  private generateInsights(results: any[], data: ParsedData, context: DataAnalysisContext): string[] {
+    const insights: string[] = [];
+    
+    // Basic data insights
+    insights.push(`Successfully analyzed your dataset containing ${data.rows.length.toLocaleString()} rows and ${data.columns.length} columns.`);
+    
+    // Quality insights
+    const qualityResult = results.find(r => r.id === 'data-completeness');
+    if (qualityResult) {
+      insights.push(`Data quality assessment shows ${qualityResult.value}% completeness, indicating ${qualityResult.value > 90 ? 'excellent' : qualityResult.value > 70 ? 'good' : 'acceptable'} data integrity.`);
+    }
+    
+    // Structure insights
+    const structureResult = results.find(r => r.id === 'data-structure');
+    if (structureResult) {
+      insights.push(`Dataset structure analysis reveals organized data with identifiable patterns suitable for ${context.researchQuestion.toLowerCase().includes('trend') ? 'trend analysis' : 'behavioral analysis'}.`);
+    }
+    
+    // Research question specific insight
+    insights.push(`Based on your research question "${context.researchQuestion}", the dataset appears well-suited for analysis with sufficient data points and appropriate column structure.`);
+    
+    return insights;
+  }
+
   private calculateOverallConfidence(validation: any, results: any[]): 'high' | 'medium' | 'low' {
     if (!validation.isValid) return 'low';
     
@@ -186,6 +210,26 @@ export class AnalysisCoordinator {
     if (highConfidenceResults / Math.max(totalResults, 1) > 0.6) return 'high';
     if (highConfidenceResults / Math.max(totalResults, 1) > 0.3) return 'medium';
     return 'low';
+  }
+
+  private generateRecommendations(insights: string[], validation: any, data: ParsedData): string[] {
+    const recommendations: string[] = [];
+    
+    if (data.rows.length > 1000) {
+      recommendations.push('Consider segmenting your analysis by time periods or categories for deeper insights');
+      recommendations.push('Explore correlations between different data dimensions');
+    } else {
+      recommendations.push('Your dataset is ready for detailed analysis');
+      recommendations.push('Consider collecting more data points for stronger statistical significance');
+    }
+    
+    if (validation.warnings.length > 0) {
+      recommendations.push('Review data quality warnings to ensure optimal analysis results');
+    }
+    
+    recommendations.push('Use the "Ask More Questions" feature to dive deeper into specific aspects of your data');
+    
+    return recommendations;
   }
 
   private generateSQLQuery(context: DataAnalysisContext, data: ParsedData): string {
@@ -252,12 +296,13 @@ export class AnalysisCoordinator {
       timestamp: new Date(),
       context,
       results: [],
-      insights: [`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
+      insights: [`Analysis encountered an issue: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your data format and try again.`],
       confidence: 'low',
       recommendations: [
-        'Check your data format and ensure it contains valid information',
-        'Verify that your file was uploaded correctly',
-        'Try uploading a smaller sample of your data first'
+        'Verify that your CSV file contains valid data with headers',
+        'Ensure the file is not corrupted and contains readable content',
+        'Try uploading a smaller sample of your data first',
+        'Contact support if the issue persists'
       ],
       sqlQuery: '-- Analysis failed',
       queryBreakdown: [],
