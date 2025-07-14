@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, History, BarChart3 } from 'lucide-react';
+import { Plus, History, BarChart3, Settings, TestTube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DatasetsGrid from '@/components/data/DatasetsGrid';
 import { useIndexPageState } from '@/hooks/useIndexPageState';
@@ -124,8 +124,8 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Dashboard Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* Main Action Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             <Card 
               className="p-8 bg-gradient-to-br from-green-50 to-blue-50 border-green-200 hover:shadow-lg transition-all cursor-pointer group"
               onClick={() => navigate('/new-project')}
@@ -151,7 +151,51 @@ const Index = () => {
                 <p className="text-gray-600">Resume analysis on your saved datasets</p>
               </div>
             </Card>
+
+            <Card 
+              className="p-8 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg transition-all cursor-pointer group"
+              onClick={() => navigate('/dashboard')}
+            >
+              <div className="text-center">
+                <div className="p-4 bg-blue-500 rounded-full w-16 h-16 mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <BarChart3 className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-semibold text-xl text-gray-800 mb-2">Analytics Dashboard</h3>
+                <p className="text-gray-600">View comprehensive data analytics and insights</p>
+              </div>
+            </Card>
           </div>
+
+          {/* Admin and Testing Section */}
+          {user && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              <Card 
+                className="p-6 bg-gradient-to-br from-orange-50 to-red-50 border-orange-200 hover:shadow-lg transition-all cursor-pointer group"
+                onClick={() => navigate('/admin')}
+              >
+                <div className="text-center">
+                  <div className="p-3 bg-orange-500 rounded-full w-12 h-12 mx-auto mb-3 group-hover:scale-110 transition-transform">
+                    <Settings className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="font-semibold text-lg text-gray-800 mb-2">Admin Panel</h3>
+                  <p className="text-gray-600">System administration and QA tools</p>
+                </div>
+              </Card>
+
+              <Card 
+                className="p-6 bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200 hover:shadow-lg transition-all cursor-pointer group"
+                onClick={() => navigate('/pipeline-review')}
+              >
+                <div className="text-center">
+                  <div className="p-3 bg-teal-500 rounded-full w-12 h-12 mx-auto mb-3 group-hover:scale-110 transition-transform">
+                    <TestTube className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="font-semibold text-lg text-gray-800 mb-2">Pipeline Review</h3>
+                  <p className="text-gray-600">Analytics pipeline testing and optimization</p>
+                </div>
+              </Card>
+            </div>
+          )}
 
           {/* Recent Activity Section - Only show for authenticated users */}
           {user && datasets && datasets.length > 0 && (
