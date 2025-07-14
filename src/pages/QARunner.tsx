@@ -3,14 +3,11 @@ import React from 'react';
 import QATrigger from '../components/QATrigger';
 import QARunner from '../components/QARunner';
 import Header from '@/components/Header';
-import { useAuthState } from '@/hooks/useAuthState';
 
 const QARunnerPage: React.FC = () => {
-  const { user, handleUserChange } = useAuthState();
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <Header user={user} onUserChange={handleUserChange} />
+      <Header />
       
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
