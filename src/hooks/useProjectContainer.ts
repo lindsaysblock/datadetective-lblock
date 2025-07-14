@@ -212,7 +212,11 @@ export const useProjectContainer = () => {
     nextStep: formManagement.navigationActions.nextStep,
     prevStep: formManagement.navigationActions.prevStep,
     setShowProjectDialog,
-    setShowRecoveryDialog
+    setShowRecoveryDialog,
+    // Add the missing setter functions
+    setCurrentProjectName: (name: string) => formManagement.updateFormState({ currentProjectName: name }),
+    setAnalysisError: (error: string | null) => formManagement.updateFormState({ analysisError: error }),
+    resetForm: formManagement.resetForm
   };
 
   return {

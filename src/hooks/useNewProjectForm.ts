@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { parseCSVFile, parseJSONFile } from '@/utils/dataParser';
+import { parseFile } from '@/utils/dataParser';
 
 export const useNewProjectForm = () => {
   const [step, setStep] = useState(1);
@@ -52,15 +52,7 @@ export const useNewProjectForm = () => {
       for (const file of files) {
         console.log('Processing file:', file.name, file.type);
         
-        let fileData;
-        if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-          fileData = await parseCSVFile(file);
-        } else if (file.type === 'application/json' || file.name.endsWith('.json')) {
-          fileData = await parseJSONFile(file);
-        } else {
-          // Try to parse as CSV for other text files
-          fileData = await parseCSVFile(file);
-        }
+        const fileData = await parseFile(file);
         
         if (fileData) {
           newParsedData.push({
