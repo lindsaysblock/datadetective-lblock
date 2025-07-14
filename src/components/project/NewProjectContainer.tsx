@@ -32,7 +32,8 @@ const NewProjectContainer = () => {
     hasData: !!formData.parsedData && formData.parsedData.length > 0,
     dataFiles: formData.parsedData?.length || 0,
     user: user?.email,
-    authLoading
+    authLoading,
+    analysisProgress
   });
 
   const handleStartAnalysisWrapper = (educationalMode: boolean = false) => {
@@ -88,11 +89,25 @@ const NewProjectContainer = () => {
           onProjectConfirm={handleProjectConfirm}
         />
 
-        <AnalysisProgressView
-          isAnalyzing={formData.isProcessingAnalysis && !formData.showProjectDialog}
-          onComplete={handleAnalysisComplete}
-          onProgressUpdate={handleProgressUpdate}
-        />
+        {/* Show progress overlay when analysis is running */}
+        {formData.isProcessingAnalysis && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <h3 className="text-xl font-semibold">Analyzing Your Data</h3>
+                <p className="text-gray-600">Please wait while we process your analysis...</p>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300"
+                    style={{ width: `${analysisProgress}%` }}
+                  ></div>
+                </div>
+                <p className="text-sm text-gray-500">{Math.round(analysisProgress)}% complete</p>
+              </div>
+            </div>
+          </div>
+        )}
         
         <NewProjectContent onStartAnalysis={handleStartAnalysisWrapper} />
       </div>

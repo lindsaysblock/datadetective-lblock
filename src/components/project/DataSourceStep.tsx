@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
@@ -30,19 +31,22 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
   onNext,
   onPrevious
 }) => {
-  // Check if we have data - either files selected OR data already parsed
-  const hasUploadedData = parsedData && parsedData.length > 0;
-  const hasSelectedFiles = files && files.length > 0;
-  const hasAnyData = hasUploadedData || hasSelectedFiles;
+  // Check if we have successfully parsed data - this is the key validation
+  const hasValidData = parsedData && parsedData.length > 0 && parsedData.some(data => 
+    data && (data.rows?.length > 0 || data.summary?.totalRows > 0)
+  );
 
-  console.log('DataSourceStep state:', {
+  console.log('DataSourceStep validation:', {
     filesCount: files?.length || 0,
     parsedDataCount: parsedData?.length || 0,
-    hasUploadedData,
-    hasSelectedFiles,
-    hasAnyData,
+    hasValidData,
     uploading,
-    parsing
+    parsing,
+    parsedDataDetails: parsedData?.map(data => ({
+      rows: data?.rows?.length || 0,
+      totalRows: data?.summary?.totalRows || 0,
+      name: data?.name
+    }))
   });
 
   const handleFileUpload = async (uploadedFiles: File[]) => {
@@ -137,15 +141,11 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
   };
 
   const handleNext = () => {
-    // Updated validation logic - check for either uploaded data OR selected files
-    if (!hasAnyData) {
-      console.log('No data available, cannot proceed to next step');
+    if (!hasValidData) {
+      console.log('Cannot proceed - no valid data available');
       return;
     }
-    console.log('Proceeding to next step with data:', { 
-      parsedDataCount: parsedData?.length || 0,
-      filesCount: files?.length || 0 
-    });
+    console.log('Proceeding to next step with valid data');
     onNext();
   };
 
@@ -156,7 +156,7 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
         <p className="text-gray-600">Upload files, paste data, or connect to your existing data sources</p>
       </div>
 
-      {!hasUploadedData ? (
+      {!hasValidData ? (
         <div className="space-y-6">
           <DataSourceOptions
             onFileUpload={handleFileUpload}
@@ -181,7 +181,7 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
           )}
 
           {/* Show selected files info */}
-          {hasSelectedFiles && !uploading && !parsing && (
+          {files && files.length > 0 && !uploading && !parsing && (
             <Card className="bg-gray-50 border-gray-200">
               <CardContent className="p-4">
                 <h4 className="font-medium text-gray-900 mb-2">Selected Files:</h4>
@@ -244,10 +244,10 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
         
         <Button 
           onClick={handleNext}
-          disabled={!hasAnyData}
-          className={hasAnyData ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300 cursor-not-allowed"}
+          disabled={!hasValidData}
+          className={hasValidData ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300 cursor-not-allowed"}
         >
-          {hasAnyData ? 'Next: Add Context' : 'Connect Data to Continue'}
+          {hasValidData ? 'Next: Add Context' : 'Process Data to Continue'}
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </div>

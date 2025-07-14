@@ -4,15 +4,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, FolderPlus, Brain, CheckCircle, Clock } from 'lucide-react';
+import { Loader2, Brain, CheckCircle, Clock, BarChart3 } from 'lucide-react';
 
 interface ProjectNamingDialogProps {
   open: boolean;
@@ -33,74 +29,26 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
   analysisProgress = 0,
   analysisCompleted = false
 }) => {
-  const [projectName, setProjectName] = useState('');
-  const [projectSaved, setProjectSaved] = useState(false);
+  const [autoCloseTimer, setAutoCloseTimer] = useState(3);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (analysisCompleted && projectSaved && onViewResults) {
-      // Analysis is complete, close dialog and view results
-      onViewResults();
-      onOpenChange(false);
-      return;
-    }
-    
-    if (projectName.trim() && !projectSaved) {
-      // Save project name and start showing progress
-      onConfirm(projectName.trim());
-      setProjectSaved(true);
-    }
-  };
-
-  const handleClose = () => {
-    // Only allow closing if analysis is complete or not started
-    if (!isProcessing || analysisCompleted) {
-      onOpenChange(false);
-      setProjectName('');
-      setProjectSaved(false);
-    }
-  };
-
-  // Reset saved state when dialog opens
+  // Auto-close when analysis completes
   useEffect(() => {
-    if (open && !projectSaved) {
-      setProjectSaved(false);
-    }
-  }, [open, projectSaved]);
+    if (analysisCompleted && onViewResults) {
+      const timer = setInterval(() => {
+        setAutoCloseTimer(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            onViewResults();
+            onOpenChange(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
 
-  // Auto-navigate to results when analysis completes
-  useEffect(() => {
-    if (analysisCompleted && projectSaved && onViewResults) {
-      setTimeout(() => {
-        onViewResults();
-        onOpenChange(false);
-      }, 1500); // Give user a moment to see completion message
+      return () => clearInterval(timer);
     }
-  }, [analysisCompleted, projectSaved, onViewResults, onOpenChange]);
-
-  const getButtonText = () => {
-    if (analysisCompleted) {
-      return 'View Results';
-    }
-    if (projectSaved && isProcessing) {
-      return 'Analyzing...';
-    }
-    if (projectSaved) {
-      return 'Analysis Starting...';
-    }
-    return 'Save & Start Analysis';
-  };
-
-  const getButtonIcon = () => {
-    if (analysisCompleted) {
-      return <CheckCircle className="w-4 h-4 mr-2" />;
-    }
-    if (isProcessing) {
-      return <Loader2 className="w-4 h-4 mr-2 animate-spin" />;
-    }
-    return null;
-  };
+  }, [analysisCompleted, onViewResults, onOpenChange]);
 
   const getEstimatedTime = () => {
     if (analysisProgress < 25) return '45-60 seconds remaining';
@@ -110,108 +58,142 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
     return 'Almost done...';
   };
 
+  const getProgressPhase = () => {
+    if (analysisProgress < 20) return 'Parsing your data...';
+    if (analysisProgress < 40) return 'Identifying patterns...';
+    if (analysisProgress < 60) return 'Running statistical analysis...';
+    if (analysisProgress < 80) return 'Generating insights...';
+    if (analysisProgress < 95) return 'Preparing visualizations...';
+    return 'Finalizing results...';
+  };
+
+  // Only show if processing or completed
+  if (!isProcessing && !analysisCompleted) {
+    return null;
+  }
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => isProcessing && !analysisCompleted && e.preventDefault()}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      // Only allow closing if analysis is complete
+      if (!isProcessing || analysisCompleted) {
+        onOpenChange(newOpen);
+      }
+    }}>
+      <DialogContent 
+        className="sm:max-w-lg" 
+        onPointerDownOutside={(e) => {
+          // Prevent closing during processing
+          if (isProcessing && !analysisCompleted) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FolderPlus className="w-5 h-5 text-purple-600" />
-            {analysisCompleted ? 'Analysis Complete!' : projectSaved ? 'Analysis in Progress' : 'Name Your Project'}
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            {analysisCompleted ? (
+              <>
+                <CheckCircle className="w-6 h-6 text-green-600" />
+                Analysis Complete!
+              </>
+            ) : (
+              <>
+                <BarChart3 className="w-6 h-6 text-blue-600 animate-pulse" />
+                Analyzing Your Data
+              </>
+            )}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-base">
             {analysisCompleted ? 
-              "Your analysis is ready! Redirecting to results..." :
-              projectSaved ? 
-                "Your project has been saved. Analyzing your data now..." :
-                "Give your analysis project a memorable name."
+              `Redirecting to results in ${autoCloseTimer} seconds...` :
+              "Please wait while we process your analysis"
             }
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="project-name">Project Name</Label>
-            <Input
-              id="project-name"
-              placeholder="e.g., Sales Data Analysis, Customer Survey Insights..."
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              disabled={projectSaved}
-              autoFocus={!projectSaved}
-            />
-          </div>
-          
-          {(isProcessing || analysisCompleted) && projectSaved && (
-            <div className="space-y-4">
-              <div className={`flex items-center gap-3 p-4 rounded-lg ${
-                analysisCompleted ? 'text-green-600 bg-green-50 border border-green-200' : 'text-blue-600 bg-blue-50 border border-blue-200'
-              }`}>
-                {analysisCompleted ? (
-                  <CheckCircle className="w-5 h-5" />
-                ) : (
-                  <Brain className="w-5 h-5 animate-pulse" />
-                )}
-                <div className="flex-1">
-                  <span className="text-sm font-medium">
-                    {analysisCompleted ? 'Analysis complete!' : 'Analyzing your data...'}
-                  </span>
-                  {!analysisCompleted && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <Clock className="w-3 h-3" />
-                      <span className="text-xs">{getEstimatedTime()}</span>
+        <div className="space-y-6 py-4">
+          {analysisCompleted ? (
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-green-700">Analysis Successful!</h3>
+                <p className="text-gray-600">Your data has been analyzed and insights are ready.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Progress Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-blue-50 border border-blue-200">
+                  <Brain className="w-6 h-6 text-blue-600 animate-pulse" />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-blue-800">{getProgressPhase()}</span>
+                      <span className="text-sm text-blue-600 font-semibold">{Math.round(analysisProgress)}%</span>
                     </div>
-                  )}
+                    <Progress 
+                      value={analysisProgress} 
+                      className="h-3 bg-blue-100"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 text-sm text-gray-600 justify-center">
+                  <Clock className="w-4 h-4" />
+                  <span>{getEstimatedTime()}</span>
                 </div>
               </div>
-              
-              {!analysisCompleted && (
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700">Analysis Progress</span>
-                      <span className="text-sm text-gray-500">{Math.round(analysisProgress)}%</span>
+
+              {/* Status Cards */}
+              <div className="grid grid-cols-1 gap-3">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                     </div>
-                    <Progress value={analysisProgress} className="h-3" />
-                  </div>
-                  
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex gap-1">
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                      </div>
-                      <span className="text-xs font-medium text-gray-600">Processing your data</span>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-800">Processing Your Data</h4>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Finding patterns, generating insights, and preparing visualizations...
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-500">
-                      Finding patterns, generating insights, and preparing visualizations...
-                    </p>
                   </div>
                 </div>
-              )}
+
+                {analysisProgress > 50 && (
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <div>
+                        <h4 className="text-sm font-medium text-green-800">Data Analysis Complete</h4>
+                        <p className="text-xs text-green-600 mt-1">
+                          Statistical analysis and pattern recognition finished
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {analysisProgress > 80 && (
+                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="w-4 h-4 text-purple-600 animate-spin" />
+                      <div>
+                        <h4 className="text-sm font-medium text-purple-800">Generating Visualizations</h4>
+                        <p className="text-xs text-purple-600 mt-1">
+                          Creating charts and visual insights from your data
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
-          
-          <DialogFooter>
-            {!isProcessing && !projectSaved && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-              >
-                Cancel
-              </Button>
-            )}
-            <Button
-              type="submit"
-              disabled={(!projectName.trim() && !analysisCompleted) || (isProcessing && !analysisCompleted)}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-            >
-              {getButtonIcon()}
-              {getButtonText()}
-            </Button>
-          </DialogFooter>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
