@@ -22,20 +22,21 @@ interface PipelineReviewResult {
 
 // Helper function to convert ParsedDataFile to ParsedData
 const convertToParseData = (dataFile: ParsedDataFile): ParsedData => {
-  const columns: DataColumn[] = dataFile.columns.map(columnName => ({
+  const columnNames = dataFile.data.length > 0 ? Object.keys(dataFile.data[0]) : [];
+  const columns: DataColumn[] = columnNames.map(columnName => ({
     name: columnName,
     type: 'string', // Default type, could be inferred from data
-    samples: dataFile.rows.slice(0, 5).map(row => row[columnName])
+    samples: dataFile.data.slice(0, 5).map(row => row[columnName])
   }));
 
   return {
     columns,
-    rows: dataFile.rows,
-    rowCount: dataFile.rowCount,
+    rows: dataFile.data,
+    rowCount: dataFile.rows,
     fileSize: 1000000, // Default file size
     summary: {
-      totalRows: dataFile.rowCount,
-      totalColumns: dataFile.columns.length,
+      totalRows: dataFile.rows,
+      totalColumns: dataFile.columns,
       possibleUserIdColumns: [],
       possibleEventColumns: [],
       possibleTimestampColumns: []
@@ -158,7 +159,7 @@ const AnalyticsPipelineReview: React.FC = () => {
 
     for (const dataset of testDatasets) {
       try {
-        if (dataset.rows.length > 0 && dataset.columns.length > 0) {
+        if (dataset.data.length > 0 && dataset.columns > 0) {
           successCount++;
         }
       } catch (error) {

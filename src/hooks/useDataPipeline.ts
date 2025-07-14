@@ -43,7 +43,13 @@ export const useDataPipeline = () => {
           preview: parsedData.rows.slice(0, 5),
           data: parsedData.rows,
           columnInfo: parsedData.columns,
-          summary: parsedData.summary
+          summary: {
+            totalRows: parsedData.rowCount,
+            totalColumns: parsedData.columns.length,
+            possibleUserIdColumns: parsedData.summary?.possibleUserIdColumns || [],
+            possibleEventColumns: parsedData.summary?.possibleEventColumns || [],
+            possibleTimestampColumns: parsedData.summary?.possibleTimestampColumns || []
+          }
         };
 
         // Validate the data

@@ -1,5 +1,5 @@
 
-import { TestSuite, TestResult } from '../types';
+import { TestSuite, UnitTestResult } from '../types';
 import { TestRunner } from '../testRunner';
 
 export class AnalysisFlowTests {
@@ -7,7 +7,7 @@ export class AnalysisFlowTests {
 
   async run(): Promise<TestSuite> {
     const suiteStart = performance.now();
-    const tests: TestResult[] = [];
+    const tests: UnitTestResult[] = [];
 
     // Test 1: Data Pipeline Processing
     const test1 = await this.testRunner.runTest('Data Pipeline File Processing', (assert) => {
@@ -40,8 +40,12 @@ export class AnalysisFlowTests {
       assert.equal(mockParsedData.name, 'test.csv', 'Should preserve filename');
     });
     tests.push({
-      ...test1,
-      message: test1.message || 'Data Pipeline File Processing test completed'
+      testName: test1.testName,
+      status: test1.status,
+      duration: test1.duration,
+      message: test1.message || 'Data Pipeline File Processing test completed',
+      assertions: test1.assertions,
+      passedAssertions: test1.passedAssertions
     });
 
     // Test 2: Analysis Context Creation
@@ -53,6 +57,8 @@ export class AnalysisFlowTests {
         parsedData: [{
           id: 'file-1',
           name: 'test.csv',
+          rows: 1,
+          columns: 2,
           data: [{ name: 'John', age: 25 }]
         }],
         columnMapping: {}
@@ -63,8 +69,12 @@ export class AnalysisFlowTests {
       assert.equal(typeof mockContext.educationalMode, 'boolean', 'Should have boolean educational mode');
     });
     tests.push({
-      ...test2,
-      message: test2.message || 'Analysis Context Creation test completed'
+      testName: test2.testName,
+      status: test2.status,
+      duration: test2.duration,
+      message: test2.message || 'Analysis Context Creation test completed',
+      assertions: test2.assertions,
+      passedAssertions: test2.passedAssertions
     });
 
     // Test 3: Analysis Progress Tracking
@@ -85,8 +95,12 @@ export class AnalysisFlowTests {
       assert.equal(currentStep, 5, 'Should have completed all progress steps');
     });
     tests.push({
-      ...test3,
-      message: test3.message || 'Analysis Progress Tracking test completed'
+      testName: test3.testName,
+      status: test3.status,
+      duration: test3.duration,
+      message: test3.message || 'Analysis Progress Tracking test completed',
+      assertions: test3.assertions,
+      passedAssertions: test3.passedAssertions
     });
 
     // Test 4: Analysis Results Validation
@@ -121,8 +135,12 @@ export class AnalysisFlowTests {
       assert.equal(mockResults.confidence, 'high', 'Should have confidence level');
     });
     tests.push({
-      ...test4,
-      message: test4.message || 'Analysis Results Validation test completed'
+      testName: test4.testName,
+      status: test4.status,
+      duration: test4.duration,
+      message: test4.message || 'Analysis Results Validation test completed',
+      assertions: test4.assertions,
+      passedAssertions: test4.passedAssertions
     });
 
     // Test 5: Error Handling and Recovery
@@ -147,8 +165,12 @@ export class AnalysisFlowTests {
       });
     });
     tests.push({
-      ...test5,
-      message: test5.message || 'Error Handling and Recovery test completed'
+      testName: test5.testName,
+      status: test5.status,
+      duration: test5.duration,
+      message: test5.message || 'Error Handling and Recovery test completed',
+      assertions: test5.assertions,
+      passedAssertions: test5.passedAssertions
     });
 
     // Test 6: Flow State Management
@@ -181,8 +203,12 @@ export class AnalysisFlowTests {
       assert.equal(mockFlowState.showAnalysisView, true, 'Should show analysis view when completed');
     });
     tests.push({
-      ...test6,
-      message: test6.message || 'Flow State Management test completed'
+      testName: test6.testName,
+      status: test6.status,
+      duration: test6.duration,
+      message: test6.message || 'Flow State Management test completed',
+      assertions: test6.assertions,
+      passedAssertions: test6.passedAssertions
     });
 
     return {

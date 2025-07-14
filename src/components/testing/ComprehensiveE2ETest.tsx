@@ -266,9 +266,10 @@ const ComprehensiveE2ETest: React.FC = () => {
           parsedData: [{
             id: 'test-1',
             name: 'test.csv',
-            rows: [{ name: 'John', age: 25 }],
-            columns: ['name', 'age'],
-            rowCount: 1
+            rows: 1,
+            columns: 2,
+            data: [{ name: 'John', age: 25 }],
+            preview: [{ name: 'John', age: 25 }]
           }],
           educationalMode: false
         };
@@ -295,9 +296,10 @@ const ComprehensiveE2ETest: React.FC = () => {
           parsedData: [{
             id: 'test-1',
             name: 'test.csv',
-            rows: [{ name: 'John', age: 25 }],
-            columns: ['name', 'age'],
-            rowCount: 1
+            rows: 1,
+            columns: 2,
+            data: [{ name: 'John', age: 25 }],
+            preview: [{ name: 'John', age: 25 }]
           }],
           educationalMode: false
         };

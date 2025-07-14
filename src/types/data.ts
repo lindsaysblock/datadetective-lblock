@@ -18,9 +18,9 @@ export interface ParsedDataFile {
   summary?: {
     totalRows: number;
     totalColumns: number;
-    possibleUserIdColumns: string[];
-    possibleEventColumns: string[];
-    possibleTimestampColumns: string[];
+    possibleUserIdColumns?: string[];
+    possibleEventColumns?: string[];
+    possibleTimestampColumns?: string[];
   };
 }
 

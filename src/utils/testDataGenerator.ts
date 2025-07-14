@@ -10,20 +10,19 @@ export interface TestScenario {
 }
 
 export const generateTestDataset = (type: DatasetType, rowCount: number = 1000): ParsedDataFile => {
-  const baseData = {
+  const baseData: ParsedDataFile = {
     id: `test-${type}-${Date.now()}`,
     name: `test-${type}-data.csv`,
-    filename: `test-${type}-data.csv`,
-    rowCount,
-    columns: [] as string[],
-    rows: [] as any[]
+    rows: rowCount,
+    columns: 0, // Will be set below
+    data: []
   };
 
   switch (type) {
     case 'ecommerce':
-      baseData.columns = ['user_id', 'product_id', 'category', 'price', 'quantity', 'timestamp'];
+      baseData.columns = 6;
       for (let i = 0; i < rowCount; i++) {
-        baseData.rows.push({
+        baseData.data.push({
           user_id: `user_${Math.floor(Math.random() * 10000)}`,
           product_id: `prod_${Math.floor(Math.random() * 1000)}`,
           category: ['electronics', 'clothing', 'books', 'home'][Math.floor(Math.random() * 4)],
@@ -35,9 +34,9 @@ export const generateTestDataset = (type: DatasetType, rowCount: number = 1000):
       break;
 
     case 'behavioral':
-      baseData.columns = ['user_id', 'event_type', 'page', 'session_id', 'timestamp'];
+      baseData.columns = 5;
       for (let i = 0; i < rowCount; i++) {
-        baseData.rows.push({
+        baseData.data.push({
           user_id: `user_${Math.floor(Math.random() * 5000)}`,
           event_type: ['click', 'view', 'scroll', 'hover'][Math.floor(Math.random() * 4)],
           page: ['home', 'product', 'checkout', 'profile'][Math.floor(Math.random() * 4)],
@@ -48,9 +47,9 @@ export const generateTestDataset = (type: DatasetType, rowCount: number = 1000):
       break;
 
     case 'financial':
-      baseData.columns = ['account_id', 'transaction_type', 'amount', 'currency', 'timestamp'];
+      baseData.columns = 5;
       for (let i = 0; i < rowCount; i++) {
-        baseData.rows.push({
+        baseData.data.push({
           account_id: `acc_${Math.floor(Math.random() * 1000)}`,
           transaction_type: ['debit', 'credit', 'transfer'][Math.floor(Math.random() * 3)],
           amount: Math.floor(Math.random() * 10000) + 1,
@@ -61,9 +60,9 @@ export const generateTestDataset = (type: DatasetType, rowCount: number = 1000):
       break;
 
     case 'mixed':
-      baseData.columns = ['id', 'name', 'value', 'category', 'date'];
+      baseData.columns = 5;
       for (let i = 0; i < rowCount; i++) {
-        baseData.rows.push({
+        baseData.data.push({
           id: i + 1,
           name: `Item ${i + 1}`,
           value: Math.floor(Math.random() * 1000),
@@ -73,6 +72,9 @@ export const generateTestDataset = (type: DatasetType, rowCount: number = 1000):
       }
       break;
   }
+
+  // Add preview data
+  baseData.preview = baseData.data.slice(0, 5);
 
   return baseData;
 };
