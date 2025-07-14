@@ -8,9 +8,9 @@ import { AuthProvider } from "./contexts/AuthContext";
 import Header from "./components/Header";
 import Index from "./pages/Index";
 import NewProject from "./pages/NewProject";
-import TestRunner from "./pages/TestRunner";
-import ComprehensiveTestRunner from "./pages/ComprehensiveTestRunner";
+import QueryHistory from "./pages/QueryHistory";
 import Profile from "./pages/Profile";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -28,9 +28,9 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/new-project" element={<NewProject />} />
-                  <Route path="/test-runner" element={<TestRunner />} />
-                  <Route path="/comprehensive-tests" element={<ComprehensiveTestRunner />} />
+                  <Route path="/query-history" element={<QueryHistory />} />
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/admin" element={<Admin />} />
                 </Routes>
               </main>
             </div>
