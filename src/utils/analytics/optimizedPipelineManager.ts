@@ -1,4 +1,3 @@
-
 import { ParsedData } from '../dataParser';
 import { AnalyticsPipeline, PipelineStage, AnalyticsConfig } from '../../types/analytics';
 import { DataValidator } from './dataValidator';
@@ -179,7 +178,8 @@ export class OptimizedPipelineManager {
       rows: this.data.rows.slice(0, sampleSize)
     };
     
-    const result = validator.validate(sampleData);
+    // Fix: DataValidator.validate() takes no arguments
+    const result = validator.validate();
 
     if (!result.isValid && result.errors.length > 0) {
       throw new Error(`Validation failed: ${result.errors.join(', ')}`);

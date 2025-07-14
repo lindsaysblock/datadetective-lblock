@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,8 @@ import { Play, CheckCircle, AlertTriangle, XCircle, Zap, BarChart3, Settings } f
 import { AnalyticsPipelineManager } from '@/utils/analytics/pipelineManager';
 import { DataAnalysisEngine } from '@/utils/analysis/dataAnalysisEngine';
 import { generateTestDataset } from '@/utils/testDataGenerator';
-import { ParsedData } from '@/utils/dataParser';
+import { ParsedData, DataColumn } from '@/utils/dataParser';
+import { ParsedDataFile } from '@/types/data';
 
 interface PipelineReviewResult {
   stage: string;
@@ -19,6 +19,29 @@ interface PipelineReviewResult {
   optimizations: string[];
   timestamp: Date;
 }
+
+// Helper function to convert ParsedDataFile to ParsedData
+const convertToParseData = (dataFile: ParsedDataFile): ParsedData => {
+  const columns: DataColumn[] = dataFile.columns.map(columnName => ({
+    name: columnName,
+    type: 'string', // Default type, could be inferred from data
+    samples: dataFile.rows.slice(0, 5).map(row => row[columnName])
+  }));
+
+  return {
+    columns,
+    rows: dataFile.rows,
+    rowCount: dataFile.rowCount,
+    fileSize: 1000000, // Default file size
+    summary: {
+      totalRows: dataFile.rowCount,
+      totalColumns: dataFile.columns.length,
+      possibleUserIdColumns: [],
+      possibleEventColumns: [],
+      possibleTimestampColumns: []
+    }
+  };
+};
 
 const AnalyticsPipelineReview: React.FC = () => {
   const [isReviewing, setIsReviewing] = useState(false);
@@ -164,20 +187,8 @@ const AnalyticsPipelineReview: React.FC = () => {
   };
 
   const reviewAnalysisEngine = async (): Promise<PipelineReviewResult> => {
-    const testData = generateTestDataset('behavioral', 5000);
-    
-    // Convert to ParsedData format
-    const parsedData: ParsedData = {
-      ...testData,
-      fileSize: 1000000,
-      summary: {
-        totalRows: testData.rows.length,
-        totalColumns: testData.columns.length,
-        possibleUserIdColumns: [],
-        possibleEventColumns: [],
-        possibleTimestampColumns: []
-      }
-    };
+    const testDataFile = generateTestDataset('behavioral', 5000);
+    const parsedData = convertToParseData(testDataFile);
 
     const startTime = window.performance.now();
     
@@ -221,20 +232,8 @@ const AnalyticsPipelineReview: React.FC = () => {
   };
 
   const reviewPipelineEfficiency = async (): Promise<PipelineReviewResult> => {
-    const testData = generateTestDataset('financial', 3000);
-    
-    // Convert to ParsedData format
-    const parsedData: ParsedData = {
-      ...testData,
-      fileSize: 2000000,
-      summary: {
-        totalRows: testData.rows.length,
-        totalColumns: testData.columns.length,
-        possibleUserIdColumns: [],
-        possibleEventColumns: [],
-        possibleTimestampColumns: []
-      }
-    };
+    const testDataFile = generateTestDataset('financial', 3000);
+    const parsedData = convertToParseData(testDataFile);
 
     const startTime = window.performance.now();
     
