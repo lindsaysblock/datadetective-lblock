@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Play, BookOpen, FolderPlus } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Play, BookOpen, FolderPlus } from 'lucide-react';
 import AnalysisResultsCard from '@/components/analysis/AnalysisResultsCard';
 
 interface AnalysisSummaryStepProps {
