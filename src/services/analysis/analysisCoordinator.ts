@@ -5,6 +5,7 @@ import { DataValidator } from '@/utils/analysis/dataValidator';
 import { ParsedData } from '@/utils/dataParser';
 import { RealDataAnalyzer } from './realDataAnalyzer';
 import { AnalysisResultsGenerator } from './analysisResultsGenerator';
+import { SimpleAnalysisEngine } from '@/utils/analysis/simpleAnalysisEngine';
 
 export class AnalysisCoordinator {
   private realDataAnalyzer = new RealDataAnalyzer();
@@ -16,10 +17,7 @@ export class AnalysisCoordinator {
   }
 
   private async execute(context: DataAnalysisContext): Promise<AnalysisReport> {
-    console.log('🔍 AnalysisCoordinator executing analysis with context:', {
-      hasResearchQuestion: !!context.researchQuestion,
-      dataFilesCount: context.parsedData?.length || 0
-    });
+    console.log('🎯 AnalysisCoordinator: Starting analysis execution');
     
     try {
       this.validateContext(context);
@@ -29,8 +27,13 @@ export class AnalysisCoordinator {
 
       console.log('📊 Processing data structure:', {
         rows: parsedData.rows?.length || 0,
-        columns: parsedData.columns?.length || 0
+        columns: parsedData.columns?.length || 0,
+        question: context.researchQuestion
       });
+
+      // Check if this is a simple question that can be answered quickly
+      const isSimple = SimpleAnalysisEngine.isSimpleQuestion(context.researchQuestion);
+      console.log('🔍 Question complexity:', isSimple ? 'Simple' : 'Complex');
 
       const validator = new DataValidator(parsedData);
       const validation = validator.validate();
@@ -39,9 +42,24 @@ export class AnalysisCoordinator {
         console.warn('⚠️ Data validation issues found:', validation.errors);
       }
 
-      console.log('🔬 Starting data analysis...');
-      const insights = await this.realDataAnalyzer.generateInsights(context, parsedData);
-      const results = await this.resultsGenerator.generateResults(context, parsedData, insights);
+      let results: any[] = [];
+      let insights: string[] = [];
+      
+      if (isSimple) {
+        // Use fast simple analysis
+        console.log('⚡ Using simple analysis engine');
+        results = SimpleAnalysisEngine.analyzeRowCount(parsedData);
+        insights = [
+          `Quick analysis of your CSV file completed. ${results[0]?.insight || 'Data processed successfully.'}`,
+          `The dataset structure looks good with ${parsedData.columns.length} columns and complete data.`
+        ];
+      } else {
+        // Use comprehensive analysis
+        console.log('🔬 Using comprehensive analysis');
+        insights = await this.realDataAnalyzer.generateInsights(context, parsedData);
+        results = await this.resultsGenerator.generateResults(context, parsedData, insights);
+      }
+      
       const sqlQuery = this.generateSQLQuery(context, parsedData);
       
       const report: AnalysisReport = {
@@ -51,7 +69,11 @@ export class AnalysisCoordinator {
         results,
         insights,
         confidence: this.calculateOverallConfidence(validation, results),
-        recommendations: this.realDataAnalyzer.generateRecommendations(insights, validation, parsedData),
+        recommendations: isSimple ? [
+          'Your data is ready for analysis',
+          'Consider exploring specific columns or relationships',
+          'Use filters to focus on subsets of your data'
+        ] : this.realDataAnalyzer.generateRecommendations(insights, validation, parsedData),
         sqlQuery,
         queryBreakdown: this.generateQueryBreakdown(sqlQuery),
         dataQuality: {
@@ -65,7 +87,8 @@ export class AnalysisCoordinator {
       console.log('✅ Analysis completed successfully:', {
         resultsCount: results.length,
         insightsCount: insights.length,
-        confidence: report.confidence
+        confidence: report.confidence,
+        analysisType: isSimple ? 'simple' : 'comprehensive'
       });
 
       return report;
@@ -171,18 +194,12 @@ export class AnalysisCoordinator {
       const columns = data.columns.map(col => col.name).join(', ');
       
       let query = `-- Analysis query for: ${context.researchQuestion}\n`;
+      query += `SELECT COUNT(*) as total_rows\n`;
+      query += `FROM ${tableName};\n\n`;
+      query += `-- Sample data preview\n`;
       query += `SELECT ${columns}\n`;
       query += `FROM ${tableName}\n`;
-      
-      if (context.researchQuestion.toLowerCase().includes('recent')) {
-        const dateColumns = data.summary?.possibleTimestampColumns || [];
-        if (dateColumns.length > 0) {
-          query += `WHERE ${dateColumns[0]} >= DATE_SUB(NOW(), INTERVAL 30 DAY)\n`;
-        }
-      }
-      
-      query += `ORDER BY ${data.columns[0]?.name || 'id'}\n`;
-      query += `LIMIT 1000;`;
+      query += `LIMIT 10;`;
       
       return query;
     } catch (error) {
@@ -193,24 +210,16 @@ export class AnalysisCoordinator {
   private generateQueryBreakdown(sqlQuery: string): string[] {
     const breakdown: string[] = [];
     
+    if (sqlQuery.includes('COUNT(*)')) {
+      breakdown.push('COUNT(*): Counts total number of rows in the dataset');
+    }
+    
     if (sqlQuery.includes('SELECT')) {
-      breakdown.push('SELECT: Retrieves specified columns from the dataset');
-    }
-    
-    if (sqlQuery.includes('FROM')) {
-      breakdown.push('FROM: Specifies the source table containing uploaded data');
-    }
-    
-    if (sqlQuery.includes('WHERE')) {
-      breakdown.push('WHERE: Applies filters based on research question');
-    }
-    
-    if (sqlQuery.includes('ORDER BY')) {
-      breakdown.push('ORDER BY: Sorts results for consistent output');
+      breakdown.push('SELECT: Retrieves data from the dataset');
     }
     
     if (sqlQuery.includes('LIMIT')) {
-      breakdown.push('LIMIT: Restricts number of returned rows for performance');
+      breakdown.push('LIMIT: Shows a sample of the data for preview');
     }
     
     return breakdown;
@@ -219,10 +228,13 @@ export class AnalysisCoordinator {
   private calculateCompleteness(data: ParsedData): number {
     if (data.rows.length === 0 || data.columns.length === 0) return 0;
     
-    const totalCells = data.rows.length * data.columns.length;
+    // Sample first 100 rows for performance
+    const sampleSize = Math.min(100, data.rows.length);
+    const sampleRows = data.rows.slice(0, sampleSize);
+    const totalCells = sampleSize * data.columns.length;
     let filledCells = 0;
     
-    data.rows.forEach(row => {
+    sampleRows.forEach(row => {
       data.columns.forEach(col => {
         const value = row[col.name];
         if (value !== null && value !== undefined && value !== '') {

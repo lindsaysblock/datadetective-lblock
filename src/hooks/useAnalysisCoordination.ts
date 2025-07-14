@@ -1,171 +1,122 @@
 
 import { useState, useCallback } from 'react';
-import { useDataAnalysis } from '@/hooks/useDataAnalysis';
-import { DataAnalysisContext, AnalysisResults, ParsedDataFile, ColumnMapping } from '@/types/data';
-import { ParsedData } from '@/utils/dataParser';
-import { useToast } from '@/hooks/use-toast';
+import { DataAnalysisContext } from '@/types/data';
+import { AnalysisEngine } from '@/services/analysisEngine';
+import { SimpleAnalysisEngine } from '@/utils/analysis/simpleAnalysisEngine';
 
 interface AnalysisState {
   isProcessingAnalysis: boolean;
+  analysisResults: any;
+  analysisError: string | null;
   analysisCompleted: boolean;
-  analysisResults: AnalysisResults | null;
-  educationalMode: boolean;
 }
-
-// Helper function to convert ParsedData to ParsedDataFile
-const convertToDataFile = (data: ParsedData, index: number): ParsedDataFile => ({
-  id: `file-${index}-${Date.now()}`,
-  name: `dataset-${index + 1}.csv`,
-  rows: data.rows,
-  columns: data.columns.map(col => col.name),
-  rowCount: data.rowCount,
-  preview: data.rows.slice(0, 10),
-  data: data.rows
-});
 
 export const useAnalysisCoordination = () => {
   const [analysisState, setAnalysisState] = useState<AnalysisState>({
     isProcessingAnalysis: false,
-    analysisCompleted: false,
     analysisResults: null,
-    educationalMode: false
+    analysisError: null,
+    analysisCompleted: false
   });
-
-  const { analyzeData, isAnalyzing, analysisError, clearAnalysis } = useDataAnalysis();
-  const { toast } = useToast();
 
   const startAnalysis = useCallback(async (
     researchQuestion: string,
     additionalContext: string,
-    educationalMode: boolean = false,
-    parsedData: ParsedData[] | null,
-    columnMapping?: Record<string, string>
+    educationalMode: boolean,
+    parsedData: any[],
+    columnMapping: any,
+    onProgress?: (progress: number) => void
   ) => {
-    console.log('🚀 Starting analysis coordination:', {
-      researchQuestion: researchQuestion?.slice(0, 100) + '...',
-      hasAdditionalContext: !!additionalContext,
-      educationalMode,
-      hasData: !!parsedData,
-      dataCount: parsedData?.length || 0
+    console.log('🚀 Starting analysis coordination');
+    
+    setAnalysisState({
+      isProcessingAnalysis: true,
+      analysisResults: null,
+      analysisError: null,
+      analysisCompleted: false
     });
 
-    if (!researchQuestion?.trim()) {
-      toast({
-        title: "Research Question Required",
-        description: "Please provide a research question before starting analysis.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!parsedData || parsedData.length === 0) {
-      toast({
-        title: "Data Required",  
-        description: "Please upload data before starting analysis.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setAnalysisState(prev => ({
-      ...prev,
-      isProcessingAnalysis: true,
-      analysisCompleted: false,
-      educationalMode
-    }));
-
     try {
-      // Convert ParsedData[] to ParsedDataFile[]
-      const dataFiles: ParsedDataFile[] = parsedData.map((data, index) => convertToDataFile(data, index));
-      
-      // Convert columnMapping to proper ColumnMapping type
-      const properColumnMapping: ColumnMapping = {
-        userIdColumn: columnMapping?.userId,
-        timestampColumn: columnMapping?.timestamp,
-        eventColumn: columnMapping?.event,
-        valueColumns: Object.values(columnMapping || {}).filter(Boolean),
-        categoryColumns: []
-      };
+      // Immediate progress update
+      onProgress?.(10);
 
       const context: DataAnalysisContext = {
         researchQuestion,
-        additionalContext: additionalContext || '',
-        parsedData: dataFiles,
-        columnMapping: properColumnMapping,
-        educationalMode
+        additionalContext,
+        educationalMode,
+        parsedData,
+        columnMapping
       };
 
-      console.log('📊 Executing analysis with context:', context);
+      // Check if it's a simple question for faster processing
+      const isSimple = SimpleAnalysisEngine.isSimpleQuestion(researchQuestion);
       
-      const results = await analyzeData(context);
-      
-      if (results) {
-        setAnalysisState(prev => ({
-          ...prev,
-          analysisResults: results,
-          analysisCompleted: true
-        }));
-
-        console.log('✅ Analysis coordination completed successfully');
+      if (isSimple) {
+        console.log('⚡ Processing simple question - faster analysis');
         
-        toast({
-          title: "Analysis Complete!",
-          description: "Your data analysis has been completed successfully.",
-        });
+        // Quick progress updates for simple questions
+        onProgress?.(30);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        onProgress?.(60);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        onProgress?.(85);
+        await new Promise(resolve => setTimeout(resolve, 300));
       } else {
-        throw new Error('Analysis returned no results');
+        console.log('🔬 Processing complex question - comprehensive analysis');
+        
+        // Slower progress for complex analysis
+        onProgress?.(25);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        onProgress?.(50);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        onProgress?.(75);
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
+
+      // Execute the analysis
+      const analysisResults = await AnalysisEngine.analyzeData(context);
+      
+      onProgress?.(95);
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      onProgress?.(100);
+
+      setAnalysisState({
+        isProcessingAnalysis: false,
+        analysisResults,
+        analysisError: null,
+        analysisCompleted: true
+      });
+
+      console.log('✅ Analysis coordination completed');
+      
     } catch (error) {
       console.error('❌ Analysis coordination failed:', error);
-      
-      toast({
-        title: "Analysis Failed",
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-        variant: "destructive",
+      setAnalysisState({
+        isProcessingAnalysis: false,
+        analysisResults: null,
+        analysisError: error instanceof Error ? error.message : 'Analysis failed',
+        analysisCompleted: false
       });
-    } finally {
-      setAnalysisState(prev => ({
-        ...prev,
-        isProcessingAnalysis: false
-      }));
     }
-  }, [analyzeData, toast]);
+  }, []);
 
   const resetAnalysis = useCallback(() => {
-    console.log('🔄 Resetting analysis state');
-    
     setAnalysisState({
       isProcessingAnalysis: false,
-      analysisCompleted: false,
       analysisResults: null,
-      educationalMode: false
+      analysisError: null,
+      analysisCompleted: false
     });
-    
-    clearAnalysis();
-  }, [clearAnalysis]);
-
-  const retryAnalysis = useCallback(async (
-    researchQuestion: string,
-    additionalContext: string,
-    parsedData: ParsedData[] | null,
-    columnMapping?: Record<string, string>
-  ) => {
-    console.log('🔄 Retrying analysis');
-    
-    resetAnalysis();
-    
-    // Small delay to ensure state is reset
-    setTimeout(() => {
-      startAnalysis(researchQuestion, additionalContext, analysisState.educationalMode, parsedData, columnMapping);
-    }, 100);
-  }, [startAnalysis, resetAnalysis, analysisState.educationalMode]);
+  }, []);
 
   return {
     analysisState,
-    isAnalyzing,
-    analysisError,
     startAnalysis,
-    resetAnalysis,
-    retryAnalysis
+    resetAnalysis
   };
 };

@@ -63,13 +63,19 @@ export const useProjectContainer = () => {
 
     setEducationalMode(educationalMode);
     setShowProjectDialog(true);
+    setAnalysisProgress(0);
     
+    // Start analysis with progress callback
     analysisCoordination.startAnalysis(
       researchQuestion,
       additionalContext,
       educationalMode,
       parsedData,
-      columnMapping
+      columnMapping,
+      (progress: number) => {
+        console.log('📊 Analysis progress:', progress + '%');
+        setAnalysisProgress(progress);
+      }
     );
   }, [projectAuth.user, toast, analysisCoordination]);
 
@@ -110,7 +116,7 @@ export const useProjectContainer = () => {
     console.log('✅ Project confirmed:', projectName);
     formManagement.updateFormState({ currentProjectName: projectName });
     
-    // Don't automatically show results - let the dialog handle the progress and routing
+    // Progress will be handled by the startAnalysis callback
   }, [formManagement]);
 
   const handleRestoreData = useCallback(() => {
