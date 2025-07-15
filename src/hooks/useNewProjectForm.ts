@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export interface FormData {
@@ -7,8 +7,25 @@ export interface FormData {
   researchQuestion: string;
   businessContext: string;
   file: File | null;
+  files: File[];
   uploadedData: any;
+  parsedData: any[];
+  columnMapping: Record<string, string>;
+  analysisResults: any;
+  analysisCompleted: boolean;
+  isProcessingAnalysis: boolean;
+  uploading: boolean;
+  parsing: boolean;
   step: number;
+  // Methods
+  setResearchQuestion?: (value: string) => void;
+  setAdditionalContext?: (value: string) => void;
+  nextStep?: () => void;
+  prevStep?: () => void;
+  addFile?: (file: File) => void;
+  handleFileUpload?: () => void;
+  removeFile?: (index: number) => void;
+  setColumnMapping?: (mapping: Record<string, string>) => void;
 }
 
 const initialFormData: FormData = {
@@ -16,7 +33,15 @@ const initialFormData: FormData = {
   researchQuestion: '',
   businessContext: '',
   file: null,
+  files: [],
   uploadedData: null,
+  parsedData: [],
+  columnMapping: {},
+  analysisResults: null,
+  analysisCompleted: false,
+  isProcessingAnalysis: false,
+  uploading: false,
+  parsing: false,
   step: 1,
 };
 
@@ -42,6 +67,34 @@ export const useNewProjectForm = () => {
     setFormData(prev => ({ ...prev, step }));
   }, []);
 
+  const setResearchQuestion = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, researchQuestion: value }));
+  }, []);
+
+  const setAdditionalContext = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, businessContext: value }));
+  }, []);
+
+  const addFile = useCallback((file: File) => {
+    setFormData(prev => ({ ...prev, files: [...prev.files, file] }));
+  }, []);
+
+  const removeFile = useCallback((index: number) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      files: prev.files.filter((_, i) => i !== index) 
+    }));
+  }, []);
+
+  const setColumnMapping = useCallback((mapping: Record<string, string>) => {
+    setFormData(prev => ({ ...prev, columnMapping: mapping }));
+  }, []);
+
+  const handleFileUpload = useCallback(() => {
+    // File upload logic would go here
+    console.log('File upload triggered');
+  }, []);
+
   const setContinueCaseData = useCallback((dataset: any) => {
     console.log('🔄 Setting continue case data:', dataset);
     
@@ -61,12 +114,24 @@ export const useNewProjectForm = () => {
       );
 
       const newFormData: FormData = {
+        ...initialFormData,
         projectName,
         researchQuestion,
         businessContext,
         file: mockFile,
+        files: [mockFile],
         uploadedData: dataset.data || dataset,
+        parsedData: dataset.data || [],
         step: 4, // Go directly to analysis summary
+        // Include methods
+        setResearchQuestion,
+        setAdditionalContext,
+        nextStep,
+        prevStep,
+        addFile,
+        handleFileUpload,
+        removeFile,
+        setColumnMapping,
       };
 
       setFormData(newFormData);
@@ -90,15 +155,39 @@ export const useNewProjectForm = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, setResearchQuestion, setAdditionalContext, nextStep, prevStep, addFile, handleFileUpload, removeFile, setColumnMapping]);
 
   const resetForm = useCallback(() => {
-    setFormData(initialFormData);
+    setFormData({
+      ...initialFormData,
+      // Include methods
+      setResearchQuestion,
+      setAdditionalContext,
+      nextStep,
+      prevStep,
+      addFile,
+      handleFileUpload,
+      removeFile,
+      setColumnMapping,
+    });
     setError(null);
-  }, []);
+  }, [setResearchQuestion, setAdditionalContext, nextStep, prevStep, addFile, handleFileUpload, removeFile, setColumnMapping]);
+
+  // Enhance formData with methods
+  const enhancedFormData = {
+    ...formData,
+    setResearchQuestion,
+    setAdditionalContext,
+    nextStep,
+    prevStep,
+    addFile,
+    handleFileUpload,
+    removeFile,
+    setColumnMapping,
+  };
 
   return {
-    formData,
+    formData: enhancedFormData,
     isLoading,
     error,
     updateFormData,

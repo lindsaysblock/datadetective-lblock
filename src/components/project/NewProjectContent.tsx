@@ -11,7 +11,7 @@ import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
 import { useToast } from '@/hooks/use-toast';
 
 interface NewProjectContentProps {
-  formData: any; // Pass formData from parent
+  formData: any;
   onStartAnalysis: (educationalMode?: boolean, projectName?: string) => void;
 }
 
@@ -58,7 +58,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
       return;
     }
 
-    if (!formData.parsedData || formData.parsedData.length === 0) {
+    if (!formData.uploadedData && (!formData.parsedData || formData.parsedData.length === 0)) {
       toast({
         title: "Data Required",
         description: "Please upload data files before starting analysis.",
@@ -74,8 +74,8 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
       await saveAnalysisProject(
         projectName,
         formData.researchQuestion,
-        formData.additionalContext || '',
-        formData.parsedData
+        formData.businessContext || '',
+        formData.uploadedData || formData.parsedData
       );
 
       console.log('Project saved successfully, starting analysis');
@@ -98,21 +98,21 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
       case 1:
         return (
           <ResearchQuestionStep
-            researchQuestion={formData.researchQuestion}
-            setResearchQuestion={formData.setResearchQuestion}
-            onNext={formData.nextStep}
+            researchQuestion={formData.researchQuestion || ''}
+            setResearchQuestion={(value) => formData.setResearchQuestion?.(value)}
+            onNext={() => formData.nextStep?.()}
           />
         );
       case 2:
         return (
           <DataSourceStep
-            files={formData.files}
-            uploading={formData.uploading}
-            parsing={formData.parsing}
-            parsedData={formData.parsedData}
+            files={formData.files || []}
+            uploading={formData.uploading || false}
+            parsing={formData.parsing || false}
+            parsedData={formData.parsedData || formData.uploadedData || []}
             onFileChange={(event) => {
               const selectedFiles = event.target.files;
-              if (selectedFiles && selectedFiles.length > 0) {
+              if (selectedFiles && selectedFiles.length > 0 && formData.addFile) {
                 Array.from(selectedFiles).forEach(file => {
                   formData.addFile(file);
                 });
@@ -121,34 +121,34 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
             onFileUpload={formData.handleFileUpload}
             onRemoveFile={formData.removeFile}
             onColumnMapping={formData.setColumnMapping}
-            onNext={formData.nextStep}
-            onPrevious={formData.prevStep}
+            onNext={() => formData.nextStep?.()}
+            onPrevious={() => formData.prevStep?.()}
           />
         );
       case 3:
         return (
           <BusinessContextStep
-            additionalContext={formData.additionalContext}
-            setAdditionalContext={formData.setAdditionalContext}
-            parsedData={formData.parsedData}
-            columnMapping={formData.columnMapping}
+            additionalContext={formData.businessContext || ''}
+            setAdditionalContext={(value) => formData.setAdditionalContext?.(value)}
+            parsedData={formData.parsedData || formData.uploadedData || []}
+            columnMapping={formData.columnMapping || {}}
             onColumnMapping={formData.setColumnMapping}
-            onNext={formData.nextStep}
-            onPrevious={formData.prevStep}
+            onNext={() => formData.nextStep?.()}
+            onPrevious={() => formData.prevStep?.()}
           />
         );
       case 4:
         return (
           <AnalysisSummaryStep
-            researchQuestion={formData.researchQuestion}
-            additionalContext={formData.additionalContext}
-            parsedData={formData.parsedData}
-            columnMapping={formData.columnMapping}
+            researchQuestion={formData.researchQuestion || ''}
+            additionalContext={formData.businessContext || ''}
+            parsedData={formData.parsedData || formData.uploadedData || []}
+            columnMapping={formData.columnMapping || {}}
             analysisResults={formData.analysisResults}
-            analysisCompleted={formData.analysisCompleted}
-            isProcessingAnalysis={formData.isProcessingAnalysis}
+            analysisCompleted={formData.analysisCompleted || false}
+            isProcessingAnalysis={formData.isProcessingAnalysis || false}
             onStartAnalysis={handleStartAnalysisWrapper}
-            onPrevious={formData.prevStep}
+            onPrevious={() => formData.prevStep?.()}
           />
         );
       default:
@@ -158,7 +158,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
 
   return (
     <div className="max-w-4xl mx-auto">
-      <StepIndicator currentStep={formData.step} />
+      <StepIndicator currentStep={formData.step || 1} />
       
       <Card className="mt-8">
         <CardContent className="p-8">

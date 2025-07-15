@@ -1,12 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import NewProjectLayout from './NewProjectLayout';
 import NewProjectContent from './NewProjectContent';
 
 const NewProjectContainer: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isInitialized, setIsInitialized] = useState(false);
   const {
     formData,
@@ -72,14 +73,23 @@ const NewProjectContainer: React.FC = () => {
     );
   }
 
+  const handleStartAnalysis = (educationalMode?: boolean, projectName?: string) => {
+    console.log('Starting analysis with:', { educationalMode, projectName, formData });
+    // Navigate to analysis or handle analysis start
+    navigate('/analysis', { 
+      state: { 
+        formData, 
+        educationalMode, 
+        projectName 
+      } 
+    });
+  };
+
   return (
     <NewProjectLayout>
       <NewProjectContent
         formData={formData}
-        updateFormData={updateFormData}
-        nextStep={nextStep}
-        prevStep={prevStep}
-        goToStep={goToStep}
+        onStartAnalysis={handleStartAnalysis}
       />
     </NewProjectLayout>
   );

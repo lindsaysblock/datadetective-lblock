@@ -11,8 +11,8 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     watch: {
       usePolling: false,
-      interval: 1000,
-      binaryInterval: 1000,
+      interval: 2000,
+      binaryInterval: 2000,
       ignored: [
         '**/node_modules/**',
         '**/.git/**',
@@ -21,7 +21,11 @@ export default defineConfig(({ mode }) => ({
         '**/.vscode/**',
         '**/.idea/**',
         '**/tmp/**',
-        '**/temp/**'
+        '**/temp/**',
+        '**/public/**',
+        '**/build/**',
+        '**/.next/**',
+        '**/out/**'
       ]
     }
   },
