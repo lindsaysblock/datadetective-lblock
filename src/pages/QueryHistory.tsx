@@ -1,16 +1,41 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ArrowLeft, Search, Plus, Calendar, BarChart3, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
 import { useIndexPageState } from '@/hooks/useIndexPageState';
+import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
+import { useToast } from '@/hooks/use-toast';
 
 const QueryHistory = () => {
   const { user, datasets, datasetsLoading } = useIndexPageState();
+  const { deleteDataset } = useDatasetPersistence();
+  const { toast } = useToast();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (datasetId: string, datasetName: string) => {
+    try {
+      setDeletingId(datasetId);
+      await deleteDataset(datasetId);
+      toast({
+        title: "Case Deleted",
+        description: `${datasetName} has been permanently deleted.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete the case. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (datasetsLoading) {
     return (
@@ -20,7 +45,7 @@ const QueryHistory = () => {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading projects...</p>
+              <p className="text-gray-600">Loading cases...</p>
             </div>
           </div>
         </div>
@@ -45,8 +70,8 @@ const QueryHistory = () => {
                 <BarChart3 className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">Query History</h1>
-                <p className="text-gray-600">Manage your data exploration projects</p>
+                <h1 className="text-2xl font-bold text-gray-800">Case History</h1>
+                <p className="text-gray-600">Manage your data investigation cases</p>
               </div>
             </div>
           </div>
@@ -54,7 +79,7 @@ const QueryHistory = () => {
           <Link to="/new-project">
             <Button className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2">
               <Plus className="w-4 h-4" />
-              Start New Project
+              Start New Case
             </Button>
           </Link>
         </div>
@@ -64,7 +89,7 @@ const QueryHistory = () => {
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="Search projects..."
+              placeholder="Search cases..."
               className="pl-10"
             />
           </div>
@@ -79,20 +104,45 @@ const QueryHistory = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <CardTitle className="text-lg">
-                        {dataset.summary?.projectName || dataset.name || `Project ${index + 1}`}
+                        {dataset.summary?.projectName || dataset.name || `Case ${index + 1}`}
                       </CardTitle>
                       <Badge variant="secondary" className="bg-green-100 text-green-800">
                         active
                       </Badge>
                     </div>
                     <CardDescription className="text-gray-600">
-                      {dataset.summary?.description || dataset.summary?.researchQuestion || 'Data analysis project'}
+                      {dataset.summary?.description || dataset.summary?.researchQuestion || 'Data investigation case'}
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm">
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm" disabled={deletingId === dataset.id}>
+                          {deletingId === dataset.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500"></div>
+                          ) : (
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          )}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Case</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Please confirm you want to permanently delete this case "{dataset.summary?.projectName || dataset.name || `Case ${index + 1}`}". This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(dataset.id, dataset.summary?.projectName || dataset.name || `Case ${index + 1}`)}
+                            className="bg-red-500 hover:bg-red-600"
+                          >
+                            Delete Case
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </CardHeader>
                 
@@ -130,7 +180,7 @@ const QueryHistory = () => {
                     <Button 
                       className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
                     >
-                      Continue Exploration
+                      Continue Investigation
                     </Button>
                   </div>
                 </CardContent>
@@ -140,12 +190,12 @@ const QueryHistory = () => {
             <Card className="text-center py-12">
               <CardContent>
                 <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">No Projects Yet</h3>
-                <p className="text-gray-500 mb-4">Start your first data exploration project</p>
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">No Cases Yet</h3>
+                <p className="text-gray-500 mb-4">Start your first data investigation case</p>
                 <Link to="/new-project">
                   <Button className="bg-green-500 hover:bg-green-600 text-white">
                     <Plus className="w-4 h-4 mr-2" />
-                    Start New Project
+                    Start New Case
                   </Button>
                 </Link>
               </CardContent>
