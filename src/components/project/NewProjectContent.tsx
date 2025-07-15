@@ -66,20 +66,14 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
 
       console.log('Validation passed, starting analysis');
       
-      // Save project if user is authenticated
+      // Save project if user is authenticated - fix the arguments to match expected signature
       if (user) {
         try {
           const savedProject = await saveAnalysisProject(
             projectName,
             formData.researchQuestion,
             formData.businessContext || '',
-            formData.uploadedData || formData.parsedData,
-            {
-              educationalMode,
-              processedFiles: formData.processedFiles || [],
-              totalRows: formData.parsedData?.reduce((sum: number, data: any) => sum + (data.rowCount || 0), 0) || 0,
-              totalColumns: formData.parsedData?.reduce((sum: number, data: any) => sum + (data.columns?.length || 0), 0) || 0
-            }
+            formData.uploadedData || formData.parsedData
           );
           
           console.log('Project saved successfully:', savedProject);
@@ -108,7 +102,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
         return (
           <ResearchQuestionStep
             researchQuestion={formData.researchQuestion}
-            onResearchQuestionChange={formData.setResearchQuestion}
+            setResearchQuestion={formData.setResearchQuestion}
             onNext={formData.nextStep}
           />
         );
@@ -132,8 +126,8 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
       case 3:
         return (
           <BusinessContextStep
-            businessContext={formData.businessContext}
-            onBusinessContextChange={formData.setAdditionalContext}
+            additionalContext={formData.businessContext}
+            setAdditionalContext={formData.setAdditionalContext}
             onNext={formData.nextStep}
             onPrevious={formData.prevStep}
           />
@@ -141,9 +135,16 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
       case 4:
         return (
           <AnalysisSummaryStep
-            formData={formData}
+            researchQuestion={formData.researchQuestion}
+            additionalContext={formData.businessContext}
+            parsedData={formData.parsedData}
+            columnMapping={formData.columnMapping}
+            analysisResults={formData.analysisResults}
+            analysisCompleted={formData.analysisCompleted}
+            isProcessingAnalysis={formData.isProcessingAnalysis}
             onStartAnalysis={handleStartAnalysisWrapper}
             onPrevious={formData.prevStep}
+            formData={formData}
           />
         );
       default:

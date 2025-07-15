@@ -182,8 +182,8 @@ export class E2ETestRunner {
   }
 
   private printTestSummary(results: UnitTestResult[]): void {
-    const passed = results.filter(r => r.passed).length;
-    const failed = results.filter(r => !r.passed).length;
+    const passed = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
     
     console.log('\n📊 E2E Test Summary:');
     console.log(`✅ Passed: ${passed}`);
@@ -192,8 +192,8 @@ export class E2ETestRunner {
     
     if (failed > 0) {
       console.log('\n❌ Failed Tests:');
-      results.filter(r => !r.passed).forEach(test => {
-        console.log(`  - ${test.name}: ${test.error}`);
+      results.filter(r => !r.success).forEach(test => {
+        console.log(`  - ${test.testName}: ${test.error || 'Unknown error'}`);
       });
     }
   }
