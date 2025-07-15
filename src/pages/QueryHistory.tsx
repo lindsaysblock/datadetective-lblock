@@ -8,13 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ArrowLeft, Search, Plus, Calendar, BarChart3, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
-import { useIndexPageState } from '@/hooks/useIndexPageState';
+import { useAuth } from '@/hooks/useAuth';
 import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
 import { useToast } from '@/hooks/use-toast';
 
 const QueryHistory = () => {
-  const { user, datasets, datasetsLoading } = useIndexPageState();
-  const { deleteDataset } = useDatasetPersistence();
+  const { user } = useAuth();
+  const { datasets, loading: datasetsLoading, deleteDataset } = useDatasetPersistence();
   const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
