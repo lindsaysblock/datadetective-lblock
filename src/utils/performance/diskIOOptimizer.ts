@@ -7,10 +7,10 @@ interface CacheEntry<T> {
 }
 
 interface OptimizationConfig {
-  maxMemoryCache: number; // MB
-  cacheExpiry: number; // ms
+  maxMemoryCache: number;
+  cacheExpiry: number;
   batchSize: number;
-  compressionThreshold: number; // bytes
+  compressionThreshold: number;
 }
 
 export class DiskIOOptimizer {
@@ -21,10 +21,10 @@ export class DiskIOOptimizer {
   private isProcessingQueue = false;
   
   private config: OptimizationConfig = {
-    maxMemoryCache: 50, // 50MB
-    cacheExpiry: 5 * 60 * 1000, // 5 minutes
+    maxMemoryCache: 50,
+    cacheExpiry: 5 * 60 * 1000,
     batchSize: 100,
-    compressionThreshold: 1024 // 1KB
+    compressionThreshold: 1024
   };
 
   static getInstance(): DiskIOOptimizer {
@@ -34,16 +34,13 @@ export class DiskIOOptimizer {
     return DiskIOOptimizer.instance;
   }
 
-  // Optimized caching with memory management
   cacheData<T>(key: string, data: T, forceCache = false): void {
     const dataSize = this.estimateSize(data);
     
-    // Skip caching large objects unless forced
     if (!forceCache && dataSize > this.config.compressionThreshold * 10) {
       return;
     }
 
-    // Memory pressure management
     this.enforceMemoryLimit();
 
     this.memoryCache.set(key, {
@@ -59,23 +56,24 @@ export class DiskIOOptimizer {
     
     if (!entry) return null;
     
-    // Check expiry
     if (Date.now() - entry.timestamp > this.config.cacheExpiry) {
       this.memoryCache.delete(key);
       return null;
     }
 
-    // Update access tracking
     entry.accessCount++;
     return entry.data;
   }
 
-  // Batch operations to reduce I/O
-  batchOperation<T>(operations: Array<() => Promise<T>>): Promise<T[]> {
+  async batchOperation<T>(operations: Array<() => Promise<T>>): Promise<T[]> {
     return new Promise((resolve, reject) => {
       const batchedOp = async () => {
         try {
-          const results = await Promise.all(operations);
+          const results: T[] = [];
+          for (const operation of operations) {
+            const result = await operation();
+            results.push(result);
+          }
           resolve(results);
         } catch (error) {
           reject(error);
@@ -87,11 +85,9 @@ export class DiskIOOptimizer {
     });
   }
 
-  // Deferred writes to reduce immediate I/O
   deferredWrite(key: string, data: any): void {
     this.pendingWrites.set(key, data);
     
-    // Auto-flush after batch size
     if (this.pendingWrites.size >= this.config.batchSize) {
       this.flushPendingWrites();
     }
@@ -103,7 +99,6 @@ export class DiskIOOptimizer {
         const writes = Array.from(this.pendingWrites.entries());
         this.pendingWrites.clear();
         
-        // Simulate batched write operation
         await new Promise(r => setTimeout(r, 10));
         console.log(`Flushed ${writes.length} pending writes`);
         resolve();
@@ -114,7 +109,6 @@ export class DiskIOOptimizer {
     });
   }
 
-  // Stream processing for large datasets
   async streamProcess<T, R>(
     data: T[], 
     processor: (chunk: T[]) => Promise<R[]>,
@@ -127,7 +121,6 @@ export class DiskIOOptimizer {
       const chunkResults = await processor(chunk);
       results.push(...chunkResults);
       
-      // Yield control to prevent blocking
       await new Promise(resolve => setTimeout(resolve, 0));
     }
     
@@ -155,7 +148,7 @@ export class DiskIOOptimizer {
 
   private enforceMemoryLimit(): void {
     const currentSize = this.getCurrentCacheSize();
-    const maxSize = this.config.maxMemoryCache * 1024 * 1024; // Convert to bytes
+    const maxSize = this.config.maxMemoryCache * 1024 * 1024;
     
     if (currentSize > maxSize) {
       this.evictLeastUsed();
@@ -171,7 +164,6 @@ export class DiskIOOptimizer {
     const entries = Array.from(this.memoryCache.entries())
       .sort(([, a], [, b]) => a.accessCount - b.accessCount);
     
-    // Remove least used 25% of cache
     const removeCount = Math.floor(entries.length * 0.25);
     for (let i = 0; i < removeCount; i++) {
       this.memoryCache.delete(entries[i][0]);
@@ -180,13 +172,12 @@ export class DiskIOOptimizer {
 
   private estimateSize(data: any): number {
     try {
-      return JSON.stringify(data).length * 2; // Rough estimate
+      return JSON.stringify(data).length * 2;
     } catch {
-      return 1024; // Default size for non-serializable data
+      return 1024;
     }
   }
 
-  // Cleanup method
   cleanup(): void {
     this.flushPendingWrites();
     this.memoryCache.clear();
