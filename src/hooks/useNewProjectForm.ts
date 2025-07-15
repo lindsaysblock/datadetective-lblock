@@ -107,6 +107,7 @@ export const useNewProjectForm = () => {
             name: file.name,
             rows: 100,
             columns: 5,
+            rowCount: 100,
             preview: [
               ['ID', 'Name', 'Date', 'Value', 'Category'],
               ['1', 'Sample A', '2024-01-01', '100', 'Type1'],
@@ -143,6 +144,7 @@ export const useNewProjectForm = () => {
             name: file.name,
             rows: parsedData.rowCount,
             columns: parsedData.columns.length,
+            rowCount: parsedData.rowCount,
             preview: parsedData.rows.slice(0, 5),
             data: parsedData.rows,
             columnInfo: parsedData.columns,

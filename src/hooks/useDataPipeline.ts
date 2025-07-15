@@ -44,6 +44,7 @@ export const useDataPipeline = () => {
               name: file.name,
               rows: 100,
               columns: 5,
+              rowCount: 100,
               preview: [
                 ['Column1', 'Column2', 'Column3', 'Column4', 'Column5'],
                 ['Value1', 'Value2', 'Value3', 'Value4', 'Value5'],
@@ -85,6 +86,7 @@ export const useDataPipeline = () => {
             name: file.name,
             rows: parsedData.rowCount,
             columns: parsedData.columns.length,
+            rowCount: parsedData.rowCount,
             preview: parsedData.rows.slice(0, 5),
             data: parsedData.rows,
             columnInfo: parsedData.columns,
@@ -128,6 +130,7 @@ export const useDataPipeline = () => {
             name: file.name,
             rows: 0,
             columns: 0,
+            rowCount: 0,
             preview: [['Error parsing file']],
             data: [],
             columnInfo: [],

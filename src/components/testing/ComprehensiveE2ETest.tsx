@@ -268,6 +268,7 @@ const ComprehensiveE2ETest: React.FC = () => {
             name: 'test.csv',
             rows: 1,
             columns: 2,
+            rowCount: 1,
             data: [{ name: 'John', age: 25 }],
             preview: [{ name: 'John', age: 25 }]
           }],
@@ -298,6 +299,7 @@ const ComprehensiveE2ETest: React.FC = () => {
             name: 'test.csv',
             rows: 1,
             columns: 2,
+            rowCount: 1,
             data: [{ name: 'John', age: 25 }],
             preview: [{ name: 'John', age: 25 }]
           }],

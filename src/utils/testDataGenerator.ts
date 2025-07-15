@@ -15,6 +15,7 @@ export const generateTestDataset = (type: DatasetType, rowCount: number = 1000):
     name: `test-${type}-data.csv`,
     rows: rowCount,
     columns: 0, // Will be set below
+    rowCount: rowCount,
     data: []
   };
 
