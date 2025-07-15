@@ -13,13 +13,16 @@ import { Progress } from '@/components/ui/progress';
 const NewProjectContainer = () => {
   console.log('NewProjectContainer component rendering');
   
+  // ALL HOOKS MUST BE CALLED IN THE SAME ORDER EVERY TIME
   const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const formData = useNewProjectForm();
   const flowManager = useProjectFlowManager();
+  
+  // Compute derived values after all hooks are called
   const isContinueCase = location.state?.continueInvestigation;
 
-  // Handle continue investigation from query history
+  // Handle continue investigation from query history - this useEffect must always run
   useEffect(() => {
     if (location.state?.continueInvestigation && location.state?.dataset) {
       const dataset = location.state.dataset;
@@ -33,19 +36,19 @@ const NewProjectContainer = () => {
       const reconstructedParsedData = [{
         id: dataset.id,
         name: dataset.original_filename,
-        columns: dataset.metadata?.columns?.length || dataset.summary?.totalColumns || 0,
+        columns: Array.isArray(dataset.metadata?.columns) ? dataset.metadata.columns.length : 0,
         rows: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
         rowCount: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
-        preview: dataset.metadata?.sample_rows || [],
-        data: dataset.metadata?.sample_rows || [],
-        columnInfo: dataset.metadata?.columns?.map((col: any) => ({
+        preview: Array.isArray(dataset.metadata?.sample_rows) ? dataset.metadata.sample_rows : [],
+        data: Array.isArray(dataset.metadata?.sample_rows) ? dataset.metadata.sample_rows : [],
+        columnInfo: Array.isArray(dataset.metadata?.columns) ? dataset.metadata.columns.map((col: any) => ({
           name: col.name || col,
           type: col.type || 'string',
           samples: col.samples || []
-        })) || [],
+        })) : [],
         summary: {
           totalRows: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
-          totalColumns: dataset.metadata?.columns?.length || dataset.summary?.totalColumns || 0,
+          totalColumns: Array.isArray(dataset.metadata?.columns) ? dataset.metadata.columns.length : 0,
           possibleUserIdColumns: dataset.summary?.possibleUserIdColumns || [],
           possibleEventColumns: dataset.summary?.possibleEventColumns || [],
           possibleTimestampColumns: dataset.summary?.possibleTimestampColumns || []
@@ -87,7 +90,7 @@ const NewProjectContainer = () => {
       // Clear the location state to prevent re-triggering
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, formData]);
+  }, [location.state, formData]); // Dependencies are consistent
 
   console.log('Current flow state:', {
     step: formData.step,
