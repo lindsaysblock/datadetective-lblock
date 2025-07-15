@@ -10,18 +10,18 @@ interface UseAuthGuardOptions {
 }
 
 export const useAuthGuard = ({ requireAuth = false, redirectTo }: UseAuthGuardOptions = {}) => {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (loading) return;
+    if (isLoading) return;
 
     if (requireAuth && !user) {
       navigate(redirectTo || ROUTES.AUTH, { replace: true });
     } else if (!requireAuth && user && redirectTo) {
       navigate(redirectTo, { replace: true });
     }
-  }, [user, loading, requireAuth, redirectTo, navigate]);
+  }, [user, isLoading, requireAuth, redirectTo, navigate]);
 
-  return { user, loading };
+  return { user, loading: isLoading };
 };
