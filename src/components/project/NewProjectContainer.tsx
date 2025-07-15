@@ -16,6 +16,7 @@ const NewProjectContainer = () => {
   const { user, isLoading: authLoading } = useAuth();
   const formData = useNewProjectForm();
   const flowManager = useProjectFlowManager();
+  const isContinueCase = location.state?.continueInvestigation;
 
   // Handle continue investigation from query history
   useEffect(() => {
@@ -41,6 +42,15 @@ const NewProjectContainer = () => {
       formData.setParsedData(reconstructedParsedData);
       formData.setStep(step);
       
+      // Create mock files for the form
+      const mockFiles = [{
+        name: dataset.original_filename,
+        type: dataset.mime_type || 'text/csv',
+        size: dataset.file_size || 0,
+        lastModified: new Date(dataset.created_at).getTime()
+      }];
+      formData.setFiles(mockFiles as File[]);
+      
       // Clear the location state to prevent re-triggering
       window.history.replaceState({}, document.title);
     }
@@ -58,7 +68,8 @@ const NewProjectContainer = () => {
     user: user?.email,
     authLoading,
     analysisProgress: flowManager.analysisProgress,
-    analysisError: flowManager.analysisError
+    analysisError: flowManager.analysisError,
+    isContinueCase
   });
 
   const handleStartAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
@@ -134,7 +145,7 @@ const NewProjectContainer = () => {
   return (
     <NewProjectLayout>
       <div className="container mx-auto px-4 py-8" data-testid="new-project-container">
-        <ProjectHeader />
+        <ProjectHeader isContinueCase={isContinueCase} />
         
         {/* Show processing overlay when data is being processed */}
         {flowManager.isProcessingData && (
