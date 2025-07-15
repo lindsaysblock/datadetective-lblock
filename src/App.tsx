@@ -7,7 +7,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { ROUTES } from '@/config/routes';
 import Index from '@/pages/Index';
 import QueryHistory from '@/pages/QueryHistory';
-import AuthPage from '@/pages/AuthPage';
+import Auth from '@/pages/Auth';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,7 +37,7 @@ function App() {
             <Routes>
               <Route path={ROUTES.HOME} element={<Index />} />
               <Route path={ROUTES.QUERY_HISTORY} element={<QueryHistory />} />
-              <Route path={ROUTES.AUTH} element={<AuthPage />} />
+              <Route path={ROUTES.AUTH} element={<Auth />} />
             </Routes>
           </Suspense>
           <Toaster />
