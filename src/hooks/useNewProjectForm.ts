@@ -1,6 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useContinueCase } from './useContinueCase';
 
 export interface FormData {
   projectName: string;
@@ -50,6 +51,7 @@ export const useNewProjectForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { reconstructAnalysisState, createMockFilesFromParsedData } = useContinueCase();
 
   const updateFormData = useCallback((updates: Partial<FormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -102,27 +104,25 @@ export const useNewProjectForm = () => {
       setIsLoading(true);
       setError(null);
 
-      const projectName = dataset.summary?.projectName || dataset.name || 'Continued Investigation';
-      const researchQuestion = dataset.summary?.researchQuestion || dataset.summary?.description || '';
-      const businessContext = dataset.summary?.businessContext || '';
-
-      // Create a mock file object for the uploaded data
-      const mockFile = new File(
-        [JSON.stringify(dataset.data || [])], 
-        dataset.original_filename || 'dataset.json',
-        { type: 'application/json' }
+      // Use the reconstructAnalysisState to get the proper data structure
+      const reconstructedState = reconstructAnalysisState(dataset);
+      
+      // Create mock files from the parsed data with original file size
+      const mockFiles = createMockFilesFromParsedData(
+        reconstructedState.parsedData, 
+        dataset.file_size
       );
 
       const newFormData: FormData = {
         ...initialFormData,
-        projectName,
-        researchQuestion,
-        businessContext,
-        file: mockFile,
-        files: [mockFile],
-        uploadedData: dataset.data || dataset,
-        parsedData: dataset.data || [],
-        step: 4, // Go directly to analysis summary
+        projectName: reconstructedState.projectName,
+        researchQuestion: reconstructedState.researchQuestion,
+        businessContext: reconstructedState.additionalContext,
+        file: mockFiles[0] || null,
+        files: mockFiles,
+        uploadedData: reconstructedState.parsedData,
+        parsedData: reconstructedState.parsedData,
+        step: reconstructedState.step,
         // Include methods
         setResearchQuestion,
         setAdditionalContext,
@@ -136,11 +136,17 @@ export const useNewProjectForm = () => {
 
       setFormData(newFormData);
       
-      console.log('✅ Continue case data set successfully');
+      console.log('✅ Continue case data set successfully:', {
+        projectName: reconstructedState.projectName,
+        researchQuestion: reconstructedState.researchQuestion,
+        filesCount: mockFiles.length,
+        filesSizes: mockFiles.map(f => ({ name: f.name, size: f.size })),
+        step: reconstructedState.step
+      });
       
       toast({
         title: "Investigation Loaded",
-        description: `Continuing with "${projectName}"`,
+        description: `Continuing with "${reconstructedState.projectName}"`,
       });
 
     } catch (error) {
@@ -155,7 +161,7 @@ export const useNewProjectForm = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, setResearchQuestion, setAdditionalContext, nextStep, prevStep, addFile, handleFileUpload, removeFile, setColumnMapping]);
+  }, [toast, reconstructAnalysisState, createMockFilesFromParsedData, setResearchQuestion, setAdditionalContext, nextStep, prevStep, addFile, handleFileUpload, removeFile, setColumnMapping]);
 
   const resetForm = useCallback(() => {
     setFormData({

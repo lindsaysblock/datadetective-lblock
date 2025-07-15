@@ -73,7 +73,7 @@ export const useContinueCase = () => {
     };
   }, []);
 
-  const createMockFilesFromParsedData = useCallback((parsedData: ParsedDataFile[]) => {
+  const createMockFilesFromParsedData = useCallback((parsedData: ParsedDataFile[], originalFileSize?: number) => {
     console.log('🔧 Creating mock files for continue case analysis...');
     
     return parsedData.map(data => {
@@ -81,7 +81,8 @@ export const useContinueCase = () => {
         name: data.name,
         columns: data.columnInfo?.length || 0,
         dataRows: data.data?.length || 0,
-        totalRows: data.rowCount
+        totalRows: data.rowCount,
+        originalFileSize
       });
       
       // Validate that we have the necessary data
@@ -114,11 +115,11 @@ export const useContinueCase = () => {
         });
       }
       
-      // Only generate additional rows if we have very few existing rows
-      const minRows = 20;
+      // Generate additional sample rows to have meaningful data for analysis
+      const minRows = Math.max(existingRows.length, 50); // Ensure we have at least 50 rows for analysis
       if (existingRows.length < minRows) {
         const neededRows = minRows - existingRows.length;
-        console.log(`📈 Generating ${neededRows} additional rows for analysis`);
+        console.log(`📈 Generating ${neededRows} additional sample rows for analysis`);
         
         for (let i = 0; i < neededRows; i++) {
           const syntheticRow = columnHeaders.map((header, colIndex) => {
@@ -159,23 +160,35 @@ export const useContinueCase = () => {
       
       const csvContent = csvRows.join('\n');
       
+      // Calculate a realistic file size based on content
+      const calculatedSize = new Blob([csvContent]).size;
+      const finalSize = originalFileSize || calculatedSize;
+      
       console.log('✅ Created continue case file:', {
         filename: data.name,
-        contentSize: csvContent.length,
+        contentSize: calculatedSize,
+        reportedSize: finalSize,
         totalRows: csvRows.length - 1,
         columns: columnHeaders.length
       });
       
-      // Create a File object that mimics a real uploaded file
+      // Create a File object that mimics a real uploaded file with proper size
       const file = new File([csvContent], data.name, { 
         type: 'text/csv',
         lastModified: Date.now()
+      });
+      
+      // Override the size property to show the original file size
+      Object.defineProperty(file, 'size', {
+        value: finalSize,
+        writable: false
       });
       
       // Add metadata to help the data pipeline
       (file as any).parsedData = data;
       (file as any).isReconstructed = true;
       (file as any).originalDataset = true;
+      (file as any).originalSize = finalSize;
       
       return file;
     });
