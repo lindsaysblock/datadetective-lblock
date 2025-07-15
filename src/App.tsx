@@ -1,79 +1,49 @@
 
-import React, { useState, useEffect } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NewProject from "./pages/NewProject";
-import Dashboard from "./pages/Dashboard";
-import QueryHistory from "./pages/QueryHistory";
-import Admin from "./pages/Admin";
-import Auth from "./pages/Auth";
-import Profile from "./pages/Profile";
-import { ErrorBoundary } from "./components/common/ErrorBoundary";
+import { Suspense } from 'react';
+import { Toaster } from '@/components/ui/toaster';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { ROUTES } from '@/config/routes';
+import Index from '@/pages/Index';
+import QueryHistory from '@/pages/QueryHistory';
+import AuthPage from '@/pages/AuthPage';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p className="text-gray-600">Loading...</p>
+    </div>
+  </div>
+);
 
 function App() {
-  const [isReactReady, setIsReactReady] = useState(false);
-  const [queryClient, setQueryClient] = useState<QueryClient | null>(null);
-
-  // Ensure React is fully initialized before proceeding
-  useEffect(() => {
-    console.log("App useEffect - React:", React);
-    console.log("App useEffect - React.version:", React.version);
-    
-    if (React && React.version) {
-      // Initialize QueryClient only after React is confirmed to be ready
-      const client = new QueryClient({
-        defaultOptions: {
-          queries: {
-            retry: 1,
-            refetchOnWindowFocus: false,
-          },
-        },
-      });
-      
-      console.log("QueryClient initialized:", client);
-      setQueryClient(client);
-      setIsReactReady(true);
-    } else {
-      console.error("React is not fully available!");
-    }
-  }, []);
-
-  // Show loading state while React initializes
-  if (!isReactReady || !queryClient) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Initializing application...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <Router>
+          <Suspense fallback={<LoadingFallback />}>
             <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/new-project" element={<NewProject />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/query-history" element={<QueryHistory />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/admin" element={<Admin />} />
+              <Route path={ROUTES.HOME} element={<Index />} />
+              <Route path={ROUTES.QUERY_HISTORY} element={<QueryHistory />} />
+              <Route path={ROUTES.AUTH} element={<AuthPage />} />
             </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+          </Suspense>
+          <Toaster />
+        </Router>
+      </ErrorBoundary>
+    </QueryClientProvider>
   );
 }
 
