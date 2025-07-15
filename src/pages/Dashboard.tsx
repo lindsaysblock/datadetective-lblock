@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import DashboardView from '../components/dashboard/DashboardView';
 import { ParsedData } from '@/utils/dataParser';
+import { ROUTES } from '@/config/routes';
 
 const Dashboard = () => {
   const { toast } = useToast();
@@ -26,11 +27,11 @@ const Dashboard = () => {
   const recommendations: any[] = [];
 
   const handleStartNewProject = () => {
-    navigate('/new-project');
+    navigate(ROUTES.NEW_PROJECT);
   };
 
   const handleContinueProject = () => {
-    navigate('/query-history');
+    navigate(ROUTES.QUERY_HISTORY);
   };
 
   return (

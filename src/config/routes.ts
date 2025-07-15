@@ -1,24 +1,13 @@
 
 export const ROUTES = {
   HOME: '/',
-  AUTH: '/auth',
   DASHBOARD: '/dashboard',
   QUERY_HISTORY: '/query-history',
+  AUTH: '/auth',
   NEW_PROJECT: '/new-project',
-  SETTINGS: '/settings',
-  HELP: '/help'
+  PROFILE: '/profile',
+  ADMIN: '/admin',
+  QA_DASHBOARD: '/qa-dashboard',
+  QA_RUNNER: '/qa-runner',
+  NOT_FOUND: '*'
 } as const;
-
-export type RouteKey = keyof typeof ROUTES;
-export type RoutePath = typeof ROUTES[RouteKey];
-
-export const PUBLIC_ROUTES: RoutePath[] = [
-  ROUTES.AUTH
-];
-
-export const PROTECTED_ROUTES: RoutePath[] = [
-  ROUTES.DASHBOARD,
-  ROUTES.QUERY_HISTORY,
-  ROUTES.NEW_PROJECT,
-  ROUTES.SETTINGS
-];

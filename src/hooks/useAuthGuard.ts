@@ -1,54 +1,27 @@
 
 import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from './useAuth';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { ROUTES } from '@/config/routes';
 
-interface AuthGuardOptions {
-  redirectTo?: string;
+interface UseAuthGuardOptions {
   requireAuth?: boolean;
-  allowedRoles?: string[];
+  redirectTo?: string;
 }
 
-export const useAuthGuard = (options: AuthGuardOptions = {}) => {
-  const { user, isLoading } = useAuth();
+export const useAuthGuard = ({ requireAuth = false, redirectTo }: UseAuthGuardOptions = {}) => {
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  const {
-    redirectTo = '/auth',
-    requireAuth = true,
-    allowedRoles = []
-  } = options;
 
   useEffect(() => {
-    if (isLoading) return;
+    if (loading) return;
 
-    // Check if auth is required and user is not authenticated
     if (requireAuth && !user) {
-      console.log('🔒 Auth required, redirecting to:', redirectTo);
-      navigate(redirectTo, { 
-        state: { from: location.pathname },
-        replace: true 
-      });
-      return;
+      navigate(redirectTo || ROUTES.AUTH, { replace: true });
+    } else if (!requireAuth && user && redirectTo) {
+      navigate(redirectTo, { replace: true });
     }
+  }, [user, loading, requireAuth, redirectTo, navigate]);
 
-    // Check if user has required roles (if specified)
-    if (user && allowedRoles.length > 0) {
-      // This would need to be implemented based on your role system
-      console.log('👤 User roles check needed for:', allowedRoles);
-    }
-
-    // If user is authenticated and on auth page, redirect to main app
-    if (user && location.pathname === '/auth') {
-      console.log('✅ User authenticated, redirecting to main app');
-      navigate('/', { replace: true });
-    }
-  }, [user, isLoading, navigate, location, redirectTo, requireAuth, allowedRoles]);
-
-  return {
-    isAuthenticated: !!user,
-    isLoading,
-    user
-  };
+  return { user, loading };
 };
