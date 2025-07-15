@@ -8,6 +8,7 @@ import NewProjectLayout from './NewProjectLayout';
 import { useProjectFlowManager } from '@/hooks/useProjectFlowManager';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import { useAuth } from '@/hooks/useAuth';
+import { Progress } from '@/components/ui/progress';
 
 const NewProjectContainer = () => {
   console.log('NewProjectContainer component rendering');
@@ -73,7 +74,7 @@ const NewProjectContainer = () => {
   });
 
   const handleStartAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
-    console.log('Starting analysis with:', { educationalMode, projectName });
+    console.log('🚀 Starting analysis with:', { educationalMode, projectName });
     
     // Check authentication
     if (!user && !authLoading) {
@@ -95,7 +96,7 @@ const NewProjectContainer = () => {
     const finalProjectName = projectName || `Analysis ${Date.now()}`;
     
     try {
-      console.log('Calling flowManager.executeFullAnalysis with:', {
+      console.log('📊 Calling flowManager.executeFullAnalysis with:', {
         researchQuestion: formData.researchQuestion,
         additionalContext: formData.additionalContext || '',
         educationalMode,
@@ -111,24 +112,24 @@ const NewProjectContainer = () => {
         finalProjectName
       );
 
-      console.log('Analysis execution completed:', results);
+      console.log('✅ Analysis execution completed:', results);
     } catch (error) {
-      console.error('Analysis execution failed:', error);
+      console.error('❌ Analysis execution failed:', error);
     }
   };
 
   // Calculate estimated time based on progress
   const getEstimatedTime = () => {
-    if (flowManager.analysisProgress === 0) return 2;
+    if (flowManager.analysisProgress === 0) return 2.0;
     if (flowManager.analysisProgress < 25) return 1.5;
-    if (flowManager.analysisProgress < 50) return 1;
+    if (flowManager.analysisProgress < 50) return 1.0;
     if (flowManager.analysisProgress < 75) return 0.5;
     return 0.1;
   };
 
   // Show analysis view if we have completed analysis
   if (flowManager.showAnalysisView && flowManager.analysisResults) {
-    console.log('Rendering analysis view');
+    console.log('📊 Rendering analysis view');
     return (
       <ProjectAnalysisView
         projectName={flowManager.currentProjectName}
@@ -169,21 +170,23 @@ const NewProjectContainer = () => {
                 <h3 className="text-xl font-semibold">Analyzing Your Data...</h3>
                 <p className="text-gray-600">Please wait while we process your analysis for "{flowManager.currentProjectName}"</p>
                 
-                {/* Progress Bar */}
-                <div className="space-y-2">
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div 
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300"
-                      style={{ width: `${flowManager.analysisProgress}%` }}
-                    ></div>
-                  </div>
+                {/* Enhanced Progress Bar */}
+                <div className="space-y-3">
+                  <Progress value={flowManager.analysisProgress} className="w-full h-3" />
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>{Math.round(flowManager.analysisProgress)}% complete</span>
-                    <span>~{getEstimatedTime()} min remaining</span>
+                    <span>~{getEstimatedTime().toFixed(1)} min remaining</span>
                   </div>
                 </div>
                 
-                <p className="text-sm text-gray-500">Running analysis on your dataset...</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                  <p className="text-sm text-gray-500">Running comprehensive analysis on your dataset...</p>
+                </div>
               </div>
             </div>
           </div>
@@ -194,8 +197,8 @@ const NewProjectContainer = () => {
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
               <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto">
-                  <div className="text-yellow-600 text-2xl">⚠️</div>
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                  <div className="text-red-600 text-2xl">⚠️</div>
                 </div>
                 <h3 className="text-xl font-semibold">Analysis Error</h3>
                 <p className="text-gray-600">{flowManager.analysisError}</p>

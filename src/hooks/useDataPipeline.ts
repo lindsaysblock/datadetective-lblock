@@ -32,6 +32,7 @@ export const useDataPipeline = () => {
       for (const file of files) {
         console.log('📁 Processing file:', file.name);
         
+        // Parse the file
         const parsedData = await parseFile(file);
         
         // Convert to ParsedDataFile format
@@ -88,6 +89,7 @@ export const useDataPipeline = () => {
         description: `Processed ${results.length} file(s) with ${results.reduce((total, file) => total + file.rows, 0)} total rows.`,
       });
 
+      console.log('✅ Data pipeline completed successfully');
       return results;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'File processing failed';
@@ -110,6 +112,7 @@ export const useDataPipeline = () => {
   }, [toast]);
 
   const clearPipeline = useCallback(() => {
+    console.log('🧹 Clearing data pipeline');
     setState({
       isProcessing: false,
       error: null,

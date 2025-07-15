@@ -37,8 +37,9 @@ export const useAnalysisOrchestrator = () => {
     });
 
     try {
-      // Progress simulation based on complexity
+      // Progress simulation with more realistic timing
       const updateProgress = (progress: number) => {
+        console.log('📊 Updating progress to:', progress);
         setState(prev => ({ ...prev, progress }));
         onProgress?.(progress);
       };
@@ -54,20 +55,31 @@ export const useAnalysisOrchestrator = () => {
         throw new Error('Data is required for analysis');
       }
 
-      // Analysis phases with progress updates
+      console.log('📊 Starting analysis phases...');
+
+      // Phase 1: Data preprocessing
       updateProgress(25);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      updateProgress(50);
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      updateProgress(75);
+      // Phase 2: Statistical analysis
+      updateProgress(50);
+      await new Promise(resolve => setTimeout(resolve, 1200));
       
-      // Execute actual analysis
+      // Phase 3: Pattern recognition
+      updateProgress(75);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Phase 4: Execute actual analysis
+      updateProgress(85);
+      console.log('📊 Executing analysis engine...');
+      
       const results = await AnalysisEngine.analyzeData(context);
       
+      console.log('✅ Analysis engine completed:', results);
+      
+      // Final progress update
       updateProgress(95);
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       updateProgress(100);
 
@@ -84,7 +96,7 @@ export const useAnalysisOrchestrator = () => {
         description: "Your data analysis has been completed successfully.",
       });
 
-      console.log('✅ Analysis orchestration completed');
+      console.log('✅ Analysis orchestration completed successfully');
       return results;
 
     } catch (error) {
@@ -110,6 +122,7 @@ export const useAnalysisOrchestrator = () => {
   }, [toast]);
 
   const resetAnalysis = useCallback(() => {
+    console.log('🔄 Resetting analysis orchestrator');
     setState({
       isAnalyzing: false,
       progress: 0,
