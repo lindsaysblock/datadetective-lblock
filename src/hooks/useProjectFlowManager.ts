@@ -59,13 +59,19 @@ export const useProjectFlowManager = () => {
       
       let parsedData;
       if (hasReconstructedFiles) {
-        console.log('🔄 Using reconstructed files from continue case');
-        // For continue cases, extract the parsedData from file metadata
-        parsedData = files.map(file => (file as any).parsedData).filter(Boolean);
+        console.log('🔄 Processing continue case with reconstructed files');
         
-        if (parsedData.length === 0) {
-          // Fallback to processing the files normally
-          console.log('📋 Fallback: Processing reconstructed files normally');
+        // For continue cases, we need to either use the embedded parsedData or process normally
+        const reconstructedData = files
+          .map(file => (file as any).parsedData)
+          .filter(Boolean);
+        
+        if (reconstructedData.length > 0 && reconstructedData[0].columnInfo && reconstructedData[0].data) {
+          console.log('✅ Using embedded parsed data from continue case');
+          parsedData = reconstructedData;
+        } else {
+          console.log('📊 Processing reconstructed files through normal pipeline');
+          // The files contain CSV data, so process them normally
           parsedData = await dataPipeline.processFiles(files);
         }
       } else {
@@ -73,9 +79,15 @@ export const useProjectFlowManager = () => {
         parsedData = await dataPipeline.processFiles(files);
       }
       
+      // Validate parsed data
+      if (!parsedData || parsedData.length === 0) {
+        throw new Error('No data was successfully parsed from the uploaded files');
+      }
+      
       console.log('✅ File processing completed:', {
-        fileCount: parsedData?.length || 0,
-        hasReconstructedFiles
+        fileCount: parsedData.length,
+        hasReconstructedFiles,
+        totalRows: parsedData.reduce((sum, file) => sum + (file.rowCount || 0), 0)
       });
       
       setFlowState(prev => ({ ...prev, analysisProgress: 10 }));

@@ -22,25 +22,42 @@ export const useContinueCase = () => {
       };
     }
     
-    // Fallback to legacy reconstruction if enhanced metadata is not available
+    // Fallback to legacy reconstruction with better error handling
     console.log('⚠️ Using legacy metadata reconstruction');
+    
+    // Validate basic data structure
+    if (!dataset.summary && !dataset.metadata) {
+      console.error('❌ No metadata or summary found in dataset');
+      throw new Error('Dataset missing required metadata for reconstruction');
+    }
+    
+    // Extract column information more safely
+    const columns = Array.isArray(dataset.metadata?.columns) 
+      ? dataset.metadata.columns 
+      : [];
+    
+    const sampleRows = Array.isArray(dataset.metadata?.sample_rows) 
+      ? dataset.metadata.sample_rows 
+      : [];
+    
+    const totalRows = dataset.metadata?.totalRows || dataset.summary?.totalRows || sampleRows.length;
     
     const legacyParsedData: ParsedDataFile[] = [{
       id: dataset.id,
       name: dataset.original_filename,
-      columns: Array.isArray(dataset.metadata?.columns) ? dataset.metadata.columns.length : 0,
-      rows: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
-      rowCount: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
-      preview: Array.isArray(dataset.metadata?.sample_rows) ? dataset.metadata.sample_rows : [],
-      data: Array.isArray(dataset.metadata?.sample_rows) ? dataset.metadata.sample_rows : [],
-      columnInfo: Array.isArray(dataset.metadata?.columns) ? dataset.metadata.columns.map((col: any) => ({
-        name: col.name || col,
-        type: col.type || 'string',
-        samples: col.samples || []
-      })) : [],
+      columns: columns.length,
+      rows: totalRows,
+      rowCount: totalRows,
+      preview: sampleRows.slice(0, 10), // Limit preview to first 10 rows
+      data: sampleRows,
+      columnInfo: columns.map((col: any) => ({
+        name: typeof col === 'string' ? col : col.name || `column_${Math.random()}`,
+        type: typeof col === 'object' && col.type ? col.type : 'string',
+        samples: typeof col === 'object' && col.samples ? col.samples.slice(0, 5) : []
+      })),
       summary: {
-        totalRows: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
-        totalColumns: Array.isArray(dataset.metadata?.columns) ? dataset.metadata.columns.length : 0,
+        totalRows,
+        totalColumns: columns.length,
         possibleUserIdColumns: dataset.summary?.possibleUserIdColumns || [],
         possibleEventColumns: dataset.summary?.possibleEventColumns || [],
         possibleTimestampColumns: dataset.summary?.possibleTimestampColumns || []
@@ -60,88 +77,76 @@ export const useContinueCase = () => {
     console.log('🔧 Creating mock files for continue case analysis...');
     
     return parsedData.map(data => {
-      const columnHeaders = data.columnInfo?.map(col => col.name) || [];
-      const sampleRows = data.preview || data.data || [];
-      
-      console.log('📊 Processing file:', {
+      console.log('📊 Processing continue case file:', {
         name: data.name,
-        columns: columnHeaders.length,
-        sampleRows: sampleRows.length,
+        columns: data.columnInfo?.length || 0,
+        dataRows: data.data?.length || 0,
         totalRows: data.rowCount
       });
       
-      // Create comprehensive CSV content with realistic data
+      // Validate that we have the necessary data
+      if (!data.columnInfo || data.columnInfo.length === 0) {
+        console.error('❌ No column information available for:', data.name);
+        throw new Error(`No column information available for ${data.name}`);
+      }
+      
+      const columnHeaders = data.columnInfo.map(col => col.name);
+      const existingRows = data.data || data.preview || [];
+      
+      // Create CSV content with proper escaping
       const csvRows = [columnHeaders.join(',')];
       
-      // Use actual data rows if available
-      if (sampleRows.length > 0) {
-        // Process existing sample rows
-        sampleRows.forEach(row => {
+      // Use existing data rows if available
+      if (existingRows.length > 0) {
+        existingRows.forEach(row => {
           const csvRow = columnHeaders.map(header => {
             const value = row[header];
-            // Handle different data types properly
             if (value === null || value === undefined) return '';
-            if (typeof value === 'string' && value.includes(',')) return `"${value.replace(/"/g, '""')}"`;
-            return String(value);
+            
+            // Proper CSV escaping
+            const stringValue = String(value);
+            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+              return `"${stringValue.replace(/"/g, '""')}"`;
+            }
+            return stringValue;
           }).join(',');
           csvRows.push(csvRow);
         });
+      }
+      
+      // Only generate additional rows if we have very few existing rows
+      const minRows = 20;
+      if (existingRows.length < minRows) {
+        const neededRows = minRows - existingRows.length;
+        console.log(`📈 Generating ${neededRows} additional rows for analysis`);
         
-        // Generate additional rows if we need more data for analysis
-        const neededRows = Math.max(50, Math.min(100, data.rowCount || 50)) - sampleRows.length;
-        if (neededRows > 0) {
-          console.log(`📈 Generating ${neededRows} additional rows for robust analysis`);
-          
-          for (let i = 0; i < neededRows; i++) {
-            const syntheticRow = columnHeaders.map((header, colIndex) => {
-              const columnInfo = data.columnInfo?.[colIndex];
-              const samples = columnInfo?.samples || [];
-              
-              // Generate realistic data based on column type and samples
-              if (samples.length > 0) {
-                // Use existing samples as basis
-                const sample = samples[Math.floor(Math.random() * samples.length)];
-                if (typeof sample === 'number') {
-                  return String(sample + Math.floor(Math.random() * 100) - 50);
-                } else if (typeof sample === 'string') {
-                  return sample.includes(',') ? `"${sample}_${i}"` : `${sample}_${i}`;
-                }
-                return String(sample);
-              }
-              
-              // Generate based on column type
-              switch (columnInfo?.type) {
-                case 'number':
-                  return String(Math.floor(Math.random() * 1000) + 1);
-                case 'date':
-                  const date = new Date();
-                  date.setDate(date.getDate() - Math.floor(Math.random() * 365));
-                  return date.toISOString().split('T')[0];
-                default:
-                  return header.includes(',') ? `"sample_${colIndex}_${i}"` : `sample_${colIndex}_${i}`;
-              }
-            }).join(',');
-            
-            csvRows.push(syntheticRow);
-          }
-        }
-      } else {
-        // Create completely synthetic data if no sample data exists
-        console.log('🎭 Creating synthetic data - no sample data available');
-        const rowCount = Math.max(20, Math.min(100, data.rowCount || 50));
-        
-        for (let i = 0; i < rowCount; i++) {
+        for (let i = 0; i < neededRows; i++) {
           const syntheticRow = columnHeaders.map((header, colIndex) => {
-            // Generate realistic data based on column name patterns
-            if (header.toLowerCase().includes('id')) {
-              return String(i + 1);
-            } else if (header.toLowerCase().includes('name')) {
+            const columnInfo = data.columnInfo?.[colIndex];
+            const samples = columnInfo?.samples || [];
+            
+            // Use samples if available, otherwise generate based on column name/type
+            if (samples.length > 0) {
+              const sample = samples[Math.floor(Math.random() * samples.length)];
+              if (typeof sample === 'number') {
+                return String(sample + Math.floor(Math.random() * 10) - 5);
+              } else if (typeof sample === 'string') {
+                return sample.includes(',') ? `"${sample}_${i}"` : `${sample}_${i}`;
+              }
+              return String(sample);
+            }
+            
+            // Generate based on column name patterns
+            const lowerHeader = header.toLowerCase();
+            if (lowerHeader.includes('id')) {
+              return String(1000 + i);
+            } else if (lowerHeader.includes('name') || lowerHeader.includes('title')) {
               return `"Sample ${header} ${i + 1}"`;
-            } else if (header.toLowerCase().includes('date') || header.toLowerCase().includes('time')) {
+            } else if (lowerHeader.includes('date') || lowerHeader.includes('time')) {
               const date = new Date();
               date.setDate(date.getDate() - Math.floor(Math.random() * 365));
               return date.toISOString().split('T')[0];
-            } else if (header.toLowerCase().includes('amount') || header.toLowerCase().includes('value') || header.toLowerCase().includes('price')) {
+            } else if (lowerHeader.includes('amount') || lowerHeader.includes('value') || lowerHeader.includes('price')) {
               return String((Math.random() * 1000).toFixed(2));
             } else {
               return `"${header}_value_${i + 1}"`;
@@ -154,23 +159,23 @@ export const useContinueCase = () => {
       
       const csvContent = csvRows.join('\n');
       
-      console.log('✅ Created mock file:', {
+      console.log('✅ Created continue case file:', {
         filename: data.name,
-        size: csvContent.length,
-        rows: csvRows.length - 1, // Subtract header row
-        columns: columnHeaders.length,
-        sampleContent: csvContent.substring(0, 200) + '...'
+        contentSize: csvContent.length,
+        totalRows: csvRows.length - 1,
+        columns: columnHeaders.length
       });
       
-      // Create a proper File object with the CSV content
+      // Create a File object that mimics a real uploaded file
       const file = new File([csvContent], data.name, { 
         type: 'text/csv',
         lastModified: Date.now()
       });
       
-      // Add custom properties to help with analysis
+      // Add metadata to help the data pipeline
       (file as any).parsedData = data;
       (file as any).isReconstructed = true;
+      (file as any).originalDataset = true;
       
       return file;
     });

@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import ProjectAnalysisView from '@/components/ProjectAnalysisView';
 import NewProjectContent from './NewProjectContent';
@@ -20,11 +19,14 @@ const NewProjectContainer = () => {
   const flowManager = useProjectFlowManager();
   const { reconstructAnalysisState, createMockFilesFromParsedData } = useContinueCase();
   
+  const [continueSetupComplete, setContinueSetupComplete] = useState(false);
+  const [continueSetupError, setContinueSetupError] = useState<string | null>(null);
+  
   const isContinueCase = location.state?.continueInvestigation;
 
-  // Handle continue investigation with improved logic
+  // Handle continue investigation with improved error handling
   useEffect(() => {
-    if (location.state?.continueInvestigation && location.state?.dataset) {
+    if (location.state?.continueInvestigation && location.state?.dataset && !continueSetupComplete) {
       const dataset = location.state.dataset;
       
       console.log('🔍 Continue case detected - Setting up analysis state from dataset:', dataset.id);
@@ -41,6 +43,15 @@ const NewProjectContainer = () => {
           projectName: analysisState.projectName
         });
         
+        // Validate reconstructed data
+        if (!analysisState.parsedData || analysisState.parsedData.length === 0) {
+          throw new Error('No data found in dataset for analysis');
+        }
+        
+        if (!analysisState.researchQuestion) {
+          throw new Error('No research question found in dataset');
+        }
+        
         // Set all form data from reconstructed state
         formData.setResearchQuestion(analysisState.researchQuestion);
         formData.setAdditionalContext(analysisState.additionalContext);
@@ -53,17 +64,22 @@ const NewProjectContainer = () => {
         
         console.log('✅ Continue case setup completed successfully:', {
           filesCreated: mockFiles.length,
-          totalFileSize: mockFiles.reduce((sum, file) => sum + file.size, 0)
+          totalFileSize: mockFiles.reduce((sum, file) => sum + file.size, 0),
+          researchQuestion: analysisState.researchQuestion
         });
+        
+        setContinueSetupComplete(true);
+        setContinueSetupError(null);
         
       } catch (error) {
         console.error('❌ Error setting up continue case:', error);
+        setContinueSetupError(error instanceof Error ? error.message : 'Failed to setup continue case');
       }
       
       // Clear location state to prevent re-triggering
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, formData, reconstructAnalysisState, createMockFilesFromParsedData]);
+  }, [location.state, formData, reconstructAnalysisState, createMockFilesFromParsedData, continueSetupComplete]);
 
   console.log('🕵️ Current investigation state:', {
     step: formData.step,
@@ -81,6 +97,8 @@ const NewProjectContainer = () => {
     analysisProgress: flowManager.analysisProgress,
     analysisError: flowManager.analysisError,
     isContinueCase,
+    continueSetupComplete,
+    continueSetupError,
     researchQuestion: formData.researchQuestion
   });
 
@@ -100,13 +118,12 @@ const NewProjectContainer = () => {
     let filesToProcess = formData.files;
     
     // For continue case, ensure we have properly formatted files
-    if (isContinueCase) {
-      console.log('🔄 Continue case: Preparing evidence files for analysis...');
+    if (isContinueCase && continueSetupComplete) {
+      console.log('🔄 Continue case: Using prepared evidence files for analysis...');
       
       if (!filesToProcess || filesToProcess.length === 0) {
-        console.log('📁 Creating files from parsed data for continue case analysis');
-        filesToProcess = createMockFilesFromParsedData(formData.parsedData);
-        formData.setFiles(filesToProcess); // Update form state with the files
+        console.error('❌ Continue case setup completed but no files available');
+        return;
       }
       
       // Log file details for debugging
@@ -115,7 +132,8 @@ const NewProjectContainer = () => {
           name: file.name,
           size: file.size,
           type: file.type,
-          isReconstructed: (file as any).isReconstructed
+          isReconstructed: (file as any).isReconstructed,
+          hasContent: file.size > 0
         });
       });
     }
@@ -166,6 +184,36 @@ const NewProjectContainer = () => {
     return '🎯 Case almost solved...';
   };
 
+  // Show continue case setup error if there is one
+  if (continueSetupError) {
+    return (
+      <NewProjectLayout>
+        <div className="container mx-auto px-4 py-8">
+          <ProjectHeader isContinueCase={isContinueCase} />
+          <div className="max-w-md mx-auto mt-12">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="text-red-600 text-2xl">🚨</div>
+              </div>
+              <h3 className="text-xl font-semibold text-red-800 mb-2">Case Setup Failed</h3>
+              <p className="text-red-600 mb-4">{continueSetupError}</p>
+              <button 
+                onClick={() => {
+                  setContinueSetupError(null);
+                  setContinueSetupComplete(false);
+                  formData.resetForm();
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Start New Case
+              </button>
+            </div>
+          </div>
+        </div>
+      </NewProjectLayout>
+    );
+  }
+
   // Show analysis view if we have completed analysis AND results
   if (flowManager.showAnalysisView && flowManager.analysisResults) {
     console.log('📊 Rendering detective case results view');
@@ -213,7 +261,7 @@ const NewProjectContainer = () => {
                   <Progress value={flowManager.analysisProgress} className="w-full h-3" />
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>{Math.round(flowManager.analysisProgress)}% complete</span>
-                    <span>~{getEstimatedTime().toFixed(1)} min remaining</span>
+                    <span>~{(flowManager.analysisProgress === 0 ? 2.0 : flowManager.analysisProgress < 25 ? 1.5 : flowManager.analysisProgress < 50 ? 1.0 : flowManager.analysisProgress < 75 ? 0.5 : 0.1).toFixed(1)} min remaining</span>
                   </div>
                 </div>
                 
@@ -223,7 +271,15 @@ const NewProjectContainer = () => {
                     <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
                     <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                   </div>
-                  <p className="text-sm text-gray-500">{getProgressPhase()}</p>
+                  <p className="text-sm text-gray-500">
+                    {flowManager.analysisProgress < 15 ? '🔍 Cataloging evidence files...' :
+                     flowManager.analysisProgress < 30 ? '🧐 Examining data patterns...' :
+                     flowManager.analysisProgress < 50 ? '🕵️ Following the data trail...' :
+                     flowManager.analysisProgress < 70 ? '🔗 Connecting the clues...' :
+                     flowManager.analysisProgress < 85 ? '📝 Building the case...' :
+                     flowManager.analysisProgress < 95 ? '📊 Preparing final report...' :
+                     '🎯 Case almost solved...'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -251,6 +307,8 @@ const NewProjectContainer = () => {
                     onClick={() => {
                       flowManager.backToProject();
                       formData.resetForm();
+                      setContinueSetupComplete(false);
+                      setContinueSetupError(null);
                     }}
                     className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
                   >
