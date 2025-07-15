@@ -133,18 +133,18 @@ export const useNewProjectForm = () => {
         isReconstructed: (f as any).isReconstructed 
       })));
 
-      // CRITICAL FIX: Set the project name correctly
+      // CRITICAL FIX: Extract the project name correctly
       const projectNameToSet = reconstructedState.projectName || dataset.name || 'Untitled Project';
       
-      console.log('🎯 CRITICAL: Setting project name to:', projectNameToSet);
+      console.log('🎯 CRITICAL: Final project name to set:', projectNameToSet);
 
-      // Update the form data with the project name FIRST
+      // Update form data with proper project name
       setFormData(prev => {
         const newFormData = {
           ...prev,
-          projectName: projectNameToSet, // This is the key fix
-          researchQuestion: reconstructedState.researchQuestion,
-          businessContext: reconstructedState.additionalContext,
+          projectName: projectNameToSet,
+          researchQuestion: reconstructedState.researchQuestion || '',
+          businessContext: reconstructedState.additionalContext || '',
           file: mockFiles[0] || null,
           files: mockFiles,
           uploadedData: reconstructedState.parsedData,
@@ -152,8 +152,7 @@ export const useNewProjectForm = () => {
           step: reconstructedState.step,
         };
 
-        console.log('✅ CRITICAL: Final formData being set with projectName:', newFormData.projectName);
-        console.log('✅ CRITICAL: Complete formData:', {
+        console.log('✅ FINAL FORM DATA SET:', {
           projectName: newFormData.projectName,
           researchQuestion: newFormData.researchQuestion,
           step: newFormData.step,
@@ -188,7 +187,7 @@ export const useNewProjectForm = () => {
     setError(null);
   }, []);
 
-  // CRITICAL: Make sure setProjectName is always included
+  // Enhanced form data with methods
   const enhancedFormData = {
     ...formData,
     setProjectName,
@@ -202,8 +201,9 @@ export const useNewProjectForm = () => {
     setColumnMapping,
   };
 
-  console.log('🔍 useNewProjectForm final state:', {
+  console.log('🔍 useNewProjectForm final enhanced data:', {
     projectName: enhancedFormData.projectName,
+    projectNameLength: enhancedFormData.projectName?.length || 0,
     researchQuestion: enhancedFormData.researchQuestion,
     step: enhancedFormData.step,
     hasSetProjectName: !!enhancedFormData.setProjectName,
