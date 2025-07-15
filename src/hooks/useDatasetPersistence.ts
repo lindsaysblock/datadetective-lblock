@@ -18,13 +18,15 @@ export interface Dataset {
   updated_at: string;
 }
 
+// Updated interface to be compatible with Supabase Json type
 export interface EnhancedDatasetMetadata {
   researchQuestion: string;
   additionalContext: string;
-  parsedData: ParsedDataFile[];
+  parsedData: any[]; // Changed from ParsedDataFile[] to any[] for Json compatibility
   analysisReady: boolean;
   totalFiles: number;
   projectName: string;
+  [key: string]: any; // Added index signature for Json compatibility
 }
 
 export const useDatasetPersistence = () => {
@@ -68,7 +70,17 @@ export const useDatasetPersistence = () => {
       const enhancedMetadata: EnhancedDatasetMetadata = {
         researchQuestion,
         additionalContext,
-        parsedData,
+        parsedData: parsedData.map(data => ({
+          id: data.id,
+          name: data.name,
+          rows: data.rows,
+          columns: data.columns,
+          rowCount: data.rowCount,
+          preview: data.preview,
+          data: data.data,
+          columnInfo: data.columnInfo,
+          summary: data.summary
+        })), // Convert to plain objects for Json compatibility
         analysisReady: true,
         totalFiles: parsedData.length,
         projectName
@@ -96,17 +108,18 @@ export const useDatasetPersistence = () => {
       // Use the first file's name or a default
       const primaryFilename = parsedData[0]?.name || 'project_data.csv';
 
+      // Fixed: Remove array brackets and ensure proper typing
       const { data, error } = await supabase
         .from('datasets')
-        .insert([{
+        .insert({
           user_id: user.id,
           name: projectName,
           original_filename: primaryFilename,
           file_size: null,
           mime_type: primaryFilename.endsWith('.csv') ? 'text/csv' : 'application/json',
-          metadata: enhancedMetadata,
-          summary: summary
-        }])
+          metadata: enhancedMetadata as any, // Type assertion for Json compatibility
+          summary: summary as any // Type assertion for Json compatibility
+        })
         .select()
         .single();
 
@@ -144,7 +157,7 @@ export const useDatasetPersistence = () => {
 
       const { data, error } = await supabase
         .from('datasets')
-        .insert([{
+        .insert({
           user_id: user.id,
           name: filename.replace(/\.[^/.]+$/, ""),
           original_filename: filename,
@@ -152,7 +165,7 @@ export const useDatasetPersistence = () => {
           mime_type: filename.endsWith('.csv') ? 'text/csv' : 'application/json',
           metadata: metadata,
           summary: parsedData.summary || {}
-        }])
+        })
         .select()
         .single();
 
