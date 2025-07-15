@@ -8,6 +8,7 @@ import BusinessContextStep from './BusinessContextStep';
 import AnalysisSummaryStep from './AnalysisSummaryStep';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import { useAuth } from '@/hooks/useAuth';
+import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
 import { useToast } from '@/hooks/use-toast';
 
 interface NewProjectContentProps {
@@ -17,6 +18,7 @@ interface NewProjectContentProps {
 const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }) => {
   const formData = useNewProjectForm();
   const { user } = useAuth();
+  const { saveAnalysisProject } = useDatasetPersistence();
   const { toast } = useToast();
 
   console.log('NewProjectContent formData:', {
@@ -57,7 +59,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
       return;
     }
 
-    if (!formData.files || formData.files.length === 0) {
+    if (!formData.parsedData || formData.parsedData.length === 0) {
       toast({
         title: "Data Required",
         description: "Please upload data files before starting analysis.",
@@ -66,79 +68,18 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
       return;
     }
 
-    // Check for duplicate project names
     try {
-      const { supabase } = await import('@/integrations/supabase/client');
-      const { data: existingProjects, error } = await supabase
-        .from('datasets')
-        .select('id')
-        .eq('name', projectName.trim())
-        .eq('user_id', user.id)
-        .limit(1);
+      // Save the complete analysis project with enhanced metadata
+      console.log('Saving analysis project with enhanced metadata');
+      
+      await saveAnalysisProject(
+        projectName,
+        formData.researchQuestion,
+        formData.additionalContext || '',
+        formData.parsedData
+      );
 
-      if (error) {
-        console.error('Error checking project name:', error);
-        toast({
-          title: "Validation Error",
-          description: "Unable to validate project name. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (existingProjects && existingProjects.length > 0) {
-        toast({
-          title: "Project Name Exists",
-          description: "A project with this name already exists. Please choose a different name.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Save project to history
-      for (const data of formData.parsedData) {
-        const metadata = {
-          columns: data.columnInfo || [],
-          sample_rows: data.preview?.slice(0, 10) || [],
-          totalRows: data.rowCount || data.rows || 0
-        };
-
-        const summary = {
-          projectName,
-          researchQuestion: formData.researchQuestion,
-          description: formData.additionalContext,
-          totalRows: data.rowCount || data.rows || 0,
-          totalColumns: data.columnInfo?.length || data.columns || 0,
-          ...data.summary
-        };
-
-        const { error: insertError } = await supabase
-          .from('datasets')
-          .insert([{
-            user_id: user.id,
-            name: projectName,
-            original_filename: data.name || 'uploaded_file.csv',
-            file_size: null,
-            mime_type: data.name?.endsWith('.csv') ? 'text/csv' : 'application/json',
-            metadata: metadata,
-            summary: summary
-          }]);
-
-        if (insertError) {
-          console.error('Error saving project:', insertError);
-          toast({
-            title: "Save Failed",
-            description: "Failed to save project to history. Please try again.",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      toast({
-        title: "Project Saved",
-        description: `"${projectName}" has been saved to your project history.`,
-      });
+      console.log('Project saved successfully, starting analysis');
 
       // Now start the analysis
       onStartAnalysis(educationalMode, projectName);

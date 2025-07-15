@@ -8,89 +8,58 @@ import NewProjectLayout from './NewProjectLayout';
 import { useProjectFlowManager } from '@/hooks/useProjectFlowManager';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import { useAuth } from '@/hooks/useAuth';
+import { useContinueCase } from '@/hooks/useContinueCase';
 import { Progress } from '@/components/ui/progress';
 
 const NewProjectContainer = () => {
   console.log('NewProjectContainer component rendering');
   
-  // ALL HOOKS MUST BE CALLED IN THE SAME ORDER EVERY TIME
   const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const formData = useNewProjectForm();
   const flowManager = useProjectFlowManager();
+  const { reconstructAnalysisState, createMockFilesFromParsedData } = useContinueCase();
   
-  // Compute derived values after all hooks are called
   const isContinueCase = location.state?.continueInvestigation;
 
-  // Handle continue investigation from query history - this useEffect must always run
+  // Handle continue investigation with improved logic
   useEffect(() => {
     if (location.state?.continueInvestigation && location.state?.dataset) {
       const dataset = location.state.dataset;
-      const step = location.state.step || 4;
       
-      console.log('Continuing investigation with dataset:', dataset);
-      console.log('Dataset metadata:', dataset.metadata);
-      console.log('Dataset summary:', dataset.summary);
+      console.log('Continue case: Setting up analysis state from dataset:', dataset.id);
       
-      // Reconstruct the form data from the dataset
-      const reconstructedParsedData = [{
-        id: dataset.id,
-        name: dataset.original_filename,
-        columns: Array.isArray(dataset.metadata?.columns) ? dataset.metadata.columns.length : 0,
-        rows: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
-        rowCount: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
-        preview: Array.isArray(dataset.metadata?.sample_rows) ? dataset.metadata.sample_rows : [],
-        data: Array.isArray(dataset.metadata?.sample_rows) ? dataset.metadata.sample_rows : [],
-        columnInfo: Array.isArray(dataset.metadata?.columns) ? dataset.metadata.columns.map((col: any) => ({
-          name: col.name || col,
-          type: col.type || 'string',
-          samples: col.samples || []
-        })) : [],
-        summary: {
-          totalRows: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
-          totalColumns: Array.isArray(dataset.metadata?.columns) ? dataset.metadata.columns.length : 0,
-          possibleUserIdColumns: dataset.summary?.possibleUserIdColumns || [],
-          possibleEventColumns: dataset.summary?.possibleEventColumns || [],
-          possibleTimestampColumns: dataset.summary?.possibleTimestampColumns || []
-        }
-      }];
+      try {
+        // Reconstruct the complete analysis state
+        const analysisState = reconstructAnalysisState(dataset);
+        
+        console.log('Reconstructed analysis state:', {
+          hasResearchQuestion: !!analysisState.researchQuestion,
+          hasAdditionalContext: !!analysisState.additionalContext,
+          parsedDataCount: analysisState.parsedData.length,
+          step: analysisState.step
+        });
+        
+        // Set all form data from reconstructed state
+        formData.setResearchQuestion(analysisState.researchQuestion);
+        formData.setAdditionalContext(analysisState.additionalContext);
+        formData.setParsedData(analysisState.parsedData);
+        formData.setStep(analysisState.step);
+        
+        // Create mock files for the analysis pipeline
+        const mockFiles = createMockFilesFromParsedData(analysisState.parsedData);
+        formData.setFiles(mockFiles);
+        
+        console.log('Continue case setup completed successfully');
+        
+      } catch (error) {
+        console.error('Error setting up continue case:', error);
+      }
       
-      console.log('Reconstructed parsed data:', reconstructedParsedData);
-      
-      // Set the form data with proper values
-      formData.setResearchQuestion(dataset.summary?.researchQuestion || '');
-      formData.setAdditionalContext(dataset.summary?.description || dataset.summary?.additionalContext || '');
-      formData.setParsedData(reconstructedParsedData);
-      
-      // Create proper mock files for the form - this is crucial for analysis
-      const mockFiles = [{
-        name: dataset.original_filename,
-        type: dataset.mime_type || 'text/csv',
-        size: dataset.file_size || 1000,
-        lastModified: new Date(dataset.created_at).getTime(),
-        // Add the actual data as a blob so the analysis can work
-        stream: () => new ReadableStream(),
-        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-        text: () => Promise.resolve(''),
-        slice: () => new Blob()
-      }];
-      
-      formData.setFiles(mockFiles as File[]);
-      
-      // Force step to 4 for continue case
-      formData.setStep(4);
-      
-      console.log('Continue case setup completed:', {
-        step: 4,
-        hasResearchQuestion: !!formData.researchQuestion,
-        hasFiles: mockFiles.length > 0,
-        hasParsedData: reconstructedParsedData.length > 0
-      });
-      
-      // Clear the location state to prevent re-triggering
+      // Clear location state to prevent re-triggering
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, formData]); // Dependencies are consistent
+  }, [location.state, formData, reconstructAnalysisState, createMockFilesFromParsedData]);
 
   console.log('Current flow state:', {
     step: formData.step,
@@ -114,40 +83,22 @@ const NewProjectContainer = () => {
   const handleStartAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
     console.log('🚀 Starting analysis with:', { educationalMode, projectName });
     
-    // Check authentication
     if (!user && !authLoading) {
       console.log('User not authenticated');
       return;
     }
 
-    // Validate form data
     if (!formData.researchQuestion?.trim()) {
       console.error('Research question is required');
       return;
     }
 
-    // For continue case, we need to handle files differently
     let filesToProcess = formData.files;
     
+    // For continue case, ensure we have files for the analysis pipeline
     if (isContinueCase && (!filesToProcess || filesToProcess.length === 0)) {
-      console.log('Continue case: Creating synthetic files from parsed data');
-      
-      // Create synthetic files from parsed data for continue case
-      filesToProcess = formData.parsedData.map(data => {
-        const columnHeaders = data.columnInfo?.map(col => col.name) || [];
-        const sampleRows = data.preview || [];
-        
-        const csvContent = [
-          columnHeaders.join(','),
-          ...sampleRows.map(row => 
-            columnHeaders.map(header => row[header] || '').join(',')
-          )
-        ].join('\n');
-        
-        return new File([csvContent], data.name, { type: 'text/csv' });
-      });
-      
-      console.log('Created synthetic files:', filesToProcess.map(f => f.name));
+      console.log('Continue case: Creating files from parsed data for analysis');
+      filesToProcess = createMockFilesFromParsedData(formData.parsedData);
     }
 
     if (!filesToProcess || filesToProcess.length === 0) {
@@ -158,13 +109,7 @@ const NewProjectContainer = () => {
     const finalProjectName = projectName || `Analysis ${Date.now()}`;
     
     try {
-      console.log('📊 Calling flowManager.executeFullAnalysis with:', {
-        researchQuestion: formData.researchQuestion,
-        additionalContext: formData.additionalContext || '',
-        educationalMode,
-        filesCount: filesToProcess.length,
-        projectName: finalProjectName
-      });
+      console.log('📊 Executing analysis for continue case:', isContinueCase);
 
       const results = await flowManager.executeFullAnalysis(
         formData.researchQuestion,
@@ -180,7 +125,6 @@ const NewProjectContainer = () => {
     }
   };
 
-  // Calculate estimated time based on progress
   const getEstimatedTime = () => {
     if (flowManager.analysisProgress === 0) return 2.0;
     if (flowManager.analysisProgress < 25) return 1.5;
@@ -210,7 +154,7 @@ const NewProjectContainer = () => {
       <div className="container mx-auto px-4 py-8" data-testid="new-project-container">
         <ProjectHeader isContinueCase={isContinueCase} />
         
-        {/* Show processing overlay when data is being processed */}
+        {/* Processing overlay */}
         {flowManager.isProcessingData && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
@@ -223,7 +167,7 @@ const NewProjectContainer = () => {
           </div>
         )}
 
-        {/* Enhanced analysis overlay with progress bar and ETA */}
+        {/* Enhanced analysis overlay */}
         {flowManager.isAnalyzing && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
@@ -232,7 +176,6 @@ const NewProjectContainer = () => {
                 <h3 className="text-xl font-semibold">Analyzing Your Data...</h3>
                 <p className="text-gray-600">Please wait while we process your analysis for "{flowManager.currentProjectName}"</p>
                 
-                {/* Enhanced Progress Bar */}
                 <div className="space-y-3">
                   <Progress value={flowManager.analysisProgress} className="w-full h-3" />
                   <div className="flex justify-between text-sm text-gray-600">
@@ -254,7 +197,7 @@ const NewProjectContainer = () => {
           </div>
         )}
 
-        {/* Show error overlay only for true analysis failures */}
+        {/* Error overlay */}
         {flowManager.analysisError && !flowManager.analysisCompleted && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">

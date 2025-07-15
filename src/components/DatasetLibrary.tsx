@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ interface DatasetLibraryProps {
 const DatasetLibrary: React.FC<DatasetLibraryProps> = ({ onDatasetSelect }) => {
   const { datasets, loading, deleteDataset } = useDatasetPersistence();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleExport = async (dataset: any) => {
     try {
@@ -51,6 +53,27 @@ const DatasetLibrary: React.FC<DatasetLibraryProps> = ({ onDatasetSelect }) => {
         description: error.message || "Failed to export dataset",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleContinueInvestigation = (dataset: any) => {
+    console.log('Continuing investigation with dataset:', dataset.id);
+    
+    // Use the unified continue case navigation
+    navigate('/new-project', { 
+      state: { 
+        continueInvestigation: true,
+        dataset: dataset,
+        step: 4
+      }
+    });
+  };
+
+  const handleDatasetSelect = (dataset: any) => {
+    if (onDatasetSelect) {
+      onDatasetSelect(dataset);
+    } else {
+      handleContinueInvestigation(dataset);
     }
   };
 
@@ -119,16 +142,14 @@ const DatasetLibrary: React.FC<DatasetLibraryProps> = ({ onDatasetSelect }) => {
               )}
               
               <div className="flex gap-2 pt-2">
-                {onDatasetSelect && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => onDatasetSelect(dataset)}
-                  >
-                    Analyze
-                  </Button>
-                )}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleDatasetSelect(dataset)}
+                >
+                  Continue Analysis
+                </Button>
                 
                 <Button 
                   variant="outline" 
