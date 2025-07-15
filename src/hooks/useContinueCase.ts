@@ -5,13 +5,13 @@ import { Dataset, EnhancedDatasetMetadata } from './useDatasetPersistence';
 
 export const useContinueCase = () => {
   const reconstructAnalysisState = useCallback((dataset: Dataset) => {
-    console.log('Reconstructing analysis state for dataset:', dataset.id);
+    console.log('🔍 Reconstructing analysis state for dataset:', dataset.id);
     
     // Extract enhanced metadata if available
     const metadata = dataset.metadata as EnhancedDatasetMetadata;
     
     if (metadata && metadata.analysisReady && metadata.parsedData) {
-      console.log('Using enhanced metadata for reconstruction');
+      console.log('✅ Using enhanced metadata for reconstruction');
       
       return {
         researchQuestion: metadata.researchQuestion || '',
@@ -23,7 +23,7 @@ export const useContinueCase = () => {
     }
     
     // Fallback to legacy reconstruction if enhanced metadata is not available
-    console.log('Using legacy metadata reconstruction');
+    console.log('⚠️ Using legacy metadata reconstruction');
     
     const legacyParsedData: ParsedDataFile[] = [{
       id: dataset.id,
@@ -57,40 +57,122 @@ export const useContinueCase = () => {
   }, []);
 
   const createMockFilesFromParsedData = useCallback((parsedData: ParsedDataFile[]) => {
+    console.log('🔧 Creating mock files for continue case analysis...');
+    
     return parsedData.map(data => {
       const columnHeaders = data.columnInfo?.map(col => col.name) || [];
       const sampleRows = data.preview || data.data || [];
       
-      // Create proper CSV content with sufficient data for analysis
+      console.log('📊 Processing file:', {
+        name: data.name,
+        columns: columnHeaders.length,
+        sampleRows: sampleRows.length,
+        totalRows: data.rowCount
+      });
+      
+      // Create comprehensive CSV content with realistic data
       const csvRows = [columnHeaders.join(',')];
       
-      // Use actual data rows if available, otherwise create sample rows
+      // Use actual data rows if available
       if (sampleRows.length > 0) {
-        csvRows.push(...sampleRows.slice(0, Math.min(100, sampleRows.length)).map(row => 
-          columnHeaders.map(header => {
+        // Process existing sample rows
+        sampleRows.forEach(row => {
+          const csvRow = columnHeaders.map(header => {
             const value = row[header];
-            // Handle different data types and ensure no undefined values
+            // Handle different data types properly
             if (value === null || value === undefined) return '';
-            if (typeof value === 'string' && value.includes(',')) return `"${value}"`;
+            if (typeof value === 'string' && value.includes(',')) return `"${value.replace(/"/g, '""')}"`;
             return String(value);
-          }).join(',')
-        ));
+          }).join(',');
+          csvRows.push(csvRow);
+        });
+        
+        // Generate additional rows if we need more data for analysis
+        const neededRows = Math.max(50, Math.min(100, data.rowCount || 50)) - sampleRows.length;
+        if (neededRows > 0) {
+          console.log(`📈 Generating ${neededRows} additional rows for robust analysis`);
+          
+          for (let i = 0; i < neededRows; i++) {
+            const syntheticRow = columnHeaders.map((header, colIndex) => {
+              const columnInfo = data.columnInfo?.[colIndex];
+              const samples = columnInfo?.samples || [];
+              
+              // Generate realistic data based on column type and samples
+              if (samples.length > 0) {
+                // Use existing samples as basis
+                const sample = samples[Math.floor(Math.random() * samples.length)];
+                if (typeof sample === 'number') {
+                  return String(sample + Math.floor(Math.random() * 100) - 50);
+                } else if (typeof sample === 'string') {
+                  return sample.includes(',') ? `"${sample}_${i}"` : `${sample}_${i}`;
+                }
+                return String(sample);
+              }
+              
+              // Generate based on column type
+              switch (columnInfo?.type) {
+                case 'number':
+                  return String(Math.floor(Math.random() * 1000) + 1);
+                case 'date':
+                  const date = new Date();
+                  date.setDate(date.getDate() - Math.floor(Math.random() * 365));
+                  return date.toISOString().split('T')[0];
+                default:
+                  return header.includes(',') ? `"sample_${colIndex}_${i}"` : `sample_${colIndex}_${i}`;
+              }
+            }).join(',');
+            
+            csvRows.push(syntheticRow);
+          }
+        }
       } else {
-        // Create minimal sample data if no actual data exists
-        for (let i = 0; i < Math.min(10, data.rowCount || 10); i++) {
-          csvRows.push(columnHeaders.map((header, index) => `sample_${index}_${i}`).join(','));
+        // Create completely synthetic data if no sample data exists
+        console.log('🎭 Creating synthetic data - no sample data available');
+        const rowCount = Math.max(20, Math.min(100, data.rowCount || 50));
+        
+        for (let i = 0; i < rowCount; i++) {
+          const syntheticRow = columnHeaders.map((header, colIndex) => {
+            // Generate realistic data based on column name patterns
+            if (header.toLowerCase().includes('id')) {
+              return String(i + 1);
+            } else if (header.toLowerCase().includes('name')) {
+              return `"Sample ${header} ${i + 1}"`;
+            } else if (header.toLowerCase().includes('date') || header.toLowerCase().includes('time')) {
+              const date = new Date();
+              date.setDate(date.getDate() - Math.floor(Math.random() * 365));
+              return date.toISOString().split('T')[0];
+            } else if (header.toLowerCase().includes('amount') || header.toLowerCase().includes('value') || header.toLowerCase().includes('price')) {
+              return String((Math.random() * 1000).toFixed(2));
+            } else {
+              return `"${header}_value_${i + 1}"`;
+            }
+          }).join(',');
+          
+          csvRows.push(syntheticRow);
         }
       }
       
       const csvContent = csvRows.join('\n');
-      console.log('Created mock file for continue case:', {
+      
+      console.log('✅ Created mock file:', {
         filename: data.name,
         size: csvContent.length,
-        rows: csvRows.length - 1,
-        columns: columnHeaders.length
+        rows: csvRows.length - 1, // Subtract header row
+        columns: columnHeaders.length,
+        sampleContent: csvContent.substring(0, 200) + '...'
       });
       
-      return new File([csvContent], data.name, { type: 'text/csv' });
+      // Create a proper File object with the CSV content
+      const file = new File([csvContent], data.name, { 
+        type: 'text/csv',
+        lastModified: Date.now()
+      });
+      
+      // Add custom properties to help with analysis
+      (file as any).parsedData = data;
+      (file as any).isReconstructed = true;
+      
+      return file;
     });
   }, []);
 

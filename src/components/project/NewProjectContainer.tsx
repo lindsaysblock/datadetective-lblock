@@ -12,7 +12,7 @@ import { useContinueCase } from '@/hooks/useContinueCase';
 import { Progress } from '@/components/ui/progress';
 
 const NewProjectContainer = () => {
-  console.log('NewProjectContainer component rendering');
+  console.log('🕵️ NewProjectContainer component rendering');
   
   const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
@@ -27,17 +27,18 @@ const NewProjectContainer = () => {
     if (location.state?.continueInvestigation && location.state?.dataset) {
       const dataset = location.state.dataset;
       
-      console.log('Continue case: Setting up analysis state from dataset:', dataset.id);
+      console.log('🔍 Continue case detected - Setting up analysis state from dataset:', dataset.id);
       
       try {
         // Reconstruct the complete analysis state
         const analysisState = reconstructAnalysisState(dataset);
         
-        console.log('Reconstructed analysis state:', {
+        console.log('📊 Reconstructed analysis state:', {
           hasResearchQuestion: !!analysisState.researchQuestion,
           hasAdditionalContext: !!analysisState.additionalContext,
           parsedDataCount: analysisState.parsedData.length,
-          step: analysisState.step
+          step: analysisState.step,
+          projectName: analysisState.projectName
         });
         
         // Set all form data from reconstructed state
@@ -50,10 +51,13 @@ const NewProjectContainer = () => {
         const mockFiles = createMockFilesFromParsedData(analysisState.parsedData);
         formData.setFiles(mockFiles);
         
-        console.log('Continue case setup completed successfully');
+        console.log('✅ Continue case setup completed successfully:', {
+          filesCreated: mockFiles.length,
+          totalFileSize: mockFiles.reduce((sum, file) => sum + file.size, 0)
+        });
         
       } catch (error) {
-        console.error('Error setting up continue case:', error);
+        console.error('❌ Error setting up continue case:', error);
       }
       
       // Clear location state to prevent re-triggering
@@ -61,7 +65,7 @@ const NewProjectContainer = () => {
     }
   }, [location.state, formData, reconstructAnalysisState, createMockFilesFromParsedData]);
 
-  console.log('Current flow state:', {
+  console.log('🕵️ Current investigation state:', {
     step: formData.step,
     showAnalysisView: flowManager.showAnalysisView,
     isProcessingData: flowManager.isProcessingData,
@@ -81,35 +85,54 @@ const NewProjectContainer = () => {
   });
 
   const handleStartAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
-    console.log('🚀 Starting analysis with:', { educationalMode, projectName });
+    console.log('🚀 Starting detective investigation with:', { educationalMode, projectName, isContinueCase });
     
     if (!user && !authLoading) {
-      console.log('User not authenticated');
+      console.log('❌ User not authenticated');
       return;
     }
 
     if (!formData.researchQuestion?.trim()) {
-      console.error('Research question is required');
+      console.error('❌ Research question is required for investigation');
       return;
     }
 
     let filesToProcess = formData.files;
     
-    // For continue case, ensure we have files for the analysis pipeline
-    if (isContinueCase && (!filesToProcess || filesToProcess.length === 0)) {
-      console.log('Continue case: Creating files from parsed data for analysis');
-      filesToProcess = createMockFilesFromParsedData(formData.parsedData);
+    // For continue case, ensure we have properly formatted files
+    if (isContinueCase) {
+      console.log('🔄 Continue case: Preparing evidence files for analysis...');
+      
+      if (!filesToProcess || filesToProcess.length === 0) {
+        console.log('📁 Creating files from parsed data for continue case analysis');
+        filesToProcess = createMockFilesFromParsedData(formData.parsedData);
+        formData.setFiles(filesToProcess); // Update form state with the files
+      }
+      
+      // Log file details for debugging
+      filesToProcess.forEach((file, index) => {
+        console.log(`📄 Evidence file ${index + 1}:`, {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          isReconstructed: (file as any).isReconstructed
+        });
+      });
     }
 
     if (!filesToProcess || filesToProcess.length === 0) {
-      console.error('No files available for analysis');
+      console.error('❌ No evidence files available for investigation');
       return;
     }
 
     const finalProjectName = projectName || `Investigation ${Date.now()}`;
     
     try {
-      console.log('📊 Executing analysis for continue case:', isContinueCase);
+      console.log('🔍 Executing detective analysis:', {
+        isContinueCase,
+        fileCount: filesToProcess.length,
+        projectName: finalProjectName
+      });
 
       const results = await flowManager.executeFullAnalysis(
         formData.researchQuestion,
@@ -119,9 +142,9 @@ const NewProjectContainer = () => {
         finalProjectName
       );
 
-      console.log('✅ Analysis execution completed:', results);
+      console.log('✅ Detective investigation completed:', !!results);
     } catch (error) {
-      console.error('❌ Analysis execution failed:', error);
+      console.error('❌ Detective investigation failed:', error);
     }
   };
 
@@ -134,18 +157,18 @@ const NewProjectContainer = () => {
   };
 
   const getProgressPhase = () => {
-    if (flowManager.analysisProgress < 15) return 'Cataloging evidence files...';
-    if (flowManager.analysisProgress < 30) return 'Examining data patterns...';
-    if (flowManager.analysisProgress < 50) return 'Following the data trail...';
-    if (flowManager.analysisProgress < 70) return 'Connecting the clues...';
-    if (flowManager.analysisProgress < 85) return 'Building the case...';
-    if (flowManager.analysisProgress < 95) return 'Preparing final report...';
-    return 'Case almost solved...';
+    if (flowManager.analysisProgress < 15) return '🔍 Cataloging evidence files...';
+    if (flowManager.analysisProgress < 30) return '🧐 Examining data patterns...';
+    if (flowManager.analysisProgress < 50) return '🕵️ Following the data trail...';
+    if (flowManager.analysisProgress < 70) return '🔗 Connecting the clues...';
+    if (flowManager.analysisProgress < 85) return '📝 Building the case...';
+    if (flowManager.analysisProgress < 95) return '📊 Preparing final report...';
+    return '🎯 Case almost solved...';
   };
 
   // Show analysis view if we have completed analysis AND results
   if (flowManager.showAnalysisView && flowManager.analysisResults) {
-    console.log('📊 Rendering analysis view with results');
+    console.log('📊 Rendering detective case results view');
     return (
       <ProjectAnalysisView
         projectName={flowManager.currentProjectName}
