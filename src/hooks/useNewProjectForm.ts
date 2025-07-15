@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile } from '@/utils/dataParser';
@@ -17,6 +16,14 @@ interface NewProjectFormState {
   analysisCompleted: boolean;
   isProcessingAnalysis: boolean;
   currentProjectName: string;
+}
+
+interface ContinueCaseData {
+  researchQuestion: string;
+  additionalContext: string;
+  parsedData: ParsedDataFile[];
+  files: File[];
+  step: number;
 }
 
 export const useNewProjectForm = () => {
@@ -65,6 +72,24 @@ export const useNewProjectForm = () => {
   const setColumnMapping = useCallback((mapping: any) => {
     console.log('🗂️ Setting column mapping:', mapping);
     setFormState(prev => ({ ...prev, columnMapping: mapping }));
+  }, []);
+
+  const setContinueCaseData = useCallback((data: ContinueCaseData) => {
+    console.log('🔄 Setting continue case data:', {
+      step: data.step,
+      researchQuestion: data.researchQuestion?.slice(0, 50),
+      parsedDataCount: data.parsedData.length,
+      filesCount: data.files.length
+    });
+    
+    setFormState(prev => ({
+      ...prev,
+      step: data.step,
+      researchQuestion: data.researchQuestion,
+      additionalContext: data.additionalContext,
+      parsedData: data.parsedData,
+      files: data.files
+    }));
   }, []);
 
   const addFile = useCallback((file: File) => {
@@ -231,6 +256,7 @@ export const useNewProjectForm = () => {
     setFiles,
     setParsedData,
     setColumnMapping,
+    setContinueCaseData,
     addFile,
     removeFile,
     handleFileUpload,

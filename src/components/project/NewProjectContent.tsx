@@ -6,17 +6,16 @@ import ResearchQuestionStep from './ResearchQuestionStep';
 import DataSourceStep from './DataSourceStep';
 import BusinessContextStep from './BusinessContextStep';
 import AnalysisSummaryStep from './AnalysisSummaryStep';
-import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import { useAuth } from '@/hooks/useAuth';
 import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
 import { useToast } from '@/hooks/use-toast';
 
 interface NewProjectContentProps {
+  formData: any; // Pass formData from parent
   onStartAnalysis: (educationalMode?: boolean, projectName?: string) => void;
 }
 
-const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }) => {
-  const formData = useNewProjectForm();
+const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStartAnalysis }) => {
   const { user } = useAuth();
   const { saveAnalysisProject } = useDatasetPersistence();
   const { toast } = useToast();

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import ProjectAnalysisView from '@/components/ProjectAnalysisView';
@@ -21,15 +22,17 @@ const NewProjectContainer = () => {
   
   const [continueSetupComplete, setContinueSetupComplete] = useState(false);
   const [continueSetupError, setContinueSetupError] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(false);
   
   const isContinueCase = location.state?.continueInvestigation;
 
   // Handle continue investigation with improved error handling
   useEffect(() => {
-    if (location.state?.continueInvestigation && location.state?.dataset && !continueSetupComplete) {
+    if (location.state?.continueInvestigation && location.state?.dataset && !continueSetupComplete && !isInitializing) {
       const dataset = location.state.dataset;
       
       console.log('🔍 Continue case detected - Setting up analysis state from dataset:', dataset.id);
+      setIsInitializing(true);
       
       try {
         // Reconstruct the complete analysis state
@@ -52,20 +55,23 @@ const NewProjectContainer = () => {
           throw new Error('No research question found in dataset');
         }
         
-        // Set all form data from reconstructed state
-        formData.setResearchQuestion(analysisState.researchQuestion);
-        formData.setAdditionalContext(analysisState.additionalContext);
-        formData.setParsedData(analysisState.parsedData);
-        formData.setStep(analysisState.step);
-        
-        // Create mock files for the analysis pipeline
+        // Create mock files for the analysis pipeline first
         const mockFiles = createMockFilesFromParsedData(analysisState.parsedData);
-        formData.setFiles(mockFiles);
+        
+        // Set all form data from reconstructed state in the correct order
+        formData.setContinueCaseData({
+          researchQuestion: analysisState.researchQuestion,
+          additionalContext: analysisState.additionalContext,
+          parsedData: analysisState.parsedData,
+          files: mockFiles,
+          step: analysisState.step
+        });
         
         console.log('✅ Continue case setup completed successfully:', {
           filesCreated: mockFiles.length,
           totalFileSize: mockFiles.reduce((sum, file) => sum + file.size, 0),
-          researchQuestion: analysisState.researchQuestion
+          researchQuestion: analysisState.researchQuestion,
+          step: analysisState.step
         });
         
         setContinueSetupComplete(true);
@@ -74,12 +80,14 @@ const NewProjectContainer = () => {
       } catch (error) {
         console.error('❌ Error setting up continue case:', error);
         setContinueSetupError(error instanceof Error ? error.message : 'Failed to setup continue case');
+      } finally {
+        setIsInitializing(false);
       }
       
       // Clear location state to prevent re-triggering
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, formData, reconstructAnalysisState, createMockFilesFromParsedData, continueSetupComplete]);
+  }, [location.state, formData, reconstructAnalysisState, createMockFilesFromParsedData, continueSetupComplete, isInitializing]);
 
   console.log('🕵️ Current investigation state:', {
     step: formData.step,
@@ -99,7 +107,8 @@ const NewProjectContainer = () => {
     isContinueCase,
     continueSetupComplete,
     continueSetupError,
-    researchQuestion: formData.researchQuestion
+    researchQuestion: formData.researchQuestion,
+    isInitializing
   });
 
   const handleStartAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
@@ -166,23 +175,23 @@ const NewProjectContainer = () => {
     }
   };
 
-  const getEstimatedTime = () => {
-    if (flowManager.analysisProgress === 0) return 2.0;
-    if (flowManager.analysisProgress < 25) return 1.5;
-    if (flowManager.analysisProgress < 50) return 1.0;
-    if (flowManager.analysisProgress < 75) return 0.5;
-    return 0.1;
-  };
-
-  const getProgressPhase = () => {
-    if (flowManager.analysisProgress < 15) return '🔍 Cataloging evidence files...';
-    if (flowManager.analysisProgress < 30) return '🧐 Examining data patterns...';
-    if (flowManager.analysisProgress < 50) return '🕵️ Following the data trail...';
-    if (flowManager.analysisProgress < 70) return '🔗 Connecting the clues...';
-    if (flowManager.analysisProgress < 85) return '📝 Building the case...';
-    if (flowManager.analysisProgress < 95) return '📊 Preparing final report...';
-    return '🎯 Case almost solved...';
-  };
+  // Show initialization loading for continue case
+  if (isContinueCase && isInitializing) {
+    return (
+      <NewProjectLayout>
+        <div className="container mx-auto px-4 py-8">
+          <ProjectHeader isContinueCase={isContinueCase} />
+          <div className="max-w-md mx-auto mt-12">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+              <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <h3 className="text-xl font-semibold text-blue-800 mb-2">🔍 Loading Case Files</h3>
+              <p className="text-blue-600">Reconstructing investigation data...</p>
+            </div>
+          </div>
+        </div>
+      </NewProjectLayout>
+    );
+  }
 
   // Show continue case setup error if there is one
   if (continueSetupError) {
@@ -320,7 +329,10 @@ const NewProjectContainer = () => {
           </div>
         )}
         
-        <NewProjectContent onStartAnalysis={handleStartAnalysis} />
+        <NewProjectContent 
+          formData={formData}
+          onStartAnalysis={handleStartAnalysis} 
+        />
       </div>
     </NewProjectLayout>
   );
