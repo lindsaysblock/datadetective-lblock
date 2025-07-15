@@ -14,6 +14,8 @@ interface DashboardViewProps {
   data: ParsedData;
   findings: any[];
   recommendations: any[];
+  onStartNewProject?: () => void;
+  onContinueProject?: () => void;
 }
 
 const DashboardView: React.FC<DashboardViewProps> = ({
@@ -21,7 +23,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   onTabChange,
   data,
   findings,
-  recommendations
+  recommendations,
+  onStartNewProject,
+  onContinueProject
 }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -76,38 +80,40 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           {/* Action Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
             {/* Start New Project Card */}
-            <Link to="/new-project">
-              <Card className="bg-white/80 backdrop-blur-sm border-green-200 hover:border-green-300 transition-all duration-200 hover:shadow-lg cursor-pointer h-full">
-                <CardHeader className="text-center pb-4">
-                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Plus className="w-8 h-8 text-white" strokeWidth={2.5} />
-                  </div>
-                  <CardTitle className="text-2xl text-gray-800">Start New Project</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <CardDescription className="text-lg text-gray-600">
-                    Upload fresh data and begin a new investigation
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </Link>
+            <Card 
+              className="bg-white/80 backdrop-blur-sm border-green-200 hover:border-green-300 transition-all duration-200 hover:shadow-lg cursor-pointer h-full"
+              onClick={onStartNewProject || (() => {})}
+            >
+              <CardHeader className="text-center pb-4">
+                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Plus className="w-8 h-8 text-white" strokeWidth={2.5} />
+                </div>
+                <CardTitle className="text-2xl text-gray-800">Start New Project</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <CardDescription className="text-lg text-gray-600">
+                  Upload fresh data and begin a new investigation
+                </CardDescription>
+              </CardContent>
+            </Card>
 
             {/* Continue Existing Project Card */}
-            <Link to="/query-history">
-              <Card className="bg-white/80 backdrop-blur-sm border-purple-200 hover:border-purple-300 transition-all duration-200 hover:shadow-lg cursor-pointer h-full">
-                <CardHeader className="text-center pb-4">
-                  <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Clock className="w-8 h-8 text-white" strokeWidth={2.5} />
-                  </div>
-                  <CardTitle className="text-2xl text-gray-800">Continue Existing Project</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <CardDescription className="text-lg text-gray-600">
-                    Resume analysis on your saved datasets
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </Link>
+            <Card 
+              className="bg-white/80 backdrop-blur-sm border-purple-200 hover:border-purple-300 transition-all duration-200 hover:shadow-lg cursor-pointer h-full"
+              onClick={onContinueProject || (() => {})}
+            >
+              <CardHeader className="text-center pb-4">
+                <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock className="w-8 h-8 text-white" strokeWidth={2.5} />
+                </div>
+                <CardTitle className="text-2xl text-gray-800">Continue Existing Project</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <CardDescription className="text-lg text-gray-600">
+                  Resume analysis on your saved datasets
+                </CardDescription>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
