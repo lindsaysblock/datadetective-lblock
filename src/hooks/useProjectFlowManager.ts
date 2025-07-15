@@ -30,10 +30,20 @@ export const useProjectFlowManager = () => {
     console.log('🎯 Executing full analysis pipeline');
     
     try {
-      // Step 1: Process files through data pipeline
+      // Step 1: Set project name early
+      setFlowState(prev => ({
+        ...prev,
+        currentProjectName: projectName,
+        analysisProgress: 0,
+        showAnalysisView: false
+      }));
+
+      // Step 2: Process files through data pipeline
+      console.log('📁 Processing files through data pipeline...');
       const parsedData = await dataPipeline.processFiles(files);
+      console.log('✅ File processing completed:', parsedData?.length || 0, 'files');
       
-      // Step 2: Create analysis context
+      // Step 3: Create analysis context
       const context: DataAnalysisContext = {
         researchQuestion,
         additionalContext,
@@ -45,13 +55,8 @@ export const useProjectFlowManager = () => {
         }
       };
 
-      // Step 3: Set project name and start analysis
-      setFlowState(prev => ({
-        ...prev,
-        currentProjectName: projectName,
-        analysisProgress: 0
-      }));
-
+      console.log('🔍 Starting analysis orchestration...');
+      
       // Step 4: Execute analysis with progress tracking
       const results = await analysisOrchestrator.startAnalysis(context, (progress) => {
         setFlowState(prev => ({ ...prev, analysisProgress: progress }));
@@ -59,13 +64,13 @@ export const useProjectFlowManager = () => {
 
       // Step 5: Navigate to results view if successful
       if (results && analysisOrchestrator.completed) {
+        console.log('✅ Analysis completed successfully, showing results view');
         setFlowState(prev => ({
           ...prev,
           showAnalysisView: true,
           analysisProgress: 100
         }));
         
-        console.log('✅ Full analysis pipeline completed successfully');
         return results;
       }
 
@@ -78,6 +83,7 @@ export const useProjectFlowManager = () => {
   }, [dataPipeline, analysisOrchestrator]);
 
   const backToProject = useCallback(() => {
+    console.log('🔄 Returning to project form');
     setFlowState({
       showAnalysisView: false,
       currentProjectName: '',

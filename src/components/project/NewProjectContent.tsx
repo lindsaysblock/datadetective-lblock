@@ -7,8 +7,8 @@ import DataSourceStep from './DataSourceStep';
 import BusinessContextStep from './BusinessContextStep';
 import AnalysisSummaryStep from './AnalysisSummaryStep';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
-import { useProjectFormActions } from '@/hooks/useProjectFormActions';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface NewProjectContentProps {
   onStartAnalysis: (educationalMode?: boolean, projectName?: string) => void;
@@ -17,38 +17,7 @@ interface NewProjectContentProps {
 const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }) => {
   const formData = useNewProjectForm();
   const { user } = useAuth();
-
-  // Create mock objects for the project form actions
-  const mockAnalysis = {
-    startAnalysis: () => {},
-    resetAnalysis: () => {}
-  };
-
-  const mockAuth = {
-    user,
-    setShowSignInModal: () => {}
-  };
-
-  const mockDialogs = {
-    setShowProjectDialog: () => {},
-    setRecoveryDialogDismissed: () => {}
-  };
-
-  const mockPersistence = {
-    saveFormData: () => {},
-    clearFormData: () => {},
-    getFormData: () => ({})
-  };
-
-  const projectFormActions = useProjectFormActions(
-    formData,
-    mockAnalysis,
-    mockAuth,
-    mockDialogs,
-    mockPersistence.saveFormData,
-    mockPersistence.clearFormData,
-    mockPersistence.getFormData
-  );
+  const { toast } = useToast();
 
   console.log('NewProjectContent formData:', {
     step: formData.step,
@@ -60,11 +29,127 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
   const handleStartAnalysisWrapper = async (educationalMode: boolean = false, projectName: string = '') => {
     console.log('NewProjectContent starting analysis:', { educationalMode, projectName });
     
-    // Use the project form actions to handle the start analysis (which includes saving to history)
-    await projectFormActions.handleStartAnalysisClick(educationalMode, projectName);
-    
-    // Then call the original onStartAnalysis
-    onStartAnalysis(educationalMode, projectName);
+    // Validate required fields
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to start analysis.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.researchQuestion?.trim()) {
+      toast({
+        title: "Research Question Required",
+        description: "Please enter a research question before starting analysis.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!projectName.trim()) {
+      toast({
+        title: "Project Name Required",
+        description: "Please enter a project name before starting analysis.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.files || formData.files.length === 0) {
+      toast({
+        title: "Data Required",
+        description: "Please upload data files before starting analysis.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for duplicate project names
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: existingProjects, error } = await supabase
+        .from('datasets')
+        .select('id')
+        .eq('name', projectName.trim())
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking project name:', error);
+        toast({
+          title: "Validation Error",
+          description: "Unable to validate project name. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (existingProjects && existingProjects.length > 0) {
+        toast({
+          title: "Project Name Exists",
+          description: "A project with this name already exists. Please choose a different name.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Save project to history
+      for (const data of formData.parsedData) {
+        const metadata = {
+          columns: data.columns || [],
+          sample_rows: data.rows?.slice(0, 10) || []
+        };
+
+        const summary = {
+          projectName,
+          researchQuestion: formData.researchQuestion,
+          description: formData.additionalContext,
+          totalRows: data.summary?.totalRows || data.rowCount || 0,
+          totalColumns: data.summary?.totalColumns || data.columns?.length || 0,
+          ...data.summary
+        };
+
+        const { error: insertError } = await supabase
+          .from('datasets')
+          .insert([{
+            user_id: user.id,
+            name: projectName,
+            original_filename: data.name || 'uploaded_file.csv',
+            file_size: null,
+            mime_type: data.name?.endsWith('.csv') ? 'text/csv' : 'application/json',
+            metadata: metadata,
+            summary: summary
+          }]);
+
+        if (insertError) {
+          console.error('Error saving project:', insertError);
+          toast({
+            title: "Save Failed",
+            description: "Failed to save project to history. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      toast({
+        title: "Project Saved",
+        description: `"${projectName}" has been saved to your project history.`,
+      });
+
+      // Now start the analysis
+      onStartAnalysis(educationalMode, projectName);
+
+    } catch (error) {
+      console.error('Error in project validation/saving:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred while processing your request. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const renderStepContent = () => {

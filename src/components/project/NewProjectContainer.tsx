@@ -35,8 +35,7 @@ const NewProjectContainer = () => {
     
     // Check authentication
     if (!user && !authLoading) {
-      console.log('User not authenticated, showing sign in modal');
-      // Handle auth requirement
+      console.log('User not authenticated');
       return;
     }
 
@@ -54,13 +53,23 @@ const NewProjectContainer = () => {
     const finalProjectName = projectName || `Analysis ${Date.now()}`;
     
     try {
-      await flowManager.executeFullAnalysis(
+      console.log('Calling flowManager.executeFullAnalysis with:', {
+        researchQuestion: formData.researchQuestion,
+        additionalContext: formData.additionalContext || '',
+        educationalMode,
+        filesCount: formData.files.length,
+        projectName: finalProjectName
+      });
+
+      const results = await flowManager.executeFullAnalysis(
         formData.researchQuestion,
         formData.additionalContext || '',
         educationalMode,
         formData.files,
         finalProjectName
       );
+
+      console.log('Analysis execution completed:', results);
     } catch (error) {
       console.error('Analysis execution failed:', error);
     }
