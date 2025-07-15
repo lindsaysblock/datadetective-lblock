@@ -59,14 +59,36 @@ export const useContinueCase = () => {
   const createMockFilesFromParsedData = useCallback((parsedData: ParsedDataFile[]) => {
     return parsedData.map(data => {
       const columnHeaders = data.columnInfo?.map(col => col.name) || [];
-      const sampleRows = data.preview || [];
+      const sampleRows = data.preview || data.data || [];
       
-      const csvContent = [
-        columnHeaders.join(','),
-        ...sampleRows.slice(0, 5).map(row => 
-          columnHeaders.map(header => row[header] || '').join(',')
-        )
-      ].join('\n');
+      // Create proper CSV content with sufficient data for analysis
+      const csvRows = [columnHeaders.join(',')];
+      
+      // Use actual data rows if available, otherwise create sample rows
+      if (sampleRows.length > 0) {
+        csvRows.push(...sampleRows.slice(0, Math.min(100, sampleRows.length)).map(row => 
+          columnHeaders.map(header => {
+            const value = row[header];
+            // Handle different data types and ensure no undefined values
+            if (value === null || value === undefined) return '';
+            if (typeof value === 'string' && value.includes(',')) return `"${value}"`;
+            return String(value);
+          }).join(',')
+        ));
+      } else {
+        // Create minimal sample data if no actual data exists
+        for (let i = 0; i < Math.min(10, data.rowCount || 10); i++) {
+          csvRows.push(columnHeaders.map((header, index) => `sample_${index}_${i}`).join(','));
+        }
+      }
+      
+      const csvContent = csvRows.join('\n');
+      console.log('Created mock file for continue case:', {
+        filename: data.name,
+        size: csvContent.length,
+        rows: csvRows.length - 1,
+        columns: columnHeaders.length
+      });
       
       return new File([csvContent], data.name, { type: 'text/csv' });
     });

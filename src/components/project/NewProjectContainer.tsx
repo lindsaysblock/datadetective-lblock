@@ -134,17 +134,18 @@ const NewProjectContainer = () => {
   };
 
   const getProgressPhase = () => {
-    if (flowManager.analysisProgress < 20) return 'Examining the evidence...';
-    if (flowManager.analysisProgress < 40) return 'Following the data trail...';
-    if (flowManager.analysisProgress < 60) return 'Connecting the clues...';
-    if (flowManager.analysisProgress < 80) return 'Building the case...';
+    if (flowManager.analysisProgress < 15) return 'Cataloging evidence files...';
+    if (flowManager.analysisProgress < 30) return 'Examining data patterns...';
+    if (flowManager.analysisProgress < 50) return 'Following the data trail...';
+    if (flowManager.analysisProgress < 70) return 'Connecting the clues...';
+    if (flowManager.analysisProgress < 85) return 'Building the case...';
     if (flowManager.analysisProgress < 95) return 'Preparing final report...';
     return 'Case almost solved...';
   };
 
-  // Show analysis view if we have completed analysis
+  // Show analysis view if we have completed analysis AND results
   if (flowManager.showAnalysisView && flowManager.analysisResults) {
-    console.log('📊 Rendering analysis view');
+    console.log('📊 Rendering analysis view with results');
     return (
       <ProjectAnalysisView
         projectName={flowManager.currentProjectName}
@@ -176,7 +177,7 @@ const NewProjectContainer = () => {
           </div>
         )}
 
-        {/* Enhanced analysis overlay with detective theme */}
+        {/* Enhanced analysis overlay with improved progress flow */}
         {flowManager.isAnalyzing && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
@@ -206,7 +207,7 @@ const NewProjectContainer = () => {
           </div>
         )}
 
-        {/* Error overlay */}
+        {/* Improved error overlay with better messaging */}
         {flowManager.analysisError && !flowManager.analysisCompleted && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
@@ -214,14 +215,14 @@ const NewProjectContainer = () => {
                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
                   <div className="text-red-600 text-2xl">🚨</div>
                 </div>
-                <h3 className="text-xl font-semibold">Investigation Interrupted</h3>
+                <h3 className="text-xl font-semibold">🚨 Investigation Interrupted</h3>
                 <p className="text-gray-600">{flowManager.analysisError}</p>
                 <div className="flex gap-3 justify-center">
                   <button 
                     onClick={() => handleStartAnalysis(false, flowManager.currentProjectName)}
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
-                    Retry Investigation
+                    🔍 Retry Investigation
                   </button>
                   <button 
                     onClick={() => {
@@ -230,7 +231,7 @@ const NewProjectContainer = () => {
                     }}
                     className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
                   >
-                    New Case
+                    📋 New Case
                   </button>
                 </div>
               </div>
