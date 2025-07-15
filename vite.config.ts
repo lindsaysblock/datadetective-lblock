@@ -10,29 +10,46 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     watch: {
-      usePolling: false,
-      interval: 2000,
-      binaryInterval: 2000,
+      usePolling: true,
+      interval: 5000,
+      binaryInterval: 10000,
+      depth: 2,
       ignored: [
-        '**/node_modules/**',
         '**/.git/**',
+        '**/node_modules/**',
         '**/dist/**',
+        '**/build/**',
         '**/coverage/**',
+        '**/.next/**',
+        '**/out/**',
         '**/.vscode/**',
         '**/.idea/**',
         '**/tmp/**',
         '**/temp/**',
         '**/public/**',
-        '**/build/**',
-        '**/.next/**',
-        '**/out/**'
+        '**/supabase/**',
+        '**/*.log',
+        '**/*.lock',
+        '**/package-lock.json',
+        '**/bun.lockb',
+        '**/yarn.lock',
+        '**/.env*',
+        '**/tsconfig*.json',
+        '**/vite.config.ts',
+        '**/tailwind.config.ts',
+        '**/postcss.config.js',
+        '**/eslint.config.js',
+        '**/components.json',
+        '**/*.md',
+        '**/README*',
+        '**/PRD',
+        '**/.gitignore'
       ]
     }
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -40,6 +57,14 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    exclude: ['fsevents']
+    exclude: ['fsevents'],
+    include: ['react', 'react-dom']
+  },
+  build: {
+    target: 'esnext',
+    minify: 'esbuild',
+    rollupOptions: {
+      external: ['fsevents']
+    }
   }
 }));
