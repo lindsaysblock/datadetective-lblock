@@ -1,267 +1,111 @@
-import { useState, useCallback } from 'react';
+
+import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { parseFile } from '@/utils/dataParser';
-import { ParsedDataFile } from '@/types/data';
 
-interface NewProjectFormState {
-  step: number;
+export interface FormData {
+  projectName: string;
   researchQuestion: string;
-  additionalContext: string;
-  files: File[];
-  uploading: boolean;
-  parsing: boolean;
-  parsedData: ParsedDataFile[];
-  columnMapping: any;
-  analysisResults: any;
-  analysisCompleted: boolean;
-  isProcessingAnalysis: boolean;
-  currentProjectName: string;
-}
-
-interface ContinueCaseData {
-  researchQuestion: string;
-  additionalContext: string;
-  parsedData: ParsedDataFile[];
-  files: File[];
+  businessContext: string;
+  file: File | null;
+  uploadedData: any;
   step: number;
 }
+
+const initialFormData: FormData = {
+  projectName: '',
+  researchQuestion: '',
+  businessContext: '',
+  file: null,
+  uploadedData: null,
+  step: 1,
+};
 
 export const useNewProjectForm = () => {
-  const [formState, setFormState] = useState<NewProjectFormState>({
-    step: 1,
-    researchQuestion: '',
-    additionalContext: '',
-    files: [],
-    uploading: false,
-    parsing: false,
-    parsedData: [],
-    columnMapping: { valueColumns: [], categoryColumns: [] },
-    analysisResults: null,
-    analysisCompleted: false,
-    isProcessingAnalysis: false,
-    currentProjectName: ''
-  });
-
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const setStep = useCallback((step: number) => {
-    console.log('📍 Setting step to:', step);
-    setFormState(prev => ({ ...prev, step }));
+  const updateFormData = useCallback((updates: Partial<FormData>) => {
+    setFormData(prev => ({ ...prev, ...updates }));
   }, []);
-
-  const setResearchQuestion = useCallback((question: string) => {
-    console.log('❓ Setting research question:', question.slice(0, 50) + '...');
-    setFormState(prev => ({ ...prev, researchQuestion: question }));
-  }, []);
-
-  const setAdditionalContext = useCallback((context: string) => {
-    console.log('📝 Setting additional context, length:', context.length);
-    setFormState(prev => ({ ...prev, additionalContext: context }));
-  }, []);
-
-  const setFiles = useCallback((files: File[]) => {
-    console.log('📂 Setting files:', files.map(f => f.name));
-    setFormState(prev => ({ ...prev, files }));
-  }, []);
-
-  const setParsedData = useCallback((data: ParsedDataFile[]) => {
-    console.log('📊 Setting parsed data, files:', data.length);
-    setFormState(prev => ({ ...prev, parsedData: data }));
-  }, []);
-
-  const setColumnMapping = useCallback((mapping: any) => {
-    console.log('🗂️ Setting column mapping:', mapping);
-    setFormState(prev => ({ ...prev, columnMapping: mapping }));
-  }, []);
-
-  const setContinueCaseData = useCallback((data: ContinueCaseData) => {
-    console.log('🔄 Setting continue case data:', {
-      step: data.step,
-      researchQuestion: data.researchQuestion?.slice(0, 50),
-      parsedDataCount: data.parsedData.length,
-      filesCount: data.files.length
-    });
-    
-    setFormState(prev => ({
-      ...prev,
-      step: data.step,
-      researchQuestion: data.researchQuestion,
-      additionalContext: data.additionalContext,
-      parsedData: data.parsedData,
-      files: data.files
-    }));
-  }, []);
-
-  const addFile = useCallback((file: File) => {
-    console.log('➕ Adding file:', file.name, 'Size:', file.size);
-    setFormState(prev => ({ 
-      ...prev, 
-      files: [...prev.files, file] 
-    }));
-  }, []);
-
-  const removeFile = useCallback((index: number) => {
-    console.log('➖ Removing file at index:', index);
-    setFormState(prev => ({
-      ...prev,
-      files: prev.files.filter((_, i) => i !== index),
-      parsedData: prev.parsedData.filter((_, i) => i !== index)
-    }));
-  }, []);
-
-  const handleFileUpload = useCallback(async () => {
-    if (formState.files.length === 0) {
-      console.log('⚠️ No files to upload');
-      return;
-    }
-
-    console.log('🔄 Starting file upload for files:', formState.files.map(f => f.name));
-    setFormState(prev => ({ ...prev, uploading: true, parsing: true }));
-
-    try {
-      const parsedResults: ParsedDataFile[] = [];
-
-      for (const file of formState.files) {
-        console.log('📁 Processing file:', file.name);
-        
-        // Check if it's a synthetic file (empty) from continue case
-        if (file.size === 0 && file.name) {
-          console.log('📝 Detected synthetic file, creating mock data');
-          const mockDataFile: ParsedDataFile = {
-            id: `mock-${Date.now()}-${Math.random()}`,
-            name: file.name,
-            rows: 100,
-            columns: 5,
-            rowCount: 100,
-            preview: [
-              ['ID', 'Name', 'Date', 'Value', 'Category'],
-              ['1', 'Sample A', '2024-01-01', '100', 'Type1'],
-              ['2', 'Sample B', '2024-01-02', '150', 'Type2'],
-              ['3', 'Sample C', '2024-01-03', '200', 'Type1']
-            ],
-            data: [],
-            columnInfo: [
-              { name: 'ID', type: 'number' },
-              { name: 'Name', type: 'string' },
-              { name: 'Date', type: 'date' },
-              { name: 'Value', type: 'number' },
-              { name: 'Category', type: 'string' }
-            ],
-            summary: {
-              totalRows: 100,
-              totalColumns: 5,
-              possibleUserIdColumns: ['ID'],
-              possibleEventColumns: ['Name'],
-              possibleTimestampColumns: ['Date']
-            }
-          };
-          
-          parsedResults.push(mockDataFile);
-          console.log('✅ Created mock data for:', file.name);
-          continue;
-        }
-
-        try {
-          const parsedData = await parseFile(file);
-          
-          const dataFile: ParsedDataFile = {
-            id: `file-${Date.now()}-${Math.random()}`,
-            name: file.name,
-            rows: parsedData.rowCount,
-            columns: parsedData.columns.length,
-            rowCount: parsedData.rowCount,
-            preview: parsedData.rows.slice(0, 5),
-            data: parsedData.rows,
-            columnInfo: parsedData.columns,
-            summary: {
-              totalRows: parsedData.rowCount,
-              totalColumns: parsedData.columns.length,
-              possibleUserIdColumns: parsedData.summary?.possibleUserIdColumns || [],
-              possibleEventColumns: parsedData.summary?.possibleEventColumns || [],
-              possibleTimestampColumns: parsedData.summary?.possibleTimestampColumns || []
-            }
-          };
-
-          parsedResults.push(dataFile);
-          console.log('✅ File processed successfully:', file.name);
-        } catch (error) {
-          console.error('❌ Error processing file:', file.name, error);
-          toast({
-            title: "File Processing Error",
-            description: `Failed to process ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            variant: "destructive",
-          });
-        }
-      }
-
-      setFormState(prev => ({
-        ...prev,
-        uploading: false,
-        parsing: false,
-        parsedData: parsedResults
-      }));
-
-      toast({
-        title: "Upload Successful",
-        description: `Successfully processed ${parsedResults.length} file(s)`,
-      });
-
-      console.log('✅ All files processed successfully, total:', parsedResults.length);
-    } catch (error) {
-      console.error('❌ File upload failed:', error);
-      setFormState(prev => ({ ...prev, uploading: false, parsing: false }));
-      toast({
-        title: "Upload Failed",
-        description: "There was an error processing your files.",
-        variant: "destructive",
-      });
-    }
-  }, [formState.files, toast]);
 
   const nextStep = useCallback(() => {
-    const newStep = Math.min(formState.step + 1, 4);
-    console.log('⏭️ Moving to next step:', newStep);
-    setFormState(prev => ({ ...prev, step: newStep }));
-  }, [formState.step]);
+    setFormData(prev => ({ ...prev, step: prev.step + 1 }));
+  }, []);
 
   const prevStep = useCallback(() => {
-    const newStep = Math.max(formState.step - 1, 1);
-    console.log('⏮️ Moving to previous step:', newStep);
-    setFormState(prev => ({ ...prev, step: newStep }));
-  }, [formState.step]);
+    setFormData(prev => ({ ...prev, step: Math.max(1, prev.step - 1) }));
+  }, []);
+
+  const goToStep = useCallback((step: number) => {
+    setFormData(prev => ({ ...prev, step }));
+  }, []);
+
+  const setContinueCaseData = useCallback((dataset: any) => {
+    console.log('🔄 Setting continue case data:', dataset);
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const projectName = dataset.summary?.projectName || dataset.name || 'Continued Investigation';
+      const researchQuestion = dataset.summary?.researchQuestion || dataset.summary?.description || '';
+      const businessContext = dataset.summary?.businessContext || '';
+
+      // Create a mock file object for the uploaded data
+      const mockFile = new File(
+        [JSON.stringify(dataset.data || [])], 
+        dataset.original_filename || 'dataset.json',
+        { type: 'application/json' }
+      );
+
+      const newFormData: FormData = {
+        projectName,
+        researchQuestion,
+        businessContext,
+        file: mockFile,
+        uploadedData: dataset.data || dataset,
+        step: 4, // Go directly to analysis summary
+      };
+
+      setFormData(newFormData);
+      
+      console.log('✅ Continue case data set successfully');
+      
+      toast({
+        title: "Investigation Loaded",
+        description: `Continuing with "${projectName}"`,
+      });
+
+    } catch (error) {
+      console.error('❌ Error setting continue case data:', error);
+      setError('Failed to load investigation data');
+      
+      toast({
+        title: "Load Error",
+        description: "Failed to load the investigation. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   const resetForm = useCallback(() => {
-    console.log('🔄 Resetting form');
-    setFormState({
-      step: 1,
-      researchQuestion: '',
-      additionalContext: '',
-      files: [],
-      uploading: false,
-      parsing: false,
-      parsedData: [],
-      columnMapping: { valueColumns: [], categoryColumns: [] },
-      analysisResults: null,
-      analysisCompleted: false,
-      isProcessingAnalysis: false,
-      currentProjectName: ''
-    });
+    setFormData(initialFormData);
+    setError(null);
   }, []);
 
   return {
-    ...formState,
-    setStep,
-    setResearchQuestion,
-    setAdditionalContext,
-    setFiles,
-    setParsedData,
-    setColumnMapping,
-    setContinueCaseData,
-    addFile,
-    removeFile,
-    handleFileUpload,
+    formData,
+    isLoading,
+    error,
+    updateFormData,
     nextStep,
     prevStep,
-    resetForm
+    goToStep,
+    setContinueCaseData,
+    resetForm,
   };
 };
