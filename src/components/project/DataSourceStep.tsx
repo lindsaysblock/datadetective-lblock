@@ -5,12 +5,14 @@ import { ArrowRight, ArrowLeft, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import DataSourceOptions from './steps/DataSourceOptions';
 import ConnectedDataSection from './steps/ConnectedDataSection';
+import { useDataSourceHandlers } from '@/hooks/useDataSourceHandlers';
 
 interface DataSourceStepProps {
   files: File[];
   uploading: boolean;
   parsing: boolean;
   parsedData: any[];
+  processedFiles?: any[];
   columnMapping?: any;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onFileUpload: () => void;
@@ -25,6 +27,7 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
   uploading,
   parsing,
   parsedData,
+  processedFiles = [],
   onFileChange,
   onFileUpload,
   onRemoveFile,
@@ -33,9 +36,9 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
 }) => {
   const [showAddMore, setShowAddMore] = React.useState(false);
 
-  // Check if we have successfully parsed data - this is the key validation
+  // Check if we have successfully parsed data
   const hasValidData = parsedData && parsedData.length > 0 && parsedData.some(data => 
-    data && (data.rows?.length > 0 || data.summary?.totalRows > 0)
+    data && (data.rows?.length > 0 || data.summary?.totalRows > 0 || data.rowCount > 0)
   );
 
   console.log('DataSourceStep validation:', {
@@ -47,101 +50,19 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
     showAddMore,
     parsedDataDetails: parsedData?.map(data => ({
       rows: data?.rows?.length || 0,
-      totalRows: data?.summary?.totalRows || 0,
+      totalRows: data?.summary?.totalRows || data?.rowCount || 0,
       name: data?.name
     }))
   });
 
-  const handleFileUpload = async (uploadedFiles: File[]) => {
-    console.log('DataSourceStep handleFileUpload called with files:', uploadedFiles);
-    
-    if (uploadedFiles.length === 0) {
-      console.log('No files provided, returning early');
-      return;
-    }
+  const dataSourceHandlers = useDataSourceHandlers(
+    onFileChange,
+    onFileUpload,
+    setShowAddMore
+  );
 
-    try {
-      // Create a proper FileList-like object
-      const fileList = Object.assign(uploadedFiles, {
-        item: (index: number) => uploadedFiles[index] || null,
-        length: uploadedFiles.length
-      }) as FileList;
-
-      // Create a proper mock event that mimics a real file input change
-      const mockEvent = {
-        target: {
-          files: fileList,
-          value: '',
-          type: 'file'
-        } as HTMLInputElement,
-        currentTarget: {
-          files: fileList,
-          value: '',
-          type: 'file'
-        } as HTMLInputElement,
-        preventDefault: () => {},
-        stopPropagation: () => {},
-        nativeEvent: new Event('change'),
-        isDefaultPrevented: () => false,
-        isPropagationStopped: () => false,
-        persist: () => {},
-        bubbles: false,
-        cancelable: false,
-        defaultPrevented: false,
-        eventPhase: 0,
-        isTrusted: false,
-        timeStamp: Date.now(),
-        type: 'change'
-      } as React.ChangeEvent<HTMLInputElement>;
-
-      console.log('Calling onFileChange with mock event for files:', uploadedFiles.map(f => f.name));
-      
-      // Call the file change handler to update state
-      onFileChange(mockEvent);
-      
-      // Wait a bit for state to update, then trigger upload
-      setTimeout(() => {
-        console.log('Triggering onFileUpload after state update');
-        onFileUpload();
-        setShowAddMore(false); // Hide the add more section after upload
-      }, 100);
-      
-    } catch (error) {
-      console.error('Error processing files in DataSourceStep:', error);
-    }
-  };
-
-  const handleDataPaste = async (data: string) => {
-    console.log('DataSourceStep handleDataPaste called with data length:', data.length);
-    try {
-      // Create a mock CSV file from pasted data
-      const mockFile = new File([data], 'pasted-data.csv', { type: 'text/csv' });
-      await handleFileUpload([mockFile]);
-    } catch (error) {
-      console.error('Error processing pasted data:', error);
-    }
-  };
-
-  const handleDatabaseConnect = async (config: any) => {
-    console.log('DataSourceStep handleDatabaseConnect called with config:', config);
-    try {
-      // Create a mock file to represent database connection
-      const mockFile = new File(['database'], 'database-connection', { type: 'application/json' });
-      await handleFileUpload([mockFile]);
-    } catch (error) {
-      console.error('Database connection error:', error);
-    }
-  };
-
-  const handlePlatformConnect = async (platform: string, config: any) => {
-    console.log('DataSourceStep handlePlatformConnect called for platform:', platform);
-    try {
-      // Create a mock file to represent platform connection
-      const mockFile = new File(['platform'], `${platform}-connection`, { type: 'application/json' });
-      await handleFileUpload([mockFile]);
-    } catch (error) {
-      console.error('Platform connection error:', error);
-    }
+  const handleAddMoreData = () => {
+    setShowAddMore(true);
   };
 
   const handleNext = () => {
@@ -153,9 +74,16 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
     onNext();
   };
 
-  const handleAddMoreData = () => {
-    setShowAddMore(true);
-  };
+  // Auto-trigger upload when files are selected but not yet processed
+  React.useEffect(() => {
+    if (files && files.length > 0 && !uploading && !parsing && !hasValidData) {
+      console.log('Auto-triggering upload for selected files');
+      const timer = setTimeout(() => {
+        onFileUpload();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [files, uploading, parsing, hasValidData, onFileUpload]);
 
   return (
     <div className="space-y-6">
@@ -165,31 +93,33 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
       </div>
 
       {/* Show existing data if available */}
-      {hasValidData && !showAddMore && (
+      {hasValidData && (
         <div className="space-y-6">
           <ConnectedDataSection
             parsedData={parsedData}
+            processedFiles={processedFiles}
             files={files}
             onRemoveFile={onRemoveFile}
             onAddMore={handleAddMoreData}
           />
           
-          {/* Add More Data Button */}
-          <Card className="border-dashed border-2 border-blue-300 bg-blue-50">
-            <CardContent className="p-6 text-center">
-              <Button
-                onClick={handleAddMoreData}
-                variant="outline"
-                className="flex items-center gap-2 mx-auto"
-              >
-                <Plus className="w-4 h-4" />
-                Add More Data Sources
-              </Button>
-              <p className="text-sm text-blue-600 mt-2">
-                You can combine multiple data sources for richer analysis
-              </p>
-            </CardContent>
-          </Card>
+          {!showAddMore && (
+            <Card className="border-dashed border-2 border-blue-300 bg-blue-50">
+              <CardContent className="p-6 text-center">
+                <Button
+                  onClick={handleAddMoreData}
+                  variant="outline"
+                  className="flex items-center gap-2 mx-auto"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add More Data Sources
+                </Button>
+                <p className="text-sm text-blue-600 mt-2">
+                  You can combine multiple data sources for richer analysis
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
@@ -210,10 +140,10 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
           )}
           
           <DataSourceOptions
-            onFileUpload={handleFileUpload}
-            onDataPaste={handleDataPaste}
-            onDatabaseConnect={handleDatabaseConnect}
-            onPlatformConnect={handlePlatformConnect}
+            onFileUpload={dataSourceHandlers.handleFileUpload}
+            onDataPaste={dataSourceHandlers.handleDataPaste}
+            onDatabaseConnect={dataSourceHandlers.handleDatabaseConnect}
+            onPlatformConnect={dataSourceHandlers.handlePlatformConnect}
           />
 
           {/* Processing State */}

@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useContinueCase } from './useContinueCase';
+import { useFileProcessing, type ProcessedFileData } from './useFileProcessing';
 
 export interface FormData {
   projectName: string;
@@ -18,16 +19,7 @@ export interface FormData {
   uploading: boolean;
   parsing: boolean;
   step: number;
-  // Methods
-  setProjectName?: (value: string) => void;
-  setResearchQuestion?: (value: string) => void;
-  setAdditionalContext?: (value: string) => void;
-  nextStep?: () => void;
-  prevStep?: () => void;
-  addFile?: (file: File) => void;
-  handleFileUpload?: () => void;
-  removeFile?: (index: number) => void;
-  setColumnMapping?: (mapping: Record<string, string>) => void;
+  processedFiles: ProcessedFileData[];
 }
 
 const initialFormData: FormData = {
@@ -45,6 +37,7 @@ const initialFormData: FormData = {
   uploading: false,
   parsing: false,
   step: 1,
+  processedFiles: [],
 };
 
 export const useNewProjectForm = () => {
@@ -53,6 +46,7 @@ export const useNewProjectForm = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const { reconstructAnalysisState, createMockFilesFromParsedData } = useContinueCase();
+  const fileProcessing = useFileProcessing();
 
   const updateFormData = useCallback((updates: Partial<FormData>) => {
     console.log('📝 updateFormData called with:', updates);
@@ -61,7 +55,8 @@ export const useNewProjectForm = () => {
       console.log('📝 Form data after update:', {
         projectName: updated.projectName,
         step: updated.step,
-        hasData: !!(updated.parsedData && updated.parsedData.length > 0)
+        hasData: !!(updated.parsedData && updated.parsedData.length > 0),
+        processedFilesCount: updated.processedFiles?.length || 0
       });
       return updated;
     });
@@ -111,9 +106,65 @@ export const useNewProjectForm = () => {
     setFormData(prev => ({ ...prev, columnMapping: mapping }));
   }, []);
 
-  const handleFileUpload = useCallback(() => {
-    console.log('File upload triggered');
-  }, []);
+  const handleFileUpload = useCallback(async () => {
+    console.log('🚀 handleFileUpload called with files:', formData.files.length);
+    
+    if (formData.files.length === 0) {
+      console.log('⚠️ No files to process');
+      return;
+    }
+
+    try {
+      // Update state to show processing
+      setFormData(prev => ({ 
+        ...prev, 
+        uploading: fileProcessing.state.uploading,
+        parsing: fileProcessing.state.parsing 
+      }));
+
+      // Process files using the file processing hook
+      const processedFiles = await fileProcessing.processFiles(formData.files);
+      
+      // Convert processed files to parsedData format
+      const parsedData = processedFiles.map(pf => ({
+        id: pf.id,
+        name: pf.name,
+        rows: pf.parsedData.rows,
+        summary: pf.parsedData.summary,
+        columns: pf.parsedData.columns,
+        rowCount: pf.parsedData.rowCount
+      }));
+
+      // Update form data with processed results
+      setFormData(prev => ({ 
+        ...prev,
+        processedFiles,
+        parsedData,
+        uploadedData: parsedData,
+        uploading: false,
+        parsing: false
+      }));
+
+      console.log('✅ File upload completed successfully:', {
+        processedCount: processedFiles.length,
+        totalRows: parsedData.reduce((sum, pd) => sum + (pd.rowCount || 0), 0)
+      });
+
+    } catch (error) {
+      console.error('❌ File upload failed:', error);
+      setFormData(prev => ({ 
+        ...prev, 
+        uploading: false, 
+        parsing: false 
+      }));
+      
+      toast({
+        title: "Upload Failed",
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        variant: "destructive",
+      });
+    }
+  }, [formData.files, fileProcessing, toast]);
 
   const setContinueCaseData = useCallback((dataset: any) => {
     console.log('🔄 Setting continue case data:', dataset);
@@ -141,33 +192,21 @@ export const useNewProjectForm = () => {
         isReconstructed: (f as any).isReconstructed 
       })));
 
-      // Extract the project name correctly with multiple fallbacks
       const projectNameToSet = reconstructedState.projectName || dataset.name || dataset.summary?.projectName || 'Untitled Project';
       
       console.log('🎯 CRITICAL: Final project name to set:', projectNameToSet);
 
-      // Use setFormData with a function to ensure we get the latest state
-      setFormData(prevFormData => {
-        const newFormData = {
-          ...prevFormData,
-          projectName: projectNameToSet,
-          researchQuestion: reconstructedState.researchQuestion || '',
-          businessContext: reconstructedState.additionalContext || '',
-          file: mockFiles[0] || null,
-          files: mockFiles,
-          uploadedData: reconstructedState.parsedData,
-          parsedData: reconstructedState.parsedData,
-          step: reconstructedState.step,
-        };
-        
-        console.log('✅ NEW FORM DATA SET:', {
-          projectName: newFormData.projectName,
-          step: newFormData.step,
-          filesCount: newFormData.files.length,
-          parsedDataCount: newFormData.parsedData.length
-        });
-        
-        return newFormData;
+      setFormData({
+        ...initialFormData,
+        projectName: projectNameToSet,
+        researchQuestion: reconstructedState.researchQuestion || '',
+        businessContext: reconstructedState.additionalContext || '',
+        file: mockFiles[0] || null,
+        files: mockFiles,
+        uploadedData: reconstructedState.parsedData,
+        parsedData: reconstructedState.parsedData,
+        step: reconstructedState.step,
+        processedFiles: [],
       });
 
       console.log('✅ CONTINUE CASE DATA SET - Project Name:', projectNameToSet);
@@ -195,39 +234,29 @@ export const useNewProjectForm = () => {
     console.log('Resetting form data');
     setFormData(initialFormData);
     setError(null);
-  }, []);
-
-  // Enhanced form data with methods - create this with current formData values
-  const enhancedFormData = {
-    ...formData, // Use current formData state directly
-    setProjectName,
-    setResearchQuestion,
-    setAdditionalContext,
-    nextStep,
-    prevStep,
-    addFile,
-    handleFileUpload,
-    removeFile,
-    setColumnMapping,
-  };
-
-  console.log('🔍 useNewProjectForm returning enhanced data:', {
-    projectName: enhancedFormData.projectName,
-    projectNameLength: enhancedFormData.projectName?.length || 0,
-    researchQuestion: enhancedFormData.researchQuestion,
-    step: enhancedFormData.step,
-    hasSetProjectName: !!enhancedFormData.setProjectName,
-    hasData: !!(enhancedFormData.parsedData && enhancedFormData.parsedData.length > 0)
-  });
+    fileProcessing.clearAll();
+  }, [fileProcessing]);
 
   return {
-    formData: enhancedFormData,
+    formData: {
+      ...formData,
+      uploading: fileProcessing.state.uploading,
+      parsing: fileProcessing.state.parsing,
+    },
     isLoading,
     error,
+    fileProcessing,
     updateFormData,
     nextStep,
     prevStep,
     goToStep,
+    setProjectName,
+    setResearchQuestion,
+    setAdditionalContext,
+    addFile,
+    removeFile,
+    setColumnMapping,
+    handleFileUpload,
     setContinueCaseData,
     resetForm,
   };
