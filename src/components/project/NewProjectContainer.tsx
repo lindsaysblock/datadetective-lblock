@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import ProjectAnalysisView from '@/components/ProjectAnalysisView';
@@ -30,7 +31,7 @@ const NewProjectContainer = () => {
         name: dataset.original_filename,
         columns: dataset.metadata?.columns || [],
         rows: dataset.metadata?.sample_rows || [],
-        rowCount: dataset.summary?.totalRows || 0,
+        rowCount: dataset.metadata?.totalRows || 0,
         summary: dataset.summary
       }];
       
@@ -105,6 +106,15 @@ const NewProjectContainer = () => {
     }
   };
 
+  // Calculate estimated time based on progress
+  const getEstimatedTime = () => {
+    if (flowManager.analysisProgress === 0) return 2;
+    if (flowManager.analysisProgress < 25) return 1.5;
+    if (flowManager.analysisProgress < 50) return 1;
+    if (flowManager.analysisProgress < 75) return 0.5;
+    return 0.1;
+  };
+
   // Show analysis view if we have completed analysis
   if (flowManager.showAnalysisView && flowManager.analysisResults) {
     console.log('Rendering analysis view');
@@ -143,17 +153,26 @@ const NewProjectContainer = () => {
         {flowManager.isAnalyzing && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
-              <div className="text-center space-y-4">
+              <div className="text-center space-y-6">
                 <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <h3 className="text-xl font-semibold">Analyzing Your Data</h3>
-                <p className="text-gray-600">Please wait while we process your analysis...</p>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div 
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300"
-                    style={{ width: `${flowManager.analysisProgress}%` }}
-                  ></div>
+                <h3 className="text-xl font-semibold">Analyzing Your Data...</h3>
+                <p className="text-gray-600">Please wait while we process your analysis for "{flowManager.currentProjectName}"</p>
+                
+                {/* Progress Bar */}
+                <div className="space-y-2">
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300"
+                      style={{ width: `${flowManager.analysisProgress}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>{Math.round(flowManager.analysisProgress)}% complete</span>
+                    <span>~{getEstimatedTime()} min remaining</span>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-500">{Math.round(flowManager.analysisProgress)}% complete</p>
+                
+                <p className="text-sm text-gray-500">Running analysis on your dataset...</p>
               </div>
             </div>
           </div>

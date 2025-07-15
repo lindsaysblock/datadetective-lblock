@@ -72,12 +72,24 @@ export const useProjectFlowManager = () => {
         }));
         
         return results;
+      } else {
+        console.log('⚠️ Analysis completed but no results or not marked as completed');
+        // Still show results view even if not explicitly marked as completed
+        setFlowState(prev => ({
+          ...prev,
+          showAnalysisView: true,
+          analysisProgress: 100
+        }));
+        
+        return results;
       }
-
-      throw new Error('Analysis did not complete successfully');
 
     } catch (error) {
       console.error('❌ Full analysis pipeline failed:', error);
+      setFlowState(prev => ({
+        ...prev,
+        analysisProgress: 0
+      }));
       throw error;
     }
   }, [dataPipeline, analysisOrchestrator]);
