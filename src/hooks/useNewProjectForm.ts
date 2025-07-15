@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useContinueCase } from './useContinueCase';
@@ -71,10 +72,10 @@ export const useNewProjectForm = () => {
   }, []);
 
   const setProjectName = useCallback((value: string) => {
-    console.log('Setting project name in useNewProjectForm:', value);
+    console.log('🎯 setProjectName called with:', value);
     setFormData(prev => {
       const updated = { ...prev, projectName: value };
-      console.log('Updated formData after setProjectName:', { projectName: updated.projectName });
+      console.log('🎯 Updated formData projectName:', updated.projectName);
       return updated;
     });
   }, []);
@@ -103,7 +104,6 @@ export const useNewProjectForm = () => {
   }, []);
 
   const handleFileUpload = useCallback(() => {
-    // File upload logic would go here
     console.log('File upload triggered');
   }, []);
 
@@ -114,7 +114,6 @@ export const useNewProjectForm = () => {
       setIsLoading(true);
       setError(null);
 
-      // Use the reconstructAnalysisState to get the proper data structure
       const reconstructedState = reconstructAnalysisState(dataset);
       
       console.log('📊 Reconstructed state:', {
@@ -123,7 +122,6 @@ export const useNewProjectForm = () => {
         originalFileSize: dataset.file_size
       });
 
-      // Create mock files from the parsed data with original file size
       const mockFiles = createMockFilesFromParsedData(
         reconstructedState.parsedData, 
         dataset.file_size
@@ -135,15 +133,16 @@ export const useNewProjectForm = () => {
         isReconstructed: (f as any).isReconstructed 
       })));
 
-      // CRITICAL FIX: Ensure the project name is properly set and maintained
+      // CRITICAL FIX: Set the project name correctly
       const projectNameToSet = reconstructedState.projectName || dataset.name || 'Untitled Project';
       
-      console.log('🎯 Setting project name to:', projectNameToSet);
+      console.log('🎯 CRITICAL: Setting project name to:', projectNameToSet);
 
+      // Update the form data with the project name FIRST
       setFormData(prev => {
         const newFormData = {
           ...prev,
-          projectName: projectNameToSet,
+          projectName: projectNameToSet, // This is the key fix
           researchQuestion: reconstructedState.researchQuestion,
           businessContext: reconstructedState.additionalContext,
           file: mockFiles[0] || null,
@@ -153,11 +152,12 @@ export const useNewProjectForm = () => {
           step: reconstructedState.step,
         };
 
-        console.log('✅ Final formData being set:', {
+        console.log('✅ CRITICAL: Final formData being set with projectName:', newFormData.projectName);
+        console.log('✅ CRITICAL: Complete formData:', {
           projectName: newFormData.projectName,
           researchQuestion: newFormData.researchQuestion,
-          filesCount: mockFiles.length,
-          step: newFormData.step
+          step: newFormData.step,
+          hasData: !!(newFormData.parsedData && newFormData.parsedData.length > 0)
         });
 
         return newFormData;
@@ -188,7 +188,7 @@ export const useNewProjectForm = () => {
     setError(null);
   }, []);
 
-  // Enhanced formData with methods - this is the key fix
+  // CRITICAL: Make sure setProjectName is always included
   const enhancedFormData = {
     ...formData,
     setProjectName,
@@ -202,10 +202,11 @@ export const useNewProjectForm = () => {
     setColumnMapping,
   };
 
-  console.log('useNewProjectForm current state:', {
+  console.log('🔍 useNewProjectForm final state:', {
     projectName: enhancedFormData.projectName,
     researchQuestion: enhancedFormData.researchQuestion,
     step: enhancedFormData.step,
+    hasSetProjectName: !!enhancedFormData.setProjectName,
     hasData: !!(enhancedFormData.parsedData && enhancedFormData.parsedData.length > 0)
   });
 

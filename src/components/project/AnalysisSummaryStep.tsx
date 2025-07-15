@@ -32,66 +32,68 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   onPrevious,
   formData
 }) => {
-  const projectName = formData?.projectName || '';
   const [educationalMode, setEducationalMode] = React.useState(false);
 
-  console.log('AnalysisSummaryStep render - formData debugging:', {
-    formDataExists: !!formData,
+  // CRITICAL: Get project name from formData
+  const projectName = formData?.projectName || '';
+
+  console.log('🔍 AnalysisSummaryStep render - CRITICAL DEBUG:', {
+    projectNameFromProps: projectName,
+    projectNameLength: projectName?.length || 0,
+    formDataProjectName: formData?.projectName,
+    hasSetProjectName: !!formData?.setProjectName,
     formDataKeys: formData ? Object.keys(formData) : [],
-    projectNameFromFormData: formData?.projectName,
-    projectNameLength: formData?.projectName?.length || 0,
-    setProjectNameExists: !!formData?.setProjectName,
-    researchQuestion: researchQuestion ? `${researchQuestion.substring(0, 13)}...` : 'None',
+    researchQuestion: researchQuestion ? `${researchQuestion.substring(0, 20)}...` : 'None',
     hasData: !!(parsedData && parsedData.length > 0),
   });
 
   // Auto-set a default project name if none exists and we have a research question
   useEffect(() => {
-    console.log('AnalysisSummaryStep useEffect triggered:', {
-      projectName,
+    console.log('🔍 AnalysisSummaryStep useEffect triggered:', {
+      currentProjectName: projectName,
       hasResearchQuestion: !!researchQuestion,
       hasSetProjectName: !!formData?.setProjectName
     });
     
     if (!projectName && researchQuestion && formData?.setProjectName) {
       const defaultName = `Analysis: ${researchQuestion.substring(0, 30)}${researchQuestion.length > 30 ? '...' : ''}`;
-      console.log('Auto-setting default project name:', defaultName);
+      console.log('🎯 Auto-setting default project name:', defaultName);
       formData.setProjectName(defaultName);
     }
   }, [projectName, researchQuestion, formData?.setProjectName]);
 
   const handleProjectNameChange = (value: string) => {
-    console.log('Project name input changed to:', value);
+    console.log('🎯 Project name input changed to:', value);
     if (formData?.setProjectName) {
       formData.setProjectName(value);
     } else {
-      console.error('setProjectName function not available in formData');
+      console.error('❌ setProjectName function not available in formData');
     }
   };
 
   const handleStartAnalysis = () => {
     const finalProjectName = projectName?.trim();
     
-    console.log('Starting analysis with:', {
+    console.log('🚀 Starting analysis with:', {
       projectName: finalProjectName,
       researchQuestion,
       hasData: !!(parsedData && parsedData.length > 0)
     });
 
     if (!finalProjectName) {
-      console.error('No project name provided');
+      console.error('❌ No project name provided');
       alert('Please enter a project name');
       return;
     }
 
     if (!researchQuestion?.trim()) {
-      console.error('No research question provided');
+      console.error('❌ No research question provided');
       alert('Please enter a research question');
       return;
     }
 
     if (!parsedData || parsedData.length === 0) {
-      console.error('No data available');
+      console.error('❌ No data available');
       alert('Please upload data before starting analysis');
       return;
     }
@@ -99,7 +101,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     try {
       onStartAnalysis(educationalMode, finalProjectName);
     } catch (error) {
-      console.error('Error starting analysis:', error);
+      console.error('❌ Error starting analysis:', error);
       alert('An error occurred while starting the analysis. Please try again.');
     }
   };
@@ -135,12 +137,12 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             {!projectName && (
               <p className="text-sm text-red-500">Project name is required</p>
             )}
-            <p className="text-xs text-gray-500">
-              Current value: "{projectName || 'None'}"
-            </p>
-            <p className="text-xs text-gray-400">
-              Debug: formData.projectName = "{formData?.projectName || 'undefined'}"
-            </p>
+            {/* DEBUG INFO - Remove in production */}
+            <div className="text-xs text-gray-400 space-y-1">
+              <p>🔍 Debug: Current projectName = "{projectName || 'EMPTY'}"</p>
+              <p>🔍 Debug: formData.projectName = "{formData?.projectName || 'UNDEFINED'}"</p>
+              <p>🔍 Debug: setProjectName available = {formData?.setProjectName ? 'YES' : 'NO'}</p>
+            </div>
           </div>
         </CardContent>
       </Card>
