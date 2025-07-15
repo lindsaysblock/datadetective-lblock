@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import DataSourceOptions from './steps/DataSourceOptions';
 import ConnectedDataSection from './steps/ConnectedDataSection';
@@ -31,6 +31,8 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
   onNext,
   onPrevious
 }) => {
+  const [showAddMore, setShowAddMore] = React.useState(false);
+
   // Check if we have successfully parsed data - this is the key validation
   const hasValidData = parsedData && parsedData.length > 0 && parsedData.some(data => 
     data && (data.rows?.length > 0 || data.summary?.totalRows > 0)
@@ -42,6 +44,7 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
     hasValidData,
     uploading,
     parsing,
+    showAddMore,
     parsedDataDetails: parsedData?.map(data => ({
       rows: data?.rows?.length || 0,
       totalRows: data?.summary?.totalRows || 0,
@@ -100,6 +103,7 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
       setTimeout(() => {
         console.log('Triggering onFileUpload after state update');
         onFileUpload();
+        setShowAddMore(false); // Hide the add more section after upload
       }, 100);
       
     } catch (error) {
@@ -149,6 +153,10 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
     onNext();
   };
 
+  const handleAddMoreData = () => {
+    setShowAddMore(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -156,8 +164,51 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
         <p className="text-gray-600">Upload files, paste data, or connect to your existing data sources</p>
       </div>
 
-      {!hasValidData ? (
+      {/* Show existing data if available */}
+      {hasValidData && !showAddMore && (
         <div className="space-y-6">
+          <ConnectedDataSection
+            parsedData={parsedData}
+            files={files}
+            onRemoveFile={onRemoveFile}
+            onAddMore={handleAddMoreData}
+          />
+          
+          {/* Add More Data Button */}
+          <Card className="border-dashed border-2 border-blue-300 bg-blue-50">
+            <CardContent className="p-6 text-center">
+              <Button
+                onClick={handleAddMoreData}
+                variant="outline"
+                className="flex items-center gap-2 mx-auto"
+              >
+                <Plus className="w-4 h-4" />
+                Add More Data Sources
+              </Button>
+              <p className="text-sm text-blue-600 mt-2">
+                You can combine multiple data sources for richer analysis
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Show data source options if no data OR if user wants to add more */}
+      {(!hasValidData || showAddMore) && (
+        <div className="space-y-6">
+          {showAddMore && (
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Add Additional Data Source</h3>
+              <Button
+                variant="ghost"
+                onClick={() => setShowAddMore(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
+          
           <DataSourceOptions
             onFileUpload={handleFileUpload}
             onDataPaste={handleDataPaste}
@@ -204,33 +255,16 @@ const DataSourceStep: React.FC<DataSourceStepProps> = ({
           )}
 
           {/* Help Text */}
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-blue-800 text-sm">
-              <strong>Need help?</strong> You can upload files (CSV, Excel, JSON), paste your data directly, 
-              or connect to platforms like Amplitude, Snowflake, Looker, and more. 
-              Our AI will automatically detect data types and suggest the best analysis approaches.
-            </p>
-          </div>
+          {!hasValidData && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800 text-sm">
+                <strong>Need help?</strong> You can upload files (CSV, Excel, JSON), paste your data directly, 
+                or connect to platforms like Amplitude, Snowflake, Looker, and more. 
+                Our AI will automatically detect data types and suggest the best analysis approaches.
+              </p>
+            </div>
+          )}
         </div>
-      ) : (
-        <ConnectedDataSection
-          parsedData={parsedData}
-          files={files}
-          onRemoveFile={onRemoveFile}
-          onAddMore={() => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.csv,.xlsx,.xls,.json';
-            input.multiple = true;
-            input.onchange = (e) => {
-              const selectedFiles = Array.from((e.target as HTMLInputElement).files || []);
-              if (selectedFiles.length > 0) {
-                handleFileUpload(selectedFiles);
-              }
-            };
-            input.click();
-          }}
-        />
       )}
 
       <div className="flex justify-between pt-6">

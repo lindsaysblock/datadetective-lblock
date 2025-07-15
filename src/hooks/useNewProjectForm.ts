@@ -55,10 +55,10 @@ export const useNewProjectForm = () => {
   const { reconstructAnalysisState, createMockFilesFromParsedData } = useContinueCase();
 
   const updateFormData = useCallback((updates: Partial<FormData>) => {
-    console.log('Updating form data:', updates);
+    console.log('📝 updateFormData called with:', updates);
     setFormData(prev => {
       const updated = { ...prev, ...updates };
-      console.log('🔄 Form data updated:', {
+      console.log('📝 Form data after update:', {
         projectName: updated.projectName,
         step: updated.step,
         hasData: !!(updated.parsedData && updated.parsedData.length > 0)
@@ -146,17 +146,28 @@ export const useNewProjectForm = () => {
       
       console.log('🎯 CRITICAL: Final project name to set:', projectNameToSet);
 
-      // Update form data with correct project name - use setFormData directly to ensure state update
-      setFormData({
-        ...initialFormData,
-        projectName: projectNameToSet,
-        researchQuestion: reconstructedState.researchQuestion || '',
-        businessContext: reconstructedState.additionalContext || '',
-        file: mockFiles[0] || null,
-        files: mockFiles,
-        uploadedData: reconstructedState.parsedData,
-        parsedData: reconstructedState.parsedData,
-        step: reconstructedState.step,
+      // Use setFormData with a function to ensure we get the latest state
+      setFormData(prevFormData => {
+        const newFormData = {
+          ...prevFormData,
+          projectName: projectNameToSet,
+          researchQuestion: reconstructedState.researchQuestion || '',
+          businessContext: reconstructedState.additionalContext || '',
+          file: mockFiles[0] || null,
+          files: mockFiles,
+          uploadedData: reconstructedState.parsedData,
+          parsedData: reconstructedState.parsedData,
+          step: reconstructedState.step,
+        };
+        
+        console.log('✅ NEW FORM DATA SET:', {
+          projectName: newFormData.projectName,
+          step: newFormData.step,
+          filesCount: newFormData.files.length,
+          parsedDataCount: newFormData.parsedData.length
+        });
+        
+        return newFormData;
       });
 
       console.log('✅ CONTINUE CASE DATA SET - Project Name:', projectNameToSet);
