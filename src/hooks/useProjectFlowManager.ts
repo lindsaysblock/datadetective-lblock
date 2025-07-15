@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useDataPipeline } from './useDataPipeline';
 import { useAnalysisOrchestrator } from './useAnalysisOrchestrator';
 import { DataAnalysisContext } from '@/types/data';
@@ -8,17 +8,20 @@ interface ProjectFlowState {
   showAnalysisView: boolean;
   currentProjectName: string;
   analysisProgress: number;
+  isInitialized: boolean;
 }
 
 export const useProjectFlowManager = () => {
   const [flowState, setFlowState] = useState<ProjectFlowState>({
     showAnalysisView: false,
     currentProjectName: '',
-    analysisProgress: 0
+    analysisProgress: 0,
+    isInitialized: true
   });
 
   const dataPipeline = useDataPipeline();
   const analysisOrchestrator = useAnalysisOrchestrator();
+  const analysisInProgressRef = useRef(false);
 
   const executeFullAnalysis = useCallback(async (
     researchQuestion: string,
@@ -29,13 +32,22 @@ export const useProjectFlowManager = () => {
   ) => {
     console.log('🎯 Executing full analysis pipeline');
     
+    // Prevent multiple simultaneous analyses
+    if (analysisInProgressRef.current) {
+      console.log('⚠️ Analysis already in progress, skipping');
+      return null;
+    }
+    
+    analysisInProgressRef.current = true;
+    
     try {
       // Step 1: Set project name and reset progress
       setFlowState(prev => ({
         ...prev,
         currentProjectName: projectName,
         analysisProgress: 0,
-        showAnalysisView: false
+        showAnalysisView: false,
+        isInitialized: true
       }));
 
       // Step 2: Process files through data pipeline
@@ -93,15 +105,19 @@ export const useProjectFlowManager = () => {
         showAnalysisView: false
       }));
       throw error;
+    } finally {
+      analysisInProgressRef.current = false;
     }
   }, [dataPipeline, analysisOrchestrator]);
 
   const backToProject = useCallback(() => {
     console.log('🔄 Returning to project form');
+    analysisInProgressRef.current = false;
     setFlowState({
       showAnalysisView: false,
       currentProjectName: '',
-      analysisProgress: 0
+      analysisProgress: 0,
+      isInitialized: true
     });
     dataPipeline.clearPipeline();
     analysisOrchestrator.resetAnalysis();
@@ -113,7 +129,7 @@ export const useProjectFlowManager = () => {
     
     // Pipeline states
     isProcessingData: dataPipeline.isProcessing,
-    isAnalyzing: analysisOrchestrator.isAnalyzing,
+    isAnalyzing: analysisOrchestrator.isAnalyzing || analysisInProgressRef.current,
     analysisResults: analysisOrchestrator.results,
     analysisError: analysisOrchestrator.error,
     analysisCompleted: analysisOrchestrator.completed,

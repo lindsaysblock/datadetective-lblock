@@ -220,7 +220,7 @@ const NewProjectContainer = () => {
           </div>
         )}
 
-        {/* Show analysis overlay when analysis is running */}
+        {/* Enhanced analysis overlay with progress bar and ETA */}
         {flowManager.isAnalyzing && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">

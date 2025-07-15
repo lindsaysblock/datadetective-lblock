@@ -123,7 +123,7 @@ const ProjectNamingDialog: React.FC<ProjectNamingDialogProps> = ({
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Progress Section */}
+              {/* Enhanced Progress Section with ETA */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3 p-4 rounded-lg bg-blue-50 border border-blue-200">
                   <Brain className="w-6 h-6 text-blue-600 animate-pulse" />
