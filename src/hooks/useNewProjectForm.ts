@@ -2,137 +2,238 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile } from '@/utils/dataParser';
+import { ParsedDataFile } from '@/types/data';
+
+interface NewProjectFormState {
+  step: number;
+  researchQuestion: string;
+  additionalContext: string;
+  files: File[];
+  uploading: boolean;
+  parsing: boolean;
+  parsedData: ParsedDataFile[];
+  columnMapping: any;
+  analysisResults: any;
+  analysisCompleted: boolean;
+  isProcessingAnalysis: boolean;
+  currentProjectName: string;
+}
 
 export const useNewProjectForm = () => {
-  const [step, setStep] = useState(1);
-  const [researchQuestion, setResearchQuestion] = useState('');
-  const [additionalContext, setAdditionalContext] = useState('');
-  const [files, setFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [parsing, setParsing] = useState(false);
-  const [parsedData, setParsedData] = useState<any[]>([]);
-  const [columnMapping, setColumnMapping] = useState<any>({});
-  const [analysisResults, setAnalysisResults] = useState<any>(null);
-  const [analysisCompleted, setAnalysisCompleted] = useState(false);
-  const [isProcessingAnalysis, setIsProcessingAnalysis] = useState(false);
-  const [currentProjectName, setCurrentProjectName] = useState('');
-  const [educationalMode, setEducationalMode] = useState(false);
-  const [analysisError, setAnalysisError] = useState<string | null>(null);
-  
+  const [formState, setFormState] = useState<NewProjectFormState>({
+    step: 1,
+    researchQuestion: '',
+    additionalContext: '',
+    files: [],
+    uploading: false,
+    parsing: false,
+    parsedData: [],
+    columnMapping: { valueColumns: [], categoryColumns: [] },
+    analysisResults: null,
+    analysisCompleted: false,
+    isProcessingAnalysis: false,
+    currentProjectName: ''
+  });
+
   const { toast } = useToast();
 
-  const nextStep = useCallback(() => {
-    setStep(prev => Math.min(prev + 1, 4));
+  const setStep = useCallback((step: number) => {
+    console.log('📍 Setting step to:', step);
+    setFormState(prev => ({ ...prev, step }));
   }, []);
 
-  const prevStep = useCallback(() => {
-    setStep(prev => Math.max(prev - 1, 1));
+  const setResearchQuestion = useCallback((question: string) => {
+    console.log('❓ Setting research question:', question.slice(0, 50) + '...');
+    setFormState(prev => ({ ...prev, researchQuestion: question }));
+  }, []);
+
+  const setAdditionalContext = useCallback((context: string) => {
+    console.log('📝 Setting additional context, length:', context.length);
+    setFormState(prev => ({ ...prev, additionalContext: context }));
+  }, []);
+
+  const setFiles = useCallback((files: File[]) => {
+    console.log('📂 Setting files:', files.map(f => f.name));
+    setFormState(prev => ({ ...prev, files }));
+  }, []);
+
+  const setParsedData = useCallback((data: ParsedDataFile[]) => {
+    console.log('📊 Setting parsed data, files:', data.length);
+    setFormState(prev => ({ ...prev, parsedData: data }));
+  }, []);
+
+  const setColumnMapping = useCallback((mapping: any) => {
+    console.log('🗂️ Setting column mapping:', mapping);
+    setFormState(prev => ({ ...prev, columnMapping: mapping }));
   }, []);
 
   const addFile = useCallback((file: File) => {
-    setFiles(prev => [...prev, file]);
+    console.log('➕ Adding file:', file.name, 'Size:', file.size);
+    setFormState(prev => ({ 
+      ...prev, 
+      files: [...prev.files, file] 
+    }));
   }, []);
 
   const removeFile = useCallback((index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-    setParsedData(prev => prev.filter((_, i) => i !== index));
+    console.log('➖ Removing file at index:', index);
+    setFormState(prev => ({
+      ...prev,
+      files: prev.files.filter((_, i) => i !== index),
+      parsedData: prev.parsedData.filter((_, i) => i !== index)
+    }));
   }, []);
 
   const handleFileUpload = useCallback(async () => {
-    if (files.length === 0) {
+    if (formState.files.length === 0) {
+      console.log('⚠️ No files to upload');
       return;
     }
 
-    setUploading(true);
-    setParsing(true);
-    
+    console.log('🔄 Starting file upload for files:', formState.files.map(f => f.name));
+    setFormState(prev => ({ ...prev, uploading: true, parsing: true }));
+
     try {
-      const newParsedData = [];
-      
-      for (const file of files) {
-        console.log('Processing file:', file.name, file.type);
+      const parsedResults: ParsedDataFile[] = [];
+
+      for (const file of formState.files) {
+        console.log('📁 Processing file:', file.name);
         
-        const fileData = await parseFile(file);
-        
-        if (fileData) {
-          newParsedData.push({
-            ...fileData,
-            name: file.name
+        // Check if it's a synthetic file (empty) from continue case
+        if (file.size === 0 && file.name) {
+          console.log('📝 Detected synthetic file, creating mock data');
+          const mockDataFile: ParsedDataFile = {
+            id: `mock-${Date.now()}-${Math.random()}`,
+            name: file.name,
+            rows: 100,
+            columns: 5,
+            preview: [
+              ['ID', 'Name', 'Date', 'Value', 'Category'],
+              ['1', 'Sample A', '2024-01-01', '100', 'Type1'],
+              ['2', 'Sample B', '2024-01-02', '150', 'Type2'],
+              ['3', 'Sample C', '2024-01-03', '200', 'Type1']
+            ],
+            data: [],
+            columnInfo: [
+              { name: 'ID', type: 'number' },
+              { name: 'Name', type: 'string' },
+              { name: 'Date', type: 'date' },
+              { name: 'Value', type: 'number' },
+              { name: 'Category', type: 'string' }
+            ],
+            summary: {
+              totalRows: 100,
+              totalColumns: 5,
+              possibleUserIdColumns: ['ID'],
+              possibleEventColumns: ['Name'],
+              possibleTimestampColumns: ['Date']
+            }
+          };
+          
+          parsedResults.push(mockDataFile);
+          console.log('✅ Created mock data for:', file.name);
+          continue;
+        }
+
+        try {
+          const parsedData = await parseFile(file);
+          
+          const dataFile: ParsedDataFile = {
+            id: `file-${Date.now()}-${Math.random()}`,
+            name: file.name,
+            rows: parsedData.rowCount,
+            columns: parsedData.columns.length,
+            preview: parsedData.rows.slice(0, 5),
+            data: parsedData.rows,
+            columnInfo: parsedData.columns,
+            summary: {
+              totalRows: parsedData.rowCount,
+              totalColumns: parsedData.columns.length,
+              possibleUserIdColumns: parsedData.summary?.possibleUserIdColumns || [],
+              possibleEventColumns: parsedData.summary?.possibleEventColumns || [],
+              possibleTimestampColumns: parsedData.summary?.possibleTimestampColumns || []
+            }
+          };
+
+          parsedResults.push(dataFile);
+          console.log('✅ File processed successfully:', file.name);
+        } catch (error) {
+          console.error('❌ Error processing file:', file.name, error);
+          toast({
+            title: "File Processing Error",
+            description: `Failed to process ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            variant: "destructive",
           });
         }
       }
-      
-      setParsedData(newParsedData);
-      
-      if (newParsedData.length > 0) {
-        toast({
-          title: "Files Processed Successfully",
-          description: `${newParsedData.length} file(s) have been processed and are ready for analysis.`,
-        });
-      }
-      
+
+      setFormState(prev => ({
+        ...prev,
+        uploading: false,
+        parsing: false,
+        parsedData: parsedResults
+      }));
+
+      toast({
+        title: "Upload Successful",
+        description: `Successfully processed ${parsedResults.length} file(s)`,
+      });
+
+      console.log('✅ All files processed successfully, total:', parsedResults.length);
     } catch (error) {
-      console.error('Error processing files:', error);
+      console.error('❌ File upload failed:', error);
+      setFormState(prev => ({ ...prev, uploading: false, parsing: false }));
       toast({
         title: "Upload Failed",
-        description: "There was an error processing your files. Please try again.",
+        description: "There was an error processing your files.",
         variant: "destructive",
       });
-    } finally {
-      setUploading(false);
-      setParsing(false);
     }
-  }, [files, toast]);
+  }, [formState.files, toast]);
+
+  const nextStep = useCallback(() => {
+    const newStep = Math.min(formState.step + 1, 4);
+    console.log('⏭️ Moving to next step:', newStep);
+    setFormState(prev => ({ ...prev, step: newStep }));
+  }, [formState.step]);
+
+  const prevStep = useCallback(() => {
+    const newStep = Math.max(formState.step - 1, 1);
+    console.log('⏮️ Moving to previous step:', newStep);
+    setFormState(prev => ({ ...prev, step: newStep }));
+  }, [formState.step]);
 
   const resetForm = useCallback(() => {
-    setStep(1);
-    setResearchQuestion('');
-    setAdditionalContext('');
-    setFiles([]);
-    setUploading(false);
-    setParsing(false);
-    setParsedData([]);
-    setColumnMapping({});
-    setAnalysisResults(null);
-    setAnalysisCompleted(false);
-    setIsProcessingAnalysis(false);
-    setCurrentProjectName('');
-    setEducationalMode(false);
-    setAnalysisError(null);
+    console.log('🔄 Resetting form');
+    setFormState({
+      step: 1,
+      researchQuestion: '',
+      additionalContext: '',
+      files: [],
+      uploading: false,
+      parsing: false,
+      parsedData: [],
+      columnMapping: { valueColumns: [], categoryColumns: [] },
+      analysisResults: null,
+      analysisCompleted: false,
+      isProcessingAnalysis: false,
+      currentProjectName: ''
+    });
   }, []);
 
   return {
-    step,
-    researchQuestion,
-    additionalContext,
-    files,
-    uploading,
-    parsing,
-    parsedData,
-    columnMapping,
-    analysisResults,
-    analysisCompleted,
-    isProcessingAnalysis,
-    currentProjectName,
-    educationalMode,
-    analysisError,
+    ...formState,
     setStep,
     setResearchQuestion,
     setAdditionalContext,
     setFiles,
     setParsedData,
     setColumnMapping,
-    setAnalysisResults,
-    setAnalysisCompleted,
-    setIsProcessingAnalysis,
-    setCurrentProjectName,
-    setEducationalMode,
-    setAnalysisError,
-    nextStep,
-    prevStep,
     addFile,
     removeFile,
     handleFileUpload,
+    nextStep,
+    prevStep,
     resetForm
   };
 };

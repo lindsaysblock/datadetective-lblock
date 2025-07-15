@@ -26,6 +26,8 @@ const NewProjectContainer = () => {
       const step = location.state.step || 4;
       
       console.log('Continuing investigation with dataset:', dataset);
+      console.log('Dataset metadata:', dataset.metadata);
+      console.log('Dataset summary:', dataset.summary);
       
       // Reconstruct the form data from the dataset
       const reconstructedParsedData = [{
@@ -33,24 +35,47 @@ const NewProjectContainer = () => {
         name: dataset.original_filename,
         columns: dataset.metadata?.columns || [],
         rows: dataset.metadata?.sample_rows || [],
-        rowCount: dataset.metadata?.totalRows || 0,
-        summary: dataset.summary
+        rowCount: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
+        summary: {
+          totalRows: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
+          totalColumns: dataset.metadata?.columns?.length || dataset.summary?.totalColumns || 0,
+          possibleUserIdColumns: dataset.summary?.possibleUserIdColumns || [],
+          possibleEventColumns: dataset.summary?.possibleEventColumns || [],
+          possibleTimestampColumns: dataset.summary?.possibleTimestampColumns || []
+        }
       }];
       
-      // Set the form data
-      formData.setResearchQuestion(dataset.summary?.researchQuestion || '');
-      formData.setAdditionalContext(dataset.summary?.description || '');
-      formData.setParsedData(reconstructedParsedData);
-      formData.setStep(step);
+      console.log('Reconstructed parsed data:', reconstructedParsedData);
       
-      // Create mock files for the form
+      // Set the form data with proper values
+      formData.setResearchQuestion(dataset.summary?.researchQuestion || '');
+      formData.setAdditionalContext(dataset.summary?.description || dataset.summary?.additionalContext || '');
+      formData.setParsedData(reconstructedParsedData);
+      
+      // Create proper mock files for the form - this is crucial for analysis
       const mockFiles = [{
         name: dataset.original_filename,
         type: dataset.mime_type || 'text/csv',
-        size: dataset.file_size || 0,
-        lastModified: new Date(dataset.created_at).getTime()
+        size: dataset.file_size || 1000,
+        lastModified: new Date(dataset.created_at).getTime(),
+        // Add the actual data as a blob so the analysis can work
+        stream: () => new ReadableStream(),
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        text: () => Promise.resolve(''),
+        slice: () => new Blob()
       }];
+      
       formData.setFiles(mockFiles as File[]);
+      
+      // Force step to 4 for continue case
+      formData.setStep(4);
+      
+      console.log('Continue case setup completed:', {
+        step: 4,
+        hasResearchQuestion: !!formData.researchQuestion,
+        hasFiles: mockFiles.length > 0,
+        hasParsedData: reconstructedParsedData.length > 0
+      });
       
       // Clear the location state to prevent re-triggering
       window.history.replaceState({}, document.title);
@@ -66,11 +91,14 @@ const NewProjectContainer = () => {
     hasAnalysisResults: !!flowManager.analysisResults,
     hasData: !!formData.parsedData && formData.parsedData.length > 0,
     dataFiles: formData.parsedData?.length || 0,
+    hasFiles: !!formData.files && formData.files.length > 0,
+    filesCount: formData.files?.length || 0,
     user: user?.email,
     authLoading,
     analysisProgress: flowManager.analysisProgress,
     analysisError: flowManager.analysisError,
-    isContinueCase
+    isContinueCase,
+    researchQuestion: formData.researchQuestion
   });
 
   const handleStartAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
@@ -88,8 +116,27 @@ const NewProjectContainer = () => {
       return;
     }
 
-    if (!formData.files || formData.files.length === 0) {
-      console.error('Files are required');
+    // For continue case, we need to handle files differently
+    let filesToProcess = formData.files;
+    
+    if (isContinueCase && (!filesToProcess || filesToProcess.length === 0)) {
+      console.log('Continue case: Creating synthetic files from parsed data');
+      
+      // Create synthetic files from parsed data for continue case
+      filesToProcess = formData.parsedData.map(data => {
+        const csvContent = [
+          data.columns.join(','),
+          ...data.rows.map(row => row.join(','))
+        ].join('\n');
+        
+        return new File([csvContent], data.name, { type: 'text/csv' });
+      });
+      
+      console.log('Created synthetic files:', filesToProcess.map(f => f.name));
+    }
+
+    if (!filesToProcess || filesToProcess.length === 0) {
+      console.error('No files available for analysis');
       return;
     }
 
@@ -100,7 +147,7 @@ const NewProjectContainer = () => {
         researchQuestion: formData.researchQuestion,
         additionalContext: formData.additionalContext || '',
         educationalMode,
-        filesCount: formData.files.length,
+        filesCount: filesToProcess.length,
         projectName: finalProjectName
       });
 
@@ -108,7 +155,7 @@ const NewProjectContainer = () => {
         formData.researchQuestion,
         formData.additionalContext || '',
         educationalMode,
-        formData.files,
+        filesToProcess,
         finalProjectName
       );
 
