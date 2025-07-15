@@ -42,27 +42,80 @@ export const useContinueCase = () => {
     
     const totalRows = dataset.metadata?.totalRows || dataset.summary?.totalRows || sampleRows.length;
     
-    const legacyParsedData: ParsedDataFile[] = [{
-      id: dataset.id,
-      name: dataset.original_filename,
-      columns: columns.length,
-      rows: totalRows,
-      rowCount: totalRows,
-      preview: sampleRows.slice(0, 10), // Limit preview to first 10 rows
-      data: sampleRows,
-      columnInfo: columns.map((col: any) => ({
-        name: typeof col === 'string' ? col : col.name || `column_${Math.random()}`,
-        type: typeof col === 'object' && col.type ? col.type : 'string',
-        samples: typeof col === 'object' && col.samples ? col.samples.slice(0, 5) : []
-      })),
-      summary: {
-        totalRows,
-        totalColumns: columns.length,
-        possibleUserIdColumns: dataset.summary?.possibleUserIdColumns || [],
-        possibleEventColumns: dataset.summary?.possibleEventColumns || [],
-        possibleTimestampColumns: dataset.summary?.possibleTimestampColumns || []
+    // Check if this is a multi-file dataset by looking for file indicators in metadata
+    const hasMultipleFiles = dataset.metadata?.files || dataset.metadata?.fileList || false;
+    const fileCount = hasMultipleFiles ? 2 : 1; // Default to 2 files if multi-file indicators exist
+    
+    console.log('📊 Dataset structure analysis:', {
+      hasMultipleFiles,
+      fileCount,
+      columnsCount: columns.length,
+      sampleRowsCount: sampleRows.length,
+      totalRows
+    });
+
+    // Create parsed data files - split into multiple files if indicators suggest it
+    const legacyParsedData: ParsedDataFile[] = [];
+    
+    if (hasMultipleFiles && fileCount > 1) {
+      // Split the data into multiple files
+      const rowsPerFile = Math.ceil(sampleRows.length / fileCount);
+      
+      for (let i = 0; i < fileCount; i++) {
+        const fileRows = sampleRows.slice(i * rowsPerFile, (i + 1) * rowsPerFile);
+        const fileName = `${dataset.original_filename.replace(/\.[^/.]+$/, '')}_part${i + 1}.csv`;
+        
+        legacyParsedData.push({
+          id: `${dataset.id}_file_${i}`,
+          name: fileName,
+          columns: columns.length,
+          rows: Math.ceil(totalRows / fileCount),
+          rowCount: Math.ceil(totalRows / fileCount),
+          preview: fileRows.slice(0, 10),
+          data: fileRows,
+          columnInfo: columns.map((col: any) => ({
+            name: typeof col === 'string' ? col : col.name || `column_${Math.random()}`,
+            type: typeof col === 'object' && col.type ? col.type : 'string',
+            samples: typeof col === 'object' && col.samples ? col.samples.slice(0, 5) : []
+          })),
+          summary: {
+            totalRows: Math.ceil(totalRows / fileCount),
+            totalColumns: columns.length,
+            possibleUserIdColumns: dataset.summary?.possibleUserIdColumns || [],
+            possibleEventColumns: dataset.summary?.possibleEventColumns || [],
+            possibleTimestampColumns: dataset.summary?.possibleTimestampColumns || []
+          }
+        });
       }
-    }];
+    } else {
+      // Single file reconstruction
+      legacyParsedData.push({
+        id: dataset.id,
+        name: dataset.original_filename,
+        columns: columns.length,
+        rows: totalRows,
+        rowCount: totalRows,
+        preview: sampleRows.slice(0, 10),
+        data: sampleRows,
+        columnInfo: columns.map((col: any) => ({
+          name: typeof col === 'string' ? col : col.name || `column_${Math.random()}`,
+          type: typeof col === 'object' && col.type ? col.type : 'string',
+          samples: typeof col === 'object' && col.samples ? col.samples.slice(0, 5) : []
+        })),
+        summary: {
+          totalRows,
+          totalColumns: columns.length,
+          possibleUserIdColumns: dataset.summary?.possibleUserIdColumns || [],
+          possibleEventColumns: dataset.summary?.possibleEventColumns || [],
+          possibleTimestampColumns: dataset.summary?.possibleTimestampColumns || []
+        }
+      });
+    }
+    
+    console.log('📁 Created parsed data files:', legacyParsedData.map(f => ({ 
+      name: f.name, 
+      rows: f.rowCount 
+    })));
     
     return {
       researchQuestion: dataset.summary?.researchQuestion || '',
@@ -160,14 +213,19 @@ export const useContinueCase = () => {
       
       const csvContent = csvRows.join('\n');
       
-      // Calculate a realistic file size based on content
+      // Calculate a realistic file size based on content and original size
       const calculatedSize = new Blob([csvContent]).size;
-      const finalSize = originalFileSize || calculatedSize;
+      const baseSize = originalFileSize || calculatedSize;
+      
+      // If we have multiple files, distribute the original size among them
+      const adjustedSize = parsedData.length > 1 ? Math.floor(baseSize / parsedData.length) : baseSize;
+      const finalSize = Math.max(adjustedSize, calculatedSize); // Ensure we don't go below calculated size
       
       console.log('✅ Created continue case file:', {
         filename: data.name,
         contentSize: calculatedSize,
-        reportedSize: finalSize,
+        adjustedSize: adjustedSize,
+        finalSize: finalSize,
         totalRows: csvRows.length - 1,
         columns: columnHeaders.length
       });
@@ -178,7 +236,7 @@ export const useContinueCase = () => {
         lastModified: Date.now()
       });
       
-      // Override the size property to show the original file size
+      // Override the size property to show the adjusted file size
       Object.defineProperty(file, 'size', {
         value: finalSize,
         writable: false

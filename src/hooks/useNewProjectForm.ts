@@ -19,6 +19,7 @@ export interface FormData {
   parsing: boolean;
   step: number;
   // Methods
+  setProjectName?: (value: string) => void;
   setResearchQuestion?: (value: string) => void;
   setAdditionalContext?: (value: string) => void;
   nextStep?: () => void;
@@ -69,6 +70,10 @@ export const useNewProjectForm = () => {
     setFormData(prev => ({ ...prev, step }));
   }, []);
 
+  const setProjectName = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, projectName: value }));
+  }, []);
+
   const setResearchQuestion = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, researchQuestion: value }));
   }, []);
@@ -107,11 +112,23 @@ export const useNewProjectForm = () => {
       // Use the reconstructAnalysisState to get the proper data structure
       const reconstructedState = reconstructAnalysisState(dataset);
       
+      console.log('📊 Reconstructed state:', {
+        projectName: reconstructedState.projectName,
+        parsedDataLength: reconstructedState.parsedData?.length || 0,
+        originalFileSize: dataset.file_size
+      });
+
       // Create mock files from the parsed data with original file size
       const mockFiles = createMockFilesFromParsedData(
         reconstructedState.parsedData, 
         dataset.file_size
       );
+
+      console.log('📁 Created mock files:', mockFiles.map(f => ({ 
+        name: f.name, 
+        size: f.size,
+        isReconstructed: (f as any).isReconstructed 
+      })));
 
       const newFormData: FormData = {
         ...initialFormData,
@@ -124,6 +141,7 @@ export const useNewProjectForm = () => {
         parsedData: reconstructedState.parsedData,
         step: reconstructedState.step,
         // Include methods
+        setProjectName,
         setResearchQuestion,
         setAdditionalContext,
         nextStep,
@@ -161,12 +179,13 @@ export const useNewProjectForm = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, reconstructAnalysisState, createMockFilesFromParsedData, setResearchQuestion, setAdditionalContext, nextStep, prevStep, addFile, handleFileUpload, removeFile, setColumnMapping]);
+  }, [toast, reconstructAnalysisState, createMockFilesFromParsedData, setProjectName, setResearchQuestion, setAdditionalContext, nextStep, prevStep, addFile, handleFileUpload, removeFile, setColumnMapping]);
 
   const resetForm = useCallback(() => {
     setFormData({
       ...initialFormData,
       // Include methods
+      setProjectName,
       setResearchQuestion,
       setAdditionalContext,
       nextStep,
@@ -177,11 +196,12 @@ export const useNewProjectForm = () => {
       setColumnMapping,
     });
     setError(null);
-  }, [setResearchQuestion, setAdditionalContext, nextStep, prevStep, addFile, handleFileUpload, removeFile, setColumnMapping]);
+  }, [setProjectName, setResearchQuestion, setAdditionalContext, nextStep, prevStep, addFile, handleFileUpload, removeFile, setColumnMapping]);
 
   // Enhance formData with methods
   const enhancedFormData = {
     ...formData,
+    setProjectName,
     setResearchQuestion,
     setAdditionalContext,
     nextStep,
