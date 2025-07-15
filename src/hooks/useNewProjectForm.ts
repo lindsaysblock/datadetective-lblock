@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useContinueCase } from './useContinueCase';
@@ -73,7 +72,11 @@ export const useNewProjectForm = () => {
 
   const setProjectName = useCallback((value: string) => {
     console.log('Setting project name in useNewProjectForm:', value);
-    setFormData(prev => ({ ...prev, projectName: value }));
+    setFormData(prev => {
+      const updated = { ...prev, projectName: value };
+      console.log('Updated formData after setProjectName:', { projectName: updated.projectName });
+      return updated;
+    });
   }, []);
 
   const setResearchQuestion = useCallback((value: string) => {
@@ -132,30 +135,37 @@ export const useNewProjectForm = () => {
         isReconstructed: (f as any).isReconstructed 
       })));
 
-      const newFormData: FormData = {
-        ...initialFormData,
-        projectName: reconstructedState.projectName,
-        researchQuestion: reconstructedState.researchQuestion,
-        businessContext: reconstructedState.additionalContext,
-        file: mockFiles[0] || null,
-        files: mockFiles,
-        uploadedData: reconstructedState.parsedData,
-        parsedData: reconstructedState.parsedData,
-        step: reconstructedState.step,
-      };
+      // CRITICAL FIX: Ensure the project name is properly set and maintained
+      const projectNameToSet = reconstructedState.projectName || dataset.name || 'Untitled Project';
+      
+      console.log('🎯 Setting project name to:', projectNameToSet);
 
-      console.log('✅ Setting continue case form data:', {
-        projectName: newFormData.projectName,
-        researchQuestion: newFormData.researchQuestion,
-        filesCount: mockFiles.length,
-        step: newFormData.step
+      setFormData(prev => {
+        const newFormData = {
+          ...prev,
+          projectName: projectNameToSet,
+          researchQuestion: reconstructedState.researchQuestion,
+          businessContext: reconstructedState.additionalContext,
+          file: mockFiles[0] || null,
+          files: mockFiles,
+          uploadedData: reconstructedState.parsedData,
+          parsedData: reconstructedState.parsedData,
+          step: reconstructedState.step,
+        };
+
+        console.log('✅ Final formData being set:', {
+          projectName: newFormData.projectName,
+          researchQuestion: newFormData.researchQuestion,
+          filesCount: mockFiles.length,
+          step: newFormData.step
+        });
+
+        return newFormData;
       });
-
-      setFormData(newFormData);
       
       toast({
         title: "Investigation Loaded",
-        description: `Continuing with "${reconstructedState.projectName}"`,
+        description: `Continuing with "${projectNameToSet}"`,
       });
 
     } catch (error) {

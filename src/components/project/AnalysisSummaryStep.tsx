@@ -35,20 +35,24 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   const projectName = formData?.projectName || '';
   const [educationalMode, setEducationalMode] = React.useState(false);
 
-  console.log('AnalysisSummaryStep current state:', {
+  console.log('AnalysisSummaryStep render - formData debugging:', {
+    formDataExists: !!formData,
+    formDataKeys: formData ? Object.keys(formData) : [],
+    projectNameFromFormData: formData?.projectName,
+    projectNameLength: formData?.projectName?.length || 0,
+    setProjectNameExists: !!formData?.setProjectName,
     researchQuestion: researchQuestion ? `${researchQuestion.substring(0, 13)}...` : 'None',
-    hasResearchQuestion: !!researchQuestion,
-    researchQuestionLength: researchQuestion?.length || 0,
-    projectName: projectName || 'Empty',
-    hasSetProjectName: !!formData?.setProjectName,
     hasData: !!(parsedData && parsedData.length > 0),
-    analysisCompleted,
-    isProcessingAnalysis,
-    canProceed: !!(researchQuestion && projectName && parsedData && parsedData.length > 0)
   });
 
   // Auto-set a default project name if none exists and we have a research question
   useEffect(() => {
+    console.log('AnalysisSummaryStep useEffect triggered:', {
+      projectName,
+      hasResearchQuestion: !!researchQuestion,
+      hasSetProjectName: !!formData?.setProjectName
+    });
+    
     if (!projectName && researchQuestion && formData?.setProjectName) {
       const defaultName = `Analysis: ${researchQuestion.substring(0, 30)}${researchQuestion.length > 30 ? '...' : ''}`;
       console.log('Auto-setting default project name:', defaultName);
@@ -57,7 +61,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   }, [projectName, researchQuestion, formData?.setProjectName]);
 
   const handleProjectNameChange = (value: string) => {
-    console.log('Project name changed to:', value);
+    console.log('Project name input changed to:', value);
     if (formData?.setProjectName) {
       formData.setProjectName(value);
     } else {
@@ -133,6 +137,9 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             )}
             <p className="text-xs text-gray-500">
               Current value: "{projectName || 'None'}"
+            </p>
+            <p className="text-xs text-gray-400">
+              Debug: formData.projectName = "{formData?.projectName || 'undefined'}"
             </p>
           </div>
         </CardContent>
