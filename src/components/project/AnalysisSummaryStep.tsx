@@ -34,6 +34,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   const [educationalMode, setEducationalMode] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [nameError, setNameError] = useState('');
+  const [isStarting, setIsStarting] = useState(false);
   
   const hasData = parsedData && parsedData.length > 0;
   const hasResearchQuestion = researchQuestion && researchQuestion.trim().length > 0;
@@ -73,7 +74,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   }
 
   // If analysis is processing, show progress
-  if (isProcessingAnalysis) {
+  if (isProcessingAnalysis || isStarting) {
     return (
       <div className="space-y-6">
         <div className="text-center">
@@ -123,21 +124,36 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     if (!canProceed) return;
 
     setNameError('');
+    setIsStarting(true);
     
-    // Check if project name already exists
-    const nameExists = await checkProjectNameExists(projectName);
-    if (nameExists) {
-      setNameError('A project with this name already exists. Please choose a different name.');
-      return;
-    }
+    try {
+      // Check if project name already exists
+      const nameExists = await checkProjectNameExists(projectName);
+      if (nameExists) {
+        setNameError('A project with this name already exists. Please choose a different name.');
+        setIsStarting(false);
+        return;
+      }
 
-    onStartAnalysis(educationalMode, projectName);
+      // Automatically start analysis after successful validation
+      onStartAnalysis(educationalMode, projectName);
+    } catch (error) {
+      console.error('Error starting analysis:', error);
+      setNameError('An error occurred while starting the analysis. Please try again.');
+      setIsStarting(false);
+    }
   };
 
   const handleProjectNameChange = (value: string) => {
     setProjectName(value);
     if (nameError) {
       setNameError('');
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && canProceed && !isStarting) {
+      handleStartAnalysis();
     }
   };
 
@@ -172,7 +188,9 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
                     placeholder="e.g., Sales Data Analysis, Customer Survey Insights..."
                     value={projectName}
                     onChange={(e) => handleProjectNameChange(e.target.value)}
+                    onKeyPress={handleKeyPress}
                     className={`w-full ${nameError ? 'border-red-500' : ''}`}
+                    disabled={isStarting}
                   />
                   {nameError && (
                     <p className="text-red-500 text-sm mt-1">{nameError}</p>
@@ -236,28 +254,43 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
               id="educational-mode"
               checked={educationalMode}
               onCheckedChange={setEducationalMode}
+              disabled={isStarting}
             />
           </div>
 
           {/* Start Analysis Button */}
           <Button 
             onClick={handleStartAnalysis}
-            disabled={!canProceed}
+            disabled={!canProceed || isStarting}
             className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-4 h-auto flex items-center justify-center gap-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Play className="w-6 h-6" />
-            <div>
-              <div className="font-semibold">Start the Case</div>
-              <div className="text-sm text-purple-200">
-                {educationalMode ? 'With step-by-step guidance' : 'Get instant insights'}
-              </div>
-            </div>
+            {isStarting ? (
+              <>
+                <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full" />
+                <div>
+                  <div className="font-semibold">Starting Analysis...</div>
+                  <div className="text-sm text-purple-200">
+                    Saving project and initializing
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <Play className="w-6 h-6" />
+                <div>
+                  <div className="font-semibold">Start the Case</div>
+                  <div className="text-sm text-purple-200">
+                    {educationalMode ? 'With step-by-step guidance' : 'Get instant insights'}
+                  </div>
+                </div>
+              </>
+            )}
           </Button>
         </CardContent>
       </Card>
 
       <div className="flex justify-between">
-        <Button variant="outline" onClick={onPrevious} className="flex items-center gap-2 bg-white hover:bg-gray-50">
+        <Button variant="outline" onClick={onPrevious} className="flex items-center gap-2 bg-white hover:bg-gray-50" disabled={isStarting}>
           <ArrowLeft className="w-4 h-4" />
           Previous
         </Button>
