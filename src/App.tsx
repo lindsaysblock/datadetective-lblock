@@ -13,11 +13,25 @@ import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
-  console.log("App component rendering, React available:", !!React);
+  // Add debugging to understand the issue
+  console.log("App rendering - React:", React);
+  console.log("React.version:", React.version);
   console.log("QueryClient:", queryClient);
+  
+  if (!React) {
+    console.error("React is not available!");
+    return <div>Loading...</div>;
+  }
   
   return (
     <QueryClientProvider client={queryClient}>
