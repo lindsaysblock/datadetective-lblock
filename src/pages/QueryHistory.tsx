@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,14 +38,13 @@ const QueryHistory = () => {
   };
 
   const handleContinueInvestigation = (dataset: any) => {
-    // Navigate back to the main page but replace the current route
-    // This ensures we go to the Index component (/) which handles analysis
-    navigate('/', { 
+    // Navigate to new project page with dataset data to continue at step 4
+    navigate('/new-project', { 
       state: { 
-        selectedDataset: dataset,
-        activeTab: 'analysis'
-      },
-      replace: true
+        continueInvestigation: true,
+        dataset: dataset,
+        step: 4 // Go directly to step 4 (analysis summary)
+      }
     });
   };
 

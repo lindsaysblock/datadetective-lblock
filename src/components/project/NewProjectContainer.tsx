@@ -1,5 +1,5 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import ProjectAnalysisView from '@/components/ProjectAnalysisView';
 import NewProjectContent from './NewProjectContent';
 import ProjectHeader from './ProjectHeader';
@@ -11,9 +11,39 @@ import { useAuth } from '@/hooks/useAuth';
 const NewProjectContainer = () => {
   console.log('NewProjectContainer component rendering');
   
+  const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const formData = useNewProjectForm();
   const flowManager = useProjectFlowManager();
+
+  // Handle continue investigation from query history
+  useEffect(() => {
+    if (location.state?.continueInvestigation && location.state?.dataset) {
+      const dataset = location.state.dataset;
+      const step = location.state.step || 4;
+      
+      console.log('Continuing investigation with dataset:', dataset);
+      
+      // Reconstruct the form data from the dataset
+      const reconstructedParsedData = [{
+        id: dataset.id,
+        name: dataset.original_filename,
+        columns: dataset.metadata?.columns || [],
+        rows: dataset.metadata?.sample_rows || [],
+        rowCount: dataset.summary?.totalRows || 0,
+        summary: dataset.summary
+      }];
+      
+      // Set the form data
+      formData.setResearchQuestion(dataset.summary?.researchQuestion || '');
+      formData.setAdditionalContext(dataset.summary?.description || '');
+      formData.setParsedData(reconstructedParsedData);
+      formData.setStep(step);
+      
+      // Clear the location state to prevent re-triggering
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, formData]);
 
   console.log('Current flow state:', {
     step: formData.step,

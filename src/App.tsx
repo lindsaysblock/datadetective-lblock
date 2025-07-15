@@ -9,12 +9,9 @@ import { ROUTES } from '@/config/routes';
 import Index from '@/pages/Index';
 import QueryHistory from '@/pages/QueryHistory';
 import Auth from '@/pages/Auth';
-import Dashboard from '@/pages/Dashboard';
 import NewProject from '@/pages/NewProject';
 import Profile from '@/pages/Profile';
 import Admin from '@/pages/Admin';
-import QADashboard from '@/pages/QADashboard';
-import QARunner from '@/pages/QARunner';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient({
@@ -42,14 +39,11 @@ const App = () => {
               }>
                 <Routes>
                   <Route path={ROUTES.HOME} element={<Index />} />
-                  <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
                   <Route path={ROUTES.QUERY_HISTORY} element={<QueryHistory />} />
                   <Route path={ROUTES.AUTH} element={<Auth />} />
                   <Route path={ROUTES.NEW_PROJECT} element={<NewProject />} />
                   <Route path={ROUTES.PROFILE} element={<Profile />} />
                   <Route path={ROUTES.ADMIN} element={<Admin />} />
-                  <Route path={ROUTES.QA_DASHBOARD} element={<QADashboard />} />
-                  <Route path={ROUTES.QA_RUNNER} element={<QARunner />} />
                   <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />
                 </Routes>
               </Suspense>
