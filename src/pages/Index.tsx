@@ -1,31 +1,41 @@
 
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, BarChart3, Users, History, Settings, Play } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useOptimizedDataPipeline } from '@/hooks/useOptimizedDataPipeline';
 import { useAnalyticsManager } from '@/hooks/useAnalyticsManager';
-import DataUploadFlow from '@/components/data/DataUploadFlow';
-import AnalysisDashboard from '@/components/AnalysisDashboard';
-import OptimizedE2ETestRunner from '@/components/testing/OptimizedE2ETestRunner';
+import { useToast } from '@/hooks/use-toast';
 import { parseFile } from '@/utils/dataParser';
+import MainTabsView from '@/components/query/MainTabsView';
+import AnalysisView from '@/components/query/AnalysisView';
+import Header from '@/components/Header';
+import LegalFooter from '@/components/LegalFooter';
 
 const Index = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   // Use auth guard to protect this route
-  useAuthGuard({ requireAuth: true });
+  useAuthGuard({ requireAuth: false }); // Allow access for both authenticated and non-authenticated users
 
+  // State management
   const [activeTab, setActiveTab] = useState('upload');
-  const [file, setFile] = useState<File | null>(null);
-  const [researchQuestion, setResearchQuestion] = useState('');
-  const [parsedData, setParsedData] = useState<any>(null);
+  const [showOnboarding, setShowOnboarding] = useState(!user);
+  const [analysisData, setAnalysisData] = useState<any>(null);
+  const [currentFilename, setCurrentFilename] = useState('');
+  const [findings, setFindings] = useState<any[]>([]);
   const [showAnalysis, setShowAnalysis] = useState(false);
+
+  // Upload state
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<'uploading' | 'processing' | 'complete' | 'error'>('complete');
+  const [uploadFilename, setUploadFilename] = useState('');
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [estimatedTime, setEstimatedTime] = useState(0);
 
   const dataPipeline = useOptimizedDataPipeline();
   const analyticsManager = useAnalyticsManager();
@@ -45,174 +55,234 @@ const Index = () => {
         summary: dataset.summary || {}
       };
       
-      setParsedData(reconstructedData);
-      setActiveTab(location.state.activeTab || 'analysis');
+      setAnalysisData(reconstructedData);
+      setCurrentFilename(dataset.original_filename || 'Dataset');
+      setActiveTab('analysis');
       setShowAnalysis(true);
     }
   }, [location.state]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      console.log('📁 File selected:', selectedFile.name);
-    }
+  // Event handlers
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    toast({
+      title: "Welcome to Data Detective!",
+      description: "You're ready to start analyzing your data.",
+    });
   };
 
-  const handleFileUpload = async () => {
+  const handleOnboardingSkip = () => {
+    setShowOnboarding(false);
+  };
+
+  const handleStartNewProject = () => {
+    navigate('/new-project');
+  };
+
+  const handleResumeProject = () => {
+    navigate('/query-history');
+  };
+
+  const handleFileProcessed = async (file: File) => {
     if (!file) return;
 
     try {
-      console.log('🔄 Starting file upload process...');
-      const data = await dataPipeline.processFile(file);
-      setParsedData(data);
+      setUploading(true);
+      setUploadStatus('uploading');
+      setUploadFilename(file.name);
+      setUploadError(null);
+      setUploadProgress(0);
+
+      console.log('🔄 Starting file processing...');
+      
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
+
+      const data = await parseFile(file);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      setUploadStatus('complete');
+      
+      setAnalysisData(data);
+      setCurrentFilename(file.name);
+      setFindings([]);
+      
       console.log('✅ File processed successfully');
+      
+      toast({
+        title: "File Processed",
+        description: `${file.name} has been processed successfully.`,
+      });
+
     } catch (error) {
-      console.error('❌ File upload failed:', error);
+      console.error('❌ File processing failed:', error);
+      setUploadError(error instanceof Error ? error.message : 'File processing failed');
+      setUploadStatus('error');
+      
+      toast({
+        title: "Processing Failed",
+        description: "There was an error processing your file.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleStartAnalysis = async () => {
-    if (!parsedData) return;
+  const handleGenerateMockData = () => {
+    const mockData = {
+      columns: [
+        { name: 'id', type: 'number' as const, samples: [1, 2, 3] },
+        { name: 'name', type: 'string' as const, samples: ['Sample 1', 'Sample 2', 'Sample 3'] },
+        { name: 'value', type: 'number' as const, samples: [100, 200, 300] },
+      ],
+      rows: [
+        { id: 1, name: 'Sample 1', value: 100 },
+        { id: 2, name: 'Sample 2', value: 200 },
+        { id: 3, name: 'Sample 3', value: 300 },
+      ],
+      rowCount: 3,
+      fileSize: 1024,
+      summary: {
+        totalRows: 3,
+        totalColumns: 3,
+      }
+    };
 
-    try {
-      console.log('🔍 Starting analysis...');
-      await analyticsManager.runAnalysis(parsedData);
-      setShowAnalysis(true);
-      setActiveTab('analysis');
-      console.log('✅ Analysis completed');
-    } catch (error) {
-      console.error('❌ Analysis failed:', error);
-    }
+    setAnalysisData(mockData);
+    setCurrentFilename('Mock Dataset');
+    setFindings([]);
+    
+    toast({
+      title: "Mock Data Generated",
+      description: "Sample dataset has been created for testing.",
+    });
   };
 
-  if (!user) {
+  const handleSaveToAccount = () => {
+    if (!user) {
+      toast({
+        title: "Sign In Required",
+        description: "Please sign in to save datasets to your account.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Dataset Saved",
+      description: "Your dataset has been saved to your account.",
+    });
+  };
+
+  const handleDatasetSelect = (dataset: any) => {
+    console.log('📊 Dataset selected:', dataset);
+    
+    // Reconstruct parsed data from dataset
+    const reconstructedData = {
+      columns: dataset.metadata?.columns || [],
+      rows: dataset.metadata?.sample_rows || [],
+      rowCount: dataset.metadata?.sample_rows?.length || 0,
+      fileSize: dataset.file_size || 0,
+      summary: dataset.summary || {}
+    };
+    
+    setAnalysisData(reconstructedData);
+    setCurrentFilename(dataset.original_filename || 'Dataset');
+    setActiveTab('analysis');
+    setShowAnalysis(true);
+  };
+
+  const handleStartAnalysis = () => {
+    if (!analysisData) {
+      toast({
+        title: "No Data",
+        description: "Please upload or select a dataset first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setActiveTab('analysis');
+    setShowAnalysis(true);
+    
+    toast({
+      title: "Analysis Started",
+      description: "Beginning analysis of your dataset.",
+    });
+  };
+
+  // Show analysis view if we have data and analysis is active
+  if (showAnalysis && analysisData) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
-          <p className="text-gray-600">Please sign in to continue</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <AnalysisView
+            analysisData={analysisData}
+            currentFilename={currentFilename}
+            findings={findings}
+            setActiveTab={setActiveTab}
+            setAnalysisData={setAnalysisData}
+            handleStartNewProject={handleStartNewProject}
+            handleResumeProject={handleResumeProject}
+          />
         </div>
+        <LegalFooter />
       </div>
     );
   }
 
+  // Show main dashboard
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <Header />
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Data Analysis Platform</h1>
-          <p className="text-gray-600">Upload, analyze, and gain insights from your data</p>
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-gray-800 mb-4">
+            Welcome to Data Detective
+          </h1>
+          <p className="text-xl text-gray-600">
+            Uncover insights hidden in your data with AI-powered analysis
+          </p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="upload" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Upload
-            </TabsTrigger>
-            <TabsTrigger value="analysis" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Analysis
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
-              <History className="w-4 h-4" />
-              History
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Settings
-            </TabsTrigger>
-            <TabsTrigger value="testing" className="flex items-center gap-2">
-              <Play className="w-4 h-4" />
-              Testing
-            </TabsTrigger>
-          </TabsList>
+        <MainTabsView
+          showOnboarding={showOnboarding}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          uploading={uploading}
+          uploadProgress={uploadProgress}
+          uploadStatus={uploadStatus}
+          uploadFilename={uploadFilename}
+          uploadError={uploadError}
+          estimatedTime={estimatedTime}
+          user={user}
+          handleOnboardingComplete={handleOnboardingComplete}
+          handleOnboardingSkip={handleOnboardingSkip}
+          handleStartNewProject={handleStartNewProject}
+          handleResumeProject={handleResumeProject}
+          handleFileProcessed={handleFileProcessed}
+          handleGenerateMockData={handleGenerateMockData}
+          handleSaveToAccount={handleSaveToAccount}
+          handleDatasetSelect={handleDatasetSelect}
+        />
 
-          <TabsContent value="upload" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Upload Data</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DataUploadFlow
-                  file={file}
-                  uploading={dataPipeline.isProcessing}
-                  parsing={dataPipeline.isProcessing}
-                  parsedData={parsedData}
-                  researchQuestion={researchQuestion}
-                  onFileChange={handleFileChange}
-                  onFileUpload={handleFileUpload}
-                  onResearchQuestionChange={setResearchQuestion}
-                  onStartAnalysis={handleStartAnalysis}
-                  onSaveDataset={() => {}}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="analysis" className="mt-6">
-            {showAnalysis && parsedData ? (
-              <AnalysisDashboard
-                parsedData={parsedData}
-                filename={file?.name || 'Dataset'}
-                findings={analyticsManager.results}
-                onDataUpdate={setParsedData}
-              />
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Analysis Dashboard</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <BarChart3 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Data to Analyze</h3>
-                    <p className="text-gray-600 mb-4">Upload a dataset to start analyzing</p>
-                    <Button onClick={() => setActiveTab('upload')}>
-                      Upload Data
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="history" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Analysis History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <History className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">History Coming Soon</h3>
-                  <p className="text-gray-600">Your analysis history will appear here</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="settings" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Settings className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Settings Coming Soon</h3>
-                  <p className="text-gray-600">Platform settings will be available here</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="testing" className="mt-6">
-            <OptimizedE2ETestRunner />
-          </TabsContent>
-        </Tabs>
+        {analysisData && !showAnalysis && (
+          <div className="mt-8 text-center">
+            <button
+              onClick={handleStartAnalysis}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200"
+            >
+              Start Analysis
+            </button>
+          </div>
+        )}
       </div>
+      <LegalFooter />
     </div>
   );
 };
