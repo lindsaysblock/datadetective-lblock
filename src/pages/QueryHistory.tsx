@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ const QueryHistory = () => {
   const { user } = useAuth();
   const { datasets, loading: datasetsLoading, deleteDataset } = useDatasetPersistence();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (datasetId: string, datasetName: string) => {
@@ -35,6 +36,16 @@ const QueryHistory = () => {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleContinueInvestigation = (dataset: any) => {
+    // Navigate to the main analysis page with dataset info
+    navigate('/', { 
+      state: { 
+        selectedDataset: dataset,
+        activeTab: 'analysis'
+      }
+    });
   };
 
   if (datasetsLoading) {
@@ -179,6 +190,7 @@ const QueryHistory = () => {
                   <div className="flex justify-end">
                     <Button 
                       className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                      onClick={() => handleContinueInvestigation(dataset)}
                     >
                       Continue Investigation
                     </Button>
