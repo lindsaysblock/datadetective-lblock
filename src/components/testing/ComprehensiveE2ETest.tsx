@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -258,7 +259,7 @@ const ComprehensiveE2ETest: React.FC = () => {
     // Test AnalysisCoordinator
     tests.push(await runSingleTest('Analysis Coordinator', async () => {
       try {
-        const { AnalysisCoordinator } = await import('@/services/analysisCoordinator');
+        const { AnalysisCoordinator } = await import('@/services/analysis/analysisCoordinator');
         
         const mockContext = {
           researchQuestion: 'Test question',
