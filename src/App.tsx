@@ -1,5 +1,5 @@
 
-import * as React from "react";
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +16,9 @@ import Profile from "./pages/Profile";
 const queryClient = new QueryClient();
 
 function App() {
+  console.log("App component rendering, React available:", !!React);
+  console.log("QueryClient:", queryClient);
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
