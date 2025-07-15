@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,7 @@ interface AnalysisSummaryStepProps {
   isProcessingAnalysis: boolean;
   onStartAnalysis: (educationalMode: boolean, projectName: string) => void;
   onPrevious: () => void;
+  formData: any; // Add formData prop to access main form state
 }
 
 const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
@@ -28,10 +29,12 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   analysisCompleted,
   isProcessingAnalysis,
   onStartAnalysis,
-  onPrevious
+  onPrevious,
+  formData
 }) => {
-  const [projectName, setProjectName] = useState('');
-  const [educationalMode, setEducationalMode] = useState(false);
+  // Use project name from main form data, with fallback
+  const projectName = formData?.projectName || '';
+  const [educationalMode, setEducationalMode] = React.useState(false);
 
   console.log('AnalysisSummaryStep props:', {
     researchQuestion: researchQuestion ? `${researchQuestion.substring(0, 13)}...` : '',
@@ -45,12 +48,55 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     canProceed: !!(researchQuestion && projectName && parsedData && parsedData.length > 0)
   });
 
+  // Auto-set a default project name if none exists
+  useEffect(() => {
+    if (!projectName && researchQuestion && formData?.setProjectName) {
+      const defaultName = `Analysis: ${researchQuestion.substring(0, 30)}${researchQuestion.length > 30 ? '...' : ''}`;
+      console.log('Setting default project name:', defaultName);
+      formData.setProjectName(defaultName);
+    }
+  }, [projectName, researchQuestion, formData]);
+
+  const handleProjectNameChange = (value: string) => {
+    console.log('Project name changed to:', value);
+    if (formData?.setProjectName) {
+      formData.setProjectName(value);
+    }
+  };
+
   const handleStartAnalysis = () => {
-    if (!projectName.trim()) {
+    const finalProjectName = projectName?.trim();
+    
+    console.log('Starting analysis with:', {
+      projectName: finalProjectName,
+      researchQuestion,
+      hasData: !!(parsedData && parsedData.length > 0)
+    });
+
+    if (!finalProjectName) {
+      console.error('No project name provided');
       alert('Please enter a project name');
       return;
     }
-    onStartAnalysis(educationalMode, projectName.trim());
+
+    if (!researchQuestion?.trim()) {
+      console.error('No research question provided');
+      alert('Please enter a research question');
+      return;
+    }
+
+    if (!parsedData || parsedData.length === 0) {
+      console.error('No data available');
+      alert('Please upload data before starting analysis');
+      return;
+    }
+
+    try {
+      onStartAnalysis(educationalMode, finalProjectName);
+    } catch (error) {
+      console.error('Error starting analysis:', error);
+      alert('An error occurred while starting the analysis. Please try again.');
+    }
   };
 
   const totalRows = parsedData?.reduce((sum, data) => sum + (data.rowCount || data.rows || 0), 0) || 0;
@@ -77,10 +123,13 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             <Input
               id="projectName"
               value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
+              onChange={(e) => handleProjectNameChange(e.target.value)}
               placeholder="e.g., Customer Behavior Analysis"
               className="w-full"
             />
+            {!projectName && (
+              <p className="text-sm text-red-500">Project name is required</p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -194,7 +243,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
         
         <Button 
           onClick={handleStartAnalysis}
-          disabled={!researchQuestion || !projectName.trim() || !parsedData || parsedData.length === 0 || isProcessingAnalysis}
+          disabled={!researchQuestion || !projectName?.trim() || !parsedData || parsedData.length === 0 || isProcessingAnalysis}
           className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white flex items-center gap-2"
         >
           <Play className="w-4 h-4" />

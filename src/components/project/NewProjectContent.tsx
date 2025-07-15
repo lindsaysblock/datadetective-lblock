@@ -24,70 +24,81 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
     step: formData.step,
     researchQuestion: formData.researchQuestion,
     hasResearchQuestion: !!formData.researchQuestion,
-    researchQuestionLength: formData.researchQuestion?.length || 0
+    researchQuestionLength: formData.researchQuestion?.length || 0,
+    projectName: formData.projectName,
+    hasData: !!(formData.parsedData && formData.parsedData.length > 0)
   });
 
   const handleStartAnalysisWrapper = async (educationalMode: boolean = false, projectName: string = '') => {
     console.log('NewProjectContent starting analysis:', { educationalMode, projectName });
     
-    // Validate required fields
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to start analysis.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.researchQuestion?.trim()) {
-      toast({
-        title: "Research Question Required",
-        description: "Please enter a research question before starting analysis.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!projectName.trim()) {
-      toast({
-        title: "Project Name Required",
-        description: "Please enter a project name before starting analysis.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.uploadedData && (!formData.parsedData || formData.parsedData.length === 0)) {
-      toast({
-        title: "Data Required",
-        description: "Please upload data files before starting analysis.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      // Save the complete analysis project with enhanced metadata
-      console.log('Saving analysis project with enhanced metadata');
+      // Validate required fields
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to start analysis.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!formData.researchQuestion?.trim()) {
+        toast({
+          title: "Research Question Required",
+          description: "Please enter a research question before starting analysis.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!projectName.trim()) {
+        toast({
+          title: "Project Name Required", 
+          description: "Please enter a project name before starting analysis.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!formData.uploadedData && (!formData.parsedData || formData.parsedData.length === 0)) {
+        toast({
+          title: "Data Required",
+          description: "Please upload data files before starting analysis.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Validation passed, saving analysis project with enhanced metadata');
       
-      await saveAnalysisProject(
+      // Save the complete analysis project with enhanced metadata
+      const savedProject = await saveAnalysisProject(
         projectName,
         formData.researchQuestion,
         formData.businessContext || '',
         formData.uploadedData || formData.parsedData
       );
 
-      console.log('Project saved successfully, starting analysis');
+      console.log('Project saved successfully:', savedProject?.id);
+
+      // Show success message
+      toast({
+        title: "Analysis Starting",
+        description: `Project "${projectName}" saved successfully. Starting analysis...`,
+      });
 
       // Now start the analysis
       onStartAnalysis(educationalMode, projectName);
 
     } catch (error) {
       console.error('Error in project validation/saving:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
       toast({
-        title: "Error",
-        description: "An error occurred while processing your request. Please try again.",
+        title: "Error Starting Analysis",
+        description: `Failed to start analysis: ${errorMessage}`,
         variant: "destructive",
       });
     }
@@ -149,6 +160,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
             isProcessingAnalysis={formData.isProcessingAnalysis || false}
             onStartAnalysis={handleStartAnalysisWrapper}
             onPrevious={() => formData.prevStep?.()}
+            formData={formData}
           />
         );
       default:

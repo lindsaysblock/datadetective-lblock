@@ -55,6 +55,7 @@ export const useNewProjectForm = () => {
   const { reconstructAnalysisState, createMockFilesFromParsedData } = useContinueCase();
 
   const updateFormData = useCallback((updates: Partial<FormData>) => {
+    console.log('Updating form data:', updates);
     setFormData(prev => ({ ...prev, ...updates }));
   }, []);
 
@@ -71,6 +72,7 @@ export const useNewProjectForm = () => {
   }, []);
 
   const setProjectName = useCallback((value: string) => {
+    console.log('Setting project name in form:', value);
     setFormData(prev => ({ ...prev, projectName: value }));
   }, []);
 
@@ -152,15 +154,14 @@ export const useNewProjectForm = () => {
         setColumnMapping,
       };
 
-      setFormData(newFormData);
-      
-      console.log('✅ Continue case data set successfully:', {
-        projectName: reconstructedState.projectName,
-        researchQuestion: reconstructedState.researchQuestion,
+      console.log('✅ Setting continue case form data:', {
+        projectName: newFormData.projectName,
+        researchQuestion: newFormData.researchQuestion,
         filesCount: mockFiles.length,
-        filesSizes: mockFiles.map(f => ({ name: f.name, size: f.size })),
-        step: reconstructedState.step
+        step: newFormData.step
       });
+
+      setFormData(newFormData);
       
       toast({
         title: "Investigation Loaded",
@@ -182,6 +183,7 @@ export const useNewProjectForm = () => {
   }, [toast, reconstructAnalysisState, createMockFilesFromParsedData, setProjectName, setResearchQuestion, setAdditionalContext, nextStep, prevStep, addFile, handleFileUpload, removeFile, setColumnMapping]);
 
   const resetForm = useCallback(() => {
+    console.log('Resetting form data');
     setFormData({
       ...initialFormData,
       // Include methods
@@ -211,6 +213,13 @@ export const useNewProjectForm = () => {
     removeFile,
     setColumnMapping,
   };
+
+  console.log('useNewProjectForm current state:', {
+    projectName: enhancedFormData.projectName,
+    researchQuestion: enhancedFormData.researchQuestion,
+    step: enhancedFormData.step,
+    hasData: !!(enhancedFormData.parsedData && enhancedFormData.parsedData.length > 0)
+  });
 
   return {
     formData: enhancedFormData,
