@@ -1,9 +1,23 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { ParsedDataFile } from '@/types/data';
+import { supabase } from '@/integrations/supabase/client';
 
-interface EnhancedDatasetMetadata {
+export interface Dataset {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at?: string;
+  original_filename: string;
+  file_size?: number;
+  mime_type?: string;
+  metadata?: any;
+  summary?: any;
+  user_id: string;
+}
+
+export interface EnhancedDatasetMetadata {
   projectName: string;
   researchQuestion: string;
   additionalContext: string;
@@ -11,15 +25,82 @@ interface EnhancedDatasetMetadata {
   fileCount: number;
   totalRows: number;
   totalColumns: number;
+  analysisReady?: boolean;
+  parsedData?: ParsedDataFile[];
   analysisConfig?: any;
   [key: string]: any;
 }
 
 export const useDatasetPersistence = () => {
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [loading, setLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const { user } = useAuth();
 
+  // Fetch datasets
+  const fetchDatasets = async () => {
+    if (!user) {
+      setDatasets([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('datasets')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setDatasets(data || []);
+    } catch (error) {
+      console.error('Error fetching datasets:', error);
+      setDatasets([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDatasets();
+  }, [user]);
+
+  // Save dataset (legacy function)
+  const saveDataset = async (filename: string, data: any) => {
+    if (!user) {
+      throw new Error('User must be authenticated to save datasets');
+    }
+
+    try {
+      const datasetRecord = {
+        user_id: user.id,
+        name: filename.replace(/\.[^/.]+$/, ''), // Remove file extension
+        original_filename: filename,
+        metadata: data,
+        summary: data.summary || {}
+      };
+
+      const { data: savedDataset, error } = await supabase
+        .from('datasets')
+        .insert(datasetRecord)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Refresh datasets
+      await fetchDatasets();
+      
+      return savedDataset.id;
+    } catch (error) {
+      console.error('Error saving dataset:', error);
+      throw error;
+    }
+  };
+
+  // Save analysis project (new enhanced function)
   const saveAnalysisProject = async (
     projectName: string,
     researchQuestion: string,
@@ -36,8 +117,6 @@ export const useDatasetPersistence = () => {
     try {
       console.log('🔍 Saving detective case file:', projectName);
       
-      const { supabase } = await import('@/integrations/supabase/client');
-      
       // Calculate totals
       const totalRows = parsedData.reduce((sum, file) => sum + (file.rows || 0), 0);
       const totalColumns = parsedData.reduce((sum, file) => sum + (file.columns || 0), 0);
@@ -51,6 +130,8 @@ export const useDatasetPersistence = () => {
         fileCount: parsedData.length,
         totalRows,
         totalColumns,
+        analysisReady: true,
+        parsedData: parsedData,
         analysisConfig: {
           educationalMode: false,
           detectiveTheme: true
@@ -81,19 +162,6 @@ export const useDatasetPersistence = () => {
         )
       };
 
-      // Convert ParsedDataFile objects to plain objects for JSON compatibility
-      const plainParsedData = parsedData.map(file => ({
-        id: file.id,
-        name: file.name,
-        rows: file.rows,
-        columns: file.columns,
-        rowCount: file.rowCount,
-        preview: file.preview,
-        data: file.data,
-        columnInfo: file.columnInfo,
-        summary: file.summary
-      }));
-
       // Save to datasets table
       const datasetRecord = {
         user_id: user.id,
@@ -120,6 +188,9 @@ export const useDatasetPersistence = () => {
 
       console.log('✅ Detective case file saved successfully:', savedDataset.id);
       
+      // Refresh datasets
+      await fetchDatasets();
+      
       return savedDataset;
 
     } catch (error) {
@@ -132,9 +203,39 @@ export const useDatasetPersistence = () => {
     }
   };
 
+  // Delete dataset
+  const deleteDataset = async (datasetId: string) => {
+    if (!user) {
+      throw new Error('User must be authenticated to delete datasets');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('datasets')
+        .delete()
+        .eq('id', datasetId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Refresh datasets
+      await fetchDatasets();
+    } catch (error) {
+      console.error('Error deleting dataset:', error);
+      throw error;
+    }
+  };
+
+  const refreshDatasets = fetchDatasets;
+
   return {
-    saveAnalysisProject,
+    datasets,
+    loading,
     isSaving,
-    saveError
+    saveError,
+    saveDataset,
+    saveAnalysisProject,
+    deleteDataset,
+    refreshDatasets
   };
 };
