@@ -39,12 +39,14 @@ const QueryHistory = () => {
   };
 
   const handleContinueInvestigation = (dataset: any) => {
-    // Navigate to the main analysis page with dataset info
+    // Navigate back to the main page but replace the current route
+    // This ensures we go to the Index component (/) which handles analysis
     navigate('/', { 
       state: { 
         selectedDataset: dataset,
         activeTab: 'analysis'
-      }
+      },
+      replace: true
     });
   };
 
