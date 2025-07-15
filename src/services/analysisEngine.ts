@@ -1,6 +1,6 @@
 
 import { DataAnalysisContext, AnalysisResults } from '@/types/data';
-import { AnalysisCoordinator } from './analysisCoordinator';
+import { AnalysisCoordinator } from './analysis/analysisCoordinator';
 
 export class AnalysisEngine {
   static async analyzeData(context: DataAnalysisContext): Promise<AnalysisResults> {

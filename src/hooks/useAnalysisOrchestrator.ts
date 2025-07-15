@@ -26,7 +26,7 @@ export const useAnalysisOrchestrator = () => {
     context: DataAnalysisContext,
     onProgress?: (progress: number) => void
   ): Promise<AnalysisResults | null> => {
-    console.log('🚀 Starting analysis orchestration');
+    console.log('🚀 Starting analysis orchestration with fixed circular dependency');
     
     setState({
       isAnalyzing: true,
@@ -71,11 +71,11 @@ export const useAnalysisOrchestrator = () => {
       
       // Phase 4: Execute actual analysis
       updateProgress(85);
-      console.log('📊 Executing analysis engine...');
+      console.log('📊 Executing analysis engine (fixed circular dependency)...');
       
       const results = await AnalysisEngine.analyzeData(context);
       
-      console.log('✅ Analysis engine completed:', results);
+      console.log('✅ Analysis engine completed successfully:', results);
       
       // Final progress update
       updateProgress(95);

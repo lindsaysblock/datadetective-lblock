@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { AnalysisReport } from '@/types/analysis';
 import { DataAnalysisContext } from '@/types/data';
-import { AnalysisCoordinator } from '@/services/analysisCoordinator';
+import { AnalysisCoordinator } from '@/services/analysis/analysisCoordinator';
 
 interface UseAnalysisEngineReturn {
   isAnalyzing: boolean;
