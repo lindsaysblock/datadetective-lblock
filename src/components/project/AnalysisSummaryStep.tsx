@@ -17,7 +17,7 @@ interface AnalysisSummaryStepProps {
   isProcessingAnalysis: boolean;
   onStartAnalysis: (educationalMode: boolean, projectName: string) => void;
   onPrevious: () => void;
-  formData: any; // Add formData prop to access main form state
+  formData: any;
 }
 
 const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
@@ -32,35 +32,36 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   onPrevious,
   formData
 }) => {
-  // Use project name from main form data, with fallback
   const projectName = formData?.projectName || '';
   const [educationalMode, setEducationalMode] = React.useState(false);
 
-  console.log('AnalysisSummaryStep props:', {
-    researchQuestion: researchQuestion ? `${researchQuestion.substring(0, 13)}...` : '',
+  console.log('AnalysisSummaryStep current state:', {
+    researchQuestion: researchQuestion ? `${researchQuestion.substring(0, 13)}...` : 'None',
     hasResearchQuestion: !!researchQuestion,
     researchQuestionLength: researchQuestion?.length || 0,
-    additionalContext: additionalContext ? '...' : '',
+    projectName: projectName || 'Empty',
+    hasSetProjectName: !!formData?.setProjectName,
     hasData: !!(parsedData && parsedData.length > 0),
     analysisCompleted,
     isProcessingAnalysis,
-    projectName,
     canProceed: !!(researchQuestion && projectName && parsedData && parsedData.length > 0)
   });
 
-  // Auto-set a default project name if none exists
+  // Auto-set a default project name if none exists and we have a research question
   useEffect(() => {
     if (!projectName && researchQuestion && formData?.setProjectName) {
       const defaultName = `Analysis: ${researchQuestion.substring(0, 30)}${researchQuestion.length > 30 ? '...' : ''}`;
-      console.log('Setting default project name:', defaultName);
+      console.log('Auto-setting default project name:', defaultName);
       formData.setProjectName(defaultName);
     }
-  }, [projectName, researchQuestion, formData]);
+  }, [projectName, researchQuestion, formData?.setProjectName]);
 
   const handleProjectNameChange = (value: string) => {
     console.log('Project name changed to:', value);
     if (formData?.setProjectName) {
       formData.setProjectName(value);
+    } else {
+      console.error('setProjectName function not available in formData');
     }
   };
 
@@ -130,6 +131,9 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             {!projectName && (
               <p className="text-sm text-red-500">Project name is required</p>
             )}
+            <p className="text-xs text-gray-500">
+              Current value: "{projectName || 'None'}"
+            </p>
           </div>
         </CardContent>
       </Card>

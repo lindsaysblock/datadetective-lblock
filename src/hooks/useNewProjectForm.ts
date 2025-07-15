@@ -72,7 +72,7 @@ export const useNewProjectForm = () => {
   }, []);
 
   const setProjectName = useCallback((value: string) => {
-    console.log('Setting project name in form:', value);
+    console.log('Setting project name in useNewProjectForm:', value);
     setFormData(prev => ({ ...prev, projectName: value }));
   }, []);
 
@@ -142,16 +142,6 @@ export const useNewProjectForm = () => {
         uploadedData: reconstructedState.parsedData,
         parsedData: reconstructedState.parsedData,
         step: reconstructedState.step,
-        // Include methods
-        setProjectName,
-        setResearchQuestion,
-        setAdditionalContext,
-        nextStep,
-        prevStep,
-        addFile,
-        handleFileUpload,
-        removeFile,
-        setColumnMapping,
       };
 
       console.log('✅ Setting continue case form data:', {
@@ -180,27 +170,15 @@ export const useNewProjectForm = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, reconstructAnalysisState, createMockFilesFromParsedData, setProjectName, setResearchQuestion, setAdditionalContext, nextStep, prevStep, addFile, handleFileUpload, removeFile, setColumnMapping]);
+  }, [toast, reconstructAnalysisState, createMockFilesFromParsedData]);
 
   const resetForm = useCallback(() => {
     console.log('Resetting form data');
-    setFormData({
-      ...initialFormData,
-      // Include methods
-      setProjectName,
-      setResearchQuestion,
-      setAdditionalContext,
-      nextStep,
-      prevStep,
-      addFile,
-      handleFileUpload,
-      removeFile,
-      setColumnMapping,
-    });
+    setFormData(initialFormData);
     setError(null);
-  }, [setProjectName, setResearchQuestion, setAdditionalContext, nextStep, prevStep, addFile, handleFileUpload, removeFile, setColumnMapping]);
+  }, []);
 
-  // Enhance formData with methods
+  // Enhanced formData with methods - this is the key fix
   const enhancedFormData = {
     ...formData,
     setProjectName,
