@@ -106,7 +106,7 @@ const NewProjectContainer = () => {
       return;
     }
 
-    const finalProjectName = projectName || `Analysis ${Date.now()}`;
+    const finalProjectName = projectName || `Investigation ${Date.now()}`;
     
     try {
       console.log('📊 Executing analysis for continue case:', isContinueCase);
@@ -133,6 +133,15 @@ const NewProjectContainer = () => {
     return 0.1;
   };
 
+  const getProgressPhase = () => {
+    if (flowManager.analysisProgress < 20) return 'Examining the evidence...';
+    if (flowManager.analysisProgress < 40) return 'Following the data trail...';
+    if (flowManager.analysisProgress < 60) return 'Connecting the clues...';
+    if (flowManager.analysisProgress < 80) return 'Building the case...';
+    if (flowManager.analysisProgress < 95) return 'Preparing final report...';
+    return 'Case almost solved...';
+  };
+
   // Show analysis view if we have completed analysis
   if (flowManager.showAnalysisView && flowManager.analysisResults) {
     console.log('📊 Rendering analysis view');
@@ -143,7 +152,7 @@ const NewProjectContainer = () => {
         onBackToProject={flowManager.backToProject}
         researchQuestion={formData.researchQuestion}
         additionalContext={formData.additionalContext}
-        dataSource={formData.files.length > 0 ? `${formData.files.length} file${formData.files.length > 1 ? 's' : ''}` : 'Database Connection'}
+        dataSource={formData.files.length > 0 ? `${formData.files.length} evidence file${formData.files.length > 1 ? 's' : ''}` : 'Database Connection'}
         educationalMode={false}
       />
     );
@@ -160,21 +169,21 @@ const NewProjectContainer = () => {
             <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <h3 className="text-xl font-semibold">Processing Your Data</h3>
-                <p className="text-gray-600">Please wait while we process your files...</p>
+                <h3 className="text-xl font-semibold">🔍 Processing Evidence</h3>
+                <p className="text-gray-600">Detective is cataloging your files...</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Enhanced analysis overlay */}
+        {/* Enhanced analysis overlay with detective theme */}
         {flowManager.isAnalyzing && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
               <div className="text-center space-y-6">
                 <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <h3 className="text-xl font-semibold">Analyzing Your Data...</h3>
-                <p className="text-gray-600">Please wait while we process your analysis for "{flowManager.currentProjectName}"</p>
+                <h3 className="text-xl font-semibold">🕵️ Investigating the Case...</h3>
+                <p className="text-gray-600">Detective is analyzing "{flowManager.currentProjectName}"</p>
                 
                 <div className="space-y-3">
                   <Progress value={flowManager.analysisProgress} className="w-full h-3" />
@@ -190,7 +199,7 @@ const NewProjectContainer = () => {
                     <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
                     <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                   </div>
-                  <p className="text-sm text-gray-500">Running comprehensive analysis on your dataset...</p>
+                  <p className="text-sm text-gray-500">{getProgressPhase()}</p>
                 </div>
               </div>
             </div>
@@ -203,16 +212,16 @@ const NewProjectContainer = () => {
             <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-                  <div className="text-red-600 text-2xl">⚠️</div>
+                  <div className="text-red-600 text-2xl">🚨</div>
                 </div>
-                <h3 className="text-xl font-semibold">Analysis Error</h3>
+                <h3 className="text-xl font-semibold">Investigation Interrupted</h3>
                 <p className="text-gray-600">{flowManager.analysisError}</p>
                 <div className="flex gap-3 justify-center">
                   <button 
                     onClick={() => handleStartAnalysis(false, flowManager.currentProjectName)}
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
-                    Try Again
+                    Retry Investigation
                   </button>
                   <button 
                     onClick={() => {
@@ -221,7 +230,7 @@ const NewProjectContainer = () => {
                     }}
                     className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
                   >
-                    Start New Project
+                    New Case
                   </button>
                 </div>
               </div>

@@ -22,8 +22,8 @@ export const useDataPipeline = () => {
   const { toast } = useToast();
 
   const processFiles = useCallback(async (files: File[]): Promise<ParsedDataFile[]> => {
-    console.log('🔄 Processing files through data pipeline:', files.length);
-    console.log('Files details:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
+    console.log('🔍 Processing evidence files through detective pipeline:', files.length);
+    console.log('Evidence details:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
     
     setState(prev => ({ ...prev, isProcessing: true, error: null }));
 
@@ -31,39 +31,52 @@ export const useDataPipeline = () => {
       const results: ParsedDataFile[] = [];
       
       for (const file of files) {
-        console.log('📁 Processing file:', file.name, 'Size:', file.size);
+        console.log('📁 Examining evidence file:', file.name, 'Size:', file.size);
         
-        // Check if file is empty or invalid
+        // Check if file is empty or invalid - handle synthetic/mock files
         if (file.size === 0) {
-          console.warn('⚠️ File is empty:', file.name);
-          // For synthetic files (continue case), create mock data
-          if (file.name.includes('csv') || file.name.includes('json')) {
-            console.log('📝 Creating mock data for synthetic file');
+          console.warn('⚠️ Evidence file appears empty:', file.name);
+          
+          // For synthetic files (continue case), create realistic mock data
+          if (file.name.includes('csv') || file.name.includes('json') || file.name.includes('mock')) {
+            console.log('📝 Creating mock evidence data for synthetic file');
+            
+            // Generate more realistic mock data based on file name
+            const mockColumns = file.name.includes('sales') ? 
+              ['order_id', 'customer_id', 'product_name', 'order_date', 'total_amount'] :
+              file.name.includes('user') ?
+              ['user_id', 'session_id', 'action', 'timestamp', 'page_url'] :
+              ['id', 'name', 'category', 'value', 'date'];
+            
+            const mockRows = [];
+            for (let i = 0; i < 100; i++) {
+              const row = mockColumns.map((col, index) => {
+                if (col.includes('id')) return `${col.split('_')[0]}_${1000 + i}`;
+                if (col.includes('date') || col.includes('timestamp')) return new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString();
+                if (col.includes('amount') || col.includes('value')) return (Math.random() * 1000).toFixed(2);
+                return `Sample ${col} ${i + 1}`;
+              });
+              mockRows.push(row);
+            }
+            
             const dataFile: ParsedDataFile = {
-              id: `file-${Date.now()}-${Math.random()}`,
+              id: `evidence-${Date.now()}-${Math.random()}`,
               name: file.name,
               rows: 100,
-              columns: 5,
+              columns: mockColumns.length,
               rowCount: 100,
-              preview: [
-                ['Column1', 'Column2', 'Column3', 'Column4', 'Column5'],
-                ['Value1', 'Value2', 'Value3', 'Value4', 'Value5'],
-                ['Data1', 'Data2', 'Data3', 'Data4', 'Data5']
-              ],
-              data: [],
-              columnInfo: [
-                { name: 'Column1', type: 'string' },
-                { name: 'Column2', type: 'string' },
-                { name: 'Column3', type: 'string' },
-                { name: 'Column4', type: 'string' },
-                { name: 'Column5', type: 'string' }
-              ],
+              preview: [mockColumns, ...mockRows.slice(0, 4)],
+              data: mockRows,
+              columnInfo: mockColumns.map(col => ({ 
+                name: col, 
+                type: col.includes('amount') || col.includes('value') ? 'number' : 'string' 
+              })),
               summary: {
                 totalRows: 100,
-                totalColumns: 5,
-                possibleUserIdColumns: [],
-                possibleEventColumns: [],
-                possibleTimestampColumns: []
+                totalColumns: mockColumns.length,
+                possibleUserIdColumns: mockColumns.filter(col => col.includes('user_id')),
+                possibleEventColumns: mockColumns.filter(col => col.includes('action')),
+                possibleTimestampColumns: mockColumns.filter(col => col.includes('date') || col.includes('timestamp'))
               }
             };
             results.push(dataFile);
@@ -74,15 +87,15 @@ export const useDataPipeline = () => {
         try {
           // Parse the file
           const parsedData = await parseFile(file);
-          console.log('✅ File parsed successfully:', {
+          console.log('✅ Evidence file analyzed successfully:', {
             name: file.name,
-            rows: parsedData.rowCount,
-            columns: parsedData.columns.length
+            records: parsedData.rowCount,
+            fields: parsedData.columns.length
           });
           
           // Convert to ParsedDataFile format
           const dataFile: ParsedDataFile = {
-            id: `file-${Date.now()}-${Math.random()}`,
+            id: `evidence-${Date.now()}-${Math.random()}`,
             name: file.name,
             rows: parsedData.rowCount,
             columns: parsedData.columns.length,
@@ -99,13 +112,13 @@ export const useDataPipeline = () => {
             }
           };
 
-          // Validate the data
+          // Validate the evidence
           try {
             const validator = new DataValidator(parsedData);
             const validation = validator.validate();
             
             if (!validation.isValid && validation.errors.length > 0) {
-              console.warn('⚠️ Data validation issues:', validation.errors);
+              console.warn('⚠️ Evidence quality issues detected:', validation.errors);
             }
             
             setState(prev => ({
@@ -116,22 +129,22 @@ export const useDataPipeline = () => {
               }]
             }));
           } catch (validationError) {
-            console.warn('⚠️ Validation failed, proceeding anyway:', validationError);
+            console.warn('⚠️ Evidence validation failed, proceeding with investigation:', validationError);
           }
 
           results.push(dataFile);
-          console.log('✅ File processed successfully:', dataFile.name);
+          console.log('✅ Evidence file processed successfully:', dataFile.name);
         } catch (parseError) {
-          console.error('❌ Error parsing file:', file.name, parseError);
+          console.error('❌ Error analyzing evidence file:', file.name, parseError);
           
-          // Create a basic data structure even if parsing fails
+          // Create a basic evidence structure even if parsing fails
           const fallbackDataFile: ParsedDataFile = {
-            id: `file-${Date.now()}-${Math.random()}`,
+            id: `evidence-${Date.now()}-${Math.random()}`,
             name: file.name,
             rows: 0,
             columns: 0,
             rowCount: 0,
-            preview: [['Error parsing file']],
+            preview: [['Error analyzing evidence file']],
             data: [],
             columnInfo: [],
             summary: {
@@ -155,15 +168,15 @@ export const useDataPipeline = () => {
       }));
 
       toast({
-        title: "Files Processed Successfully",
-        description: `Processed ${results.length} file(s) with ${results.reduce((total, file) => total + file.rows, 0)} total rows.`,
+        title: "🔍 Evidence Processed Successfully",
+        description: `Analyzed ${results.length} evidence file(s) with ${results.reduce((total, file) => total + file.rows, 0)} total records.`,
       });
 
-      console.log('✅ Data pipeline completed successfully, processed files:', results.length);
+      console.log('✅ Detective evidence pipeline completed successfully, processed files:', results.length);
       return results;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'File processing failed';
-      console.error('❌ Data pipeline error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Evidence processing failed';
+      console.error('❌ Detective evidence pipeline error:', error);
       
       setState(prev => ({
         ...prev,
@@ -172,7 +185,7 @@ export const useDataPipeline = () => {
       }));
 
       toast({
-        title: "Processing Failed",
+        title: "🚨 Evidence Processing Failed",
         description: errorMessage,
         variant: "destructive",
       });
@@ -182,7 +195,7 @@ export const useDataPipeline = () => {
   }, [toast]);
 
   const clearPipeline = useCallback(() => {
-    console.log('🧹 Clearing data pipeline');
+    console.log('🧹 Clearing detective evidence pipeline');
     setState({
       isProcessing: false,
       error: null,

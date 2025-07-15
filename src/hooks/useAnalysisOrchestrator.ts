@@ -26,7 +26,7 @@ export const useAnalysisOrchestrator = () => {
     context: DataAnalysisContext,
     onProgress?: (progress: number) => void
   ): Promise<AnalysisResults | null> => {
-    console.log('🚀 Starting analysis orchestration with fixed circular dependency');
+    console.log('🕵️ Starting detective investigation with enhanced progress tracking');
     
     setState({
       isAnalyzing: true,
@@ -37,51 +37,58 @@ export const useAnalysisOrchestrator = () => {
     });
 
     try {
-      // Progress simulation with more realistic timing
+      // Progress simulation with detective-themed phases
       const updateProgress = (progress: number) => {
-        console.log('📊 Updating progress to:', progress);
+        console.log('🔍 Investigation progress:', progress);
         setState(prev => ({ ...prev, progress }));
         onProgress?.(progress);
       };
 
-      // Initial validation
-      updateProgress(10);
+      // Phase 1: Initial case setup and validation
+      updateProgress(5);
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       if (!context.researchQuestion?.trim()) {
-        throw new Error('Research question is required');
+        throw new Error('Investigation requires a research question');
       }
       
       if (!context.parsedData || context.parsedData.length === 0) {
-        throw new Error('Data is required for analysis');
+        throw new Error('Investigation requires evidence data');
       }
 
-      console.log('📊 Starting analysis phases...');
+      console.log('🔍 Beginning detective investigation phases...');
 
-      // Phase 1: Data preprocessing
-      updateProgress(25);
+      // Phase 2: Evidence examination
+      updateProgress(15);
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      // Phase 3: Pattern recognition and clue gathering
+      updateProgress(30);
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Phase 2: Statistical analysis
+      // Phase 4: Statistical analysis and hypothesis testing
       updateProgress(50);
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      // Phase 3: Pattern recognition
-      updateProgress(75);
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Phase 4: Execute actual analysis
+      // Phase 5: Cross-referencing data points
+      updateProgress(70);
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Phase 6: Execute main analysis engine
       updateProgress(85);
-      console.log('📊 Executing analysis engine (fixed circular dependency)...');
+      console.log('🔍 Running core analysis engine...');
       
       const results = await AnalysisEngine.analyzeData(context);
       
-      console.log('✅ Analysis engine completed successfully:', results);
+      console.log('✅ Detective analysis completed successfully:', results);
       
-      // Final progress update
+      // Phase 7: Preparing final report
       updateProgress(95);
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 400));
       
+      // Phase 8: Case closed
       updateProgress(100);
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       setState({
         isAnalyzing: false,
@@ -92,16 +99,16 @@ export const useAnalysisOrchestrator = () => {
       });
 
       toast({
-        title: "Analysis Complete ✅",
-        description: "Your data analysis has been completed successfully.",
+        title: "🕵️ Case Solved!",
+        description: "Your investigation has been completed successfully. All clues have been analyzed.",
       });
 
-      console.log('✅ Analysis orchestration completed successfully');
+      console.log('✅ Detective investigation orchestration completed successfully');
       return results;
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Analysis failed';
-      console.error('❌ Analysis orchestration failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Investigation failed due to unexpected circumstances';
+      console.error('🚨 Detective investigation failed:', error);
       
       setState({
         isAnalyzing: false,
@@ -112,7 +119,7 @@ export const useAnalysisOrchestrator = () => {
       });
 
       toast({
-        title: "Analysis Failed",
+        title: "🚨 Investigation Interrupted",
         description: errorMessage,
         variant: "destructive",
       });
@@ -122,7 +129,7 @@ export const useAnalysisOrchestrator = () => {
   }, [toast]);
 
   const resetAnalysis = useCallback(() => {
-    console.log('🔄 Resetting analysis orchestrator');
+    console.log('🔄 Resetting detective investigation');
     setState({
       isAnalyzing: false,
       progress: 0,

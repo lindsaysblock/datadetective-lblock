@@ -57,8 +57,8 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Analysis Complete!</h2>
-          <p className="text-gray-600">Here are your analysis results</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Case Closed! 🕵️</h2>
+          <p className="text-gray-600">Your investigation is complete. Here are the findings</p>
         </div>
 
         <AnalysisResultsCard analysisResults={analysisResults} />
@@ -66,7 +66,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
         <div className="flex justify-between">
           <Button variant="outline" onClick={onPrevious} className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
-            Back
+            Back to Evidence
           </Button>
         </div>
       </div>
@@ -78,21 +78,21 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Analyzing Your Data...</h2>
-          <p className="text-gray-600">Please wait while we process your analysis for "{projectName}"</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">🔍 Investigating the Case...</h2>
+          <p className="text-gray-600">Detective is examining the evidence for "{projectName}"</p>
         </div>
 
         <Card className="w-full">
           <CardContent className="p-8 text-center">
             <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-600">Running analysis on your dataset...</p>
+            <p className="text-gray-600">Analyzing clues and patterns in your data...</p>
           </CardContent>
         </Card>
 
         <div className="flex justify-between">
           <Button variant="outline" onClick={onPrevious} className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
-            Back
+            Back to Evidence
           </Button>
         </div>
       </div>
@@ -130,7 +130,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
       // Check if project name already exists
       const nameExists = await checkProjectNameExists(projectName);
       if (nameExists) {
-        setNameError('A project with this name already exists. Please choose a different name.');
+        setNameError('A case with this name already exists. Please choose a different name.');
         setIsStarting(false);
         return;
       }
@@ -139,7 +139,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
       onStartAnalysis(educationalMode, projectName);
     } catch (error) {
       console.error('Error starting analysis:', error);
-      setNameError('An error occurred while starting the analysis. Please try again.');
+      setNameError('An error occurred while opening the case. Please try again.');
       setIsStarting(false);
     }
   };
@@ -161,8 +161,8 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Step 4: Review & Start Analysis</h2>
-        <p className="text-gray-600">Name your project and start the analysis</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">🕵️ Step 4: Open the Case File</h2>
+        <p className="text-gray-600">Name your investigation and begin the detective work</p>
       </div>
 
       {/* Project Naming and Analysis Summary Combined */}
@@ -173,19 +173,19 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
               <FolderPlus className="w-4 h-4" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Project Setup</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Case File Setup</h3>
               <p className="text-gray-500 text-sm mb-4">
-                Give your analysis project a name and review your configuration
+                Give your investigation a name and review the evidence collected
               </p>
               
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="project-name" className="text-sm font-medium text-gray-700 mb-2 block">
-                    Project Name
+                    Case Name
                   </Label>
                   <Input
                     id="project-name"
-                    placeholder="e.g., Sales Data Analysis, Customer Survey Insights..."
+                    placeholder="e.g., Sales Mystery Investigation, Customer Behavior Case..."
                     value={projectName}
                     onChange={(e) => handleProjectNameChange(e.target.value)}
                     onKeyPress={handleKeyPress}
@@ -202,7 +202,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
 
           <div className="space-y-4 mb-8">
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Research Question</h4>
+              <h4 className="font-medium text-gray-900 mb-2">🔍 Research Question</h4>
               <p className="text-sm text-gray-700">
                 {hasResearchQuestion ? researchQuestion : 'No research question provided'}
               </p>
@@ -210,29 +210,29 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
 
             {additionalContext && (
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Business Context</h4>
+                <h4 className="font-medium text-gray-900 mb-2">📝 Case Context</h4>
                 <p className="text-gray-700 text-sm">{additionalContext}</p>
               </div>
             )}
 
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Data Source</h4>
+              <h4 className="font-medium text-gray-900 mb-2">📊 Evidence Collected</h4>
               {hasData ? (
                 <div className="text-sm text-gray-700 space-y-2">
                   {parsedData.map((data, index) => (
                     <div key={index} className="flex items-center justify-between py-1">
                       <span className="font-medium">
-                        {data.name || `File ${index + 1}`}
+                        {data.name || `Evidence File ${index + 1}`}
                       </span>
                       <span className="text-gray-500">
-                        {(data.summary?.totalRows || data.rowCount || 0).toLocaleString()} rows × {' '}
-                        {data.summary?.totalColumns || data.columns?.length || 0} columns
+                        {(data.summary?.totalRows || data.rowCount || 0).toLocaleString()} records × {' '}
+                        {data.summary?.totalColumns || data.columns?.length || 0} fields
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-700">Database connection or demo analysis</p>
+                <p className="text-sm text-gray-700">Database connection or sample evidence</p>
               )}
             </div>
           </div>
@@ -243,10 +243,10 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
               <BookOpen className="w-5 h-5 text-orange-600" />
               <div>
                 <Label htmlFor="educational-mode" className="text-sm font-medium text-gray-900 cursor-pointer">
-                  Learn how to code step-by-step
+                  Detective Training Mode
                 </Label>
                 <p className="text-xs text-gray-600 mt-1">
-                  Get detailed explanations of each analysis step
+                  Learn detective techniques and investigation methods step-by-step
                 </p>
               </div>
             </div>
@@ -268,9 +268,9 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
               <>
                 <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full" />
                 <div>
-                  <div className="font-semibold">Starting Analysis...</div>
+                  <div className="font-semibold">Opening Case File...</div>
                   <div className="text-sm text-purple-200">
-                    Saving project and initializing
+                    Preparing investigation tools
                   </div>
                 </div>
               </>
@@ -278,9 +278,9 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
               <>
                 <Play className="w-6 h-6" />
                 <div>
-                  <div className="font-semibold">Start the Case</div>
+                  <div className="font-semibold">🕵️ Start the Case</div>
                   <div className="text-sm text-purple-200">
-                    {educationalMode ? 'With step-by-step guidance' : 'Get instant insights'}
+                    {educationalMode ? 'With detective training guidance' : 'Begin immediate investigation'}
                   </div>
                 </div>
               </>
