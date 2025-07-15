@@ -1,8 +1,9 @@
 
+import { diskIOOptimizer } from './diskIOOptimizer';
+
 export class OptimizedDataProcessor {
   private static instance: OptimizedDataProcessor;
   private processingCache = new Map<string, any>();
-  private maxCacheSize = 50;
 
   static getInstance(): OptimizedDataProcessor {
     if (!OptimizedDataProcessor.instance) {
@@ -11,42 +12,33 @@ export class OptimizedDataProcessor {
     return OptimizedDataProcessor.instance;
   }
 
-  async processDataWithOptimization(data: any[], cacheKey?: string): Promise<any[]> {
-    // Check cache first
-    if (cacheKey && this.processingCache.has(cacheKey)) {
-      console.log('📋 Using cached data processing result');
-      return this.processingCache.get(cacheKey);
+  async processDataWithCaching(data: any[], cacheKey: string): Promise<any[]> {
+    // Check memory cache first
+    const cached = diskIOOptimizer.getCachedData(cacheKey);
+    if (cached) {
+      console.log('📋 Using cached processed data');
+      return cached;
     }
 
-    // Process data in chunks for better performance
-    const chunkSize = 1000;
-    const processedChunks: any[] = [];
+    // Stream process large datasets to avoid memory spikes
+    const processedData = await diskIOOptimizer.streamProcess(
+      data,
+      async (chunk) => this.processChunk(chunk),
+      500 // Smaller chunks for better I/O
+    );
 
-    for (let i = 0; i < data.length; i += chunkSize) {
-      const chunk = data.slice(i, i + chunkSize);
-      const processedChunk = await this.processChunk(chunk);
-      processedChunks.push(...processedChunk);
-
-      // Allow UI to update between chunks
-      if (i % (chunkSize * 5) === 0) {
-        await new Promise(resolve => setTimeout(resolve, 0));
-      }
-    }
-
-    // Cache result if cache key provided
-    if (cacheKey) {
-      this.cacheResult(cacheKey, processedChunks);
-    }
-
-    return processedChunks;
+    // Cache results efficiently
+    diskIOOptimizer.cacheData(cacheKey, processedData);
+    
+    return processedData;
   }
 
   private async processChunk(chunk: any[]): Promise<any[]> {
     return chunk.map(item => {
-      // Optimize object structure and remove unnecessary properties
+      // Lightweight processing to reduce compute load
       const optimized = { ...item };
       
-      // Remove null/undefined values to reduce memory
+      // Remove null/undefined to reduce memory footprint
       Object.keys(optimized).forEach(key => {
         if (optimized[key] === null || optimized[key] === undefined) {
           delete optimized[key];
@@ -57,31 +49,44 @@ export class OptimizedDataProcessor {
     });
   }
 
-  private cacheResult(key: string, result: any[]): void {
-    // Implement LRU cache behavior
-    if (this.processingCache.size >= this.maxCacheSize) {
-      const firstKey = this.processingCache.keys().next().value;
-      this.processingCache.delete(firstKey);
+  // Optimized file parsing with minimal I/O
+  async parseFileOptimized(file: File): Promise<any> {
+    const cacheKey = `file_${file.name}_${file.size}_${file.lastModified}`;
+    
+    // Check if already parsed
+    const cached = diskIOOptimizer.getCachedData(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Read file in chunks to reduce memory usage
+    const result = await this.readFileInChunks(file);
+    
+    // Cache with compression for large files
+    diskIOOptimizer.cacheData(cacheKey, result, file.size > 1024 * 1024);
+    
+    return result;
+  }
+
+  private async readFileInChunks(file: File): Promise<any> {
+    const chunkSize = 64 * 1024; // 64KB chunks
+    const chunks: string[] = [];
+    
+    for (let start = 0; start < file.size; start += chunkSize) {
+      const chunk = file.slice(start, start + chunkSize);
+      const text = await chunk.text();
+      chunks.push(text);
+      
+      // Yield to prevent blocking UI
+      await new Promise(resolve => setTimeout(resolve, 0));
     }
     
-    this.processingCache.set(key, result);
+    return chunks.join('');
   }
 
   clearCache(): void {
     this.processingCache.clear();
-    console.log('🧹 Data processing cache cleared');
-  }
-
-  optimizeMemoryUsage(): void {
-    // Force garbage collection if available
-    if (window.gc) {
-      window.gc();
-    }
-    
-    // Clear old cache entries
-    this.clearCache();
-    
-    console.log('🚀 Memory optimization applied');
+    console.log('🧹 Optimized processor cache cleared');
   }
 }
 

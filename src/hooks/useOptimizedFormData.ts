@@ -1,6 +1,6 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { optimizedDataProcessor } from '@/utils/performance/optimizedDataProcessor';
+import { diskIOOptimizer } from '@/utils/performance/diskIOOptimizer';
 
 export const useOptimizedFormData = () => {
   const [step, setStep] = useState(1);
@@ -12,62 +12,86 @@ export const useOptimizedFormData = () => {
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
   
-  // Optimization: Use refs to track heavy operations
+  // Optimization refs
   const processingRef = useRef<boolean>(false);
-  const cacheKeyRef = useRef<string>('');
+  const debounceRef = useRef<NodeJS.Timeout>();
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      optimizedDataProcessor.clearCache();
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      diskIOOptimizer.cleanup();
     };
   }, []);
 
-  const optimizedSetParsedData = useCallback(async (data: any[]) => {
-    if (processingRef.current) return; // Prevent concurrent processing
-    
-    processingRef.current = true;
-    setParsing(true);
-    
-    try {
-      // Generate cache key based on data characteristics
-      const cacheKey = `data_${data.length}_${Date.now()}`;
-      cacheKeyRef.current = cacheKey;
-      
-      // Use optimized data processor
-      const optimizedData = await optimizedDataProcessor.processDataWithOptimization(data, cacheKey);
-      setParsedData(optimizedData);
-      
-      console.log(`✅ Optimized data processing complete: ${optimizedData.length} rows`);
-    } catch (error) {
-      console.error('❌ Data processing optimization failed:', error);
-      setParsedData(data); // Fallback to original data
-    } finally {
-      setParsing(false);
-      processingRef.current = false;
+  // Debounced data updates to reduce I/O
+  const debouncedSetParsedData = useCallback((data: any[]) => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
     }
+    
+    debounceRef.current = setTimeout(async () => {
+      if (processingRef.current) return;
+      
+      processingRef.current = true;
+      setParsing(true);
+      
+      try {
+        const cacheKey = `parsed_data_${data.length}_${Date.now()}`;
+        
+        // Use deferred processing for large datasets
+        if (data.length > 1000) {
+          diskIOOptimizer.deferredWrite(cacheKey, data);
+        } else {
+          diskIOOptimizer.cacheData(cacheKey, data);
+        }
+        
+        setParsedData(data);
+        console.log(`✅ Optimized data update: ${data.length} rows`);
+      } catch (error) {
+        console.error('❌ Optimized data update failed:', error);
+        setParsedData(data); // Fallback
+      } finally {
+        setParsing(false);
+        processingRef.current = false;
+      }
+    }, 300); // 300ms debounce
   }, []);
 
   const addFile = useCallback((file: File) => {
     setFiles(prev => {
-      // Prevent duplicate files
       const exists = prev.some(f => f.name === file.name && f.size === file.size);
       if (exists) return prev;
+      
+      // Cache file metadata for quick access
+      const cacheKey = `file_meta_${file.name}`;
+      diskIOOptimizer.cacheData(cacheKey, {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified
+      });
       
       return [...prev, file];
     });
   }, []);
 
   const removeFile = useCallback((index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-    
-    // Clear related data when file is removed
-    if (files.length === 1) {
-      setParsedData([]);
-      setColumnMapping({});
-      optimizedDataProcessor.clearCache();
-    }
-  }, [files.length]);
+    setFiles(prev => {
+      const newFiles = prev.filter((_, i) => i !== index);
+      
+      // Clear related cache when file is removed
+      if (newFiles.length === 0) {
+        setParsedData([]);
+        setColumnMapping({});
+        diskIOOptimizer.cleanup();
+      }
+      
+      return newFiles;
+    });
+  }, []);
 
   const nextStep = useCallback(() => {
     setStep(prev => Math.min(prev + 1, 4));
@@ -77,36 +101,60 @@ export const useOptimizedFormData = () => {
     setStep(prev => Math.max(prev - 1, 1));
   }, []);
 
+  // Optimized file upload with batching
   const handleFileUpload = useCallback(async () => {
     if (files.length === 0) return;
     
     setUploading(true);
     
     try {
-      // Simulate file processing with optimization
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Batch file processing operations
+      const uploadOperations = files.map(file => async () => {
+        const cacheKey = `upload_${file.name}_${file.size}`;
+        
+        // Check if already processed
+        const cached = diskIOOptimizer.getCachedData(cacheKey);
+        if (cached) {
+          return cached;
+        }
+        
+        // Simulate processing with minimal I/O
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const result = {
+          id: Math.random().toString(),
+          name: file.name,
+          size: file.size,
+          processed: true
+        };
+        
+        diskIOOptimizer.cacheData(cacheKey, result);
+        return result;
+      });
       
-      // Mock parsed data - in real app this would parse the actual file
-      const mockData = Array.from({ length: 100 }, (_, i) => ({
+      const results = await diskIOOptimizer.batchOperation(uploadOperations);
+      
+      // Generate mock data efficiently
+      const mockData = Array.from({ length: 50 }, (_, i) => ({
         id: i + 1,
-        name: `Item ${i + 1}`,
+        name: `Optimized Item ${i + 1}`,
         value: Math.random() * 1000,
         category: ['A', 'B', 'C'][i % 3],
         timestamp: new Date(Date.now() - i * 86400000).toISOString()
       }));
       
-      await optimizedSetParsedData(mockData);
+      debouncedSetParsedData(mockData);
       
     } catch (error) {
-      console.error('File upload optimization failed:', error);
+      console.error('Optimized upload failed:', error);
     } finally {
       setUploading(false);
     }
-  }, [files, optimizedSetParsedData]);
+  }, [files, debouncedSetParsedData]);
 
-  // Memory optimization method
   const optimizeMemory = useCallback(() => {
-    optimizedDataProcessor.optimizeMemoryUsage();
+    diskIOOptimizer.cleanup();
+    console.log('🚀 Memory and I/O optimization applied');
   }, []);
 
   return {
@@ -119,7 +167,7 @@ export const useOptimizedFormData = () => {
     addFile,
     removeFile,
     parsedData,
-    setParsedData: optimizedSetParsedData,
+    setParsedData: debouncedSetParsedData,
     columnMapping,
     setColumnMapping,
     uploading,

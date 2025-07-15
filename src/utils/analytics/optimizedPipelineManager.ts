@@ -2,11 +2,11 @@ import { ParsedData } from '../dataParser';
 import { AnalyticsPipeline, PipelineStage, AnalyticsConfig } from '../../types/analytics';
 import { DataValidator } from './dataValidator';
 import { DataAnalysisEngine } from '../analysis/dataAnalysisEngine';
+import { diskIOOptimizer } from '../performance/diskIOOptimizer';
 
 export class OptimizedPipelineManager {
   private readonly config: AnalyticsConfig;
   private readonly data: ParsedData;
-  private readonly cache: Map<string, any> = new Map();
   private readonly performanceMetrics: Map<string, number> = new Map();
 
   constructor(data: ParsedData, config: Partial<AnalyticsConfig> = {}) {
@@ -24,127 +24,94 @@ export class OptimizedPipelineManager {
   async runOptimizedPipeline(): Promise<AnalyticsPipeline> {
     const pipeline: AnalyticsPipeline = {
       id: crypto.randomUUID(),
-      name: 'Optimized Data Analytics Pipeline',
+      name: 'Disk I/O Optimized Pipeline',
       stages: this.createOptimizedStages(),
       status: 'pending',
       metrics: this.initializeMetrics()
     };
 
+    const cacheKey = `pipeline_${this.data.rowCount}_${Date.now()}`;
     const startTime = performance.now();
     
     try {
+      // Check for cached pipeline results
+      const cachedResult = diskIOOptimizer.getCachedData<AnalyticsPipeline>(cacheKey);
+      if (cachedResult) {
+        console.log('⚡ Using cached pipeline result');
+        return cachedResult;
+      }
+
       pipeline.status = 'running';
       
-      // Run stages in parallel where possible
-      const parallelStages = this.groupStagesForParallelExecution(pipeline.stages);
-      
-      for (const stageGroup of parallelStages) {
-        if (stageGroup.length === 1) {
-          await this.executeOptimizedStage(stageGroup[0], pipeline);
-        } else {
-          // Execute stages in parallel
-          await Promise.all(
-            stageGroup.map(stage => this.executeOptimizedStage(stage, pipeline))
-          );
-        }
-      }
+      // Use batched operations to reduce I/O
+      const stageOperations = pipeline.stages.map(stage => 
+        () => this.executeOptimizedStage(stage, pipeline)
+      );
+
+      await diskIOOptimizer.batchOperation(stageOperations);
 
       pipeline.status = pipeline.stages.every(s => s.status === 'completed') 
         ? 'completed' 
         : 'failed';
 
-      // Apply performance optimizations
-      await this.applyOptimizations(pipeline);
+      // Cache successful pipeline results
+      if (pipeline.status === 'completed') {
+        diskIOOptimizer.cacheData(cacheKey, pipeline);
+      }
 
     } catch (error) {
       console.error('Optimized pipeline execution failed:', error);
       pipeline.status = 'failed';
       
-      // Apply error recovery
       if (this.config.enableErrorRecovery) {
         await this.recoverFromError(pipeline, error);
       }
     } finally {
       const totalTime = performance.now() - startTime;
       this.performanceMetrics.set('total_execution_time', totalTime);
-      console.log(`Pipeline completed in ${totalTime.toFixed(2)}ms`);
+      console.log(`Optimized pipeline completed in ${totalTime.toFixed(2)}ms`);
     }
 
     return pipeline;
   }
 
   private createOptimizedStages(): PipelineStage[] {
-    const stages: PipelineStage[] = [];
-
-    // Always include validation but optimize it
-    stages.push({
-      id: 'optimized-validation',
-      name: 'Fast Data Validation',
-      type: 'validation',
-      status: 'pending'
-    });
-
-    // Parallel analysis stages
-    stages.push(
+    return [
       {
-        id: 'concurrent-analysis',
-        name: 'Concurrent Data Analysis',
+        id: 'memory-validation',
+        name: 'In-Memory Validation',
+        type: 'validation',
+        status: 'pending'
+      },
+      {
+        id: 'stream-analysis',
+        name: 'Streaming Analysis',
         type: 'analysis',
         status: 'pending'
       },
       {
-        id: 'streaming-aggregation',
-        name: 'Streaming Results Aggregation',
+        id: 'batch-aggregation',
+        name: 'Batched Aggregation',
         type: 'aggregation',
         status: 'pending'
       }
-    );
-
-    return stages;
-  }
-
-  private groupStagesForParallelExecution(stages: PipelineStage[]): PipelineStage[][] {
-    // Group stages that can run in parallel
-    const groups: PipelineStage[][] = [];
-    
-    // Validation must run first
-    const validationStages = stages.filter(s => s.type === 'validation');
-    if (validationStages.length > 0) {
-      groups.push(validationStages);
-    }
-    
-    // Analysis and aggregation can run in parallel
-    const parallelStages = stages.filter(s => s.type === 'analysis' || s.type === 'aggregation');
-    if (parallelStages.length > 0) {
-      groups.push(parallelStages);
-    }
-    
-    return groups;
+    ];
   }
 
   private async executeOptimizedStage(stage: PipelineStage, pipeline: AnalyticsPipeline): Promise<void> {
     const startTime = performance.now();
-    const cacheKey = `${stage.id}-${this.data.rowCount}`;
-    
-    // Check cache first
-    if (this.cache.has(cacheKey) && stage.type !== 'validation') {
-      stage.status = 'completed';
-      stage.duration = performance.now() - startTime;
-      return;
-    }
-
     stage.status = 'running';
 
     try {
       switch (stage.type) {
         case 'validation':
-          await this.executeOptimizedValidation(stage);
+          await this.executeMemoryValidation(stage);
           break;
         case 'analysis':
-          await this.executeConcurrentAnalysis(stage, pipeline);
+          await this.executeStreamingAnalysis(stage, pipeline);
           break;
         case 'aggregation':
-          await this.executeStreamingAggregation(stage);
+          await this.executeBatchedAggregation(stage);
           break;
         default:
           throw new Error(`Unknown stage type: ${stage.type}`);
@@ -152,121 +119,104 @@ export class OptimizedPipelineManager {
 
       stage.status = 'completed';
       
-      // Cache successful results
-      this.cache.set(cacheKey, true);
-      
     } catch (error) {
       stage.status = 'failed';
       stage.error = error instanceof Error ? error.message : String(error);
-      
-      if (this.config.enableErrorRecovery) {
-        await this.recoverStage(stage);
-      }
     } finally {
       stage.duration = performance.now() - startTime;
       this.performanceMetrics.set(`${stage.id}_duration`, stage.duration);
     }
   }
 
-  private async executeOptimizedValidation(stage: PipelineStage): Promise<void> {
+  private async executeMemoryValidation(stage: PipelineStage): Promise<void> {
+    // Use cached validation if available
+    const cacheKey = `validation_${this.data.rowCount}`;
+    const cachedValidation = diskIOOptimizer.getCachedData(cacheKey);
+    
+    if (cachedValidation) {
+      return;
+    }
+
     const validator = new DataValidator(this.data);
-    
-    // Use sampling for large datasets
-    const sampleSize = Math.min(this.data.rowCount, 1000);
-    const sampleData = {
-      ...this.data,
-      rows: this.data.rows.slice(0, sampleSize)
-    };
-    
-    // Fix: DataValidator.validate() takes no arguments
     const result = validator.validate();
 
     if (!result.isValid && result.errors.length > 0) {
       throw new Error(`Validation failed: ${result.errors.join(', ')}`);
     }
+
+    // Cache validation result
+    diskIOOptimizer.cacheData(cacheKey, result);
   }
 
-  private async executeConcurrentAnalysis(stage: PipelineStage, pipeline: AnalyticsPipeline): Promise<void> {
+  private async executeStreamingAnalysis(stage: PipelineStage, pipeline: AnalyticsPipeline): Promise<void> {
     const engine = new DataAnalysisEngine(this.data, {
       enableLogging: false,
       maxRetries: 1,
       timeoutMs: this.config.timeoutMs
     });
 
-    // Run analysis with performance monitoring
-    const results = await Promise.race([
-      engine.runCompleteAnalysis(),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Analysis timeout')), this.config.timeoutMs)
-      )
-    ]) as any[];
+    // Stream analysis to reduce memory usage
+    const results = await diskIOOptimizer.streamProcess(
+      [this.data], 
+      async (chunk) => {
+        const analysis = await engine.runCompleteAnalysis();
+        return analysis;
+      },
+      1 // Process one at a time for memory efficiency
+    );
 
     if (!results || results.length === 0) {
-      throw new Error('Analysis produced no results');
+      throw new Error('Streaming analysis produced no results');
     }
 
-    // Update metrics with optimized calculation
-    const highConfidenceCount = results.filter(r => r.confidence === 'high').length;
-    pipeline.metrics.qualityScore = results.length > 0 ? highConfidenceCount / results.length : 0;
+    // Update metrics efficiently
+    const flatResults = results.flat();
+    const highConfidenceCount = flatResults.filter(r => r.confidence === 'high').length;
+    pipeline.metrics.qualityScore = flatResults.length > 0 ? highConfidenceCount / flatResults.length : 0;
   }
 
-  private async executeStreamingAggregation(stage: PipelineStage): Promise<void> {
-    // Implement streaming aggregation for large datasets
-    const chunkSize = 1000;
+  private async executeBatchedAggregation(stage: PipelineStage): Promise<void> {
+    // Use deferred writes for aggregation
+    const chunkSize = 500; // Smaller chunks for better I/O
     const chunks = Math.ceil(this.data.rowCount / chunkSize);
     
+    const aggregationPromises = [];
     for (let i = 0; i < chunks; i++) {
-      const start = i * chunkSize;
-      const end = Math.min(start + chunkSize, this.data.rowCount);
-      
-      // Process chunk
-      const chunk = this.data.rows.slice(start, end);
-      
-      // Simulate streaming processing
-      await new Promise(resolve => setTimeout(resolve, 10));
-    }
-  }
-
-  private async applyOptimizations(pipeline: AnalyticsPipeline): Promise<void> {
-    // Memory cleanup
-    this.cache.clear();
-    
-    // Garbage collection hint
-    if ((global as any).gc) {
-      (global as any).gc();
+      const promise = new Promise<void>(resolve => {
+        // Defer the aggregation work
+        diskIOOptimizer.deferredWrite(`chunk_${i}`, {
+          start: i * chunkSize,
+          end: Math.min((i + 1) * chunkSize, this.data.rowCount)
+        });
+        resolve();
+      });
+      aggregationPromises.push(promise);
     }
     
-    // Update performance metrics
-    pipeline.metrics.dataCompleteness = this.calculateDataCompleteness();
-    pipeline.metrics.uniqueValues = this.calculateUniqueValues();
-    pipeline.metrics.dataTypes = this.calculateDataTypes();
+    await Promise.all(aggregationPromises);
+    
+    // Flush all deferred writes
+    await diskIOOptimizer.flushPendingWrites();
   }
 
   private async recoverFromError(pipeline: AnalyticsPipeline, error: unknown): Promise<void> {
-    console.warn('Applying error recovery for pipeline:', error);
+    console.warn('Applying optimized error recovery:', error);
     
-    // Reset failed stages to pending and retry
     const failedStages = pipeline.stages.filter(s => s.status === 'failed');
     
-    for (const stage of failedStages) {
+    // Use batched recovery
+    const recoveryOperations = failedStages.map(stage => async () => {
       stage.status = 'pending';
       stage.error = undefined;
       
       try {
         await this.executeOptimizedStage(stage, pipeline);
       } catch (retryError) {
-        console.warn(`Stage ${stage.name} failed after recovery attempt`);
+        console.warn(`Stage ${stage.name} failed after optimized recovery`);
       }
-    }
-  }
-
-  private async recoverStage(stage: PipelineStage): Promise<void> {
-    // Implement stage-specific recovery logic
-    if (stage.type === 'analysis') {
-      // Fallback to basic analysis
-      stage.status = 'completed';
-      stage.error = undefined;
-    }
+    });
+    
+    await diskIOOptimizer.batchOperation(recoveryOperations);
   }
 
   private calculateDataCompleteness(): number {

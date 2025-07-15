@@ -1,85 +1,100 @@
 
 import { AnalysisResult } from '../analysis/types';
 import { ParsedData } from '../dataParser';
+import { diskIOOptimizer } from '../performance/diskIOOptimizer';
 
-interface CacheEntry {
+interface OptimizedCacheEntry {
   key: string;
   data: AnalysisResult[];
   timestamp: number;
   accessCount: number;
-  ttl: number;
+  compressed: boolean;
 }
 
-interface CacheConfig {
-  maxSize: number;
-  defaultTTL: number;
+interface OptimizedCacheConfig {
+  maxMemoryEntries: number;
+  compressionThreshold: number;
+  accessThreshold: number;
   cleanupInterval: number;
-  enableCompression: boolean;
 }
 
 export class AnalyticsCacheManager {
-  private cache = new Map<string, CacheEntry>();
-  private config: CacheConfig;
+  private cache = new Map<string, OptimizedCacheEntry>();
+  private config: OptimizedCacheConfig;
   private cleanupTimer: NodeJS.Timeout | null = null;
   private hitCount = 0;
   private missCount = 0;
+  private ioOperations = 0;
 
-  constructor(config: Partial<CacheConfig> = {}) {
+  constructor(config: Partial<OptimizedCacheConfig> = {}) {
     this.config = {
-      maxSize: 100,
-      defaultTTL: 5 * 60 * 1000, // 5 minutes
-      cleanupInterval: 60 * 1000, // 1 minute
-      enableCompression: true,
+      maxMemoryEntries: 50, // Reduced for better memory management
+      compressionThreshold: 1024, // 1KB
+      accessThreshold: 3, // Promote to memory after 3 accesses
+      cleanupInterval: 30 * 1000, // 30 seconds
       ...config
     };
 
-    this.startCleanup();
+    this.startOptimizedCleanup();
   }
 
   generateKey(data: ParsedData, analysisType?: string): string {
-    const dataHash = this.hashData(data);
+    // More efficient key generation to reduce computation
     const typePrefix = analysisType || 'general';
-    return `${typePrefix}_${dataHash}`;
+    const dataSignature = `${data.rowCount}_${data.columns?.length || 0}_${data.fileSize || 0}`;
+    return `${typePrefix}_${dataSignature}`;
   }
 
   get(key: string): AnalysisResult[] | null {
-    const entry = this.cache.get(key);
-    
-    if (!entry) {
-      this.missCount++;
-      return null;
+    // First check memory cache
+    const memoryEntry = this.cache.get(key);
+    if (memoryEntry && !this.isExpired(memoryEntry)) {
+      memoryEntry.accessCount++;
+      this.hitCount++;
+      return this.decompressIfNeeded(memoryEntry.data);
     }
 
-    if (this.isExpired(entry)) {
-      this.cache.delete(key);
-      this.missCount++;
-      return null;
+    // Then check disk I/O optimizer cache
+    const diskCached = diskIOOptimizer.getCachedData<AnalysisResult[]>(key);
+    if (diskCached) {
+      this.hitCount++;
+      
+      // Promote to memory cache if accessed frequently
+      if (memoryEntry && memoryEntry.accessCount >= this.config.accessThreshold) {
+        this.promoteToMemory(key, diskCached);
+      }
+      
+      return diskCached;
     }
 
-    entry.accessCount++;
-    this.hitCount++;
-    
-    return this.config.enableCompression ? 
-      this.decompress(entry.data) : 
-      entry.data;
+    this.missCount++;
+    return null;
   }
 
-  set(key: string, data: AnalysisResult[], ttl?: number): void {
-    if (this.cache.size >= this.config.maxSize) {
-      this.evictLeastUsed();
+  set(key: string, data: AnalysisResult[]): void {
+    this.ioOperations++;
+    
+    const compressed = this.shouldCompress(data);
+    const processedData = compressed ? this.compress(data) : data;
+    
+    // Always store in disk cache for persistence
+    diskIOOptimizer.cacheData(key, processedData);
+    
+    // Store in memory cache if under limit
+    if (this.cache.size < this.config.maxMemoryEntries) {
+      this.cache.set(key, {
+        key,
+        data: processedData,
+        timestamp: Date.now(),
+        accessCount: 0,
+        compressed
+      });
     }
-
-    const processedData = this.config.enableCompression ? 
-      this.compress(data) : 
-      data;
-
-    this.cache.set(key, {
-      key,
-      data: processedData,
-      timestamp: Date.now(),
-      accessCount: 0,
-      ttl: ttl || this.config.defaultTTL
-    });
+    
+    // Batch cleanup to reduce I/O operations
+    if (this.ioOperations % 10 === 0) {
+      this.deferredCleanup();
+    }
   }
 
   invalidate(pattern?: string): number {
@@ -88,127 +103,133 @@ export class AnalyticsCacheManager {
     if (!pattern) {
       deletedCount = this.cache.size;
       this.cache.clear();
+      diskIOOptimizer.cleanup();
     } else {
       const regex = new RegExp(pattern);
+      const keysToDelete: string[] = [];
+      
+      // Batch deletions to reduce I/O
       for (const [key] of this.cache) {
         if (regex.test(key)) {
-          this.cache.delete(key);
-          deletedCount++;
+          keysToDelete.push(key);
         }
       }
+      
+      // Use batched operation for deletions
+      diskIOOptimizer.batchOperation(
+        keysToDelete.map(key => async () => {
+          this.cache.delete(key);
+          deletedCount++;
+        })
+      );
     }
     
     return deletedCount;
   }
 
-  getStats(): {
+  getOptimizedStats(): {
     hitRate: number;
-    missRate: number;
-    totalHits: number;
-    totalMisses: number;
-    cacheSize: number;
-    memoryUsage: number;
+    memoryEntries: number;
+    ioOperations: number;
+    compressionRatio: number;
   } {
     const total = this.hitCount + this.missCount;
+    const compressedEntries = Array.from(this.cache.values()).filter(e => e.compressed).length;
     
     return {
       hitRate: total > 0 ? (this.hitCount / total) * 100 : 0,
-      missRate: total > 0 ? (this.missCount / total) * 100 : 0,
-      totalHits: this.hitCount,
-      totalMisses: this.missCount,
-      cacheSize: this.cache.size,
-      memoryUsage: this.estimateMemoryUsage()
+      memoryEntries: this.cache.size,
+      ioOperations: this.ioOperations,
+      compressionRatio: this.cache.size > 0 ? (compressedEntries / this.cache.size) * 100 : 0
     };
   }
 
-  private hashData(data: ParsedData): string {
-    const hashInput = JSON.stringify({
-      rowCount: data.rowCount,
-      columnCount: data.columns.length,
-      fileSize: data.fileSize,
-      summary: data.summary
+  private promoteToMemory(key: string, data: AnalysisResult[]): void {
+    if (this.cache.size >= this.config.maxMemoryEntries) {
+      this.evictLeastUsed();
+    }
+    
+    this.cache.set(key, {
+      key,
+      data,
+      timestamp: Date.now(),
+      accessCount: this.config.accessThreshold,
+      compressed: false
     });
-    
-    return this.simpleHash(hashInput);
   }
 
-  private simpleHash(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return Math.abs(hash).toString(16);
-  }
-
-  private isExpired(entry: CacheEntry): boolean {
-    return Date.now() - entry.timestamp > entry.ttl;
-  }
-
-  private evictLeastUsed(): void {
-    let leastUsedKey = '';
-    let lowestAccessCount = Infinity;
-    
-    for (const [key, entry] of this.cache) {
-      if (entry.accessCount < lowestAccessCount) {
-        lowestAccessCount = entry.accessCount;
-        leastUsedKey = key;
-      }
-    }
-    
-    if (leastUsedKey) {
-      this.cache.delete(leastUsedKey);
-    }
+  private shouldCompress(data: AnalysisResult[]): boolean {
+    const estimatedSize = JSON.stringify(data).length;
+    return estimatedSize > this.config.compressionThreshold;
   }
 
   private compress(data: AnalysisResult[]): AnalysisResult[] {
-    // Simple compression simulation - in real implementation, use actual compression
+    // Simple compression - remove verbose fields
     return data.map(result => ({
       ...result,
+      description: result.description?.substring(0, 100) || '', // Truncate descriptions
       compressed: true
     }));
   }
 
-  private decompress(data: AnalysisResult[]): AnalysisResult[] {
-    // Simple decompression simulation
+  private decompressIfNeeded(data: AnalysisResult[]): AnalysisResult[] {
     return data.map(result => {
       const { compressed, ...rest } = result as any;
       return rest;
     });
   }
 
-  private startCleanup(): void {
+  private deferredCleanup(): void {
+    // Use deferred write for cleanup operations
+    diskIOOptimizer.deferredWrite('cleanup_operation', {
+      timestamp: Date.now(),
+      cacheSize: this.cache.size
+    });
+  }
+
+  private startOptimizedCleanup(): void {
     this.cleanupTimer = setInterval(() => {
-      this.cleanup();
+      this.optimizedCleanup();
     }, this.config.cleanupInterval);
   }
 
-  private cleanup(): void {
+  private optimizedCleanup(): void {
     const now = Date.now();
     const expiredKeys: string[] = [];
     
+    // Batch identify expired entries
     for (const [key, entry] of this.cache) {
-      if (now - entry.timestamp > entry.ttl) {
+      if (this.isExpired(entry, now)) {
         expiredKeys.push(key);
       }
     }
     
-    expiredKeys.forEach(key => this.cache.delete(key));
-    
+    // Use batched deletion
     if (expiredKeys.length > 0) {
-      console.log(`Cache cleanup: removed ${expiredKeys.length} expired entries`);
+      diskIOOptimizer.batchOperation(
+        expiredKeys.map(key => async () => {
+          this.cache.delete(key);
+        })
+      );
+      
+      console.log(`🧹 Optimized cache cleanup: removed ${expiredKeys.length} entries`);
     }
   }
 
-  private estimateMemoryUsage(): number {
-    let totalSize = 0;
+  private isExpired(entry: OptimizedCacheEntry, currentTime?: number): boolean {
+    const now = currentTime || Date.now();
+    return now - entry.timestamp > 5 * 60 * 1000; // 5 minutes
+  }
+
+  private evictLeastUsed(): void {
+    const entries = Array.from(this.cache.entries())
+      .sort(([, a], [, b]) => a.accessCount - b.accessCount);
     
-    for (const entry of this.cache.values()) {
-      totalSize += JSON.stringify(entry).length;
+    // Remove least used 20% to reduce frequent evictions
+    const removeCount = Math.floor(entries.length * 0.2);
+    for (let i = 0; i < removeCount; i++) {
+      this.cache.delete(entries[i][0]);
     }
-    
-    return totalSize;
   }
 
   stop(): void {
@@ -216,6 +237,9 @@ export class AnalyticsCacheManager {
       clearInterval(this.cleanupTimer);
       this.cleanupTimer = null;
     }
+    
+    // Final cleanup
+    diskIOOptimizer.flushPendingWrites();
     this.cache.clear();
   }
 }
