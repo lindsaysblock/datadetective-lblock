@@ -56,7 +56,15 @@ export const useNewProjectForm = () => {
 
   const updateFormData = useCallback((updates: Partial<FormData>) => {
     console.log('Updating form data:', updates);
-    setFormData(prev => ({ ...prev, ...updates }));
+    setFormData(prev => {
+      const updated = { ...prev, ...updates };
+      console.log('🔄 Form data updated:', {
+        projectName: updated.projectName,
+        step: updated.step,
+        hasData: !!(updated.parsedData && updated.parsedData.length > 0)
+      });
+      return updated;
+    });
   }, []);
 
   const nextStep = useCallback(() => {
@@ -75,7 +83,7 @@ export const useNewProjectForm = () => {
     console.log('🎯 setProjectName called with:', value);
     setFormData(prev => {
       const updated = { ...prev, projectName: value };
-      console.log('🎯 Updated formData projectName:', updated.projectName);
+      console.log('🎯 Project name set in state:', updated.projectName);
       return updated;
     });
   }, []);
@@ -133,34 +141,25 @@ export const useNewProjectForm = () => {
         isReconstructed: (f as any).isReconstructed 
       })));
 
-      // CRITICAL FIX: Extract the project name correctly
-      const projectNameToSet = reconstructedState.projectName || dataset.name || 'Untitled Project';
+      // Extract the project name correctly with multiple fallbacks
+      const projectNameToSet = reconstructedState.projectName || dataset.name || dataset.summary?.projectName || 'Untitled Project';
       
       console.log('🎯 CRITICAL: Final project name to set:', projectNameToSet);
 
-      // Update form data with proper project name
-      setFormData(prev => {
-        const newFormData = {
-          ...prev,
-          projectName: projectNameToSet,
-          researchQuestion: reconstructedState.researchQuestion || '',
-          businessContext: reconstructedState.additionalContext || '',
-          file: mockFiles[0] || null,
-          files: mockFiles,
-          uploadedData: reconstructedState.parsedData,
-          parsedData: reconstructedState.parsedData,
-          step: reconstructedState.step,
-        };
-
-        console.log('✅ FINAL FORM DATA SET:', {
-          projectName: newFormData.projectName,
-          researchQuestion: newFormData.researchQuestion,
-          step: newFormData.step,
-          hasData: !!(newFormData.parsedData && newFormData.parsedData.length > 0)
-        });
-
-        return newFormData;
+      // Update form data with correct project name - use setFormData directly to ensure state update
+      setFormData({
+        ...initialFormData,
+        projectName: projectNameToSet,
+        researchQuestion: reconstructedState.researchQuestion || '',
+        businessContext: reconstructedState.additionalContext || '',
+        file: mockFiles[0] || null,
+        files: mockFiles,
+        uploadedData: reconstructedState.parsedData,
+        parsedData: reconstructedState.parsedData,
+        step: reconstructedState.step,
       });
+
+      console.log('✅ CONTINUE CASE DATA SET - Project Name:', projectNameToSet);
       
       toast({
         title: "Investigation Loaded",
@@ -187,9 +186,9 @@ export const useNewProjectForm = () => {
     setError(null);
   }, []);
 
-  // Enhanced form data with methods
+  // Enhanced form data with methods - create this with current formData values
   const enhancedFormData = {
-    ...formData,
+    ...formData, // Use current formData state directly
     setProjectName,
     setResearchQuestion,
     setAdditionalContext,
@@ -201,7 +200,7 @@ export const useNewProjectForm = () => {
     setColumnMapping,
   };
 
-  console.log('🔍 useNewProjectForm final enhanced data:', {
+  console.log('🔍 useNewProjectForm returning enhanced data:', {
     projectName: enhancedFormData.projectName,
     projectNameLength: enhancedFormData.projectName?.length || 0,
     researchQuestion: enhancedFormData.researchQuestion,

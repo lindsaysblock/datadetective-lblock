@@ -34,28 +34,22 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
 }) => {
   const [educationalMode, setEducationalMode] = React.useState(false);
 
-  // Get project name from formData
+  // Get project name directly from formData
   const projectName = formData?.projectName || '';
 
-  console.log('🔍 AnalysisSummaryStep render - PROJECT NAME DEBUG:', {
-    projectNameFromFormData: projectName,
-    projectNameType: typeof projectName,
+  console.log('🔍 AnalysisSummaryStep render - PROJECT NAME:', {
+    projectName: projectName,
     projectNameLength: projectName?.length || 0,
     formDataProjectName: formData?.projectName,
-    formDataType: typeof formData?.projectName,
     hasSetProjectName: !!formData?.setProjectName,
-    researchQuestion: researchQuestion ? `${researchQuestion.substring(0, 20)}...` : 'None',
+    researchQuestion: researchQuestion,
     hasData: !!(parsedData && parsedData.length > 0),
-    entireFormData: formData ? {
-      projectName: formData.projectName,
-      researchQuestion: formData.researchQuestion,
-      step: formData.step
-    } : 'NO FORM DATA'
+    formDataKeys: formData ? Object.keys(formData) : 'NO FORM DATA'
   });
 
   // Auto-set a default project name if none exists and we have a research question
   useEffect(() => {
-    console.log('🔍 AnalysisSummaryStep useEffect - Auto project name logic:', {
+    console.log('🔍 AnalysisSummaryStep useEffect - Auto project name check:', {
       currentProjectName: projectName,
       hasResearchQuestion: !!researchQuestion,
       hasSetProjectName: !!formData?.setProjectName,
@@ -144,14 +138,6 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             {!projectName && (
               <p className="text-sm text-red-500">Project name is required</p>
             )}
-            {/* DEBUG INFO */}
-            <div className="text-xs text-gray-400 space-y-1 p-2 bg-gray-50 rounded">
-              <p><strong>🔍 Debug Info:</strong></p>
-              <p>Current projectName: "{projectName || 'EMPTY'}" (length: {projectName?.length || 0})</p>
-              <p>formData.projectName: "{formData?.projectName || 'UNDEFINED'}"</p>
-              <p>setProjectName available: {formData?.setProjectName ? 'YES' : 'NO'}</p>
-              <p>Form data keys: {formData ? Object.keys(formData).join(', ') : 'NO FORM DATA'}</p>
-            </div>
           </div>
         </CardContent>
       </Card>
