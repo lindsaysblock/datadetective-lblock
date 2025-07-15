@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,6 +6,7 @@ import { useOptimizedDataPipeline } from '@/hooks/useOptimizedDataPipeline';
 import { useAnalyticsManager } from '@/hooks/useAnalyticsManager';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile } from '@/utils/dataParser';
+import { useContinueCase } from '@/hooks/useContinueCase';
 import MainTabsView from '@/components/query/MainTabsView';
 import AnalysisView from '@/components/query/AnalysisView';
 import Header from '@/components/Header';
@@ -17,9 +17,10 @@ const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { reconstructAnalysisState } = useContinueCase();
   
   // Use auth guard to protect this route
-  useAuthGuard({ requireAuth: false }); // Allow access for both authenticated and non-authenticated users
+  useAuthGuard({ requireAuth: false });
 
   // State management
   const [activeTab, setActiveTab] = useState('upload');
@@ -42,25 +43,42 @@ const Index = () => {
 
   // Handle route state for continuing investigations
   useEffect(() => {
+    if (location.state?.continueInvestigation && location.state?.dataset) {
+      const dataset = location.state.dataset;
+      console.log('📊 Continue case detected on Index page, redirecting to new-project');
+      
+      // Navigate to new-project with the continue case data
+      navigate('/new-project', {
+        state: {
+          continueInvestigation: true,
+          dataset: dataset
+        },
+        replace: true
+      });
+      return;
+    }
+
+    // Handle direct dataset selection (legacy support)
     if (location.state?.selectedDataset) {
       const dataset = location.state.selectedDataset;
-      console.log('📊 Continuing investigation with dataset:', dataset);
+      console.log('📊 Legacy dataset selection detected, converting to continue case');
       
-      // Reconstruct parsed data from dataset
-      const reconstructedData = {
-        columns: dataset.metadata?.columns || [],
-        rows: dataset.metadata?.sample_rows || [],
-        rowCount: dataset.metadata?.sample_rows?.length || 0,
-        fileSize: dataset.file_size || 0,
-        summary: dataset.summary || {}
-      };
-      
-      setAnalysisData(reconstructedData);
-      setCurrentFilename(dataset.original_filename || 'Dataset');
-      setActiveTab('analysis');
-      setShowAnalysis(true);
+      try {
+        const analysisState = reconstructAnalysisState(dataset);
+        setAnalysisData(analysisState.parsedData);
+        setCurrentFilename(dataset.original_filename || 'Dataset');
+        setActiveTab('analysis');
+        setShowAnalysis(true);
+      } catch (error) {
+        console.error('Error reconstructing analysis state:', error);
+        toast({
+          title: "Error Loading Dataset",
+          description: "Unable to load the selected dataset. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
-  }, [location.state]);
+  }, [location.state, navigate, reconstructAnalysisState, toast]);
 
   // Event handlers
   const handleOnboardingComplete = () => {
@@ -179,21 +197,15 @@ const Index = () => {
   };
 
   const handleDatasetSelect = (dataset: any) => {
-    console.log('📊 Dataset selected:', dataset);
+    console.log('📊 Dataset selected on Index page, redirecting to new-project');
     
-    // Reconstruct parsed data from dataset
-    const reconstructedData = {
-      columns: dataset.metadata?.columns || [],
-      rows: dataset.metadata?.sample_rows || [],
-      rowCount: dataset.metadata?.sample_rows?.length || 0,
-      fileSize: dataset.file_size || 0,
-      summary: dataset.summary || {}
-    };
-    
-    setAnalysisData(reconstructedData);
-    setCurrentFilename(dataset.original_filename || 'Dataset');
-    setActiveTab('analysis');
-    setShowAnalysis(true);
+    // Navigate to new-project for continue case
+    navigate('/new-project', {
+      state: {
+        continueInvestigation: true,
+        dataset: dataset
+      }
+    });
   };
 
   const handleStartAnalysis = () => {
