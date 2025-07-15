@@ -1,3 +1,4 @@
+
 import { useToast } from '@/hooks/use-toast';
 
 export const useProjectFormActions = (
@@ -80,16 +81,91 @@ export const useProjectFormActions = (
     formState.removeFile(index);
   };
 
-  const handleStartAnalysisClick = (educationalMode: boolean = false) => {
+  const saveProjectToHistory = async (projectName: string, researchQuestion: string, additionalContext: string, parsedData: any[]) => {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      if (!auth.user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Save each file as a dataset in the database
+      for (const data of parsedData) {
+        const metadata = {
+          columns: data.columns || [],
+          sample_rows: data.rows?.slice(0, 10) || []
+        };
+
+        const summary = {
+          projectName,
+          researchQuestion,
+          description: additionalContext,
+          totalRows: data.summary?.totalRows || data.rowCount || 0,
+          totalColumns: data.summary?.totalColumns || data.columns?.length || 0,
+          ...data.summary
+        };
+
+        await supabase
+          .from('datasets')
+          .insert([{
+            user_id: auth.user.id,
+            name: projectName,
+            original_filename: data.name || 'uploaded_file.csv',
+            file_size: null,
+            mime_type: data.name?.endsWith('.csv') ? 'text/csv' : 'application/json',
+            metadata: metadata,
+            summary: summary
+          }]);
+      }
+
+      toast({
+        title: "Project Saved",
+        description: `"${projectName}" has been saved to your project history.`,
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error('Error saving project:', error);
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save project to history",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const handleStartAnalysisClick = async (educationalMode: boolean = false, projectName: string = '') => {
     if (!auth.user) {
       auth.setShowSignInModal(true);
       return;
     }
 
-    // Start analysis immediately with educational mode
+    if (!projectName.trim()) {
+      toast({
+        title: "Project Name Required",
+        description: "Please enter a project name before starting analysis.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Save project to history first
+    const projectSaved = await saveProjectToHistory(
+      projectName, 
+      formState.researchQuestion, 
+      formState.additionalContext, 
+      formState.parsedData
+    );
+
+    if (!projectSaved) {
+      return; // Error already shown in saveProjectToHistory
+    }
+
+    // Start analysis
     analysis.startAnalysis(formState.researchQuestion, formState.additionalContext, educationalMode, formState.parsedData);
     
-    // Show project naming dialog immediately (it will persist until analysis is complete)
+    // Show project naming dialog
     dialogs.setShowProjectDialog(true);
   };
 

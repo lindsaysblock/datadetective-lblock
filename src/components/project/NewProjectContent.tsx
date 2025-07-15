@@ -7,6 +7,8 @@ import DataSourceStep from './DataSourceStep';
 import BusinessContextStep from './BusinessContextStep';
 import AnalysisSummaryStep from './AnalysisSummaryStep';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
+import { useProjectFormActions } from '@/hooks/useProjectFormActions';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NewProjectContentProps {
   onStartAnalysis: (educationalMode?: boolean, projectName?: string) => void;
@@ -14,6 +16,39 @@ interface NewProjectContentProps {
 
 const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }) => {
   const formData = useNewProjectForm();
+  const { user } = useAuth();
+
+  // Create mock objects for the project form actions
+  const mockAnalysis = {
+    startAnalysis: () => {},
+    resetAnalysis: () => {}
+  };
+
+  const mockAuth = {
+    user,
+    setShowSignInModal: () => {}
+  };
+
+  const mockDialogs = {
+    setShowProjectDialog: () => {},
+    setRecoveryDialogDismissed: () => {}
+  };
+
+  const mockPersistence = {
+    saveFormData: () => {},
+    clearFormData: () => {},
+    getFormData: () => ({})
+  };
+
+  const projectFormActions = useProjectFormActions(
+    formData,
+    mockAnalysis,
+    mockAuth,
+    mockDialogs,
+    mockPersistence.saveFormData,
+    mockPersistence.clearFormData,
+    mockPersistence.getFormData
+  );
 
   console.log('NewProjectContent formData:', {
     step: formData.step,
@@ -22,8 +57,13 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
     researchQuestionLength: formData.researchQuestion?.length || 0
   });
 
-  const handleStartAnalysisWrapper = (educationalMode: boolean = false, projectName: string = '') => {
+  const handleStartAnalysisWrapper = async (educationalMode: boolean = false, projectName: string = '') => {
     console.log('NewProjectContent starting analysis:', { educationalMode, projectName });
+    
+    // Use the project form actions to handle the start analysis (which includes saving to history)
+    await projectFormActions.handleStartAnalysisClick(educationalMode, projectName);
+    
+    // Then call the original onStartAnalysis
     onStartAnalysis(educationalMode, projectName);
   };
 

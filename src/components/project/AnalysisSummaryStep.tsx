@@ -33,6 +33,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
 }) => {
   const [educationalMode, setEducationalMode] = useState(false);
   const [projectName, setProjectName] = useState('');
+  const [nameError, setNameError] = useState('');
   
   const hasData = parsedData && parsedData.length > 0;
   const hasResearchQuestion = researchQuestion && researchQuestion.trim().length > 0;
@@ -97,9 +98,46 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     );
   }
 
-  const handleStartAnalysis = () => {
-    if (canProceed) {
-      onStartAnalysis(educationalMode, projectName);
+  const checkProjectNameExists = async (name: string): Promise<boolean> => {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase
+        .from('datasets')
+        .select('id')
+        .eq('name', name.trim())
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking project name:', error);
+        return false;
+      }
+
+      return data && data.length > 0;
+    } catch (error) {
+      console.error('Error checking project name:', error);
+      return false;
+    }
+  };
+
+  const handleStartAnalysis = async () => {
+    if (!canProceed) return;
+
+    setNameError('');
+    
+    // Check if project name already exists
+    const nameExists = await checkProjectNameExists(projectName);
+    if (nameExists) {
+      setNameError('A project with this name already exists. Please choose a different name.');
+      return;
+    }
+
+    onStartAnalysis(educationalMode, projectName);
+  };
+
+  const handleProjectNameChange = (value: string) => {
+    setProjectName(value);
+    if (nameError) {
+      setNameError('');
     }
   };
 
@@ -133,9 +171,12 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
                     id="project-name"
                     placeholder="e.g., Sales Data Analysis, Customer Survey Insights..."
                     value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
-                    className="w-full"
+                    onChange={(e) => handleProjectNameChange(e.target.value)}
+                    className={`w-full ${nameError ? 'border-red-500' : ''}`}
                   />
+                  {nameError && (
+                    <p className="text-red-500 text-sm mt-1">{nameError}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -184,7 +225,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
               <BookOpen className="w-5 h-5 text-orange-600" />
               <div>
                 <Label htmlFor="educational-mode" className="text-sm font-medium text-gray-900 cursor-pointer">
-                  Learn how to analyze step-by-step
+                  Learn how to code step-by-step
                 </Label>
                 <p className="text-xs text-gray-600 mt-1">
                   Get detailed explanations of each analysis step
@@ -206,7 +247,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
           >
             <Play className="w-6 h-6" />
             <div>
-              <div className="font-semibold">Start Analysis</div>
+              <div className="font-semibold">Start the Case</div>
               <div className="text-sm text-purple-200">
                 {educationalMode ? 'With step-by-step guidance' : 'Get instant insights'}
               </div>
