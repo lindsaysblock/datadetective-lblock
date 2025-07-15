@@ -8,6 +8,7 @@ export interface ParsedDataFile {
   name: string;
   rows: number;
   columns: number;
+  rowCount: number; // Add this missing property
   preview?: ParsedDataRow[];
   data: ParsedDataRow[];
   columnInfo?: Array<{

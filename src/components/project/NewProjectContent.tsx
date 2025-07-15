@@ -98,16 +98,17 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ onStartAnalysis }
       // Save project to history
       for (const data of formData.parsedData) {
         const metadata = {
-          columns: data.columns || [],
-          sample_rows: data.rows?.slice(0, 10) || []
+          columns: data.columnInfo || [],
+          sample_rows: data.preview?.slice(0, 10) || [],
+          totalRows: data.rowCount || data.rows || 0
         };
 
         const summary = {
           projectName,
           researchQuestion: formData.researchQuestion,
           description: formData.additionalContext,
-          totalRows: data.summary?.totalRows || data.rowCount || 0,
-          totalColumns: data.summary?.totalColumns || data.columns?.length || 0,
+          totalRows: data.rowCount || data.rows || 0,
+          totalColumns: data.columnInfo?.length || data.columns || 0,
           ...data.summary
         };
 

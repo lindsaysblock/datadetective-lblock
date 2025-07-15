@@ -33,9 +33,16 @@ const NewProjectContainer = () => {
       const reconstructedParsedData = [{
         id: dataset.id,
         name: dataset.original_filename,
-        columns: dataset.metadata?.columns || [],
-        rows: dataset.metadata?.sample_rows || [],
+        columns: dataset.metadata?.columns?.length || dataset.summary?.totalColumns || 0,
+        rows: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
         rowCount: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
+        preview: dataset.metadata?.sample_rows || [],
+        data: dataset.metadata?.sample_rows || [],
+        columnInfo: dataset.metadata?.columns?.map((col: any) => ({
+          name: col.name || col,
+          type: col.type || 'string',
+          samples: col.samples || []
+        })) || [],
         summary: {
           totalRows: dataset.metadata?.totalRows || dataset.summary?.totalRows || 0,
           totalColumns: dataset.metadata?.columns?.length || dataset.summary?.totalColumns || 0,
@@ -124,9 +131,14 @@ const NewProjectContainer = () => {
       
       // Create synthetic files from parsed data for continue case
       filesToProcess = formData.parsedData.map(data => {
+        const columnHeaders = data.columnInfo?.map(col => col.name) || [];
+        const sampleRows = data.preview || [];
+        
         const csvContent = [
-          data.columns.join(','),
-          ...data.rows.map(row => row.join(','))
+          columnHeaders.join(','),
+          ...sampleRows.map(row => 
+            columnHeaders.map(header => row[header] || '').join(',')
+          )
         ].join('\n');
         
         return new File([csvContent], data.name, { type: 'text/csv' });
