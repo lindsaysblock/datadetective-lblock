@@ -1,40 +1,54 @@
 
+/**
+ * QA Refactoring Recommendations Component
+ * Displays automated refactoring suggestions with priority levels
+ * Refactored for consistency and maintainability
+ */
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RefactoringRecommendation } from '../../utils/qa/types';
+import { SPACING } from '@/constants/ui';
 
 interface QARefactoringRecommendationsProps {
   recommendations: RefactoringRecommendation[];
 }
 
 const QARefactoringRecommendations: React.FC<QARefactoringRecommendationsProps> = ({ recommendations }) => {
+  /**
+   * Returns semantic styling for priority badges
+   */
+  const getPriorityColor = (priority: string): string => {
+    switch (priority) {
+      case 'high': return 'bg-destructive/10 text-destructive';
+      case 'medium': return 'bg-warning/10 text-warning';
+      default: return 'bg-primary/10 text-primary';
+    }
+  };
+
   return (
-    <div className="grid gap-4">
+    <div className={`grid gap-${SPACING.MD}`}>
       {recommendations.map((rec, index) => (
-        <Card key={index} className="p-4">
-          <div className="flex items-start justify-between mb-3">
+        <Card key={index} className={`p-${SPACING.MD}`}>
+          <div className={`flex items-start justify-between mb-${SPACING.SM}`}>
             <div>
               <h4 className="font-semibold">{rec.file}</h4>
-              <div className="flex items-center gap-2 mt-1">
+              <div className={`flex items-center gap-${SPACING.SM} mt-${SPACING.XS}`}>
                 <Badge variant="outline" className="text-xs">
                   {rec.type}
                 </Badge>
-                <Badge className={`text-xs ${
-                  rec.priority === 'high' ? 'bg-red-100 text-red-700' :
-                  rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-blue-100 text-blue-700'
-                }`}>
+                <Badge className={`text-xs ${getPriorityColor(rec.priority)}`}>
                   {rec.priority} priority
                 </Badge>
               </div>
             </div>
           </div>
           
-          <p className="text-sm text-gray-600 mb-2">{rec.description}</p>
-          <div className="p-3 bg-blue-50 rounded border-l-4 border-blue-400">
-            <p className="text-sm font-medium text-blue-800">Suggestion:</p>
-            <p className="text-sm text-blue-700">{rec.suggestion}</p>
+          <p className={`text-sm text-muted-foreground mb-${SPACING.SM}`}>{rec.description}</p>
+          <div className={`p-${SPACING.SM} bg-primary/5 rounded border-l-4 border-primary`}>
+            <p className="text-sm font-medium text-primary">Suggestion:</p>
+            <p className="text-sm text-primary/80">{rec.suggestion}</p>
           </div>
         </Card>
       ))}

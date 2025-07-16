@@ -1,4 +1,10 @@
 
+/**
+ * Enhanced Compliance Dashboard Component
+ * Advanced compliance orchestration with comprehensive reporting
+ * Refactored for consistency and maintainability
+ */
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertTriangle, CheckCircle, Settings, TrendingUp, FileText, Zap } from 'lucide-react';
 import { ComplianceOrchestrator } from '@/utils/qa/standards/complianceOrchestrator';
 import { ComplianceReportGenerator } from '@/utils/qa/standards/complianceReporting';
+import { SPACING, ICON_SIZES } from '@/constants/ui';
 
 const EnhancedComplianceDashboard: React.FC = () => {
   const [orchestrationResult, setOrchestrationResult] = useState<any>(null);
@@ -45,14 +52,20 @@ const EnhancedComplianceDashboard: React.FC = () => {
     }
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600';
-    if (score >= 80) return 'text-blue-600';
-    if (score >= 70) return 'text-yellow-600';
-    return 'text-red-600';
+  /**
+   * Determines semantic color class for compliance score
+   */
+  const getScoreColor = (score: number): string => {
+    if (score >= 90) return 'text-success';
+    if (score >= 80) return 'text-primary';
+    if (score >= 70) return 'text-warning';
+    return 'text-destructive';
   };
 
-  const getScoreBadgeVariant = (score: number) => {
+  /**
+   * Determines badge variant for compliance score
+   */
+  const getScoreBadgeVariant = (score: number): 'default' | 'secondary' | 'outline' | 'destructive' => {
     if (score >= 90) return 'default';
     if (score >= 80) return 'secondary';
     if (score >= 70) return 'outline';
@@ -71,7 +84,7 @@ const EnhancedComplianceDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-${SPACING.LG}`}>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold">Enhanced Compliance Dashboard</h2>
@@ -79,13 +92,13 @@ const EnhancedComplianceDashboard: React.FC = () => {
             Advanced code quality orchestration and compliance monitoring
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className={`flex items-center gap-${SPACING.MD}`}>
           <Button 
             onClick={runComplianceOrchestration} 
             disabled={isRunning}
-            className="gap-2"
+            className={`gap-${SPACING.SM}`}
           >
-            <Zap className="h-4 w-4" />
+            <Zap className={`h-${ICON_SIZES.SM} w-${ICON_SIZES.SM}`} />
             {isRunning ? 'Running...' : 'Run Analysis'}
           </Button>
         </div>
@@ -93,13 +106,13 @@ const EnhancedComplianceDashboard: React.FC = () => {
 
       {/* Status Alert */}
       {orchestrationResult.blockDeployment && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-red-700">
-              <AlertTriangle className="h-5 w-5" />
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardContent className={`pt-${SPACING.LG}`}>
+            <div className={`flex items-center gap-${SPACING.SM} text-destructive`}>
+              <AlertTriangle className={`h-${ICON_SIZES.MD} w-${ICON_SIZES.MD}`} />
               <span className="font-semibold">Deployment Blocked</span>
             </div>
-            <p className="text-red-600 mt-1">
+            <p className={`text-destructive mt-${SPACING.XS}`}>
               Compliance score is below blocking threshold. Address critical issues before deployment.
             </p>
           </CardContent>
@@ -107,19 +120,19 @@ const EnhancedComplianceDashboard: React.FC = () => {
       )}
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-1 md:grid-cols-4 gap-${SPACING.MD}`}>
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className={`pb-${SPACING.SM}`}>
             <CardTitle className="text-sm font-medium">Overall Score</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-${SPACING.SM}`}>
               <span className={`text-2xl font-bold ${getScoreColor(orchestrationResult.overallScore)}`}>
                 {orchestrationResult.overallScore.toFixed(1)}
               </span>
               <span className="text-sm text-muted-foreground">/100</span>
             </div>
-            <Progress value={orchestrationResult.overallScore} className="mt-2" />
+            <Progress value={orchestrationResult.overallScore} className={`mt-${SPACING.SM}`} />
           </CardContent>
         </Card>
 

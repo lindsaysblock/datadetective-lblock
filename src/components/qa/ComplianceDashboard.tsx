@@ -1,3 +1,9 @@
+/**
+ * Compliance Dashboard Component
+ * Real-time code standards monitoring and auto-compliance system
+ * Refactored for consistency and maintainability
+ */
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { AlertTriangle, CheckCircle, Settings, Zap } from 'lucide-react';
 import { autoComplianceSystem } from '@/utils/qa/standards/autoComplianceSystem';
 import { ComplianceReport } from '@/utils/qa/standards/types';
+import { SPACING, ICON_SIZES } from '@/constants/ui';
 
 const ComplianceDashboard: React.FC = () => {
   const [reports, setReports] = useState<ComplianceReport[]>([]);
@@ -60,20 +67,26 @@ const ComplianceDashboard: React.FC = () => {
   const totalViolations = reports.reduce((sum, r) => sum + r.violations.length, 0);
   const totalAutoFixes = reports.reduce((sum, r) => sum + r.autoFixesApplied, 0);
 
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600';
-    if (score >= 70) return 'text-yellow-600';
-    return 'text-red-600';
+  /**
+   * Determines the semantic color class for compliance score
+   */
+  const getScoreColor = (score: number): string => {
+    if (score >= 90) return 'text-success';
+    if (score >= 70) return 'text-warning';
+    return 'text-destructive';
   };
 
-  const getScoreBadgeVariant = (score: number) => {
+  /**
+   * Determines the badge variant for compliance score
+   */
+  const getScoreBadgeVariant = (score: number): 'default' | 'secondary' | 'destructive' => {
     if (score >= 90) return 'default';
     if (score >= 70) return 'secondary';
     return 'destructive';
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-${SPACING.LG}`}>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Code Compliance Dashboard</h2>
@@ -81,9 +94,9 @@ const ComplianceDashboard: React.FC = () => {
             Automated code standards enforcement and optimization
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
+        <div className={`flex items-center gap-${SPACING.MD}`}>
+          <div className={`flex items-center gap-${SPACING.SM}`}>
+            <Settings className={`h-${ICON_SIZES.SM} w-${ICON_SIZES.SM}`} />
             <span className="text-sm">Auto-Compliance</span>
             <Switch 
               checked={isEnabled} 
@@ -93,32 +106,32 @@ const ComplianceDashboard: React.FC = () => {
           <Button 
             onClick={handleRunCheck} 
             disabled={isRunning}
-            className="gap-2"
+            className={`gap-${SPACING.SM}`}
           >
-            <Zap className="h-4 w-4" />
+            <Zap className={`h-${ICON_SIZES.SM} w-${ICON_SIZES.SM}`} />
             {isRunning ? 'Checking...' : 'Run Check'}
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-1 md:grid-cols-4 gap-${SPACING.MD}`}>
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className={`pb-${SPACING.SM}`}>
             <CardTitle className="text-sm font-medium">Overall Score</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-${SPACING.SM}`}>
               <span className={`text-2xl font-bold ${getScoreColor(avgComplianceScore)}`}>
                 {avgComplianceScore.toFixed(1)}
               </span>
               <span className="text-sm text-muted-foreground">/100</span>
             </div>
-            <Progress value={avgComplianceScore} className="mt-2" />
+            <Progress value={avgComplianceScore} className={`mt-${SPACING.SM}`} />
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className={`pb-${SPACING.SM}`}>
             <CardTitle className="text-sm font-medium">Files Checked</CardTitle>
           </CardHeader>
           <CardContent>
@@ -130,27 +143,27 @@ const ComplianceDashboard: React.FC = () => {
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className={`pb-${SPACING.SM}`}>
             <CardTitle className="text-sm font-medium">Violations</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-${SPACING.SM}`}>
               <span className="text-2xl font-bold">{totalViolations}</span>
               {totalViolations > 0 ? (
-                <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                <AlertTriangle className={`h-${ICON_SIZES.SM} w-${ICON_SIZES.SM} text-warning`} />
               ) : (
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className={`h-${ICON_SIZES.SM} w-${ICON_SIZES.SM} text-success`} />
               )}
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className={`pb-${SPACING.SM}`}>
             <CardTitle className="text-sm font-medium">Auto-Fixes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{totalAutoFixes}</div>
+            <div className="text-2xl font-bold text-success">{totalAutoFixes}</div>
             <p className="text-xs text-muted-foreground">Issues resolved</p>
           </CardContent>
         </Card>
@@ -162,16 +175,16 @@ const ComplianceDashboard: React.FC = () => {
             <CardTitle>File Compliance Details</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className={`space-y-${SPACING.MD}`}>
               {reports.map((report, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={index} className={`flex items-center justify-between p-${SPACING.SM} border rounded-lg`}>
                   <div className="flex-1">
                     <div className="font-medium">{report.filePath.split('/').pop()}</div>
                     <div className="text-sm text-muted-foreground">{report.filePath}</div>
                     {report.violations.length > 0 && (
-                      <div className="mt-1 text-xs">
+                      <div className={`mt-${SPACING.XS} text-xs`}>
                         {report.violations.slice(0, 2).map((violation, vIndex) => (
-                          <div key={vIndex} className="text-yellow-600">
+                          <div key={vIndex} className="text-warning">
                             Line {violation.line}: {violation.message}
                           </div>
                         ))}
@@ -183,9 +196,9 @@ const ComplianceDashboard: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className={`flex items-center gap-${SPACING.SM}`}>
                     {report.autoFixesApplied > 0 && (
-                      <Badge variant="outline" className="text-green-600">
+                      <Badge variant="outline" className="text-success">
                         {report.autoFixesApplied} auto-fixed
                       </Badge>
                     )}
