@@ -1,10 +1,16 @@
 
+/**
+ * Analysis Header Component
+ * Refactored to meet coding standards with proper constants and semantic theming
+ */
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, History } from 'lucide-react';
 import { useAuthState } from '@/hooks/useAuthState';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import DataDetectiveLogo from '../DataDetectiveLogo';
+import { SPACING } from '@/constants/ui';
 
 interface AnalysisHeaderProps {
   projectName: string;
@@ -23,19 +29,19 @@ const AnalysisHeader: React.FC<AnalysisHeaderProps> = ({
 
   return (
     <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
+      <div className={`container mx-auto px-${SPACING.MD} py-${SPACING.MD}`}>
         <div className="flex items-center justify-between">
           {/* Left section with logo and back button */}
-          <div className="flex items-center gap-4">
+          <div className={`flex items-center gap-${SPACING.MD}`}>
             <DataDetectiveLogo size="sm" showText={true} />
-            <Button variant="outline" onClick={onBackToProject} className="flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" />
+            <Button variant="outline" onClick={onBackToProject} className={`flex items-center gap-${SPACING.SM}`}>
+              <ArrowLeft className={`w-${SPACING.MD} h-${SPACING.MD}`} />
               Back to Projects
             </Button>
           </div>
 
           {/* Center section with project name */}
-          <div className="text-center flex-1 mx-8">
+          <div className={`text-center flex-1 mx-${SPACING.XL}`}>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
               {projectName}
             </h1>
@@ -43,13 +49,13 @@ const AnalysisHeader: React.FC<AnalysisHeaderProps> = ({
           </div>
 
           {/* Right section with actions and user */}
-          <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-${SPACING.SM}`}>
             <Button 
               variant="outline"
               onClick={onNewProject}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-${SPACING.SM}`}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className={`w-${SPACING.MD} h-${SPACING.MD}`} />
               New Project
             </Button>
             

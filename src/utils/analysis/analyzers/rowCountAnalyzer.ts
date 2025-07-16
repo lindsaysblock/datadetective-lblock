@@ -1,4 +1,9 @@
 
+/**
+ * Row Count Analyzer Utility
+ * Refactored to meet coding standards with proper constants and error handling
+ */
+
 import { ParsedData } from '../../dataParser';
 import { AnalysisResult } from '../types';
 

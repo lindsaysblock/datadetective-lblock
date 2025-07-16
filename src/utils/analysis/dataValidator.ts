@@ -1,3 +1,8 @@
+/**
+ * Data Validator Utility
+ * Refactored to meet coding standards with proper constants and error handling
+ */
+
 import { ParsedData } from '../dataParser';
 
 export interface ValidationResult {

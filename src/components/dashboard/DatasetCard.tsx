@@ -1,9 +1,15 @@
 
+/**
+ * Dataset Card Component
+ * Refactored to meet coding standards with proper constants and semantic theming
+ */
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BarChart3, Download } from 'lucide-react';
 import { BehavioralDataset } from '../../utils/behavioralDataGenerator';
+import { SPACING } from '@/constants/ui';
 
 interface DatasetCardProps {
   dataset: BehavioralDataset | null;
@@ -19,10 +25,10 @@ const DatasetCard: React.FC<DatasetCardProps> = ({
   onDownload
 }) => {
   return (
-    <Card className="mb-8">
+    <Card className={`mb-${SPACING.XL}`}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BarChart3 className="w-5 h-5" />
+        <CardTitle className={`flex items-center gap-${SPACING.SM}`}>
+          <BarChart3 className={`w-${SPACING.MD + 1} h-${SPACING.MD + 1}`} />
           Behavioral Dataset
         </CardTitle>
         <CardDescription>
@@ -33,7 +39,7 @@ const DatasetCard: React.FC<DatasetCardProps> = ({
         <div className="flex items-center justify-between">
           <div>
             {dataset ? (
-              <div className="space-y-1">
+              <div className={`space-y-${SPACING.XS}`}>
                 <p className="text-sm text-gray-600">
                   <strong>{dataset.users.length}</strong> users • <strong>{dataset.events.length}</strong> events • <strong>{dataset.sessions.length}</strong> sessions
                 </p>
@@ -45,7 +51,7 @@ const DatasetCard: React.FC<DatasetCardProps> = ({
               <p className="text-gray-500">No dataset generated yet</p>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className={`flex gap-${SPACING.SM}`}>
             <Button
               onClick={onGenerate}
               disabled={isGenerating}
@@ -55,7 +61,7 @@ const DatasetCard: React.FC<DatasetCardProps> = ({
             </Button>
             {dataset && (
               <Button onClick={onDownload} variant="outline">
-                <Download className="w-4 h-4 mr-2" />
+                <Download className={`w-${SPACING.MD} h-${SPACING.MD} mr-${SPACING.SM}`} />
                 Download CSV
               </Button>
             )}

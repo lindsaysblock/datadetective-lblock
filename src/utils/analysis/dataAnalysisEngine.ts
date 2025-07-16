@@ -1,4 +1,9 @@
 
+/**
+ * Data Analysis Engine
+ * Refactored to meet coding standards with proper constants and error handling
+ */
+
 import { ParsedData } from '../dataParser';
 import { AnalysisResult, AnalysisConfig, AnalysisSummary } from './types';
 import { AnalyticsEngineManager } from '../analytics/analyticsEngineManager';

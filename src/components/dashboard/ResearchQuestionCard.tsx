@@ -1,4 +1,9 @@
 
+/**
+ * Research Question Card Component
+ * Refactored to meet coding standards with proper constants and semantic theming
+ */
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Sparkles } from 'lucide-react';
+import { SPACING } from '@/constants/ui';
 
 interface ResearchQuestionCardProps {
   researchQuestion: string;
@@ -25,9 +31,9 @@ const ResearchQuestionCard: React.FC<ResearchQuestionCardProps> = ({
   canAnalyze
 }) => {
   return (
-    <Card className="mb-8">
+    <Card className={`mb-${SPACING.XL}`}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className={`flex items-center gap-${SPACING.SM}`}>
           <Sparkles className="w-5 h-5" />
           What do you want to discover?
         </CardTitle>
@@ -35,7 +41,7 @@ const ResearchQuestionCard: React.FC<ResearchQuestionCardProps> = ({
           Ask a question about user behavior, engagement, or business metrics
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className={`space-y-${SPACING.MD}`}>
         <div>
           <Label htmlFor="research-question">Research Question</Label>
           <Input

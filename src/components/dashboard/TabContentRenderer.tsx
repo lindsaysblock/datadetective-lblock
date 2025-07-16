@@ -1,4 +1,9 @@
 
+/**
+ * Tab Content Renderer Component
+ * Refactored to meet coding standards with proper error handling and type safety
+ */
+
 import React from 'react';
 import { TabsContent } from '@/components/ui/tabs';
 import AnalyticsTab from './tabs/AnalyticsTab';

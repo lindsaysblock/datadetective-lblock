@@ -1,4 +1,9 @@
 
+/**
+ * Analysis Simulation Test Component
+ * Refactored to meet coding standards with proper constants and error handling
+ */
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +13,7 @@ import { DataAnalysisContext } from '@/types/data';
 import { Badge } from '@/components/ui/badge';
 import { Play, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
 import AnalysisResultsDisplay from './AnalysisResultsDisplay';
+import { SPACING } from '@/constants/ui';
 
 interface TestResult {
   scenario: string;

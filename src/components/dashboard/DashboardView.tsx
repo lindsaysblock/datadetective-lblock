@@ -1,4 +1,9 @@
 
+/**
+ * Dashboard View Component
+ * Refactored to meet coding standards with proper constants and semantic theming
+ */
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import DataDetectiveLogo from '../DataDetectiveLogo';
 import HelpMenu from '../HelpMenu';
 import { ParsedData } from '@/utils/dataParser';
+import { SPACING } from '@/constants/ui';
 
 interface DashboardViewProps {
   activeTab: string;
@@ -31,18 +37,18 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+        <div className={`container mx-auto px-${SPACING.MD} py-${SPACING.MD}`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <Link to="/" className="flex items-center gap-2">
+            <div className={`flex items-center gap-${SPACING.LG}`}>
+              <Link to="/" className={`flex items-center gap-${SPACING.SM}`}>
                 <DataDetectiveLogo size="sm" showText={true} />
               </Link>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className={`flex items-center gap-${SPACING.SM}`}>
               <Link to="/new-project">
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <Plus className="w-4 h-4" />
+                <Button variant="outline" size="sm" className={`flex items-center gap-${SPACING.SM}`}>
+                  <Plus className={`w-${SPACING.MD} h-${SPACING.MD}`} />
                   New Project
                 </Button>
               </Link>
