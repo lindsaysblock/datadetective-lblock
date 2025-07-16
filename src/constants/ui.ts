@@ -70,6 +70,7 @@ export const STATUS_TYPES = {
 } as const;
 
 export const TEXT_SIZES = {
+  HERO: 'text-4xl',
   HEADING: 'text-4xl',
   SUBHEADING: 'text-2xl',
   BODY: 'text-xl',

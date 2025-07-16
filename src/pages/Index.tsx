@@ -1,3 +1,8 @@
+/**
+ * Index Page - Main Dashboard
+ * Refactored to meet coding standards with proper constants and error handling
+ */
+
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,6 +12,7 @@ import { useAnalyticsManager } from '@/hooks/useAnalyticsManager';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile } from '@/utils/dataParser';
 import { useContinueCase } from '@/hooks/useContinueCase';
+import { SPACING, TEXT_SIZES } from '@/constants/ui';
 import MainTabsView from '@/components/query/MainTabsView';
 import AnalysisView from '@/components/query/AnalysisView';
 import Header from '@/components/Header';
@@ -238,7 +244,7 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <Header />
-        <div className="container mx-auto px-4 py-8">
+        <div className={`container mx-auto px-${SPACING.MD} py-${SPACING.XL}`}>
           <AnalysisView
             analysisData={analysisData}
             currentFilename={currentFilename}
@@ -258,12 +264,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Header />
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">
+      <div className={`container mx-auto px-${SPACING.MD} py-${SPACING.XL}`}>
+        <div className={`mb-${SPACING.XL} text-center`}>
+          <h1 className={`${TEXT_SIZES.HERO} font-bold text-gray-800 mb-${SPACING.MD}`}>
             Welcome to Data Detective
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className={`${TEXT_SIZES.SUBHEADING} text-gray-600`}>
             Uncover insights hidden in your data with AI-powered analysis
           </p>
         </div>
@@ -290,10 +296,10 @@ const Index = () => {
         />
 
         {analysisData && !showAnalysis && (
-          <div className="mt-8 text-center">
+          <div className={`mt-${SPACING.XL} text-center`}>
             <button
               onClick={handleStartAnalysis}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200"
+              className={`bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-${SPACING.XL} py-${SPACING.SM} rounded-lg font-medium transition-all duration-200`}
             >
               Start Analysis
             </button>

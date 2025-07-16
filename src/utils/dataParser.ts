@@ -150,12 +150,13 @@ export const generateDataInsights = (data: ParsedData): string[] => {
     
     // Data quality insights
     const SAMPLE_SIZE = 100;
+    const PERCENTAGE_BASE = 100;
     const sampleSize = Math.min(SAMPLE_SIZE, data.rows.length);
     const completeness = data.columns.map(col => {
       const nonEmptyCount = data.rows.slice(0, sampleSize)
         .filter(row => row[col.name] !== null && row[col.name] !== undefined && row[col.name] !== '')
         .length;
-      return (nonEmptyCount / sampleSize) * SAMPLE_SIZE;
+      return (nonEmptyCount / sampleSize) * PERCENTAGE_BASE;
     });
     
     const avgCompleteness = completeness.reduce((sum, val) => sum + val, 0) / completeness.length;

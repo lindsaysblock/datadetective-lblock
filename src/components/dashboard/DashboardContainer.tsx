@@ -1,4 +1,9 @@
 
+/**
+ * Dashboard Container Component  
+ * Refactored to meet coding standards with proper data normalization and error handling
+ */
+
 import React, { useState } from 'react';
 import { ParsedData } from '@/utils/dataParser';
 import DashboardView from './DashboardView';

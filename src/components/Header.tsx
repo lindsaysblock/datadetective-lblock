@@ -1,6 +1,6 @@
 /**
  * Header Component
- * Refactored to meet coding standards with proper theming and constants
+ * Refactored to meet coding standards with proper theming and semantic constants
  */
 
 import React from 'react';

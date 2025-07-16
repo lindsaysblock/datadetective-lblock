@@ -28,9 +28,9 @@ export const useAnalysisEngine = (): UseAnalysisEngineReturn => {
   const { toast } = useToast();
 
   const simulateProgress = useCallback(async (): Promise<void> => {
-    const progressSteps = [10, 25, 40, 60, 80, 95, 100];
+    const PROGRESS_STEPS = [10, 25, 40, 60, 80, 95, 100];
     
-    for (const step of progressSteps) {
+    for (const step of PROGRESS_STEPS) {
       await new Promise(resolve => setTimeout(resolve, TIMEOUTS.SHORT));
       setProgress(step);
     }
@@ -50,7 +50,8 @@ export const useAnalysisEngine = (): UseAnalysisEngineReturn => {
       
       const analysisReport = await AnalysisCoordinator.executeAnalysis(context);
       setReport(analysisReport);
-      setProgress(100);
+      const COMPLETE_PROGRESS = 100;
+      setProgress(COMPLETE_PROGRESS);
       
       toast({
         title: "Analysis Complete! 🎉",

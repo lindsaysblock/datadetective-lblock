@@ -1,7 +1,7 @@
 
 /**
  * Main Application Component
- * Refactored to meet coding standards with centralized constants
+ * Refactored to meet coding standards with centralized constants and proper error handling
  */
 
 import React, { Suspense } from 'react';
