@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Upload, File, X, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { getAcceptString } from '@/utils/fileValidation';
+import { getAcceptString, validateFiles } from '@/utils/fileValidation';
 
 interface FileUploadSectionProps {
   files: File[];
@@ -44,8 +44,25 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   };
 
   const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('File input changed');
-    onFileChange(event);
+    console.log('🔧 File input changed, files:', event.target.files?.length || 0);
+    
+    if (event.target.files && event.target.files.length > 0) {
+      const filesArray = Array.from(event.target.files);
+      console.log('🔧 Files to validate:', filesArray.map(f => ({ name: f.name, type: f.type, size: f.size })));
+      
+      // Validate each file before proceeding
+      const { validFiles, errors } = validateFiles(filesArray);
+      
+      if (errors.length > 0) {
+        console.error('❌ File validation errors:', errors);
+        // Still call the handler to let parent handle the error
+        onFileChange(event);
+        return;
+      }
+      
+      console.log('✅ All files validated successfully:', validFiles.length);
+      onFileChange(event);
+    }
   };
 
   return (

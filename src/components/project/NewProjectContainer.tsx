@@ -102,8 +102,11 @@ const NewProjectContainer: React.FC = () => {
     prevStep,
     goToStep,
     onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (event.target.files) {
-        handleFileSelection(Array.from(event.target.files));
+      console.log('🔧 onFileChange called with event:', event.target.files);
+      if (event.target.files && event.target.files.length > 0) {
+        const filesArray = Array.from(event.target.files);
+        console.log('🔧 Files to handle:', filesArray.map(f => ({ name: f.name, type: f.type, size: f.size })));
+        handleFileSelection(filesArray);
       }
     },
     handleFileUpload: async () => {
