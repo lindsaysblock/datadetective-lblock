@@ -1,10 +1,13 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import NewProjectLayout from './NewProjectLayout';
 import NewProjectContent from './NewProjectContent';
 
+/**
+ * Container component for the new project creation flow
+ * Handles form state management and navigation logic
+ */
 const NewProjectContainer: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -29,11 +32,12 @@ const NewProjectContainer: React.FC = () => {
     }
   } = useNewProjectForm();
 
-  console.log('NewProjectContainer rendering with formData:', {
+  // Debug logging to track state
+  console.log('NewProjectContainer state:', {
     step: formData.step,
-    projectName: formData.projectName,
-    researchQuestion: formData.researchQuestion,
-    hasFiles: formData.files.length > 0 || formData.parsedData.length > 0,
+    hasData: formData.files.length > 0 || formData.parsedData.length > 0,
+    isLoading,
+    error
   });
 
   // Handle continue investigation from route state
@@ -41,18 +45,60 @@ const NewProjectContainer: React.FC = () => {
     if (!isInitialized && location.state?.continueInvestigation && location.state?.dataset) {
       console.log('🔄 Loading existing project:', location.state.dataset);
       
-      // If we have a dataset with an ID, load the full project
       if (location.state.dataset.id) {
         loadProject(location.state.dataset);
       }
       setIsInitialized(true);
     } else if (!isInitialized) {
-      // Normal initialization
       setIsInitialized(true);
     }
   }, [location.state, loadProject, isInitialized]);
 
-  // Show loading state during initialization
+  // Analysis starter function
+  const startAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
+    console.log('🚀 Starting analysis:', { educationalMode, projectName });
+    
+    try {
+      navigate('/analysis', {
+        state: {
+          formData: enhancedFormData,
+          educationalMode,
+          projectName
+        }
+      });
+    } catch (error) {
+      console.error('❌ Failed to start analysis:', error);
+    }
+  };
+
+  // Enhanced form data for backward compatibility
+  const enhancedFormData = {
+    ...formData,
+    setResearchQuestion,
+    setProjectName,
+    setAdditionalContext: setBusinessContext,
+    nextStep,
+    prevStep,
+    goToStep,
+    onFileChange: formData.onFileChange,
+    handleFileUpload: formData.handleFileUpload,
+    removeFile: formData.removeFile,
+    setColumnMapping: formData.setColumnMapping,
+    files: formData.files,
+    uploading: formData.uploading,
+    parsing: formData.parsing,
+    parsedData: formData.parsedData,
+    processedFiles: formData.processedFiles,
+    columnMapping: formData.columnMapping,
+    analysisResults: formData.analysisResults,
+    analysisCompleted: formData.analysisCompleted,
+    isProcessingAnalysis: formData.isProcessingAnalysis,
+    hasData: formData.files.length > 0 || formData.parsedData.length > 0,
+    businessContext: formData.businessContext,
+    additionalContext: formData.businessContext,
+  };
+
+  // Loading state
   if (!isInitialized || isLoading) {
     return (
       <NewProjectLayout>
@@ -70,7 +116,7 @@ const NewProjectContainer: React.FC = () => {
     );
   }
 
-  // Show error state
+  // Error state
   if (error) {
     return (
       <NewProjectLayout>
@@ -90,52 +136,7 @@ const NewProjectContainer: React.FC = () => {
     );
   }
 
-  // Create enhanced form data object for backward compatibility
-  const enhancedFormData = {
-    ...formData,
-    // Add action functions for components
-    setResearchQuestion,
-    setProjectName,
-    setAdditionalContext: setBusinessContext,
-    nextStep,
-    prevStep,
-    goToStep,
-    onFileChange: formData.onFileChange,
-    handleFileUpload: formData.handleFileUpload,
-    removeFile: formData.removeFile,
-    setColumnMapping: formData.setColumnMapping,
-    // Computed properties for compatibility
-    files: formData.files,
-    uploading: formData.uploading,
-    parsing: formData.parsing,
-    parsedData: formData.parsedData,
-    processedFiles: formData.processedFiles,
-    columnMapping: formData.columnMapping,
-    analysisResults: formData.analysisResults,
-    analysisCompleted: formData.analysisCompleted,
-    isProcessingAnalysis: formData.isProcessingAnalysis,
-    hasData: formData.files.length > 0 || formData.parsedData.length > 0,
-    businessContext: formData.businessContext,
-    additionalContext: formData.businessContext,
-  };
-
-  const startAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
-    console.log('🚀 Starting analysis:', { educationalMode, projectName });
-    
-    try {
-      // Navigate to analysis page with form data
-      navigate('/analysis', {
-        state: {
-          formData: enhancedFormData,
-          educationalMode,
-          projectName
-        }
-      });
-    } catch (error) {
-      console.error('❌ Failed to start analysis:', error);
-    }
-  };
-
+  // Main render
   return (
     <NewProjectLayout>
       <NewProjectContent
