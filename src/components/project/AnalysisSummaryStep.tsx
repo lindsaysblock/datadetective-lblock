@@ -194,7 +194,9 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             </div>
             <div className="text-center p-3 bg-gradient-to-br from-brand-purple/10 to-brand-purple/20 rounded-lg border border-brand-purple/20">
               <div className="text-2xl font-bold text-brand-purple">
-                {parsedData?.[0]?.columnInfo?.length || parsedData?.[0]?.columns || 0}
+                {Array.isArray(parsedData?.[0]?.columnInfo) 
+                  ? parsedData[0].columnInfo.length 
+                  : parsedData?.[0]?.columns || 0}
               </div>
               <div className="text-sm text-brand-purple">Data Points</div>
             </div>
@@ -218,9 +220,9 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
                     <FileText className="w-4 h-4 text-brand-blue" />
                     <div>
                       <div className="font-medium text-sm text-foreground">{data.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {(data.rowCount || data.rows || 0).toLocaleString()} records • {data.columnInfo?.length || data.columns || 0} data points
-                      </div>
+                       <div className="text-xs text-muted-foreground">
+                         {(data.rowCount || data.rows || 0).toLocaleString()} records • {Array.isArray(data.columnInfo) ? data.columnInfo.length : (data.columns || 0)} data points
+                       </div>
                     </div>
                   </div>
                   <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/20">
