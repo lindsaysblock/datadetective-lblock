@@ -235,7 +235,7 @@ const DataTestingPanel: React.FC = () => {
                     {result.success && (
                       <div className="text-sm text-gray-600 ml-8">
                         {result.dataSize && <p>• Data size: {result.dataSize} rows</p>}
-                        {result.columns && <p>• Columns: {result.columns}</p>}
+                        {result.columns && <p>• Columns: {Array.isArray(result.columns) ? result.columns.map(col => typeof col === 'object' ? col.name : col).join(', ') : result.columns}</p>}
                         {result.insights?.map((insight, i) => (
                           <p key={i}>• {insight}</p>
                         ))}
