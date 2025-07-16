@@ -21,9 +21,6 @@ const DataDetectiveHeader: React.FC = () => {
           </div>
         </div>
         <div>
-          <h1 className={`${TEXT_SIZES.HEADING} font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent`}>
-            Data Detective
-          </h1>
           <p className="text-gray-600 font-medium">Intelligent Analytics Platform</p>
         </div>
       </div>
