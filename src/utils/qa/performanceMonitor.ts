@@ -1,6 +1,21 @@
 
+/**
+ * Performance monitoring for QA tests
+ * Tracks test execution metrics and system performance
+ */
+
 import { QATestSuites } from './qaTestSuites';
 
+/** Performance monitoring constants */
+const PERFORMANCE_CONSTANTS = {
+  MEMORY_CONVERSION: 1024 * 1024,
+  EFFICIENCY_BASE: 100
+} as const;
+
+/**
+ * Performance monitoring system
+ * Tracks test execution performance and system metrics
+ */
 export class PerformanceMonitor {
   private qaTestSuites: QATestSuites;
   private performanceMetrics: Map<string, number> = new Map();

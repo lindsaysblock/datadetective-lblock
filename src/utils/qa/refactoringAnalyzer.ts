@@ -1,7 +1,16 @@
 
+/**
+ * Refactoring needs analysis system
+ * Analyzes codebase for refactoring opportunities
+ */
+
 import { QATestSuites } from './qaTestSuites';
 import { RefactoringRecommendation } from './types';
 
+/**
+ * Refactoring needs analyzer
+ * Identifies and prioritizes refactoring opportunities
+ */
 export class RefactoringAnalyzer {
   private qaTestSuites: QATestSuites;
 

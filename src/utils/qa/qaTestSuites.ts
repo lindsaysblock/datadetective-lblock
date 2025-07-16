@@ -1,8 +1,17 @@
 
+/**
+ * QA Test Suites Management
+ * Coordinates and manages all QA test execution and results
+ */
+
 import { QATestResult } from './types';
 import { TestRunner } from './testRunner';
 import { EnhancedDataValidationTests } from '../testing/suites/enhancedDataValidationTests';
 
+/**
+ * QA test suite coordinator
+ * Manages test execution and results collection
+ */
 export class QATestSuites {
   private testRunner: TestRunner;
   private results: QATestResult[] = [];

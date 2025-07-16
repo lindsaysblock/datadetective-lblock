@@ -1,4 +1,10 @@
 
+/**
+ * QA System Type Definitions
+ * Core interfaces and types for QA testing system
+ */
+
+/** QA test result interface */
 export interface QATestResult {
   testName: string;
   status: 'pass' | 'fail' | 'warning';
@@ -9,6 +15,7 @@ export interface QATestResult {
   category?: string;
 }
 
+/** QA report interface */
 export interface QAReport {
   overall: 'pass' | 'fail' | 'warning';
   timestamp: Date;
@@ -38,6 +45,7 @@ export interface PerformanceMetrics {
   duration?: number;
 }
 
+/** Refactoring recommendation interface */
 export interface RefactoringRecommendation {
   file: string;
   type: 'size' | 'complexity' | 'duplication' | 'performance';
