@@ -5,7 +5,7 @@
  * Refactored for consistency and maintainability
  */
 
-import { ANALYSIS_CONSTANTS } from '@/constants/analysis';
+import { ANALYSIS_CONFIG } from '@/constants/analysis';
 
 export interface DataQualityMetrics {
   completeness: number;
