@@ -1,10 +1,22 @@
+/**
+ * Badge UI Component
+ * Displays status indicators and labels with semantic theming
+ */
+
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-
 import { cn } from "@/lib/utils"
 
+/** Badge styling constants */
+const BADGE_CONSTANTS = {
+  DEFAULT_PADDING: "px-2.5 py-0.5",
+  FONT_SIZE: "text-xs",
+  FONT_WEIGHT: "font-semibold",
+  BORDER_RADIUS: "rounded-full"
+} as const;
+
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  `inline-flex items-center ${BADGE_CONSTANTS.BORDER_RADIUS} border ${BADGE_CONSTANTS.DEFAULT_PADDING} ${BADGE_CONSTANTS.FONT_SIZE} ${BADGE_CONSTANTS.FONT_WEIGHT} transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2`,
   {
     variants: {
       variant: {
@@ -23,10 +35,15 @@ const badgeVariants = cva(
   }
 )
 
+/** Badge component props interface */
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {}
 
+/**
+ * Badge component
+ * Renders a styled badge with customizable variants
+ */
 function Badge({ className, variant, ...props }: BadgeProps) {
   return (
     <div className={cn(badgeVariants({ variant }), className)} {...props} />

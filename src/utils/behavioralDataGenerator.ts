@@ -1,6 +1,30 @@
 
+/**
+ * Behavioral Data Generator
+ * Generates realistic user behavior datasets for testing and analysis
+ */
+
 import { MockUser, MockEvent } from './mockDataGenerator';
 
+/** Behavioral data generation constants */
+const BEHAVIORAL_CONSTANTS = {
+  DEFAULT_USER_COUNT: 5000,
+  DEFAULT_TIMEFRAME_DAYS: 90,
+  MILLISECONDS_PER_DAY: 24 * 60 * 60 * 1000,
+  MILLISECONDS_PER_MINUTE: 60 * 1000,
+  SEGMENT_MULTIPLIERS: {
+    power_user: { sessions: 15, duration: 45, ltv: 500 },
+    regular_user: { sessions: 8, duration: 25, ltv: 200 },
+    casual_user: { sessions: 3, duration: 12, ltv: 50 },
+    new_user: { sessions: 1, duration: 8, ltv: 0 }
+  },
+  USER_SEGMENTS: ['power_user', 'regular_user', 'casual_user', 'new_user'] as const,
+  ACQUISITION_CHANNELS: ['organic_search', 'paid_search', 'social_media', 'email', 'direct', 'referral'],
+  COUNTRIES: ['US', 'UK', 'CA', 'AU', 'DE', 'FR', 'JP', 'BR', 'IN', 'ES'],
+  PLANS: ['free', 'premium', 'enterprise'] as const
+} as const;
+
+/** Behavioral dataset interface */
 export interface BehavioralDataset {
   users: BehavioralUser[];
   events: BehavioralEvent[];
@@ -14,6 +38,7 @@ export interface BehavioralDataset {
   };
 }
 
+/** Enhanced user interface with behavioral attributes */
 export interface BehavioralUser extends MockUser {
   user_segment: 'power_user' | 'regular_user' | 'casual_user' | 'new_user';
   ltv: number; // Lifetime value
@@ -63,14 +88,18 @@ export interface ConversionEvent {
   attribution_channel: string;
 }
 
+/**
+ * Generates a comprehensive behavioral dataset
+ * Creates realistic user behavior patterns with sessions, events, and conversions
+ */
 export const generateLargeBehavioralDataset = (
-  userCount: number = 5000,
-  timeframeDays: number = 90
+  userCount: number = BEHAVIORAL_CONSTANTS.DEFAULT_USER_COUNT,
+  timeframeDays: number = BEHAVIORAL_CONSTANTS.DEFAULT_TIMEFRAME_DAYS
 ): BehavioralDataset => {
   console.log(`Generating behavioral dataset with ${userCount} users over ${timeframeDays} days...`);
   
   const endDate = new Date();
-  const startDate = new Date(endDate.getTime() - (timeframeDays * 24 * 60 * 60 * 1000));
+  const startDate = new Date(endDate.getTime() - (timeframeDays * BEHAVIORAL_CONSTANTS.MILLISECONDS_PER_DAY));
   
   // Generate users with behavioral attributes
   const users = generateBehavioralUsers(userCount, startDate, endDate);
@@ -106,10 +135,10 @@ export const generateLargeBehavioralDataset = (
 };
 
 const generateBehavioralUsers = (count: number, startDate: Date, endDate: Date): BehavioralUser[] => {
-  const segments = ['power_user', 'regular_user', 'casual_user', 'new_user'] as const;
-  const channels = ['organic_search', 'paid_search', 'social_media', 'email', 'direct', 'referral'];
-  const countries = ['US', 'UK', 'CA', 'AU', 'DE', 'FR', 'JP', 'BR', 'IN', 'ES'];
-  const plans = ['free', 'premium', 'enterprise'] as const;
+  const segments = BEHAVIORAL_CONSTANTS.USER_SEGMENTS;
+  const channels = BEHAVIORAL_CONSTANTS.ACQUISITION_CHANNELS;
+  const countries = BEHAVIORAL_CONSTANTS.COUNTRIES;
+  const plans = BEHAVIORAL_CONSTANTS.PLANS;
   
   return Array.from({ length: count }, (_, i) => {
     const segment = segments[Math.floor(Math.random() * segments.length)];
@@ -117,12 +146,7 @@ const generateBehavioralUsers = (count: number, startDate: Date, endDate: Date):
     const lastActivity = new Date(signupDate.getTime() + Math.random() * (endDate.getTime() - signupDate.getTime()));
     
     // Segment-based behavior patterns
-    const segmentMultipliers = {
-      power_user: { sessions: 15, duration: 45, ltv: 500 },
-      regular_user: { sessions: 8, duration: 25, ltv: 200 },
-      casual_user: { sessions: 3, duration: 12, ltv: 50 },
-      new_user: { sessions: 1, duration: 8, ltv: 0 }
-    };
+    const segmentMultipliers = BEHAVIORAL_CONSTANTS.SEGMENT_MULTIPLIERS;
     
     const multiplier = segmentMultipliers[segment];
     const totalSessions = Math.floor(Math.random() * multiplier.sessions) + 1;
@@ -161,7 +185,7 @@ const generateUserSessions = (users: BehavioralUser[], startDate: Date, endDate:
       );
       
       const durationMinutes = user.avg_session_duration + Math.floor(Math.random() * 30) - 15;
-      const sessionEnd = new Date(sessionStart.getTime() + durationMinutes * 60 * 1000);
+      const sessionEnd = new Date(sessionStart.getTime() + durationMinutes * BEHAVIORAL_CONSTANTS.MILLISECONDS_PER_MINUTE);
       
       const pageViews = Math.floor(Math.random() * 15) + 1;
       const eventsCount = Math.floor(Math.random() * 25) + pageViews;
@@ -274,6 +298,10 @@ const generateConversionEvents = (users: BehavioralUser[], sessions: UserSession
   return conversions;
 };
 
+/**
+ * Converts behavioral dataset to CSV format
+ * Flattens complex data structure for export and analysis
+ */
 export const convertBehavioralDatasetToCSV = (dataset: BehavioralDataset): string => {
   const headers = [
     'user_id', 'event_name', 'timestamp', 'session_id', 'device_type', 
