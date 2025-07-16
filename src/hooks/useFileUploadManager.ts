@@ -26,7 +26,7 @@ export const useFileUploadManager = () => {
   const generateUniqueFilename = useCallback((originalName: string): string => {
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(2, 8);
-    const extension = originalName.split('.').pop();
+    const extension = originalName?.split('.').pop();
     return `${timestamp}_${randomId}.${extension}`;
   }, []);
 
@@ -70,9 +70,9 @@ export const useFileUploadManager = () => {
                 totalColumns: Array.isArray(jsonData) && jsonData.length > 0 ? Object.keys(jsonData[0]).length : 0
               }
             });
-          } else if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+          } else if (file.type === 'text/csv' || file.name?.endsWith('.csv')) {
             const lines = text.split('\n').filter(line => line.trim());
-            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            const headers = lines[0]?.split(',').map(h => h.trim().replace(/"/g, '')) || [];
             const rows = lines.slice(1).map(line => {
               const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
               const row: any = {};

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Play, CheckCircle, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
-import { OptimizedE2ETestRunner, E2ETestResult } from '../../utils/testing/optimizedE2ETestRunner';
+import createOptimizedE2ETestRunner, { E2ETestResult } from '../../utils/testing/optimizedE2ETestRunner';
 import TestResultCard from './TestResultCard';
 
 const OptimizedE2ETestRunnerComponent: React.FC = () => {
@@ -22,8 +22,8 @@ const OptimizedE2ETestRunnerComponent: React.FC = () => {
         description: "Running optimized comprehensive test suite...",
       });
 
-      const testRunner = new OptimizedE2ETestRunner(toast);
-      const results = await testRunner.runFullE2ETest();
+      const testRunner = createOptimizedE2ETestRunner();
+      const results = await testRunner.runTests();
       
       setTestResults(results);
       setLastRunTime(new Date());

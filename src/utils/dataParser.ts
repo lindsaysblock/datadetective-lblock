@@ -37,7 +37,7 @@ export const parseFile = async (file: File): Promise<ParsedData> => {
     throw new Error('File size exceeds 100MB limit');
   }
   
-  const extension = file.name.split('.').pop()?.toLowerCase();
+  const extension = file?.name?.split('.').pop()?.toLowerCase();
   
   let parsedData: ParsedData;
   
