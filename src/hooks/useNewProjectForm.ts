@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useContinueCase } from './useContinueCase';
 import { useFileProcessing, type ProcessedFileData } from './useFileProcessing';
+import { validateFile } from '@/utils/fileValidation';
 
 export interface FormData {
   projectName: string;
@@ -92,8 +93,23 @@ export const useNewProjectForm = () => {
   }, []);
 
   const addFile = useCallback((file: File) => {
+    console.log('📁 Adding file:', { name: file.name, type: file.type, size: file.size });
+    
+    // Validate file before adding
+    const validation = validateFile(file);
+    if (!validation.isValid) {
+      console.error('❌ File validation failed:', validation.error);
+      toast({
+        title: "Invalid File",
+        description: validation.error,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log('✅ File validation passed, adding to files array');
     setFormData(prev => ({ ...prev, files: [...prev.files, file] }));
-  }, []);
+  }, [toast]);
 
   const removeFile = useCallback((index: number) => {
     setFormData(prev => ({ 
@@ -249,7 +265,23 @@ export const useNewProjectForm = () => {
       nextStep,
       prevStep,
       goToStep,
-      onFileChange: addFile,
+      onFileChange: (fileOrEvent: File | React.ChangeEvent<HTMLInputElement>) => {
+        console.log('🔧 onFileChange called with:', fileOrEvent);
+        
+        // Handle both File objects and change events
+        if ('target' in fileOrEvent && fileOrEvent.target && 'files' in fileOrEvent.target) {
+          // It's a change event - extract files
+          const files = fileOrEvent.target.files;
+          if (files && files.length > 0) {
+            Array.from(files).forEach(file => addFile(file));
+          }
+        } else if (fileOrEvent && typeof fileOrEvent === 'object' && 'name' in fileOrEvent) {
+          // It's a File object
+          addFile(fileOrEvent as File);
+        } else {
+          console.error('❌ Invalid file or event object:', fileOrEvent);
+        }
+      },
       handleFileUpload,
       removeFile,
       setColumnMapping,
