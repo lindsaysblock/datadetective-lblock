@@ -79,7 +79,12 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     console.log('🚀 Starting analysis with:', {
       projectName: finalProjectName,
       researchQuestion,
-      hasData: !!(parsedData && parsedData.length > 0)
+      hasData: !!(parsedData && parsedData.length > 0),
+      dataValidation: parsedData?.map(d => ({
+        name: d?.name,
+        rows: d?.rowCount || d?.rows,
+        hasColumnInfo: !!(d?.columnInfo && Array.isArray(d.columnInfo) && d.columnInfo.length > 0)
+      }))
     });
 
     if (!finalProjectName) {
@@ -97,6 +102,21 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     if (!parsedData || parsedData.length === 0) {
       console.error('❌ No data available');
       alert('Please upload data before starting analysis');
+      return;
+    }
+
+    // Validate data structure
+    const hasValidData = parsedData.some(data => 
+      data && 
+      (data.rowCount > 0 || data.rows > 0) && 
+      data.columnInfo && 
+      Array.isArray(data.columnInfo) && 
+      data.columnInfo.length > 0
+    );
+
+    if (!hasValidData) {
+      console.error('❌ Invalid data structure:', parsedData);
+      alert('The uploaded data appears to be corrupted or empty. Please try uploading again.');
       return;
     }
 

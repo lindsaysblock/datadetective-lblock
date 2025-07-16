@@ -65,6 +65,21 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
         return;
       }
 
+      // Ensure data structure is valid for analysis
+      const hasValidData = formData.parsedData?.some((data: any) => 
+        data && (data.rows > 0 || data.rowCount > 0) && 
+        data.columnInfo && Array.isArray(data.columnInfo) && data.columnInfo.length > 0
+      );
+
+      if (!hasValidData) {
+        toast({
+          title: "Invalid Data Structure",
+          description: "The uploaded data appears to be corrupted or empty. Please try uploading again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       console.log('Validation passed, starting analysis');
       
       // Save project if user is authenticated

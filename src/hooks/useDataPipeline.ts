@@ -113,7 +113,7 @@ export const useDataPipeline = () => {
               : [],
             summary: {
               totalRows: parsedData.rowCount,
-              totalColumns: parsedData.columns.length,
+              totalColumns: Array.isArray(parsedData.columns) ? parsedData.columns.length : 0,
               possibleUserIdColumns: parsedData.summary?.possibleUserIdColumns || [],
               possibleEventColumns: parsedData.summary?.possibleEventColumns || [],
               possibleTimestampColumns: parsedData.summary?.possibleTimestampColumns || []

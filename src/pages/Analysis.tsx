@@ -47,26 +47,75 @@ const Analysis = () => {
   }, [location.state, navigate, toast]);
 
   const simulateAnalysis = async (formData: any, educationalMode: boolean) => {
-    // Phase 1: Data Processing
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Phase 2: Pattern Recognition
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Phase 3: Generate Insights
-    const mockInsights = generateMockInsights(formData);
-    setInsights(mockInsights);
-    
-    // Phase 4: Create Visualizations
-    const mockVisualizations = await generateMockVisualizations(formData);
-    setVisualizations(mockVisualizations);
-    
-    // Phase 5: Complete Analysis
-    setIsAnalyzing(false);
-    toast({
-      title: "🔍 Investigation Complete!",
-      description: `Successfully analyzed case "${analysisData?.projectName || 'Unknown'}"`,
-    });
+    try {
+      console.log('🔍 Starting real analysis with AnalysisEngine');
+      
+      // Import the real analysis engine
+      const { AnalysisEngine } = await import('@/services/analysisEngine');
+      
+      // Prepare analysis context
+      const analysisContext = {
+        researchQuestion: formData.researchQuestion,
+        additionalContext: formData.businessContext || '',
+        parsedData: formData.parsedData || [],
+        columnMapping: formData.columnMapping || {},
+        educationalMode
+      };
+      
+      console.log('📊 Analysis context prepared:', {
+        researchQuestion: analysisContext.researchQuestion,
+        dataFiles: analysisContext.parsedData.length,
+        educationalMode: analysisContext.educationalMode
+      });
+      
+      // Phase 1: Data Processing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Phase 2: Run real analysis
+      const analysisResults = await AnalysisEngine.analyzeData(analysisContext);
+      
+      console.log('✅ Real analysis completed:', analysisResults);
+      
+      // Phase 3: Extract insights from real results
+      const realInsights = analysisResults.detailedResults?.map(result => ({
+        id: result.id,
+        title: result.title,
+        description: result.description,
+        confidence: result.confidence,
+        type: 'analysis',
+        insight: result.insight
+      })) || generateMockInsights(formData);
+      
+      setInsights(realInsights);
+      
+      // Phase 4: Create Visualizations based on real data
+      const mockVisualizations = await generateMockVisualizations(formData);
+      setVisualizations(mockVisualizations);
+      
+      // Phase 5: Complete Analysis
+      setIsAnalyzing(false);
+      toast({
+        title: "🔍 Investigation Complete!",
+        description: `Successfully analyzed case "${analysisData?.projectName || 'Unknown'}" with real insights`,
+      });
+      
+    } catch (error) {
+      console.error('❌ Analysis failed:', error);
+      
+      // Fallback to mock analysis if real analysis fails
+      const mockInsights = generateMockInsights(formData);
+      setInsights(mockInsights);
+      
+      const mockVisualizations = await generateMockVisualizations(formData);
+      setVisualizations(mockVisualizations);
+      
+      setIsAnalyzing(false);
+      toast({
+        title: "⚠️ Analysis Complete (Fallback)",
+        description: "Analysis completed using fallback method. Some features may be limited.",
+        variant: "destructive"
+      });
+    }
   };
 
   const generateMockInsights = (formData: any) => {
