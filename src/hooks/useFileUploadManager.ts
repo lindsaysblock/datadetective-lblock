@@ -58,7 +58,10 @@ export const useFileUploadManager = () => {
         try {
           const text = event.target?.result as string;
           
-          if (file.type === 'application/json') {
+          // Get file extension to determine type (more reliable than MIME type)
+          const extension = file.name?.split('.').pop()?.toLowerCase();
+          
+          if (extension === 'json' || file.type === 'application/json') {
             const jsonData = JSON.parse(text);
             resolve({
               rows: Array.isArray(jsonData) ? jsonData : [jsonData],
@@ -70,8 +73,14 @@ export const useFileUploadManager = () => {
                 totalColumns: Array.isArray(jsonData) && jsonData.length > 0 ? Object.keys(jsonData[0]).length : 0
               }
             });
-          } else if (file.type === 'text/csv' || file.name?.endsWith('.csv')) {
+          } else if (extension === 'csv' || file.type === 'text/csv' || file.type === 'application/vnd.ms-excel') {
+            // Handle CSV files - use extension check first, then MIME type as fallback
             const lines = text.split('\n').filter(line => line.trim());
+            if (lines.length === 0) {
+              reject(new Error('CSV file is empty'));
+              return;
+            }
+            
             const headers = lines[0]?.split(',').map(h => h.trim().replace(/"/g, '')) || [];
             const rows = lines.slice(1).map(line => {
               const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
@@ -92,19 +101,46 @@ export const useFileUploadManager = () => {
                 totalColumns: headers.length
               }
             });
-          } else {
-            // For other text files, create a simple structure
+          } else if (extension === 'txt' || file.type === 'text/plain') {
+            // For text files, try to detect if it's CSV-like first
             const lines = text.split('\n').filter(line => line.trim());
-            resolve({
-              rows: lines.map((line, index) => ({ line_number: index + 1, content: line })),
-              columns: ['line_number', 'content'],
-              rowCount: lines.length,
-              summary: {
-                fileType: 'TEXT',
-                totalRows: lines.length,
-                totalColumns: 2
-              }
-            });
+            if (lines.length > 0 && lines[0].includes(',')) {
+              // Looks like CSV, parse as CSV
+              const headers = lines[0]?.split(',').map(h => h.trim().replace(/"/g, '')) || [];
+              const rows = lines.slice(1).map(line => {
+                const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+                const row: any = {};
+                headers.forEach((header, index) => {
+                  row[header] = values[index] || '';
+                });
+                return row;
+              });
+
+              resolve({
+                rows,
+                columns: headers,
+                rowCount: rows.length,
+                summary: {
+                  fileType: 'CSV',
+                  totalRows: rows.length,
+                  totalColumns: headers.length
+                }
+              });
+            } else {
+              // Plain text file
+              resolve({
+                rows: lines.map((line, index) => ({ line_number: index + 1, content: line })),
+                columns: ['line_number', 'content'],
+                rowCount: lines.length,
+                summary: {
+                  fileType: 'TEXT',
+                  totalRows: lines.length,
+                  totalColumns: 2
+                }
+              });
+            }
+          } else {
+            reject(new Error(`Unsupported file type: ${extension}. Please upload CSV, JSON, or TXT files.`));
           }
         } catch (error) {
           reject(error);

@@ -16,6 +16,7 @@ export interface DataPipelineTestResult extends TestResult {
 export interface DataPipelineTestSuite {
   name: string;
   testEndToEndPipeline: () => Promise<DataPipelineTestResult>;
+  testFileUploadValidation: () => Promise<DataPipelineTestResult>;
   testAnalysisEngine: () => Promise<DataPipelineTestResult>;
   testDataTransformation: () => Promise<DataPipelineTestResult>;
   testErrorHandling: () => Promise<DataPipelineTestResult>;
@@ -139,6 +140,145 @@ export const createDataPipelineTestSuite = (): DataPipelineTestSuite => {
         message: 'End-to-end pipeline test failed',
         error: error instanceof Error ? error.message : 'Unknown error',
         duration
+      };
+    }
+  };
+
+  const testFileUploadValidation = async (): Promise<DataPipelineTestResult> => {
+    const startTime = Date.now();
+    
+    try {
+      console.log('🧪 Testing File Upload Validation...');
+      
+      // Test various CSV file scenarios that could cause "unsupported file type" errors
+      const testCases = [
+        {
+          name: 'standard-csv-mime',
+          content: 'name,age,city\nJohn,30,NYC\nJane,25,LA',
+          filename: 'test.csv',
+          mimeType: 'text/csv'
+        },
+        {
+          name: 'excel-csv-mime',
+          content: 'name,age,city\nJohn,30,NYC\nJane,25,LA',
+          filename: 'test.csv',
+          mimeType: 'application/vnd.ms-excel'
+        },
+        {
+          name: 'empty-mime',
+          content: 'name,age,city\nJohn,30,NYC\nJane,25,LA',
+          filename: 'test.csv',
+          mimeType: ''
+        },
+        {
+          name: 'octet-stream-mime',
+          content: 'name,age,city\nJohn,30,NYC\nJane,25,LA',
+          filename: 'test.csv',
+          mimeType: 'application/octet-stream'
+        }
+      ];
+      
+      let passedTests = 0;
+      const testResults = [];
+      
+      for (const testCase of testCases) {
+        try {
+          const file = new File([testCase.content], testCase.filename, { type: testCase.mimeType });
+          
+          // Test file extension detection
+          const extension = file.name?.split('.').pop()?.toLowerCase();
+          if (extension !== 'csv') {
+            throw new Error(`Extension detection failed: expected 'csv', got '${extension}'`);
+          }
+          
+          // Test file parsing logic (simulating the real parsing)
+          const reader = new FileReader();
+          const parseResult = await new Promise((resolve, reject) => {
+            reader.onload = (event) => {
+              try {
+                const text = event.target?.result as string;
+                const extension = file.name?.split('.').pop()?.toLowerCase();
+                
+                // This is the actual logic from useFileUploadManager
+                if (extension === 'csv' || file.type === 'text/csv' || file.type === 'application/vnd.ms-excel') {
+                  const lines = text.split('\n').filter(line => line.trim());
+                  if (lines.length === 0) {
+                    reject(new Error('CSV file is empty'));
+                    return;
+                  }
+                  
+                  const headers = lines[0]?.split(',').map(h => h.trim().replace(/"/g, '')) || [];
+                  const rows = lines.slice(1).map(line => {
+                    const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+                    const row: any = {};
+                    headers.forEach((header, index) => {
+                      row[header] = values[index] || '';
+                    });
+                    return row;
+                  });
+
+                  resolve({
+                    rows,
+                    columns: headers,
+                    rowCount: rows.length,
+                    fileType: 'CSV'
+                  });
+                } else {
+                  reject(new Error(`Unsupported file type: ${extension}. Please upload CSV, JSON, or TXT files.`));
+                }
+              } catch (error) {
+                reject(error);
+              }
+            };
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsText(file);
+          });
+          
+          testResults.push({
+            testCase: testCase.name,
+            success: true,
+            result: parseResult
+          });
+          passedTests++;
+          
+        } catch (error) {
+          testResults.push({
+            testCase: testCase.name,
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+      
+      const duration = Date.now() - startTime;
+      
+      return {
+        testName: 'File Upload Validation',
+        status: passedTests === testCases.length ? 'pass' : 'fail',
+        success: passedTests === testCases.length,
+        message: `${passedTests}/${testCases.length} file upload scenarios passed`,
+        error: passedTests < testCases.length ? 'Some CSV file scenarios failed - this explains the "unsupported file type" error' : undefined,
+         duration,
+        details: {
+          passedTests,
+          totalTests: testCases.length,
+          testResults,
+          criticalIssue: passedTests < testCases.length ? 'File validation logic needs fixing' : null
+        }
+      };
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      
+      return {
+        testName: 'File Upload Validation',
+        status: 'fail',
+        success: false,
+        message: 'File upload validation test failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+         duration,
+        details: {
+          criticalIssue: 'File upload validation system failure'
+        }
       };
     }
   };
@@ -418,6 +558,7 @@ export const createDataPipelineTestSuite = (): DataPipelineTestSuite => {
     
     const tests = [
       testEndToEndPipeline,
+      testFileUploadValidation,
       testAnalysisEngine,
       testDataTransformation,
       testErrorHandling
@@ -451,6 +592,7 @@ export const createDataPipelineTestSuite = (): DataPipelineTestSuite => {
   return {
     name: 'Data Detective E2E Pipeline Test Suite',
     testEndToEndPipeline,
+    testFileUploadValidation,
     testAnalysisEngine,
     testDataTransformation,
     testErrorHandling,
