@@ -1,10 +1,16 @@
 
+/**
+ * Detailed Analysis Results Component
+ * Refactored to meet coding standards with proper constants and semantic styling
+ */
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 import { AnalysisResult } from '../../utils/analysis/dataAnalysisEngine';
+import { SPACING, TEXT_SIZES, CHART_HEIGHTS } from '@/constants/ui';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -15,17 +21,17 @@ interface DetailedAnalysisResultsProps {
 const DetailedAnalysisResults: React.FC<DetailedAnalysisResultsProps> = ({ results }) => {
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {
-      case 'high': return 'bg-green-100 text-green-700';
-      case 'medium': return 'bg-yellow-100 text-yellow-700';
-      case 'low': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'high': return 'bg-success/20 text-success';
+      case 'medium': return 'bg-warning/20 text-warning';
+      case 'low': return 'bg-destructive/20 text-destructive';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
   const renderChart = (result: AnalysisResult) => {
     if (!result.chartData || result.chartData.length === 0) {
       return (
-        <div className="h-48 flex items-center justify-center text-gray-500">
+        <div className={`h-${CHART_HEIGHTS.MEDIUM} flex items-center justify-center text-muted-foreground`}>
           <p>No chart data available</p>
         </div>
       );
@@ -34,33 +40,33 @@ const DetailedAnalysisResults: React.FC<DetailedAnalysisResultsProps> = ({ resul
     switch (result.chartType) {
       case 'bar':
         return (
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={CHART_HEIGHTS.MEDIUM}>
             <BarChart data={result.chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="value" fill="#8884d8" />
+              <Bar dataKey="value" fill="hsl(var(--primary))" />
             </BarChart>
           </ResponsiveContainer>
         );
       
       case 'line':
         return (
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={CHART_HEIGHTS.MEDIUM}>
             <LineChart data={result.chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="value" stroke="#8884d8" />
+              <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" />
             </LineChart>
           </ResponsiveContainer>
         );
       
       case 'pie':
         return (
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={CHART_HEIGHTS.MEDIUM}>
             <PieChart>
               <Pie
                 data={result.chartData}
@@ -83,27 +89,27 @@ const DetailedAnalysisResults: React.FC<DetailedAnalysisResultsProps> = ({ resul
         return (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">Metric</th>
-                  <th className="text-right p-2">Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.chartData.map((row, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="p-2">{row.name}</td>
-                    <td className="p-2 text-right">{row.value}</td>
+                <thead>
+                  <tr className="border-b">
+                    <th className={`text-left p-${SPACING.SM}`}>Metric</th>
+                    <th className={`text-right p-${SPACING.SM}`}>Value</th>
                   </tr>
-                ))}
-              </tbody>
+                </thead>
+                <tbody>
+                  {result.chartData.map((row, index) => (
+                    <tr key={index} className="border-b">
+                      <td className={`p-${SPACING.SM}`}>{row.name}</td>
+                      <td className={`p-${SPACING.SM} text-right`}>{row.value}</td>
+                    </tr>
+                  ))}
+                </tbody>
             </table>
           </div>
         );
       
       default:
         return (
-          <div className="h-48 flex items-center justify-center text-gray-500">
+          <div className={`h-${CHART_HEIGHTS.MEDIUM} flex items-center justify-center text-muted-foreground`}>
             <p>Chart type not supported</p>
           </div>
         );
@@ -132,8 +138,8 @@ const DetailedAnalysisResults: React.FC<DetailedAnalysisResultsProps> = ({ resul
   if (results.length === 0) {
     return (
       <Card>
-        <CardContent className="p-6">
-          <p className="text-center text-gray-500">No detailed analysis results available.</p>
+        <CardContent className={`p-${SPACING.LG}`}>
+          <p className="text-center text-muted-foreground">No detailed analysis results available.</p>
         </CardContent>
       </Card>
     );
@@ -143,7 +149,7 @@ const DetailedAnalysisResults: React.FC<DetailedAnalysisResultsProps> = ({ resul
     <Card>
       <CardHeader>
         <CardTitle>📊 Detailed Analysis Results</CardTitle>
-        <p className="text-sm text-gray-600">
+        <p className={`${TEXT_SIZES.SMALL} text-muted-foreground`}>
           Comprehensive analysis across {results.length} metrics
         </p>
       </CardHeader>
@@ -158,35 +164,35 @@ const DetailedAnalysisResults: React.FC<DetailedAnalysisResultsProps> = ({ resul
           </TabsList>
           
           {Object.entries(categoryResults).map(([category, categoryResults]) => (
-            <TabsContent key={category} value={category} className="mt-4">
-              <div className="space-y-6">
+            <TabsContent key={category} value={category} className={`mt-${SPACING.MD}`}>
+              <div className={`space-y-${SPACING.LG}`}>
                 {categoryResults.map((result, index) => (
-                  <Card key={result.id} className="border-l-4 border-l-blue-500">
-                    <CardHeader className="pb-3">
+                  <Card key={result.id} className="border-l-4 border-l-primary">
+                    <CardHeader className={`pb-${SPACING.SM}`}>
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">{result.title}</CardTitle>
+                        <CardTitle className={TEXT_SIZES.LARGE}>{result.title}</CardTitle>
                         <Badge className={getConfidenceColor(result.confidence)}>
                           {result.confidence} confidence
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600">{result.description}</p>
+                      <p className={`${TEXT_SIZES.SMALL} text-muted-foreground`}>{result.description}</p>
                     </CardHeader>
                     <CardContent>
                       {result.chartData && result.chartType && (
-                        <div className="mb-4">
+                        <div className={`mb-${SPACING.MD}`}>
                           {renderChart(result)}
                         </div>
                       )}
                       
-                      <div className="bg-blue-50 p-3 rounded-lg">
-                        <h4 className="font-medium text-blue-800 mb-1">💡 Key Insight:</h4>
-                        <p className="text-sm text-blue-700">{result.insight}</p>
+                      <div className={`bg-primary/10 p-${SPACING.SM} rounded-lg`}>
+                        <h4 className="font-medium text-primary mb-1">💡 Key Insight:</h4>
+                        <p className={`${TEXT_SIZES.SMALL} text-primary/80`}>{result.insight}</p>
                       </div>
                       
                       {typeof result.value === 'object' && result.value !== null && (
-                        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                          <h4 className="font-medium text-gray-800 mb-1">📈 Raw Data:</h4>
-                          <pre className="text-xs text-gray-600 overflow-x-auto">
+                        <div className={`mt-${SPACING.SM} p-${SPACING.SM} bg-muted rounded-lg`}>
+                          <h4 className="font-medium text-foreground mb-1">📈 Raw Data:</h4>
+                          <pre className={`${TEXT_SIZES.SMALL} text-muted-foreground overflow-x-auto`}>
                             {JSON.stringify(result.value, null, 2)}
                           </pre>
                         </div>

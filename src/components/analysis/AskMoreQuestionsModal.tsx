@@ -1,4 +1,9 @@
 
+/**
+ * Ask More Questions Modal Component
+ * Refactored to meet coding standards with proper constants and semantic styling
+ */
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { MessageSquareText, Lightbulb, Send, Sparkles, Loader2 } from 'lucide-react';
 import { DataAnalysisContext } from '@/types/data';
+import { SPACING, TEXT_SIZES, ICON_SIZES } from '@/constants/ui';
 
 interface QuestionSuggestion {
   question: string;
@@ -64,10 +70,10 @@ const AskMoreQuestionsModal: React.FC<AskMoreQuestionsModalProps> = ({
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-700';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-700';
-      case 'advanced': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'beginner': return 'bg-success/20 text-success';
+      case 'intermediate': return 'bg-warning/20 text-warning';
+      case 'advanced': return 'bg-destructive/20 text-destructive';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -91,39 +97,39 @@ const AskMoreQuestionsModal: React.FC<AskMoreQuestionsModalProps> = ({
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <MessageSquareText className="w-5 h-5 text-purple-600" />
+            <MessageSquareText className={`${ICON_SIZES.SM} text-primary`} />
             Ask More Questions
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className={`space-y-${SPACING.LG}`}>
           {/* Custom Question Input */}
-          <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                <h3 className="font-medium text-gray-800">Ask Your Own Question</h3>
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
+            <CardContent className={`p-${SPACING.MD}`}>
+              <div className={`flex items-center gap-${SPACING.SM} mb-${SPACING.SM}`}>
+                <Sparkles className={`${ICON_SIZES.SM} text-primary`} />
+                <h3 className={`${TEXT_SIZES.MEDIUM} font-medium text-foreground`}>Ask Your Own Question</h3>
               </div>
               <Textarea
                 value={customQuestion}
                 onChange={(e) => setCustomQuestion(e.target.value)}
                 placeholder="What would you like to know about your data? Be specific about what insights you're looking for..."
-                className="min-h-[100px] mb-3"
+                className={`min-h-[100px] mb-${SPACING.SM}`}
                 disabled={isAnalyzing}
               />
               <Button 
                 onClick={handleSubmitCustomQuestion}
                 disabled={!customQuestion.trim() || isAnalyzing}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
               >
                 {isAnalyzing ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className={`${ICON_SIZES.SM} mr-${SPACING.SM} animate-spin`} />
                     Analyzing...
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4 mr-2" />
+                    <Send className={`${ICON_SIZES.SM} mr-${SPACING.SM}`} />
                     Analyze This Question
                   </>
                 )}
@@ -133,25 +139,25 @@ const AskMoreQuestionsModal: React.FC<AskMoreQuestionsModalProps> = ({
 
           {/* Suggested Questions */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Lightbulb className="w-5 h-5 text-yellow-600" />
-              <h3 className="text-lg font-semibold text-gray-800">💡 Suggested Questions</h3>
+            <div className={`flex items-center gap-${SPACING.SM} mb-${SPACING.MD}`}>
+              <Lightbulb className={`${ICON_SIZES.SM} text-warning`} />
+              <h3 className={`${TEXT_SIZES.LARGE} font-semibold text-foreground`}>💡 Suggested Questions</h3>
             </div>
             
-            <div className="grid gap-4">
+            <div className={`grid gap-${SPACING.MD}`}>
               {suggestedQuestions.map((suggestion, index) => (
-                <Card key={index} className="hover:shadow-md transition-shadow border border-gray-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
+                <Card key={index} className="hover:shadow-md transition-shadow border">
+                  <CardContent className={`p-${SPACING.MD}`}>
+                    <div className={`flex items-start justify-between mb-${SPACING.SM}`}>
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-800 mb-2">{suggestion.question}</h4>
-                        <p className="text-sm text-gray-600 mb-2">{suggestion.businessValue}</p>
+                        <h4 className={`font-medium text-foreground mb-${SPACING.XS}`}>{suggestion.question}</h4>
+                        <p className={`${TEXT_SIZES.SMALL} text-muted-foreground mb-${SPACING.XS}`}>{suggestion.businessValue}</p>
                       </div>
-                      <div className="flex flex-col gap-1 ml-4">
-                        <Badge variant="secondary" className="text-xs">
+                      <div className={`flex flex-col gap-1 ml-${SPACING.MD}`}>
+                        <Badge variant="secondary" className={TEXT_SIZES.SMALL}>
                           {suggestion.category}
                         </Badge>
-                        <Badge className={`text-xs ${getDifficultyColor(suggestion.difficulty)}`}>
+                        <Badge className={`${TEXT_SIZES.SMALL} ${getDifficultyColor(suggestion.difficulty)}`}>
                           {suggestion.difficulty}
                         </Badge>
                       </div>
