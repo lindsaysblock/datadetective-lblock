@@ -66,10 +66,7 @@ const Header: React.FC = () => {
       <div className={`container flex h-14 items-center px-${SPACING.MD}`}>
         {/* Logo */}
         <Link to="/" className="mr-6 flex items-center space-x-2">
-          <DataDetectiveLogo />
-          <span className={`hidden font-bold sm:inline-block ${TEXT_SIZES.LARGE} bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent`}>
-            Data Detective
-          </span>
+          <DataDetectiveLogo showText={true} />
         </Link>
 
         {/* Navigation */}

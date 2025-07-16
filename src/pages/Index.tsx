@@ -30,7 +30,17 @@ const Index = () => {
 
   // State management
   const [activeTab, setActiveTab] = useState('upload');
-  const [showOnboarding, setShowOnboarding] = useState(!user);
+  // Onboarding state management
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (!user) {
+      // Always show for unauthenticated users
+      return true;
+    } else {
+      // For authenticated users, check if they've seen it before
+      const hasSeenOnboarding = localStorage.getItem(`onboarding_completed_${user.id}`);
+      return !hasSeenOnboarding;
+    }
+  });
   const [analysisData, setAnalysisData] = useState<any>(null);
   const [currentFilename, setCurrentFilename] = useState('');
   const [findings, setFindings] = useState<any[]>([]);
@@ -86,9 +96,26 @@ const Index = () => {
     }
   }, [location.state, navigate, reconstructAnalysisState, toast]);
 
+  // Update onboarding visibility when user auth state changes
+  useEffect(() => {
+    if (!user) {
+      // Always show for unauthenticated users
+      setShowOnboarding(true);
+    } else {
+      // For authenticated users, check if they've seen it before
+      const hasSeenOnboarding = localStorage.getItem(`onboarding_completed_${user.id}`);
+      setShowOnboarding(!hasSeenOnboarding);
+    }
+  }, [user]);
   // Event handlers
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
+    
+    // For authenticated users, mark onboarding as completed
+    if (user) {
+      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+    }
+    
     toast({
       title: "Welcome to Data Detective!",
       description: "You're ready to start analyzing your data.",
