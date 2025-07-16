@@ -32,9 +32,9 @@ export const useFileUpload = () => {
     setParsing(true);
 
     try {
-      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      const fileExtension = file.name?.split('.').pop()?.toLowerCase();
 
-      if (fileExtension === 'csv') {
+      if (fileExtension === 'csv' || file.type === 'text/csv' || file.type === 'application/vnd.ms-excel') {
         Papa.parse(file, {
           header: true,
           dynamicTyping: true,
@@ -66,7 +66,7 @@ export const useFileUpload = () => {
             setUploading(false);
           }
         });
-      } else if (fileExtension === 'json') {
+      } else if (fileExtension === 'json' || file.type === 'application/json' || file.type === 'text/json') {
         const reader = new FileReader();
         reader.onload = async (e) => {
           try {
@@ -100,10 +100,69 @@ export const useFileUpload = () => {
           }
         };
         reader.readAsText(file);
+      } else if (fileExtension === 'txt' || file.type === 'text/plain' || file.type === 'text/txt') {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const text = e.target?.result as string;
+            const lines = text.split('\n').filter(line => line.trim());
+            
+            // Check if it looks like CSV
+            if (lines.length > 0 && lines[0].includes(',')) {
+              const headers = lines[0]?.split(',').map(h => h.trim().replace(/"/g, '')) || [];
+              const rows = lines.slice(1).map(line => {
+                const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+                const row: any = {};
+                headers.forEach((header, index) => {
+                  row[header] = values[index] || '';
+                });
+                return row;
+              });
+              
+              setParsedData({
+                columns: headers,
+                rows: rows,
+                summary: {
+                  totalRows: rows.length,
+                  totalColumns: headers.length
+                }
+              });
+            } else {
+              // Plain text
+              const textData = lines.map((line, index) => ({ line_number: index + 1, content: line }));
+              setParsedData({
+                columns: ['line_number', 'content'],
+                rows: textData,
+                summary: {
+                  totalRows: textData.length,
+                  totalColumns: 2
+                }
+              });
+            }
+            
+            setParsing(false);
+            setUploading(false);
+            
+            toast({
+              title: "Success",
+              description: `File processed successfully! Found ${lines.length} lines.`,
+            });
+          } catch (error) {
+            console.error("Text Parsing Error:", error);
+            toast({
+              title: "Parsing Error",
+              description: "Failed to parse text file.",
+              variant: "destructive",
+            });
+            setParsing(false);
+            setUploading(false);
+          }
+        };
+        reader.readAsText(file);
       } else {
         toast({
           title: "Unsupported File Type",
-          description: "Only CSV and JSON files are supported.",
+          description: `File type .${fileExtension} is not supported. Please upload CSV, JSON, or TXT files.`,
           variant: "destructive",
         });
         setParsing(false);
