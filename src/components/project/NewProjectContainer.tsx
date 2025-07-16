@@ -101,9 +101,9 @@ const NewProjectContainer: React.FC = () => {
     nextStep,
     prevStep,
     goToStep,
-    onFileChange: (files: FileList | null) => {
-      if (files) {
-        handleFileSelection(Array.from(files));
+    onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files) {
+        handleFileSelection(Array.from(event.target.files));
       }
     },
     handleFileUpload: async () => {
