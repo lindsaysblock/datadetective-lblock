@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ResearchQuestionStep, DataSourceStep, BusinessContextStep } from './QuickFormSteps';
 import AnalysisSummaryStep from './AnalysisSummaryStep';
 import DataDetectiveHeader from './DataDetectiveHeader';
+import StepIndicator from './StepIndicator';
 import { SPACING, FORM_STEPS } from '@/constants/ui';
 
 interface NewProjectContentProps {
@@ -178,6 +179,27 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
       <div className={`container mx-auto px-${SPACING.MD} py-${SPACING.XL}`}>
         <DataDetectiveHeader />
         <div className="max-w-4xl mx-auto">
+          {/* Step Indicator */}
+          <StepIndicator currentStep={formData.step} />
+          
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-gray-600">
+                Step {formData.step} of 4
+              </span>
+              <span className="text-sm text-gray-600">
+                {Math.round((formData.step / 4) * 100)}% Complete
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(formData.step / 4) * 100}%` }}
+              />
+            </div>
+          </div>
+          
           <div className={`bg-white rounded-xl shadow-lg p-${SPACING.XL}`}>
             {renderCurrentStep()}
           </div>
