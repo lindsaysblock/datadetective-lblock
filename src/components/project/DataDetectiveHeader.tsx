@@ -10,21 +10,6 @@ import { SPACING, TEXT_SIZES } from '@/constants/ui';
 const DataDetectiveHeader: React.FC = () => {
   return (
     <div className="text-center mb-12">
-      {/* Logo and Branding */}
-      <div className="flex items-center justify-center gap-3 mb-6">
-        <div className="relative">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <Search className="w-8 h-8 text-white" />
-          </div>
-          <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center">
-            <Database className="w-3 h-3 text-white" />
-          </div>
-        </div>
-        <div>
-          <p className="text-gray-600 font-medium">Intelligent Analytics Platform</p>
-        </div>
-      </div>
-
       {/* Mission Statement */}
       <div className={`max-w-3xl mx-auto p-${SPACING.LG} bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200`}>
         <div className="flex items-center justify-center gap-2 mb-4">
