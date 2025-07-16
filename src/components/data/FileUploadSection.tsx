@@ -1,9 +1,15 @@
 
+/**
+ * File Upload Section Component
+ * Refactored to meet coding standards with proper constants and semantic styling
+ */
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, File } from 'lucide-react';
+import { SPACING, TEXT_SIZES, ICON_SIZES } from '@/constants/ui';
 
 interface FileUploadSectionProps {
   file: File | null;
@@ -21,8 +27,8 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   onFileUpload
 }) => {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center space-x-4">
+    <div className={`space-y-${SPACING.MD}`}>
+      <div className={`flex items-center space-x-${SPACING.MD}`}>
         <Input
           type="file"
           id="upload"
@@ -34,23 +40,23 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
         {!file ? (
           <Label 
             htmlFor="upload" 
-            className="cursor-pointer bg-blue-100 text-blue-700 rounded-md py-3 px-6 hover:bg-blue-200 transition-colors duration-200 flex items-center gap-2 text-sm font-medium w-full justify-center border-2 border-dashed border-blue-300"
+            className={`cursor-pointer bg-primary/10 text-primary rounded-md py-${SPACING.SM} px-${SPACING.LG} hover:bg-primary/20 transition-colors duration-200 flex items-center gap-${SPACING.SM} ${TEXT_SIZES.SMALL} font-medium w-full justify-center border-2 border-dashed border-primary/30`}
           >
-            <Upload className="w-4 h-4" />
+            <Upload className={ICON_SIZES.SM} />
             Choose File (CSV, JSON, or TXT)
           </Label>
         ) : (
-          <div className="flex items-center gap-4 flex-1">
-            <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-md py-2 px-3">
-              <File className="w-4 h-4" />
+          <div className={`flex items-center gap-${SPACING.MD} flex-1`}>
+            <div className={`flex items-center gap-${SPACING.SM} ${TEXT_SIZES.SMALL} text-muted-foreground bg-muted rounded-md py-${SPACING.SM} px-${SPACING.SM}`}>
+              <File className={ICON_SIZES.SM} />
               <span className="truncate max-w-xs">{file.name}</span>
             </div>
             <Button 
               onClick={onFileUpload} 
               disabled={!file || uploading || parsing}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-${SPACING.SM}`}
             >
-              <Upload className="w-4 h-4" />
+              <Upload className={ICON_SIZES.SM} />
               {uploading || parsing ? 'Processing...' : 'Upload'}
             </Button>
           </div>
@@ -58,8 +64,8 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
       </div>
 
       {parsing && (
-        <div className="text-blue-600 flex items-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
+        <div className="text-primary flex items-center">
+          <div className={`animate-spin rounded-full h-${SPACING.LG} w-${SPACING.LG} border-b-2 border-primary mr-${SPACING.SM}`}></div>
           Parsing data...
         </div>
       )}

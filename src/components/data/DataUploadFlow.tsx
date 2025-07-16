@@ -1,4 +1,9 @@
 
+/**
+ * Data Upload Flow Component
+ * Refactored to meet coding standards with proper constants and semantic styling
+ */
+
 import React, { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 import ResearchQuestionSection from './upload/ResearchQuestionSection';
@@ -6,6 +11,7 @@ import AdditionalContextSection from './upload/AdditionalContextSection';
 import { AnalysisActionSection } from './upload/AnalysisActionSection';
 import ProjectNamingDialog from './upload/ProjectNamingDialog';
 import DataConnectionStep from './upload/DataConnectionStep';
+import { SPACING, TIMEOUTS } from '@/constants/ui';
 
 interface DataUploadFlowProps {
   file: File | null;
@@ -57,11 +63,11 @@ const DataUploadFlow: React.FC<DataUploadFlowProps> = ({
       setShowProjectDialog(false);
       // Pass the complete context to analysis
       onStartAnalysis(parsedData);
-    }, 2000);
+    }, TIMEOUTS.MEDIUM);
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-${SPACING.LG}`}>
       <ResearchQuestionSection
         researchQuestion={researchQuestion}
         onResearchQuestionChange={onResearchQuestionChange}

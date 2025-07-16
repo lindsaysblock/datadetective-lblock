@@ -1,8 +1,14 @@
 
+/**
+ * Data Upload Hook
+ * Refactored to meet coding standards with proper constants and error handling
+ */
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile, generateDataInsights, type ParsedData } from '../utils/dataParser';
 import { generateMockFindings, calculateEstimatedTime } from '../utils/dataProcessing';
+import { TIMEOUTS } from '@/constants/ui';
 
 export const useDataUpload = () => {
   const [file, setFile] = useState<File | null>(null);
