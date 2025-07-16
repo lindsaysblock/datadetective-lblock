@@ -1,4 +1,9 @@
 
+/**
+ * Column Identification Step Component
+ * Refactored to meet coding standards with proper constants and semantic styling
+ */
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { ArrowRight, ArrowLeft, CheckCircle, User, Calendar, Activity, Lightbulb, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { SPACING, TEXT_SIZES, ICON_SIZES, CONFIDENCE_LEVELS } from '@/constants/ui';
 
 interface ColumnIdentificationStepProps {
   parsedData: any[];
@@ -46,21 +52,25 @@ const ColumnIdentificationStep: React.FC<ColumnIdentificationStepProps> = ({
   };
 
   const getColumnSample = (columnName: string) => {
+    const MAX_SAMPLE_LENGTH = 50;
     if (parsedData.length > 0 && parsedData[0].rows && parsedData[0].rows.length > 0) {
       const sample = parsedData[0].rows[0][columnName];
-      return sample?.toString().substring(0, 50) || 'N/A';
+      return sample?.toString().substring(0, MAX_SAMPLE_LENGTH) || 'N/A';
     }
     return 'N/A';
   };
 
   const isNumericColumn = (columnName: string) => {
+    const NUMERIC_THRESHOLD = 0.8; // 80% or more are numeric
+    const SAMPLE_SIZE = 5;
+    
     if (parsedData.length > 0 && parsedData[0].rows && parsedData[0].rows.length > 0) {
-      const samples = parsedData[0].rows.slice(0, 5).map(row => row[columnName]);
+      const samples = parsedData[0].rows.slice(0, SAMPLE_SIZE).map(row => row[columnName]);
       const numericSamples = samples.filter(sample => {
         const num = Number(sample);
         return !isNaN(num) && isFinite(num) && sample !== '' && sample !== null;
       });
-      return numericSamples.length >= samples.length * 0.8; // 80% or more are numeric
+      return numericSamples.length >= samples.length * NUMERIC_THRESHOLD;
     }
     return false;
   };
@@ -150,17 +160,17 @@ const ColumnIdentificationStep: React.FC<ColumnIdentificationStepProps> = ({
         return (
           <div className="space-y-4">
             <div className="text-center mb-6">
-              <User className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-              <h3 className="text-xl font-semibold">Step 1: Who</h3>
-              <p className="text-gray-600">Which column identifies who performed the actions?</p>
-              <p className="text-sm text-gray-500 mt-2">Examples: Customer ID, User ID, Email, Account Number</p>
+              <User className={`w-12 h-12 text-primary mx-auto mb-${SPACING.SM}`} />
+              <h3 className={`${TEXT_SIZES.LARGE} font-semibold`}>Step 1: Who</h3>
+              <p className="text-muted-foreground">Which column identifies who performed the actions?</p>
+              <p className={`${TEXT_SIZES.SMALL} text-muted-foreground mt-${SPACING.SM}`}>Examples: Customer ID, User ID, Email, Account Number</p>
             </div>
             
-            <Card className="bg-blue-50 border-blue-200">
-              <CardContent className="pt-6">
+            <Card className="bg-primary/10 border-primary/20">
+              <CardContent className={`pt-${SPACING.LG}`}>
                 <Label>Select the column that identifies users (Optional)</Label>
                 <Select onValueChange={(value) => handleMappingChange('userIdColumn', value === 'none' ? undefined : value)}>
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className={`mt-${SPACING.SM}`}>
                     <SelectValue placeholder="Choose a column..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -169,7 +179,7 @@ const ColumnIdentificationStep: React.FC<ColumnIdentificationStepProps> = ({
                       <SelectItem key={column} value={column}>
                         <div className="flex flex-col items-start">
                           <span className="font-medium">{column}</span>
-                          <span className="text-xs text-gray-500">Example: {getColumnSample(column)}</span>
+                          <span className={`${TEXT_SIZES.SMALL} text-muted-foreground`}>Example: {getColumnSample(column)}</span>
                         </div>
                       </SelectItem>
                     ))}

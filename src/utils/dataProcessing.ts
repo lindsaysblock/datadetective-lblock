@@ -1,5 +1,16 @@
 
+/**
+ * Data Processing Utilities
+ * Refactored to meet coding standards with proper constants and error handling
+ */
+
 import { type ParsedData } from './dataParser';
+
+const MINIMUM_ROWS_FOR_ANALYSIS = 100;
+const STATISTICAL_POWER_RATIO = 10;
+const MAX_STATISTICAL_POWER = 95;
+const MIN_PROCESSING_TIME = 5000;
+const TIME_PER_MB = 2000;
 
 export const generateMockFindings = (data: ParsedData) => {
   const findings = [];
@@ -20,7 +31,7 @@ export const generateMockFindings = (data: ParsedData) => {
     });
   }
 
-  if (data.summary.totalRows > 100) {
+  if (data.summary.totalRows > MINIMUM_ROWS_FOR_ANALYSIS) {
     findings.push({
       id: '2',
       title: 'Dataset Size Analysis',
@@ -31,8 +42,8 @@ export const generateMockFindings = (data: ParsedData) => {
       timestamp: new Date(),
       chartData: [
         { name: 'Sample Size', value: data.summary.totalRows },
-        { name: 'Recommended Min', value: 100 },
-        { name: 'Statistical Power', value: Math.min(data.summary.totalRows / 10, 95) }
+        { name: 'Recommended Min', value: MINIMUM_ROWS_FOR_ANALYSIS },
+        { name: 'Statistical Power', value: Math.min(data.summary.totalRows / STATISTICAL_POWER_RATIO, MAX_STATISTICAL_POWER) }
       ]
     });
   }
@@ -41,13 +52,17 @@ export const generateMockFindings = (data: ParsedData) => {
 };
 
 export const calculateEstimatedTime = (fileSizeInMB: number): number => {
-  return Math.max(5000, fileSizeInMB * 2000);
+  return Math.max(MIN_PROCESSING_TIME, fileSizeInMB * TIME_PER_MB);
 };
 
 export const formatFileSize = (bytes?: number): string => {
+  const BYTES_PER_KB = 1024;
+  const BYTES_PER_MB = BYTES_PER_KB * 1024;
+  
   if (!bytes) return 'Unknown size';
-  const kb = bytes / 1024;
-  const mb = kb / 1024;
+  
+  const kb = bytes / BYTES_PER_KB;
+  const mb = kb / BYTES_PER_KB;
   
   if (mb >= 1) {
     return `${mb.toFixed(1)} MB`;

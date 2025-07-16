@@ -1,7 +1,14 @@
 
+/**
+ * Data Processor Utility Class
+ * Refactored to meet coding standards with proper constants and error handling
+ */
+
 import { ParsedDataFile, ParsedDataRow } from '@/types/data';
 
 export class DataProcessor {
+  private static readonly SAMPLE_SIZE_LIMIT = 100;
+  private static readonly MIN_SAMPLE_SIZE = 5;
   static extractAnalysisData(parsedData: ParsedDataFile[]): {
     allRows: ParsedDataRow[];
     allColumns: string[];
@@ -68,9 +75,8 @@ export class DataProcessor {
   static analyzeDataStructure(rows: ParsedDataRow[], columns: string[]) {
     if (rows.length === 0) return null;
 
-    const SAMPLE_SIZE_LIMIT = 100;
     const structure = {
-      sampleSize: Math.min(rows.length, SAMPLE_SIZE_LIMIT),
+      sampleSize: Math.min(rows.length, DataProcessor.SAMPLE_SIZE_LIMIT),
       columnTypes: {} as Record<string, string>,
       nullCounts: {} as Record<string, number>,
       uniqueValues: {} as Record<string, number>
