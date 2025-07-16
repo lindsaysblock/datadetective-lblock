@@ -102,7 +102,15 @@ export const useDataPipeline = () => {
             rowCount: parsedData.rowCount,
             preview: parsedData.rows.slice(0, 5),
             data: parsedData.rows,
-            columnInfo: parsedData.columns,
+            columnInfo: Array.isArray(parsedData.columns) 
+              ? parsedData.columns.map(col => 
+                  typeof col === 'string' 
+                    ? { name: col, type: 'string' as const, samples: [] }
+                    : typeof col === 'object' && col.name
+                      ? { name: col.name, type: col.type || 'string' as const, samples: col.samples || [] }
+                      : { name: String(col), type: 'string' as const, samples: [] }
+                )
+              : [],
             summary: {
               totalRows: parsedData.rowCount,
               totalColumns: parsedData.columns.length,
