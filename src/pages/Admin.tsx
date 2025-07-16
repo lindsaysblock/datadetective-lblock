@@ -68,10 +68,14 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="testing" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="testing" className="flex items-center gap-2">
                 <TestTube className="w-4 h-4" />
                 Testing
+              </TabsTrigger>
+              <TabsTrigger value="pipeline" className="flex items-center gap-2">
+                <Activity className="w-4 h-4" />
+                Data Pipeline
               </TabsTrigger>
               <TabsTrigger value="users" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
@@ -102,6 +106,55 @@ const Admin = () => {
                   <OptimizedE2ETestRunner />
                   <NewProjectE2ETestRunner />
                   <E2ETestRunner />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="pipeline" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="w-5 h-5" />
+                    Data Detective E2E Pipeline Test Suite
+                  </CardTitle>
+                  <CardDescription>
+                    Comprehensive testing of the entire data pipeline from upload to analysis
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button
+                    onClick={runDataPipelineTests}
+                    disabled={isRunningPipelineTests}
+                    className="w-full"
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    {isRunningPipelineTests ? 'Running Tests...' : 'Run Data Detective E2E Pipeline Tests'}
+                  </Button>
+                  
+                  {pipelineTestResults.length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">Test Results:</h3>
+                      {pipelineTestResults.map((result, index) => (
+                        <div
+                          key={index}
+                          className={`p-3 rounded border ${
+                            result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">{result.testName}</span>
+                            <Badge variant={result.success ? 'default' : 'destructive'}>
+                              {result.success ? 'PASS' : 'FAIL'}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1">{result.message}</p>
+                          {result.error && (
+                            <p className="text-sm text-red-600 mt-1">Error: {result.error}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
