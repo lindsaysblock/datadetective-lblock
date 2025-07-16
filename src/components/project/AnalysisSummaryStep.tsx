@@ -214,9 +214,24 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             </div>
             <div className="text-center p-3 bg-gradient-to-br from-brand-purple/10 to-brand-purple/20 rounded-lg border border-brand-purple/20">
               <div className="text-2xl font-bold text-brand-purple">
-                {Array.isArray(parsedData?.[0]?.columnInfo) 
-                  ? parsedData[0].columnInfo.length 
-                  : parsedData?.[0]?.columns || 0}
+                {(() => {
+                  const firstData = parsedData?.[0];
+                  if (!firstData) return 0;
+                  
+                  if (Array.isArray(firstData.columnInfo)) {
+                    return firstData.columnInfo.length;
+                  }
+                  
+                  if (Array.isArray(firstData.columns)) {
+                    return firstData.columns.length;
+                  }
+                  
+                  if (typeof firstData.columns === 'number') {
+                    return firstData.columns;
+                  }
+                  
+                  return 0;
+                })()}
               </div>
               <div className="text-sm text-brand-purple">Data Points</div>
             </div>
@@ -240,13 +255,25 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
                     <FileText className="w-4 h-4 text-brand-blue" />
                     <div>
                       <div className="font-medium text-sm text-foreground">{data.name}</div>
-                       <div className="text-xs text-muted-foreground">
-                         {(data.rowCount || data.rows || 0).toLocaleString()} records • {
-                           Array.isArray(data.columnInfo) 
-                             ? data.columnInfo.length 
-                             : (data.columns || 0)
-                         } data points
-                       </div>
+                        <div className="text-xs text-muted-foreground">
+                          {(data.rowCount || data.rows || 0).toLocaleString()} records • {
+                            (() => {
+                              if (Array.isArray(data.columnInfo)) {
+                                return data.columnInfo.length;
+                              }
+                              
+                              if (Array.isArray(data.columns)) {
+                                return data.columns.length;
+                              }
+                              
+                              if (typeof data.columns === 'number') {
+                                return data.columns;
+                              }
+                              
+                              return 0;
+                            })()
+                          } data points
+                        </div>
                     </div>
                   </div>
                   <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/20">

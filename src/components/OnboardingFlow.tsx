@@ -21,7 +21,8 @@ interface OnboardingFlowProps {
 }
 
 const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) => {
-  const [currentStep, setCurrentStep] = useState(0);
+  const INITIAL_STEP = 0;
+  const [currentStep, setCurrentStep] = useState(INITIAL_STEP);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   const steps: OnboardingStep[] = [
@@ -65,10 +66,12 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
     }
   ];
 
-  const progress = ((currentStep + 1) / steps.length) * 100;
+  const PROGRESS_MULTIPLIER = 100;
+  const progress = ((currentStep + 1) / steps.length) * PROGRESS_MULTIPLIER;
 
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
+  const handleNext = (): void => {
+    const lastStepIndex = steps.length - 1;
+    if (currentStep < lastStepIndex) {
       setCurrentStep(currentStep + 1);
       setCompletedSteps([...completedSteps, currentStep]);
     } else {
@@ -77,8 +80,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
     }
   };
 
-  const handlePrevious = () => {
-    if (currentStep > 0) {
+  const handlePrevious = (): void => {
+    if (currentStep > INITIAL_STEP) {
       setCurrentStep(currentStep - 1);
     }
   };

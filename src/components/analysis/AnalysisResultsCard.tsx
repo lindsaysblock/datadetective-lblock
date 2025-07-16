@@ -21,16 +21,21 @@ const AnalysisResultsCard: React.FC<AnalysisResultsCardProps> = ({ analysisResul
     return 'Analysis completed successfully with key patterns detected.';
   };
 
+  const DEFAULT_INSIGHTS = 'Analysis completed successfully with key patterns detected.';
+  const DEFAULT_CONFIDENCE = 'medium';
+  const DEFAULT_RECOMMENDATIONS = [
+    'Consider focusing on high-performing segments',
+    'Investigate the outlier cases',
+    'Monitor trends over time'
+  ];
+  const DEFAULT_SQL_QUERY = '-- No query generated';
+
   const normalizedResults = {
-    insights: formatInsights(analysisResults?.insights) || 'Analysis completed successfully with key patterns detected.',
-    confidence: analysisResults?.confidence || 'medium',
-    recommendations: analysisResults?.recommendations || [
-      'Consider focusing on high-performing segments',
-      'Investigate the outlier cases',
-      'Monitor trends over time'
-    ],
+    insights: formatInsights(analysisResults?.insights) || DEFAULT_INSIGHTS,
+    confidence: analysisResults?.confidence || DEFAULT_CONFIDENCE,
+    recommendations: analysisResults?.recommendations || DEFAULT_RECOMMENDATIONS,
     detailedResults: analysisResults?.detailedResults || [],
-    sqlQuery: analysisResults?.sqlQuery || '-- No query generated',
+    sqlQuery: analysisResults?.sqlQuery || DEFAULT_SQL_QUERY,
     queryBreakdown: analysisResults?.queryBreakdown
   };
 

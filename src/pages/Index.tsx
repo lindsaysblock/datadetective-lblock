@@ -114,14 +114,18 @@ const Index = () => {
       console.log('🔄 Starting file processing...');
       
       // Simulate upload progress
+      const PROGRESS_INCREMENT = 10;
+      const PROGRESS_INTERVAL = 200;
+      const MAX_PROGRESS = 90;
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
+        setUploadProgress(prev => Math.min(prev + PROGRESS_INCREMENT, MAX_PROGRESS));
+      }, PROGRESS_INTERVAL);
 
       const data = await parseFile(file);
       
+      const COMPLETE_PROGRESS = 100;
       clearInterval(progressInterval);
-      setUploadProgress(100);
+      setUploadProgress(COMPLETE_PROGRESS);
       setUploadStatus('complete');
       
       setAnalysisData(data);
@@ -150,7 +154,9 @@ const Index = () => {
     }
   };
 
-  const handleGenerateMockData = () => {
+  const handleGenerateMockData = (): void => {
+    const MOCK_ROW_COUNT = 3;
+    const MOCK_FILE_SIZE = 1024;
     const mockData = {
       columns: [
         { name: 'id', type: 'number' as const, samples: [1, 2, 3] },
@@ -162,11 +168,11 @@ const Index = () => {
         { id: 2, name: 'Sample 2', value: 200 },
         { id: 3, name: 'Sample 3', value: 300 },
       ],
-      rowCount: 3,
-      fileSize: 1024,
+      rowCount: MOCK_ROW_COUNT,
+      fileSize: MOCK_FILE_SIZE,
       summary: {
-        totalRows: 3,
-        totalColumns: 3,
+        totalRows: MOCK_ROW_COUNT,
+        totalColumns: MOCK_ROW_COUNT,
       }
     };
 

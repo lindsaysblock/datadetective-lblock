@@ -68,8 +68,9 @@ export class DataProcessor {
   static analyzeDataStructure(rows: ParsedDataRow[], columns: string[]) {
     if (rows.length === 0) return null;
 
+    const SAMPLE_SIZE_LIMIT = 100;
     const structure = {
-      sampleSize: Math.min(rows.length, 100),
+      sampleSize: Math.min(rows.length, SAMPLE_SIZE_LIMIT),
       columnTypes: {} as Record<string, string>,
       nullCounts: {} as Record<string, number>,
       uniqueValues: {} as Record<string, number>

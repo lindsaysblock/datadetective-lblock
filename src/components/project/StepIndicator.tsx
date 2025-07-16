@@ -1,20 +1,28 @@
 
 import React from 'react';
+import { FORM_STEPS } from '@/constants/ui';
 
 interface StepIndicatorProps {
   currentStep: number;
 }
 
+interface Step {
+  label: string;
+  step: number;
+}
+
 const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep }) => {
   console.log('StepIndicator rendering with current step:', currentStep);
 
-  const steps = [
-    { label: 'Question', step: 1 },
-    { label: 'Data Source', step: 2 },
-    { label: 'Business Context', step: 3 },
-    { label: 'Analysis', step: 4 }
+  const steps: Step[] = [
+    { label: 'Question', step: FORM_STEPS.RESEARCH_QUESTION },
+    { label: 'Data Source', step: FORM_STEPS.DATA_SOURCE },
+    { label: 'Business Context', step: FORM_STEPS.BUSINESS_CONTEXT },
+    { label: 'Analysis', step: FORM_STEPS.ANALYSIS_SUMMARY }
   ];
 
+  const MAX_STEP_INDEX = steps.length - 1;
+  
   return (
     <div className="flex items-center justify-center gap-8 mb-12">
       {steps.map((item, index) => (
@@ -31,7 +39,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep }) => {
           }`}>
             {item.label}
           </span>
-          {index < 3 && (
+          {index < MAX_STEP_INDEX && (
             <div className={`w-12 h-px mx-4 ${
               currentStep > item.step ? 'bg-blue-500' : 'bg-gray-300'
             }`} />

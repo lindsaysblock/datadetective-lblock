@@ -21,17 +21,24 @@ export interface MockEvent {
 }
 
 export const generateMockUsers = (count: number = 100): MockUser[] => {
-  const countries = ['US', 'UK', 'CA', 'AU', 'DE', 'FR', 'JP', 'BR'];
-  const plans = ['free', 'premium', 'enterprise'] as const;
-  const domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'company.com'];
+  const COUNTRIES = ['US', 'UK', 'CA', 'AU', 'DE', 'FR', 'JP', 'BR'];
+  const PLANS = ['free', 'premium', 'enterprise'] as const;
+  const EMAIL_DOMAINS = ['gmail.com', 'yahoo.com', 'outlook.com', 'company.com'];
+  const DAYS_IN_YEAR = 365;
+  const HOURS_IN_DAY = 24;
+  const MINUTES_IN_HOUR = 60;
+  const SECONDS_IN_MINUTE = 60;
+  const MILLISECONDS_IN_SECOND = 1000;
+  const MIN_AGE = 18;
+  const AGE_RANGE = 50;
   
   return Array.from({ length: count }, (_, i) => ({
     user_id: `user_${i + 1}`,
-    email: `user${i + 1}@${domains[Math.floor(Math.random() * domains.length)]}`,
-    signup_date: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
-    plan: plans[Math.floor(Math.random() * plans.length)],
-    country: countries[Math.floor(Math.random() * countries.length)],
-    age: Math.floor(Math.random() * 50) + 18
+    email: `user${i + 1}@${EMAIL_DOMAINS[Math.floor(Math.random() * EMAIL_DOMAINS.length)]}`,
+    signup_date: new Date(Date.now() - Math.random() * DAYS_IN_YEAR * HOURS_IN_DAY * MINUTES_IN_HOUR * SECONDS_IN_MINUTE * MILLISECONDS_IN_SECOND).toISOString(),
+    plan: PLANS[Math.floor(Math.random() * PLANS.length)],
+    country: COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)],
+    age: Math.floor(Math.random() * AGE_RANGE) + MIN_AGE
   }));
 };
 

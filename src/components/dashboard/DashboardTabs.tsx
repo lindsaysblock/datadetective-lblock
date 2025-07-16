@@ -9,8 +9,10 @@ interface DashboardTabsProps {
 }
 
 const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, onTabChange }) => {
+  const TAB_COUNT = 9;
+  
   return (
-    <TabsList className="grid w-full grid-cols-9 mb-8">
+    <TabsList className={`grid w-full grid-cols-${TAB_COUNT} mb-8`}>
       <TabsTrigger value="insights" className="flex items-center gap-2">
         <Lightbulb className="w-4 h-4" />
         Business Insights

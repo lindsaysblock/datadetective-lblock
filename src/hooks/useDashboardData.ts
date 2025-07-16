@@ -16,6 +16,10 @@ export const useDashboardData = (initialData?: ParsedData) => {
   };
 
   // Generate some mock processed data if no data is provided
+  const MOCK_ROW_COUNT = 3;
+  const MOCK_COLUMN_COUNT = 2;
+  const MOCK_FILE_SIZE = 1024;
+  
   const processedData: ParsedData = currentData || {
     columns: [
       { name: 'id', type: 'number' as const, samples: [1, 2, 3] },
@@ -26,11 +30,11 @@ export const useDashboardData = (initialData?: ParsedData) => {
       { id: 2, name: 'Sample 2' },
       { id: 3, name: 'Sample 3' },
     ],
-    rowCount: 3,
-    fileSize: 1024,
+    rowCount: MOCK_ROW_COUNT,
+    fileSize: MOCK_FILE_SIZE,
     summary: {
-      totalRows: 3,
-      totalColumns: 2,
+      totalRows: MOCK_ROW_COUNT,
+      totalColumns: MOCK_COLUMN_COUNT,
     }
   };
 

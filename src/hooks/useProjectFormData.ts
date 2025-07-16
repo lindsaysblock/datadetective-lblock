@@ -4,7 +4,11 @@ import { useToast } from '@/hooks/use-toast';
 import { parseFile, type ParsedData } from '@/utils/dataParser';
 
 export const useProjectFormData = () => {
-  const [step, setStep] = useState(1);
+  const INITIAL_STEP = 1;
+  const MAX_STEP = 4;
+  const MIN_STEP = 1;
+  
+  const [step, setStep] = useState(INITIAL_STEP);
   const [researchQuestion, setResearchQuestion] = useState('');
   const [additionalContext, setAdditionalContext] = useState('');
   const [files, setFiles] = useState<File[]>([]);
@@ -144,17 +148,17 @@ export const useProjectFormData = () => {
 
   const nextStep = useCallback(() => {
     console.log('Moving to next step from:', step);
-    setStep(prev => Math.min(prev + 1, 4));
+    setStep(prev => Math.min(prev + 1, MAX_STEP));
   }, [step]);
 
   const prevStep = useCallback(() => {
     console.log('Moving to previous step from:', step);
-    setStep(prev => Math.max(prev - 1, 1));
+    setStep(prev => Math.max(prev - 1, MIN_STEP));
   }, [step]);
 
   const resetForm = useCallback(() => {
     console.log('Resetting form');
-    setStep(1);
+    setStep(INITIAL_STEP);
     setResearchQuestion('');
     setAdditionalContext('');
     setFiles([]);

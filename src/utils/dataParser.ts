@@ -22,6 +22,7 @@ export interface ParsedData {
 import { parseCSV } from './parsers/csvParser';
 import { parseJSON } from './parsers/jsonParser';
 import { validateFile } from './fileValidation';
+import { FILE_SIZES } from '@/constants/ui';
 
 export const parseFile = async (file: File): Promise<ParsedData> => {
   console.log('🔍 Starting file parsing:', {
@@ -34,8 +35,8 @@ export const parseFile = async (file: File): Promise<ParsedData> => {
     throw new Error('File is empty or invalid');
   }
   
-  if (file.size > 100 * 1024 * 1024) { // 100MB limit
-    throw new Error('File size exceeds 100MB limit');
+  if (file.size > FILE_SIZES.MAX_FILE_SIZE) {
+    throw new Error(`File size exceeds ${FILE_SIZES.MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
   }
   
   // Use unified validation
@@ -148,12 +149,13 @@ export const generateDataInsights = (data: ParsedData): string[] => {
     });
     
     // Data quality insights
-    const sampleSize = Math.min(100, data.rows.length);
+    const SAMPLE_SIZE = 100;
+    const sampleSize = Math.min(SAMPLE_SIZE, data.rows.length);
     const completeness = data.columns.map(col => {
       const nonEmptyCount = data.rows.slice(0, sampleSize)
         .filter(row => row[col.name] !== null && row[col.name] !== undefined && row[col.name] !== '')
         .length;
-      return (nonEmptyCount / sampleSize) * 100;
+      return (nonEmptyCount / sampleSize) * SAMPLE_SIZE;
     });
     
     const avgCompleteness = completeness.reduce((sum, val) => sum + val, 0) / completeness.length;
