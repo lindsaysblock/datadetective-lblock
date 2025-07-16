@@ -1,12 +1,12 @@
-### 🛠 Code Quality Standards
-- ✅ Use strict TypeScript typing & interfaces
-- ✅ Keep components <200 lines; break out hooks/helpers
-- ✅ Use Prettier + ESLint + type checks in CI
-- ✅ Memoize heavy calcs with useMemo / useCallback
-- ✅ Auto-fix lint errors on commit (husky, lint-staged)
-- ✅ Minimize render depth; early returns preferred
-- ✅ No magic values — use constants/enums
-- ✅ Document all helpers & config
+## 🧭 Code Quality & Standards
+
+We enforce strong code quality for maintainability and performance.
+
+- 📏 Max file size: **220 lines**
+- 🪝 Use custom hooks if **>5 hooks**
+- ⚙️ Auto-lint, auto-format, and type-check on every commit and PR.
+
+👉 See full [Code Quality Standards](./CODE_QUALITY_STANDARDS.md) for detailed rules and practices.
 
 
 # Welcome to your Lovable project
