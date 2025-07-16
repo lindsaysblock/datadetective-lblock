@@ -102,11 +102,15 @@ const NewProjectContainer: React.FC = () => {
     prevStep,
     goToStep,
     onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => {
-      console.log('🔧 onFileChange called with event:', event.target.files);
+      console.log('🔧 NewProjectContainer onFileChange called');
       if (event.target.files && event.target.files.length > 0) {
         const filesArray = Array.from(event.target.files);
-        console.log('🔧 Files to handle:', filesArray.map(f => ({ name: f.name, type: f.type, size: f.size })));
+        console.log('🔧 Extracted files:', filesArray.map(f => ({ name: f.name, type: f.type, size: f.size })));
+        
+        // Use the proper handler that doesn't store event objects
         handleFileSelection(filesArray);
+      } else {
+        console.log('🔧 No files in event');
       }
     },
     handleFileUpload: async () => {
