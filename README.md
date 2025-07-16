@@ -1,3 +1,14 @@
+### 🛠 Code Quality Standards
+- ✅ Use strict TypeScript typing & interfaces
+- ✅ Keep components <200 lines; break out hooks/helpers
+- ✅ Use Prettier + ESLint + type checks in CI
+- ✅ Memoize heavy calcs with useMemo / useCallback
+- ✅ Auto-fix lint errors on commit (husky, lint-staged)
+- ✅ Minimize render depth; early returns preferred
+- ✅ No magic values — use constants/enums
+- ✅ Document all helpers & config
+
+
 # Welcome to your Lovable project
 
 ## Project info
