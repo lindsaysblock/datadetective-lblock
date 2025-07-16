@@ -150,31 +150,94 @@ export const createDataPipelineTestSuite = (): DataPipelineTestSuite => {
     try {
       console.log('🧪 Testing File Upload Validation...');
       
-      // Test various CSV file scenarios that could cause "unsupported file type" errors
+      // Test various file scenarios that could cause "unsupported file type" errors
       const testCases = [
+        // CSV file scenarios
         {
-          name: 'standard-csv-mime',
+          name: 'csv-standard-mime',
           content: 'name,age,city\nJohn,30,NYC\nJane,25,LA',
           filename: 'test.csv',
-          mimeType: 'text/csv'
+          mimeType: 'text/csv',
+          expectedType: 'CSV'
         },
         {
-          name: 'excel-csv-mime',
+          name: 'csv-excel-mime',
           content: 'name,age,city\nJohn,30,NYC\nJane,25,LA',
           filename: 'test.csv',
-          mimeType: 'application/vnd.ms-excel'
+          mimeType: 'application/vnd.ms-excel',
+          expectedType: 'CSV'
         },
         {
-          name: 'empty-mime',
+          name: 'csv-empty-mime',
           content: 'name,age,city\nJohn,30,NYC\nJane,25,LA',
           filename: 'test.csv',
-          mimeType: ''
+          mimeType: '',
+          expectedType: 'CSV'
         },
         {
-          name: 'octet-stream-mime',
+          name: 'csv-octet-stream-mime',
           content: 'name,age,city\nJohn,30,NYC\nJane,25,LA',
           filename: 'test.csv',
-          mimeType: 'application/octet-stream'
+          mimeType: 'application/octet-stream',
+          expectedType: 'CSV'
+        },
+        // JSON file scenarios
+        {
+          name: 'json-standard-mime',
+          content: '[{"name":"John","age":30,"city":"NYC"},{"name":"Jane","age":25,"city":"LA"}]',
+          filename: 'test.json',
+          mimeType: 'application/json',
+          expectedType: 'JSON'
+        },
+        {
+          name: 'json-text-mime',
+          content: '[{"name":"John","age":30,"city":"NYC"},{"name":"Jane","age":25,"city":"LA"}]',
+          filename: 'test.json',
+          mimeType: 'text/json',
+          expectedType: 'JSON'
+        },
+        {
+          name: 'json-empty-mime',
+          content: '[{"name":"John","age":30,"city":"NYC"},{"name":"Jane","age":25,"city":"LA"}]',
+          filename: 'test.json',
+          mimeType: '',
+          expectedType: 'JSON'
+        },
+        {
+          name: 'json-octet-stream-mime',
+          content: '[{"name":"John","age":30,"city":"NYC"},{"name":"Jane","age":25,"city":"LA"}]',
+          filename: 'test.json',
+          mimeType: 'application/octet-stream',
+          expectedType: 'JSON'
+        },
+        // TXT file scenarios
+        {
+          name: 'txt-csv-content',
+          content: 'name,age,city\nJohn,30,NYC\nJane,25,LA',
+          filename: 'test.txt',
+          mimeType: 'text/plain',
+          expectedType: 'CSV'
+        },
+        {
+          name: 'txt-plain-content',
+          content: 'This is a plain text file\nWith multiple lines\nOf content',
+          filename: 'test.txt',
+          mimeType: 'text/plain',
+          expectedType: 'TEXT'
+        },
+        {
+          name: 'txt-empty-mime',
+          content: 'name,age,city\nJohn,30,NYC\nJane,25,LA',
+          filename: 'test.txt',
+          mimeType: '',
+          expectedType: 'CSV'
+        },
+        {
+          name: 'txt-octet-stream-mime',
+          content: 'This is plain text content',
+          filename: 'test.txt',
+          mimeType: 'application/octet-stream',
+          expectedType: 'TEXT'
         }
       ];
       
@@ -187,8 +250,9 @@ export const createDataPipelineTestSuite = (): DataPipelineTestSuite => {
           
           // Test file extension detection
           const extension = file.name?.split('.').pop()?.toLowerCase();
-          if (extension !== 'csv') {
-            throw new Error(`Extension detection failed: expected 'csv', got '${extension}'`);
+          const expectedExtension = testCase.filename.split('.').pop()?.toLowerCase();
+          if (extension !== expectedExtension) {
+            throw new Error(`Extension detection failed: expected '${expectedExtension}', got '${extension}'`);
           }
           
           // Test file parsing logic (simulating the real parsing)
@@ -200,7 +264,15 @@ export const createDataPipelineTestSuite = (): DataPipelineTestSuite => {
                 const extension = file.name?.split('.').pop()?.toLowerCase();
                 
                 // This is the actual logic from useFileUploadManager
-                if (extension === 'csv' || file.type === 'text/csv' || file.type === 'application/vnd.ms-excel') {
+                if (extension === 'json' || file.type === 'application/json' || file.type === 'text/json') {
+                  const jsonData = JSON.parse(text);
+                  resolve({
+                    rows: Array.isArray(jsonData) ? jsonData : [jsonData],
+                    columns: Array.isArray(jsonData) && jsonData.length > 0 ? Object.keys(jsonData[0]) : [],
+                    rowCount: Array.isArray(jsonData) ? jsonData.length : 1,
+                    fileType: 'JSON'
+                  });
+                } else if (extension === 'csv' || file.type === 'text/csv' || file.type === 'application/vnd.ms-excel') {
                   const lines = text.split('\n').filter(line => line.trim());
                   if (lines.length === 0) {
                     reject(new Error('CSV file is empty'));
@@ -223,6 +295,36 @@ export const createDataPipelineTestSuite = (): DataPipelineTestSuite => {
                     rowCount: rows.length,
                     fileType: 'CSV'
                   });
+                } else if (extension === 'txt' || file.type === 'text/plain' || file.type === 'text/txt') {
+                  // For text files, try to detect if it's CSV-like first
+                  const lines = text.split('\n').filter(line => line.trim());
+                  if (lines.length > 0 && lines[0].includes(',')) {
+                    // Looks like CSV, parse as CSV
+                    const headers = lines[0]?.split(',').map(h => h.trim().replace(/"/g, '')) || [];
+                    const rows = lines.slice(1).map(line => {
+                      const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+                      const row: any = {};
+                      headers.forEach((header, index) => {
+                        row[header] = values[index] || '';
+                      });
+                      return row;
+                    });
+
+                    resolve({
+                      rows,
+                      columns: headers,
+                      rowCount: rows.length,
+                      fileType: 'CSV'
+                    });
+                  } else {
+                    // Plain text file
+                    resolve({
+                      rows: lines.map((line, index) => ({ line_number: index + 1, content: line })),
+                      columns: ['line_number', 'content'],
+                      rowCount: lines.length,
+                      fileType: 'TEXT'
+                    });
+                  }
                 } else {
                   reject(new Error(`Unsupported file type: ${extension}. Please upload CSV, JSON, or TXT files.`));
                 }
@@ -234,10 +336,19 @@ export const createDataPipelineTestSuite = (): DataPipelineTestSuite => {
             reader.readAsText(file);
           });
           
+          const testResult: any = parseResult;
+          
+          // Validate the result matches expected type
+          if (testResult.fileType !== testCase.expectedType) {
+            throw new Error(`Expected file type '${testCase.expectedType}', got '${testResult.fileType}'`);
+          }
+          
           testResults.push({
             testCase: testCase.name,
             success: true,
-            result: parseResult
+            result: testResult,
+            expectedType: testCase.expectedType,
+            actualType: testResult.fileType
           });
           passedTests++;
           
@@ -245,7 +356,8 @@ export const createDataPipelineTestSuite = (): DataPipelineTestSuite => {
           testResults.push({
             testCase: testCase.name,
             success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: error instanceof Error ? error.message : 'Unknown error',
+            expectedType: testCase.expectedType
           });
         }
       }
@@ -257,7 +369,7 @@ export const createDataPipelineTestSuite = (): DataPipelineTestSuite => {
         status: passedTests === testCases.length ? 'pass' : 'fail',
         success: passedTests === testCases.length,
         message: `${passedTests}/${testCases.length} file upload scenarios passed`,
-        error: passedTests < testCases.length ? 'Some CSV file scenarios failed - this explains the "unsupported file type" error' : undefined,
+        error: passedTests < testCases.length ? `Some file scenarios failed - this explains "unsupported file type" errors for CSV/JSON/TXT files` : undefined,
          duration,
         details: {
           passedTests,

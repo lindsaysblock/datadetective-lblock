@@ -61,7 +61,7 @@ export const useFileUploadManager = () => {
           // Get file extension to determine type (more reliable than MIME type)
           const extension = file.name?.split('.').pop()?.toLowerCase();
           
-          if (extension === 'json' || file.type === 'application/json') {
+          if (extension === 'json' || file.type === 'application/json' || file.type === 'text/json') {
             const jsonData = JSON.parse(text);
             resolve({
               rows: Array.isArray(jsonData) ? jsonData : [jsonData],
@@ -101,7 +101,7 @@ export const useFileUploadManager = () => {
                 totalColumns: headers.length
               }
             });
-          } else if (extension === 'txt' || file.type === 'text/plain') {
+          } else if (extension === 'txt' || file.type === 'text/plain' || file.type === 'text/txt') {
             // For text files, try to detect if it's CSV-like first
             const lines = text.split('\n').filter(line => line.trim());
             if (lines.length > 0 && lines[0].includes(',')) {
