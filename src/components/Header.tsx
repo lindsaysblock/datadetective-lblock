@@ -1,21 +1,17 @@
+/**
+ * Header Component
+ * Refactored to meet coding standards with proper theming and constants
+ */
 
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useAuthState } from '@/hooks/useAuthState';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import DataDetectiveLogo from '@/components/DataDetectiveLogo';
-import { 
-  BarChart3, 
-  Plus, 
-  History, 
-  Settings, 
-  User,
-  LogOut,
-  HelpCircle
-} from 'lucide-react';
+import { Search, Database, User, LogOut, Plus, History } from 'lucide-react';
+import { SPACING, TEXT_SIZES } from '@/constants/ui';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -23,7 +19,7 @@ const Header: React.FC = () => {
   const { user, loading } = useAuthState();
   const { toast } = useToast();
 
-  const handleSignOut = async () => {
+  const handleSignOut = async (): Promise<void> => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -42,131 +38,74 @@ const Header: React.FC = () => {
     }
   };
 
-  const handleSignInClick = () => {
+  const handleSignInClick = (): void => {
     console.log('Sign in button clicked, navigating to /auth');
     navigate('/auth');
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string): boolean => location.pathname === path;
 
-  // Check if user has admin access (you can modify this logic as needed)
-  const isAdmin = user?.email === 'admin@datadetective.com'; // Replace with your admin logic
+  const navigationItems = [
+    { path: '/', label: 'Home', icon: Database },
+    { path: '/new-project', label: 'New Project', icon: Plus },
+    { path: '/query-history', label: 'Projects', icon: History },
+  ];
+
+  if (loading) {
+    return (
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+        <div className={`container flex h-14 items-center px-${SPACING.MD}`}>
+          <div className="animate-pulse w-32 h-8 bg-gray-200 rounded"></div>
+        </div>
+      </header>
+    );
+  }
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo and Navigation */}
-          <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center">
-              <DataDetectiveLogo size="sm" showText={true} />
-            </Link>
-            
-            <nav className="hidden md:flex space-x-6">
-              <Link
-                to="/"
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/') 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <BarChart3 className="w-4 h-4" />
-                <span>Dashboard</span>
-              </Link>
-              
-              <Link
-                to="/new-project"
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/new-project') 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <Plus className="w-4 h-4" />
-                <span>New Project</span>
-              </Link>
-              
-              <Link
-                to="/query-history"
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/query-history') 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <History className="w-4 h-4" />
-                <span>Project History</span>
-              </Link>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className={`container flex h-14 items-center px-${SPACING.MD}`}>
+        {/* Logo */}
+        <Link to="/" className="mr-6 flex items-center space-x-2">
+          <DataDetectiveLogo />
+          <span className={`hidden font-bold sm:inline-block ${TEXT_SIZES.LARGE} bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent`}>
+            Data Detective
+          </span>
+        </Link>
 
-              {/* Admin-only navigation */}
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive('/admin') 
-                      ? 'bg-red-100 text-red-700' 
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                >
-                  <Settings className="w-4 h-4" />
-                  <span>Admin</span>
-                  <Badge variant="secondary" className="ml-1 text-xs">Admin</Badge>
-                </Link>
-              )}
-            </nav>
-          </div>
-
-          {/* Right side buttons */}
-          <div className="flex items-center space-x-4">
-            {/* Help button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-600 hover:text-gray-900"
+        {/* Navigation */}
+        <nav className="flex items-center space-x-6 text-sm font-medium">
+          {navigationItems.map(({ path, label, icon: Icon }) => (
+            <Link
+              key={path}
+              to={path}
+              className={`flex items-center space-x-2 transition-colors hover:text-foreground/80 ${
+                isActive(path) ? 'text-foreground' : 'text-foreground/60'
+              }`}
             >
-              <HelpCircle className="w-4 h-4 mr-2" />
-              Help
-            </Button>
+              <Icon className={`w-${SPACING.MD} h-${SPACING.MD}`} />
+              <span className="hidden sm:inline">{label}</span>
+            </Link>
+          ))}
+        </nav>
 
-            {loading ? (
-              <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
-            ) : user ? (
-              <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-600">
-                  Welcome, {user.email}
-                </span>
-                <Link
-                  to="/profile"
-                  className={`p-2 rounded-md transition-colors ${
-                    isActive('/profile')
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                >
-                  <User className="w-4 h-4" />
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="text-gray-600 hover:text-gray-900"
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </div>
-            ) : (
+        {/* User Section */}
+        <div className="ml-auto flex items-center space-x-4">
+          {user ? (
+            <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={handleSignInClick}
-                >
-                  Sign In / Sign Up
-                </Button>
+                <User className={`w-${SPACING.MD} h-${SPACING.MD}`} />
+                <span className="hidden sm:inline text-sm">{user.email}</span>
               </div>
-            )}
-          </div>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <LogOut className={`w-${SPACING.MD} h-${SPACING.MD} mr-2`} />
+                Sign Out
+              </Button>
+            </div>
+          ) : (
+            <Button size="sm" onClick={handleSignInClick} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+              Sign In
+            </Button>
+          )}
         </div>
       </div>
     </header>

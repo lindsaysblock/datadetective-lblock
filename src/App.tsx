@@ -1,4 +1,9 @@
 
+/**
+ * Main Application Component
+ * Refactored to meet coding standards with centralized constants
+ */
+
 import React, { Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
@@ -6,6 +11,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/contexts/AuthContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { ROUTES } from '@/config/routes';
+import { CACHE_TIMES, RETRY_COUNTS, SPACING } from '@/constants/ui';
 import Index from '@/pages/Index';
 import QueryHistory from '@/pages/QueryHistory';
 import Auth from '@/pages/Auth';
@@ -18,9 +24,9 @@ import NotFound from '@/pages/NotFound';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime)
-      retry: 1,
+      staleTime: CACHE_TIMES.STALE_TIME,
+      gcTime: CACHE_TIMES.GC_TIME,
+      retry: RETRY_COUNTS.DEFAULT,
       refetchOnWindowFocus: false,
     },
   },
@@ -35,7 +41,7 @@ const App = () => {
             <div className="min-h-screen bg-background">
               <Suspense fallback={
                 <div className="flex items-center justify-center min-h-screen">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <div className={`animate-spin rounded-full h-${SPACING.XL} w-${SPACING.XL} border-b-2 border-primary`}></div>
                 </div>
               }>
                 <Routes>

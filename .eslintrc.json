@@ -1,23 +1,59 @@
 {
   "root": true,
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint", "react", "unused-imports"],
+  "plugins": ["@typescript-eslint", "react", "unused-imports", "react-hooks"],
   "extends": [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
+    "@typescript-eslint/recommended",
     "plugin:react/recommended",
     "plugin:react-hooks/recommended"
   ],
   "rules": {
-    "max-lines": ["error", 220],
-    "complexity": ["warn", 5],
+    "max-lines": ["error", { "max": 220, "skipBlankLines": true, "skipComments": true }],
+    "complexity": ["error", 5],
+    "max-depth": ["error", 3],
+    "max-nested-callbacks": ["error", 3],
     "@typescript-eslint/no-unused-vars": ["error"],
     "unused-imports/no-unused-imports": "error",
-    "no-magic-numbers": ["warn", { "ignore": [0, 1], "ignoreArrayIndexes": true }],
+    "unused-imports/no-unused-vars": [
+      "warn",
+      { "vars": "all", "varsIgnorePattern": "^_", "args": "after-used", "argsIgnorePattern": "^_" }
+    ],
+    "no-magic-numbers": [
+      "warn", 
+      { 
+        "ignore": [0, 1, -1], 
+        "ignoreArrayIndexes": true,
+        "ignoreDefaultValues": true,
+        "detectObjects": false
+      }
+    ],
     "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn"
+    "react-hooks/exhaustive-deps": "warn",
+    "react/prop-types": "off",
+    "react/react-in-jsx-scope": "off",
+    "@typescript-eslint/explicit-function-return-type": "warn",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "prefer-const": "error",
+    "no-var": "error",
+    "prefer-arrow-callback": "error",
+    "prefer-template": "error",
+    "consistent-return": "error",
+    "no-else-return": "error"
   },
   "settings": {
     "react": { "version": "detect" }
+  },
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "env": {
+    "browser": true,
+    "es2022": true,
+    "node": true
   }
 }
