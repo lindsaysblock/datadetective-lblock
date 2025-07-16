@@ -127,10 +127,12 @@ const NewProjectE2ETestRunner: React.FC = () => {
               {testResults.map((result, index) => (
                 <TestResultCard
                   key={index}
-                  step={result.testName}
-                  status={result.status}
-                  details={result.error || 'Test completed successfully'}
-                  timestamp={new Date()}
+                  result={{
+                    step: result.testName,
+                    status: result.status === 'pass' ? 'success' : result.status === 'fail' ? 'error' : 'warning',
+                    details: result.error || 'Test completed successfully',
+                    timestamp: new Date()
+                  }}
                 />
               ))}
             </div>
