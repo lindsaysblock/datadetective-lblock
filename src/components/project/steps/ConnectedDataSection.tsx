@@ -97,7 +97,19 @@ const ConnectedDataSection: React.FC<ConnectedDataSectionProps> = ({
                           {(data.rowCount || data.summary?.totalRows || 0).toLocaleString()} rows
                         </Badge>
                         <Badge variant="secondary" className="text-xs">
-                          {(data.columns?.length || data.summary?.totalColumns || 0)} columns
+                          {(() => {
+                            // Safely get column count
+                            if (data.columns && Array.isArray(data.columns)) {
+                              return data.columns.length;
+                            }
+                            if (data.summary?.totalColumns) {
+                              return data.summary.totalColumns;
+                            }
+                            if (data.columnInfo && Array.isArray(data.columnInfo)) {
+                              return data.columnInfo.length;
+                            }
+                            return 0;
+                          })()} columns
                         </Badge>
                         {originalFile && (
                           <Badge variant="outline" className="text-xs">
