@@ -1,8 +1,67 @@
 
+/**
+ * Test execution and management system
+ * Coordinates load testing and unit testing with QA suites
+ */
+
 import { LoadTestingSystem, type LoadTestConfig } from '../loadTesting';
 import { UnitTestingSystem } from '../unitTesting';
 import { QATestSuites } from './qaTestSuites';
 
+/** Test runner configuration constants */
+const TEST_RUNNER_CONFIG = {
+  ERROR_RATES: {
+    PASS_THRESHOLD: 5,
+    WARNING_THRESHOLD: 15
+  },
+  MEMORY_THRESHOLDS: {
+    PASS: 100,
+    WARNING: 200
+  },
+  COVERAGE_THRESHOLDS: {
+    PASS: 80,
+    WARNING: 60
+  },
+  LOAD_CONFIGS: {
+    RESEARCH_QUESTION: {
+      concurrentUsers: 5,
+      duration: 8,
+      rampUpTime: 2,
+      testType: 'research-question'
+    },
+    DATA_PROCESSING: {
+      concurrentUsers: 8,
+      duration: 12,
+      rampUpTime: 3,
+      testType: 'data-processing'
+    },
+    CONTEXT_PROCESSING: {
+      concurrentUsers: 4,
+      duration: 6,
+      rampUpTime: 1,
+      testType: 'context-processing'
+    },
+    UI_INTERACTION: {
+      concurrentUsers: 12,
+      duration: 15,
+      rampUpTime: 4,
+      testType: 'ui-interaction'
+    }
+  }
+} as const;
+
+/** Step display names for test output */
+const STEP_NAMES = {
+  'research-question': 'Step 1: Research Question',
+  'data-processing': 'Step 2: Connect Your Data',
+  'context-processing': 'Step 3: Additional Context',
+  'ui-interaction': 'Step 4: Ready to Investigate'
+} as const;
+
+/**
+ * Test execution manager
+ * Coordinates load testing and unit testing execution
+ */
 export class TestRunner {
   private loadTestingSystem = new LoadTestingSystem();
   private unitTestingSystem = new UnitTestingSystem();
@@ -59,30 +118,10 @@ export class TestRunner {
     console.log('🚀 Running optimized load testing suite...');
     
     const loadTestConfigs: LoadTestConfig[] = [
-      {
-        concurrentUsers: 5,
-        duration: 8,
-        rampUpTime: 2,
-        testType: 'research-question'
-      },
-      {
-        concurrentUsers: 8,
-        duration: 12,
-        rampUpTime: 3,
-        testType: 'data-processing'
-      },
-      {
-        concurrentUsers: 4,
-        duration: 6,
-        rampUpTime: 1,
-        testType: 'context-processing'
-      },
-      {
-        concurrentUsers: 12,
-        duration: 15,
-        rampUpTime: 4,
-        testType: 'ui-interaction'
-      }
+      TEST_RUNNER_CONFIG.LOAD_CONFIGS.RESEARCH_QUESTION,
+      TEST_RUNNER_CONFIG.LOAD_CONFIGS.DATA_PROCESSING,
+      TEST_RUNNER_CONFIG.LOAD_CONFIGS.CONTEXT_PROCESSING,
+      TEST_RUNNER_CONFIG.LOAD_CONFIGS.UI_INTERACTION
     ];
 
     for (const config of loadTestConfigs) {
@@ -92,7 +131,8 @@ export class TestRunner {
         
         this.qaTestSuites.addTestResult({
           testName: `Load Test - ${stepName}`,
-          status: result.errorRate < 5 ? 'pass' : result.errorRate < 15 ? 'warning' : 'fail',
+          status: result.errorRate < TEST_RUNNER_CONFIG.ERROR_RATES.PASS_THRESHOLD ? 'pass' : 
+                  result.errorRate < TEST_RUNNER_CONFIG.ERROR_RATES.WARNING_THRESHOLD ? 'warning' : 'fail',
           message: `${stepName}: ${config.concurrentUsers} users, ${result.errorRate.toFixed(1)}% error rate, ${result.averageResponseTime.toFixed(0)}ms avg response`,
           performance: result.averageResponseTime,
           suggestions: result.errorRate > 10 ? [
@@ -103,7 +143,8 @@ export class TestRunner {
 
         this.qaTestSuites.addTestResult({
           testName: `Memory Usage - ${stepName}`,
-          status: result.memoryUsage.peak < 100 ? 'pass' : result.memoryUsage.peak < 200 ? 'warning' : 'fail',
+          status: result.memoryUsage.peak < TEST_RUNNER_CONFIG.MEMORY_THRESHOLDS.PASS ? 'pass' : 
+                  result.memoryUsage.peak < TEST_RUNNER_CONFIG.MEMORY_THRESHOLDS.WARNING ? 'warning' : 'fail',
           message: `${stepName} - Peak memory: ${result.memoryUsage.peak.toFixed(1)}MB, Growth: ${(result.memoryUsage.final - result.memoryUsage.initial).toFixed(1)}MB`,
           suggestions: result.memoryUsage.peak > 150 ? [
             `Monitor for memory leaks in ${stepName.toLowerCase()}`,
@@ -155,7 +196,8 @@ export class TestRunner {
 
         this.qaTestSuites.addTestResult({
           testName: 'Code Coverage (Step-Aware)',
-          status: avgCoverage > 80 ? 'pass' : avgCoverage > 60 ? 'warning' : 'fail',
+          status: avgCoverage > TEST_RUNNER_CONFIG.COVERAGE_THRESHOLDS.PASS ? 'pass' : 
+                  avgCoverage > TEST_RUNNER_CONFIG.COVERAGE_THRESHOLDS.WARNING ? 'warning' : 'fail',
           message: `${avgCoverage.toFixed(1)}% average coverage across step components (Statements: ${unitTestReport.coverage.statements.toFixed(1)}%, Functions: ${unitTestReport.coverage.functions.toFixed(1)}%)`,
           suggestions: avgCoverage < 70 ? [
             'Increase test coverage for critical step functions',
@@ -187,17 +229,6 @@ export class TestRunner {
   }
 
   private getStepDisplayName(testType: string): string {
-    switch (testType) {
-      case 'research-question':
-        return 'Step 1: Research Question';
-      case 'data-processing':
-        return 'Step 2: Connect Your Data';
-      case 'context-processing':
-        return 'Step 3: Additional Context';
-      case 'ui-interaction':
-        return 'Step 4: Ready to Investigate';
-      default:
-        return testType;
-    }
+    return STEP_NAMES[testType as keyof typeof STEP_NAMES] || testType;
   }
 }

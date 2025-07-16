@@ -1,23 +1,50 @@
+/**
+ * Test orchestration and execution management
+ * Coordinates QA test execution with performance monitoring
+ */
+
 import { QATestSuites } from './qaTestSuites';
 import { performanceMonitor } from '../performance/performanceMonitor';
 
+/** Test orchestration constants */
+const TEST_CONFIG = {
+  BUNDLE_SIZE_ESTIMATE: 2100,
+  MEMORY_EFFICIENCY_THRESHOLD: 50,
+  SYSTEM_EFFICIENCY_THRESHOLD: 80,
+  LARGE_FILE_THRESHOLD: 220
+} as const;
+
+/** Test execution order for optimal performance */
+const TEST_EXECUTION_ORDER = [
+  'components',
+  'dataFlow',
+  'dataValidation',
+  'columnIdentification',
+  'analytics',
+  'analyticsLoad',
+  'analyticsPerformance',
+  'userExperience',
+  'dataIntegrity',
+  'authentication',
+  'routing',
+  'systemHealth'
+] as const;
+
+/** Known large files for monitoring */
+const LARGE_FILES = [
+  'src/components/QueryBuilder.tsx',
+  'src/components/VisualizationReporting.tsx',
+  'src/components/AnalysisDashboard.tsx'
+] as const;
+
+/**
+ * Test orchestration manager
+ * Coordinates test execution and performance monitoring
+ */
 export class TestOrchestrator {
   private qaTestSuites: QATestSuites;
   private performanceMonitor = performanceMonitor;
-  private testExecutionOrder = [
-    'components',
-    'dataFlow',
-    'dataValidation',
-    'columnIdentification',
-    'analytics',
-    'analyticsLoad',
-    'analyticsPerformance',
-    'userExperience',
-    'dataIntegrity',
-    'authentication',
-    'routing',
-    'systemHealth'
-  ];
+  private testExecutionOrder = [...TEST_EXECUTION_ORDER];
 
   constructor(qaTestSuites: QATestSuites) {
     this.qaTestSuites = qaTestSuites;
@@ -161,11 +188,11 @@ export class TestOrchestrator {
     ];
 
     largeFiles.forEach(({ file, lines }) => {
-      if (lines > 220) {
+      if (lines > TEST_CONFIG.LARGE_FILE_THRESHOLD) {
         recommendations.push({
           file,
           priority: lines > 400 ? 'critical' : 'high',
-          description: `File has ${lines} lines (threshold: 220)`,
+          description: `File has ${lines} lines (threshold: ${TEST_CONFIG.LARGE_FILE_THRESHOLD})`,
           suggestion: `Break into smaller, focused components like we did with NewProjectContainer`
         });
       }
@@ -175,7 +202,7 @@ export class TestOrchestrator {
   }
 
   private estimateBundleSize(): number {
-    return 2100;
+    return TEST_CONFIG.BUNDLE_SIZE_ESTIMATE;
   }
 
   private countComponents(): number {
@@ -183,11 +210,7 @@ export class TestOrchestrator {
   }
 
   private identifyLargeFiles(): string[] {
-    return [
-      'src/components/QueryBuilder.tsx',
-      'src/components/VisualizationReporting.tsx', 
-      'src/components/AnalysisDashboard.tsx'
-    ];
+    return [...LARGE_FILES];
   }
 
   private calculateSystemEfficiency(): number {
@@ -204,7 +227,7 @@ export class TestOrchestrator {
     
     if (memoryLeakDetected) return 0;
     
-    return Math.max(0, 100 - (memoryUsage / 50) * 100);
+    return Math.max(0, 100 - (memoryUsage / TEST_CONFIG.MEMORY_EFFICIENCY_THRESHOLD) * 100);
   }
 
   private calculateCodeQualityScore(): number {

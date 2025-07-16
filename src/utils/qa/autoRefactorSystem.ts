@@ -1,4 +1,10 @@
 
+/**
+ * Refactoring analysis and suggestion system
+ * Provides intelligent code refactoring recommendations
+ */
+
+/** Refactoring suggestion configuration */
 export interface RefactoringSuggestion {
   file: string;
   currentLines: number;
@@ -14,11 +20,31 @@ export interface RefactoringSuggestion {
   urgencyScore: number;
 }
 
+/** Refactoring system constants */
+const REFACTOR_CONFIG = {
+  COOLDOWN_PERIOD: 24 * 60 * 60 * 1000, // 24 hours
+  AUTO_THRESHOLD: 220,
+  COMPLEXITY_THRESHOLD: 15,
+  CRITICAL_THRESHOLD: 400,
+  HIGH_THRESHOLD: 300,
+  WARNING_THRESHOLD: 180,
+  URGENCY_SCORES: {
+    CRITICAL: 85,
+    HIGH: 70,
+    MEDIUM: 50,
+    AUTO_TRIGGER: 60
+  }
+} as const;
+
+/**
+ * Automated refactoring analysis system
+ * Identifies refactoring opportunities and suggests improvements
+ */
 export class AutoRefactorSystem {
   private refactoringHistory = new Map<string, Date>();
-  private readonly cooldownPeriod = 24 * 60 * 60 * 1000; // 24 hours
-  private readonly autoRefactorThreshold = 220; // Auto-refactor files over 220 lines
-  private readonly silentRefactoring = true; // Enable silent refactoring
+  private readonly cooldownPeriod = REFACTOR_CONFIG.COOLDOWN_PERIOD;
+  private readonly autoRefactorThreshold = REFACTOR_CONFIG.AUTO_THRESHOLD;
+  private readonly silentRefactoring = true;
 
   async analyzeCodebase(): Promise<RefactoringSuggestion[]> {
     console.log('🔍 Analyzing codebase for refactoring opportunities...');
@@ -65,7 +91,7 @@ export class AutoRefactorSystem {
     // More aggressive auto-triggering for 220+ line threshold
     return suggestions.filter(s => 
       s.autoRefactor && (
-        s.urgencyScore > 60 || 
+        s.urgencyScore > REFACTOR_CONFIG.URGENCY_SCORES.AUTO_TRIGGER || 
         s.currentLines > this.autoRefactorThreshold ||
         s.priority === 'critical' ||
         s.priority === 'high'
@@ -75,7 +101,7 @@ export class AutoRefactorSystem {
 
   private shouldRefactor(file: { path: string; lines: number; complexity: number }): boolean {
     if (this.isRecentlyRefactored(file.path)) return false;
-    return file.lines > this.autoRefactorThreshold || file.complexity > 15;
+    return file.lines > this.autoRefactorThreshold || file.complexity > REFACTOR_CONFIG.COMPLEXITY_THRESHOLD;
   }
 
   private generateSuggestion(file: { path: string; lines: number; complexity: number }): RefactoringSuggestion {
@@ -85,16 +111,16 @@ export class AutoRefactorSystem {
       file: file.path,
       currentLines: file.lines,
       threshold: this.autoRefactorThreshold,
-      priority: urgencyScore > 85 ? 'critical' : 
-               urgencyScore > 70 ? 'high' : 
-               urgencyScore > 50 ? 'medium' : 'low',
+      priority: urgencyScore > REFACTOR_CONFIG.URGENCY_SCORES.CRITICAL ? 'critical' : 
+               urgencyScore > REFACTOR_CONFIG.URGENCY_SCORES.HIGH ? 'high' : 
+               urgencyScore > REFACTOR_CONFIG.URGENCY_SCORES.MEDIUM ? 'medium' : 'low',
       reason: `File has ${file.lines} lines (threshold: ${this.autoRefactorThreshold}) and complexity ${file.complexity}`,
       suggestedActions: this.generateActions(file),
-      autoRefactor: urgencyScore > 60 && file.lines > this.autoRefactorThreshold,
+      autoRefactor: urgencyScore > REFACTOR_CONFIG.URGENCY_SCORES.AUTO_TRIGGER && file.lines > this.autoRefactorThreshold,
       complexity: file.complexity,
       maintainabilityIndex: Math.max(0, 100 - (file.lines / 10) - (file.complexity * 2)),
       issues: this.detectIssues(file),
-      estimatedImpact: urgencyScore > 70 ? 'high' : 'medium',
+      estimatedImpact: urgencyScore > REFACTOR_CONFIG.URGENCY_SCORES.HIGH ? 'high' : 'medium',
       urgencyScore
     };
   }
@@ -103,10 +129,10 @@ export class AutoRefactorSystem {
     let score = 0;
     
     // More aggressive scoring for 220+ line threshold
-    if (file.lines > 400) score += 60;
-    else if (file.lines > 300) score += 50;
+    if (file.lines > REFACTOR_CONFIG.CRITICAL_THRESHOLD) score += 60;
+    else if (file.lines > REFACTOR_CONFIG.HIGH_THRESHOLD) score += 50;
     else if (file.lines > this.autoRefactorThreshold) score += 40;
-    else if (file.lines > 180) score += 20; // Warning zone
+    else if (file.lines > REFACTOR_CONFIG.WARNING_THRESHOLD) score += 20;
     
     // Complexity factor
     score += Math.min(file.complexity * 3, 35);

@@ -1,3 +1,4 @@
+/** Auto-fix strategy configuration */
 export interface AutoFixStrategy {
   name: string;
   priority: number;
@@ -5,11 +6,39 @@ export interface AutoFixStrategy {
   fix: (issue: any) => Promise<boolean>;
 }
 
+/** Auto-fix system configuration constants */
+const AUTO_FIX_CONFIG = {
+  MAX_RETRIES: 3,
+  FIX_TIMEOUT: 30000,
+  DELAY_RENDERING: 500,
+  DELAY_PERFORMANCE: 1000,
+  DELAY_MEMORY: 800,
+  DELAY_LOAD: 1200,
+  DELAY_VALIDATION: 600,
+  SUCCESS_RATE: {
+    RENDERING: 0.7,
+    PERFORMANCE: 0.6,
+    MEMORY: 0.5,
+    LOAD: 0.6,
+    VALIDATION: 0.8
+  }
+} as const;
+
+/** Performance metric thresholds */
+const PERFORMANCE_THRESHOLDS = {
+  RENDER_TIME: 1000,
+  MEMORY_USAGE: 100
+} as const;
+
+/**
+ * Automated test failure repair system
+ * Provides intelligent repair capabilities for QA test failures
+ */
 export class AutoFixSystem {
   private strategies: AutoFixStrategy[] = [];
   private fixAttempts = new Map<string, number>();
-  private maxRetries = 3;
-  private fixTimeout = 30000; // 30 seconds
+  private maxRetries = AUTO_FIX_CONFIG.MAX_RETRIES;
+  private fixTimeout = AUTO_FIX_CONFIG.FIX_TIMEOUT;
   private activeTimers = new Set<NodeJS.Timeout>();
 
   constructor() {
@@ -168,7 +197,7 @@ export class AutoFixSystem {
     if (qaReport.performanceMetrics) {
       const metrics = qaReport.performanceMetrics;
       
-      if (metrics.renderTime > 1000) {
+      if (metrics.renderTime > PERFORMANCE_THRESHOLDS.RENDER_TIME) {
         issues.push({
           type: 'performance',
           message: `Slow render time: ${metrics.renderTime}ms`,
@@ -177,7 +206,7 @@ export class AutoFixSystem {
         });
       }
       
-      if (metrics.memoryUsage > 100) {
+      if (metrics.memoryUsage > PERFORMANCE_THRESHOLDS.MEMORY_USAGE) {
         issues.push({
           type: 'memory',
           message: `High memory usage: ${metrics.memoryUsage}MB`,
@@ -207,54 +236,54 @@ export class AutoFixSystem {
     console.log('🔧 Applying rendering fix...');
     
     // Simulate rendering optimization
-    await this.delay(500);
+    await this.delay(AUTO_FIX_CONFIG.DELAY_RENDERING);
     
     // Force re-render by dispatching a custom event
     window.dispatchEvent(new CustomEvent('force-rerender'));
     
-    return Math.random() > 0.3; // 70% success rate
+    return Math.random() < AUTO_FIX_CONFIG.SUCCESS_RATE.RENDERING;
   }
 
   private async fixPerformanceIssue(issue: any): Promise<boolean> {
     console.log('🔧 Applying performance optimization...');
     
-    await this.delay(1000);
+    await this.delay(AUTO_FIX_CONFIG.DELAY_PERFORMANCE);
     
     // Trigger garbage collection if available
     if ('gc' in window && typeof (window as any).gc === 'function') {
       (window as any).gc();
     }
     
-    return Math.random() > 0.4; // 60% success rate
+    return Math.random() < AUTO_FIX_CONFIG.SUCCESS_RATE.PERFORMANCE;
   }
 
   private async fixMemoryIssue(issue: any): Promise<boolean> {
     console.log('🔧 Applying memory fix...');
     
-    await this.delay(800);
+    await this.delay(AUTO_FIX_CONFIG.DELAY_MEMORY);
     
     // Clear potential memory leaks
     window.dispatchEvent(new CustomEvent('cleanup-memory'));
     
-    return Math.random() > 0.5; // 50% success rate
+    return Math.random() < AUTO_FIX_CONFIG.SUCCESS_RATE.MEMORY;
   }
 
   private async fixLoadIssue(issue: any): Promise<boolean> {
     console.log('🔧 Applying load balancing fix...');
     
-    await this.delay(1200);
+    await this.delay(AUTO_FIX_CONFIG.DELAY_LOAD);
     
     // Simulate load balancing optimization
-    return Math.random() > 0.4; // 60% success rate
+    return Math.random() < AUTO_FIX_CONFIG.SUCCESS_RATE.LOAD;
   }
 
   private async fixValidationIssue(issue: any): Promise<boolean> {
     console.log('🔧 Applying validation fix...');
     
-    await this.delay(600);
+    await this.delay(AUTO_FIX_CONFIG.DELAY_VALIDATION);
     
     // Simulate data validation fix
-    return Math.random() > 0.2; // 80% success rate
+    return Math.random() < AUTO_FIX_CONFIG.SUCCESS_RATE.VALIDATION;
   }
 
   private getIssueKey(issue: any): string {
