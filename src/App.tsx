@@ -10,6 +10,7 @@ import Index from '@/pages/Index';
 import QueryHistory from '@/pages/QueryHistory';
 import Auth from '@/pages/Auth';
 import NewProject from '@/pages/NewProject';
+import Analysis from '@/pages/Analysis';
 import Profile from '@/pages/Profile';
 import Admin from '@/pages/Admin';
 import NotFound from '@/pages/NotFound';
@@ -42,6 +43,7 @@ const App = () => {
                   <Route path={ROUTES.QUERY_HISTORY} element={<QueryHistory />} />
                   <Route path={ROUTES.AUTH} element={<Auth />} />
                   <Route path={ROUTES.NEW_PROJECT} element={<NewProject />} />
+                  <Route path="/analysis" element={<Analysis />} />
                   <Route path={ROUTES.PROFILE} element={<Profile />} />
                   <Route path={ROUTES.ADMIN} element={<Admin />} />
                   <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />

@@ -29,7 +29,8 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
     hasData: !!(formData.parsedData && formData.parsedData.length > 0),
     processedFilesCount: formData.processedFiles?.length || 0,
     uploading: formData.uploading,
-    parsing: formData.parsing
+    parsing: formData.parsing,
+    setResearchQuestionType: typeof formData.setResearchQuestion
   });
 
   const handleStartAnalysisWrapper = async (educationalMode: boolean = false, projectName: string = '') => {
@@ -66,7 +67,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
 
       console.log('Validation passed, starting analysis');
       
-      // Save project if user is authenticated - fix the arguments to match expected signature
+      // Save project if user is authenticated
       if (user) {
         try {
           const savedProject = await saveAnalysisProject(
