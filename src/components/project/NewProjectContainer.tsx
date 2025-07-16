@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useOptimizedNewProjectForm } from '@/hooks/useOptimizedNewProjectForm';
+import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import NewProjectLayout from './NewProjectLayout';
 import NewProjectContent from './NewProjectContent';
 
@@ -14,27 +14,26 @@ const NewProjectContainer: React.FC = () => {
     formData,
     isLoading,
     error,
-    nextStep,
-    prevStep,
-    goToStep,
-    updateField,
-    setResearchQuestion,
-    setProjectName,
-    setBusinessContext,
-    handleFileSelection,
-    removeFile,
-    startAnalysis,
-    resetForm,
-    loadProject,
-    uploadProgress,
-    processingStatus,
-  } = useOptimizedNewProjectForm();
+    actions: {
+      nextStep,
+      prevStep,
+      goToStep,
+      setProjectName,
+      setResearchQuestion,
+      setAdditionalContext: setBusinessContext,
+      addFile: handleFileSelection,
+      removeFile,
+      handleFileUpload,
+      setContinueCaseData: loadProject,
+      resetForm,
+    }
+  } = useNewProjectForm();
 
-  console.log('NewProjectContainer rendering with optimized formData:', {
+  console.log('NewProjectContainer rendering with formData:', {
     step: formData.step,
     projectName: formData.projectName,
     researchQuestion: formData.researchQuestion,
-    hasFiles: formData.selectedFiles.length > 0 || formData.uploadedFiles.length > 0,
+    hasFiles: formData.files.length > 0 || formData.parsedData.length > 0,
   });
 
   // Handle continue investigation from route state
@@ -44,7 +43,7 @@ const NewProjectContainer: React.FC = () => {
       
       // If we have a dataset with an ID, load the full project
       if (location.state.dataset.id) {
-        loadProject(location.state.dataset.id);
+        loadProject(location.state.dataset);
       }
       setIsInitialized(true);
     } else if (!isInitialized) {
@@ -101,46 +100,40 @@ const NewProjectContainer: React.FC = () => {
     nextStep,
     prevStep,
     goToStep,
-    onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => {
-      console.log('🔧 NewProjectContainer onFileChange called');
-      if (event.target.files && event.target.files.length > 0) {
-        const filesArray = Array.from(event.target.files);
-        console.log('🔧 Extracted files:', filesArray.map(f => ({ name: f.name, type: f.type, size: f.size })));
-        
-        // Use the proper handler that doesn't store event objects
-        handleFileSelection(filesArray);
-      } else {
-        console.log('🔧 No files in event');
-      }
-    },
-    handleFileUpload: async () => {
-      // Files are processed automatically when analysis starts
-      return true;
-    },
-    removeFile: (index: number) => {
-      const fileToRemove = formData.selectedFiles[index];
-      if (fileToRemove) {
-        const newFiles = formData.selectedFiles.filter((_, i) => i !== index);
-        updateField('selectedFiles', newFiles);
-      }
-    },
-    setColumnMapping: (mapping: Record<string, string>) => {
-      console.log('Column mapping set:', mapping);
-      // Column mapping will be handled in the file upload process
-    },
-    // Computed properties
-    files: formData.selectedFiles,
-    uploading: processingStatus && Object.values(processingStatus).some(status => status === 'uploading'),
-    parsing: processingStatus && Object.values(processingStatus).some(status => status === 'parsing'),
+    onFileChange: formData.onFileChange,
+    handleFileUpload: formData.handleFileUpload,
+    removeFile: formData.removeFile,
+    setColumnMapping: formData.setColumnMapping,
+    // Computed properties for compatibility
+    files: formData.files,
+    uploading: formData.uploading,
+    parsing: formData.parsing,
     parsedData: formData.parsedData,
-    processedFiles: formData.uploadedFiles,
-    columnMapping: {},
-    analysisResults: null,
-    analysisCompleted: false,
-    isProcessingAnalysis: formData.isProcessing,
-    hasData: formData.selectedFiles.length > 0 || formData.uploadedFiles.length > 0,
+    processedFiles: formData.processedFiles,
+    columnMapping: formData.columnMapping,
+    analysisResults: formData.analysisResults,
+    analysisCompleted: formData.analysisCompleted,
+    isProcessingAnalysis: formData.isProcessingAnalysis,
+    hasData: formData.files.length > 0 || formData.parsedData.length > 0,
     businessContext: formData.businessContext,
     additionalContext: formData.businessContext,
+  };
+
+  const startAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
+    console.log('🚀 Starting analysis:', { educationalMode, projectName });
+    
+    try {
+      // Navigate to analysis page with form data
+      navigate('/analysis', {
+        state: {
+          formData: enhancedFormData,
+          educationalMode,
+          projectName
+        }
+      });
+    } catch (error) {
+      console.error('❌ Failed to start analysis:', error);
+    }
   };
 
   return (
