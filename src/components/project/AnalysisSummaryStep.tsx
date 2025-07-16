@@ -256,7 +256,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
               className="rounded border-brand-purple/50 text-brand-purple focus:ring-brand-purple"
             />
             <Label htmlFor="educational" className="text-sm font-medium">
-              🎓 Educational Mode (detailed explanations and step-by-step guidance)
+              📚 Educational Mode - Teach me how to code SQL step by step during the investigation
             </Label>
           </div>
         </CardContent>
@@ -275,7 +275,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
           className="bg-gradient-to-r from-brand-blue via-brand-purple to-brand-pink hover:from-brand-blue/90 hover:via-brand-purple/90 hover:to-brand-pink/90 text-white flex items-center gap-2 px-8 py-2 shadow-lg hover:shadow-xl transition-all duration-200"
         >
           <Play className="w-4 h-4" />
-          {isProcessingAnalysis ? '🔍 Starting Investigation...' : '🚀 Start Investigation'}
+          {isProcessingAnalysis ? '🔍 Starting the Case...' : '🕵️ Start the Case'}
         </Button>
       </div>
     </div>
