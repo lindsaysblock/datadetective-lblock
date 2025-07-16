@@ -1,0 +1,23 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint", "react", "unused-imports"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended"
+  ],
+  "rules": {
+    "max-lines": ["error", 220],
+    "complexity": ["warn", 5],
+    "@typescript-eslint/no-unused-vars": ["error"],
+    "unused-imports/no-unused-imports": "error",
+    "no-magic-numbers": ["warn", { "ignore": [0, 1], "ignoreArrayIndexes": true }],
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+  },
+  "settings": {
+    "react": { "version": "detect" }
+  }
+}
