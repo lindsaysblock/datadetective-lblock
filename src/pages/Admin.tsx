@@ -11,6 +11,7 @@ import LegalFooter from '@/components/LegalFooter';
 import E2ETestRunner from '@/components/testing/E2ETestRunner';
 import NewProjectE2ETestRunner from '@/components/testing/NewProjectE2ETestRunner';
 import OptimizedE2ETestRunner from '@/components/testing/OptimizedE2ETestRunner';
+import DiskIOBandwidthTest from '@/components/testing/DiskIOBandwidthTest';
 import createDataPipelineTestSuite from '@/utils/testing/dataPipelineTestSuite';
 
 const Admin = () => {
@@ -68,7 +69,7 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="testing" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="testing" className="flex items-center gap-2">
                 <TestTube className="w-4 h-4" />
                 Testing
@@ -76,6 +77,10 @@ const Admin = () => {
               <TabsTrigger value="pipeline" className="flex items-center gap-2">
                 <Activity className="w-4 h-4" />
                 Data Pipeline
+              </TabsTrigger>
+              <TabsTrigger value="performance" className="flex items-center gap-2">
+                <Activity className="w-4 h-4" />
+                Performance
               </TabsTrigger>
               <TabsTrigger value="users" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
@@ -157,6 +162,10 @@ const Admin = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="performance" className="space-y-6">
+              <DiskIOBandwidthTest />
             </TabsContent>
 
             <TabsContent value="users">
