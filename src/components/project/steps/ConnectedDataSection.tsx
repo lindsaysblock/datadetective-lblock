@@ -137,7 +137,7 @@ const ConnectedDataSection: React.FC<ConnectedDataSectionProps> = ({
                     <div className="flex flex-wrap gap-1">
                       {data.columns.slice(0, 6).map((column: any, colIndex: number) => (
                         <Badge key={colIndex} variant="outline" className="text-xs">
-                          {column.name || column}
+                          {typeof column === 'object' ? column.name : column}
                         </Badge>
                       ))}
                       {data.columns.length > 6 && (
