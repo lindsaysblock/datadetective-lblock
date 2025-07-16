@@ -8,9 +8,10 @@ import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
 import { useToast } from '@/hooks/use-toast';
+import { ResearchQuestionStep, DataSourceStep, BusinessContextStep } from './QuickFormSteps';
+import AnalysisSummaryStep from './AnalysisSummaryStep';
 import DataDetectiveHeader from './DataDetectiveHeader';
-import ProjectForm from './ProjectForm';
-import { SPACING } from '@/constants/ui';
+import { SPACING, FORM_STEPS } from '@/constants/ui';
 
 interface NewProjectContentProps {
   formData: any;
@@ -116,21 +117,69 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
     }
   };
 
-  // Simplified for now - will add step components back progressively
+  const renderCurrentStep = () => {
+    switch (formData.step) {
+      case FORM_STEPS.RESEARCH_QUESTION:
+        return (
+          <ResearchQuestionStep
+            researchQuestion={formData.researchQuestion}
+            setResearchQuestion={formData.setResearchQuestion}
+            onNext={formData.nextStep}
+          />
+        );
+      case FORM_STEPS.DATA_SOURCE:
+        return (
+          <DataSourceStep
+            files={formData.files}
+            uploading={formData.uploading}
+            parsing={formData.parsing}
+            parsedData={formData.parsedData}
+            processedFiles={formData.processedFiles}
+            columnMapping={formData.columnMapping}
+            onFileChange={formData.onFileChange}
+            onFileUpload={formData.handleFileUpload}
+            onRemoveFile={formData.removeFile}
+            onColumnMapping={formData.setColumnMapping}
+            onNext={formData.nextStep}
+            onPrevious={formData.prevStep}
+          />
+        );
+      case FORM_STEPS.BUSINESS_CONTEXT:
+        return (
+          <BusinessContextStep
+            additionalContext={formData.businessContext}
+            setAdditionalContext={formData.setAdditionalContext}
+            onNext={formData.nextStep}
+            onPrevious={formData.prevStep}
+          />
+        );
+      case FORM_STEPS.ANALYSIS_SUMMARY:
+        return (
+          <AnalysisSummaryStep
+            researchQuestion={formData.researchQuestion}
+            additionalContext={formData.businessContext}
+            parsedData={formData.parsedData}
+            columnMapping={formData.columnMapping}
+            analysisResults={formData.analysisResults}
+            analysisCompleted={formData.analysisCompleted}
+            isProcessingAnalysis={formData.isProcessingAnalysis || isLoading}
+            onStartAnalysis={handleStartAnalysisWrapper}
+            onPrevious={formData.prevStep}
+            formData={formData}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className={`container mx-auto px-${SPACING.MD} py-${SPACING.XL}`}>
         <DataDetectiveHeader />
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Create New Investigation</h2>
-            <p className="text-gray-600">Follow the steps below to set up your data analysis project</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <p className="text-center text-gray-600">
-              Project form components are being rebuilt with proper integration...
-            </p>
+          <div className={`bg-white rounded-xl shadow-lg p-${SPACING.XL}`}>
+            {renderCurrentStep()}
           </div>
         </div>
       </div>

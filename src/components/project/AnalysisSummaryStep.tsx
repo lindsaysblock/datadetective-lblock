@@ -241,7 +241,11 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
                     <div>
                       <div className="font-medium text-sm text-foreground">{data.name}</div>
                        <div className="text-xs text-muted-foreground">
-                         {(data.rowCount || data.rows || 0).toLocaleString()} records • {Array.isArray(data.columnInfo) ? data.columnInfo.length : (data.columns || 0)} data points
+                         {(data.rowCount || data.rows || 0).toLocaleString()} records • {
+                           Array.isArray(data.columnInfo) 
+                             ? data.columnInfo.length 
+                             : (data.columns || 0)
+                         } data points
                        </div>
                     </div>
                   </div>
