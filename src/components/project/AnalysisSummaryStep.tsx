@@ -112,119 +112,119 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   const totalFiles = parsedData?.length || 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 bg-gradient-to-br from-brand-blue/5 to-brand-purple/5 rounded-xl">
       {/* Header with Logo */}
       <div className="text-center">
-        <div className="flex justify-center mb-4">
-          <DataDetectiveLogo size="lg" showText={true} animated={true} />
+        <div className="flex justify-center mb-6">
+          <DataDetectiveLogo size="xl" showText={true} animated={true} />
         </div>
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-          Analysis Summary
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-brand-blue via-brand-purple to-brand-pink bg-clip-text text-transparent mb-2">
+          🕵️ Investigation Summary
         </h2>
-        <p className="text-gray-600">Review your project details before starting the investigation</p>
+        <p className="text-muted-foreground text-lg">Review your case details before starting the investigation</p>
       </div>
 
       {/* Project Name Input */}
-      <Card className="border-2 border-gradient-to-r from-blue-200 to-purple-200">
+      <Card className="border-2 border-brand-blue/20 bg-gradient-to-br from-white to-brand-blue/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-600" />
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Project Name
+            <FileText className="w-5 h-5 text-brand-blue" />
+            <span className="bg-gradient-to-r from-brand-blue via-brand-purple to-brand-pink bg-clip-text text-transparent">
+              🕵️ Case Name
             </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <Label htmlFor="projectName">Give your investigation a name</Label>
+            <Label htmlFor="projectName">Give your investigation a memorable name</Label>
             <Input
               id="projectName"
               value={projectName}
               onChange={(e) => handleProjectNameChange(e.target.value)}
-              placeholder="e.g., Customer Behavior Analysis"
-              className="w-full focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              placeholder="e.g., Customer Behavior Investigation"
+              className="w-full focus:ring-2 focus:ring-brand-purple focus:border-brand-purple"
             />
             {!projectName && (
-              <p className="text-sm text-red-500">Project name is required</p>
+              <p className="text-sm text-destructive">Case name is required to start investigation</p>
             )}
           </div>
         </CardContent>
       </Card>
 
       {/* Research Question Summary */}
-      <Card className="border-l-4 border-l-blue-500">
+      <Card className="border-l-4 border-l-brand-blue bg-gradient-to-r from-white to-brand-blue/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Database className="w-5 h-5 text-blue-600" />
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Research Question
+            <Database className="w-5 h-5 text-brand-blue" />
+            <span className="bg-gradient-to-r from-brand-blue via-brand-purple to-brand-pink bg-clip-text text-transparent">
+              🔍 Research Question
             </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-700 font-medium">{researchQuestion || 'No research question provided'}</p>
+          <p className="text-foreground font-medium">{researchQuestion || 'No research question provided'}</p>
           {additionalContext && (
-            <div className="mt-3 pt-3 border-t border-purple-100">
-              <h4 className="font-medium text-gray-800 mb-1">Additional Context:</h4>
-              <p className="text-gray-600 text-sm">{additionalContext}</p>
+            <div className="mt-3 pt-3 border-t border-brand-purple/20">
+              <h4 className="font-medium text-foreground mb-1">Additional Context:</h4>
+              <p className="text-muted-foreground text-sm">{additionalContext}</p>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Data Summary */}
-      <Card className="border-l-4 border-l-purple-500">
+      <Card className="border-l-4 border-l-brand-purple bg-gradient-to-r from-white to-brand-purple/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-purple-600" />
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Data Overview
+            <Users className="w-5 h-5 text-brand-purple" />
+            <span className="bg-gradient-to-r from-brand-blue via-brand-purple to-brand-pink bg-clip-text text-transparent">
+              📊 Evidence Overview
             </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{totalFiles}</div>
-              <div className="text-sm text-blue-700">Files</div>
+            <div className="text-center p-3 bg-gradient-to-br from-brand-blue/10 to-brand-blue/20 rounded-lg border border-brand-blue/20">
+              <div className="text-2xl font-bold text-brand-blue">{totalFiles}</div>
+              <div className="text-sm text-brand-blue">Evidence Files</div>
             </div>
-            <div className="text-center p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+            <div className="text-center p-3 bg-gradient-to-br from-green-500/10 to-green-500/20 rounded-lg border border-green-500/20">
               <div className="text-2xl font-bold text-green-600">{totalRows.toLocaleString()}</div>
-              <div className="text-sm text-green-700">Total Rows</div>
+              <div className="text-sm text-green-600">Total Records</div>
             </div>
-            <div className="text-center p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">
+            <div className="text-center p-3 bg-gradient-to-br from-brand-purple/10 to-brand-purple/20 rounded-lg border border-brand-purple/20">
+              <div className="text-2xl font-bold text-brand-purple">
                 {parsedData?.[0]?.columnInfo?.length || parsedData?.[0]?.columns || 0}
               </div>
-              <div className="text-sm text-purple-700">Columns</div>
+              <div className="text-sm text-brand-purple">Data Points</div>
             </div>
-            <div className="text-center p-3 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg">
+            <div className="text-center p-3 bg-gradient-to-br from-orange-500/10 to-orange-500/20 rounded-lg border border-orange-500/20">
               <div className="text-2xl font-bold text-orange-600">
                 {Object.keys(columnMapping || {}).length}
               </div>
-              <div className="text-sm text-orange-700">Mapped Fields</div>
+              <div className="text-sm text-orange-600">Mapped Fields</div>
             </div>
           </div>
 
           {parsedData && parsedData.length > 0 && (
             <div className="space-y-3">
-              <h4 className="font-medium text-gray-800 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-blue-500" />
-                Files to Analyze:
+              <h4 className="font-medium text-foreground flex items-center gap-2">
+                <FileText className="w-4 h-4 text-brand-blue" />
+                📋 Files to Investigate:
               </h4>
               {parsedData.map((data, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border border-blue-100">
+                <div key={index} className="flex items-center justify-between p-3 bg-gradient-to-r from-background to-brand-blue/5 rounded-lg border border-brand-blue/20">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-4 h-4 text-blue-500" />
+                    <FileText className="w-4 h-4 text-brand-blue" />
                     <div>
-                      <div className="font-medium text-sm text-gray-800">{data.name}</div>
-                      <div className="text-xs text-gray-600">
-                        {(data.rowCount || data.rows || 0).toLocaleString()} rows • {data.columnInfo?.length || data.columns || 0} columns
+                      <div className="font-medium text-sm text-foreground">{data.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {(data.rowCount || data.rows || 0).toLocaleString()} records • {data.columnInfo?.length || data.columns || 0} data points
                       </div>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
-                    Ready
+                  <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/20">
+                    🔍 Ready for Analysis
                   </Badge>
                 </div>
               ))}
@@ -234,26 +234,26 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
       </Card>
 
       {/* Analysis Options */}
-      <Card className="border-l-4 border-l-pink-500">
+      <Card className="border-l-4 border-l-brand-pink bg-gradient-to-r from-white to-brand-pink/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-pink-600" />
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Analysis Options
+            <Calendar className="w-5 h-5 text-brand-pink" />
+            <span className="bg-gradient-to-r from-brand-blue via-brand-purple to-brand-pink bg-clip-text text-transparent">
+              ⚙️ Investigation Options
             </span>
           </CardTitle>
           <CardDescription>
-            Choose how you want to run your investigation
+            Choose your detective approach for this case
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-2 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-100">
+          <div className="flex items-center space-x-2 p-3 bg-gradient-to-r from-brand-purple/5 to-brand-pink/5 rounded-lg border border-brand-purple/20">
             <input
               type="checkbox"
               id="educational"
               checked={educationalMode}
               onChange={(e) => setEducationalMode(e.target.checked)}
-              className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
+              className="rounded border-brand-purple/50 text-brand-purple focus:ring-brand-purple"
             />
             <Label htmlFor="educational" className="text-sm font-medium">
               🎓 Educational Mode (detailed explanations and step-by-step guidance)
@@ -264,7 +264,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
 
       {/* Action Buttons */}
       <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={onPrevious} className="flex items-center gap-2 hover:bg-gray-50">
+        <Button variant="outline" onClick={onPrevious} className="flex items-center gap-2 hover:bg-muted">
           <ArrowLeft className="w-4 h-4" />
           Previous
         </Button>
@@ -272,7 +272,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
         <Button 
           onClick={handleStartAnalysis}
           disabled={!researchQuestion || !projectName?.trim() || !parsedData || parsedData.length === 0 || isProcessingAnalysis}
-          className="bg-gradient-to-r from-blue-500 via-purple-600 to-pink-500 hover:from-blue-600 hover:via-purple-700 hover:to-pink-600 text-white flex items-center gap-2 px-8 py-2 shadow-lg hover:shadow-xl transition-all duration-200"
+          className="bg-gradient-to-r from-brand-blue via-brand-purple to-brand-pink hover:from-brand-blue/90 hover:via-brand-purple/90 hover:to-brand-pink/90 text-white flex items-center gap-2 px-8 py-2 shadow-lg hover:shadow-xl transition-all duration-200"
         >
           <Play className="w-4 h-4" />
           {isProcessingAnalysis ? '🔍 Starting Investigation...' : '🚀 Start Investigation'}
