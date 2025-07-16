@@ -1,8 +1,25 @@
 
+/**
+ * Code Analyzer
+ * Analyzes code quality and structure for refactoring recommendations
+ */
+
 import { RefactoringSuggestion } from '../autoRefactorSystem';
 import { RefactoringSuggestionGenerator } from './suggestionGenerator';
 import { AutoRefactorMonitor } from './autoRefactorMonitor';
 
+/** Code analysis constants */
+const ANALYSIS_CONSTANTS = {
+  MAX_LINES_PER_FILE: 220,
+  MAX_FUNCTION_COMPLEXITY: 5,
+  MAX_NESTING_DEPTH: 3,
+  PRIORITY_ORDER: { critical: 4, high: 3, medium: 2, low: 1 }
+} as const;
+
+/**
+ * Code quality analyzer
+ * Performs static analysis of code for quality metrics
+ */
 export class CodeAnalyzer {
   private suggestionGenerator = new RefactoringSuggestionGenerator();
   private autoRefactorMonitor = new AutoRefactorMonitor();
@@ -36,8 +53,7 @@ export class CodeAnalyzer {
 
     // Sort by priority and maintainability
     suggestions.sort((a, b) => {
-      const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
-      const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
+      const priorityDiff = ANALYSIS_CONSTANTS.PRIORITY_ORDER[b.priority] - ANALYSIS_CONSTANTS.PRIORITY_ORDER[a.priority];
       if (priorityDiff !== 0) return priorityDiff;
       return a.maintainabilityIndex - b.maintainabilityIndex;
     });

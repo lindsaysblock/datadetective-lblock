@@ -1,4 +1,28 @@
 
+/**
+ * File Metrics
+ * Calculates and tracks code metrics for files
+ */
+
+/** File metric thresholds */
+const METRIC_THRESHOLDS = {
+  MAX_LINES: 220,
+  MAX_COMPLEXITY: 10,
+  MAX_DEPENDENCIES: 15,
+  LINE_THRESHOLDS: {
+    component: 200,
+    hook: 150,
+    utility: 250,
+    page: 300
+  },
+  COMPLEXITY_THRESHOLDS: {
+    low: 10,
+    medium: 20,
+    high: 30
+  }
+} as const;
+
+/** File metrics interface */
 export interface FileMetrics {
   lines: number;
   complexity: number;
@@ -6,19 +30,13 @@ export interface FileMetrics {
   urgencyScore: number;
 }
 
+/**
+ * File metrics calculator
+ * Provides calculations for code quality metrics
+ */
 export class FileMetricsCalculator {
-  private readonly LINE_THRESHOLDS = {
-    component: 200,
-    hook: 150,
-    utility: 250,
-    page: 300
-  };
-
-  private readonly COMPLEXITY_THRESHOLDS = {
-    low: 10,
-    medium: 20,
-    high: 30
-  };
+  private readonly LINE_THRESHOLDS = METRIC_THRESHOLDS.LINE_THRESHOLDS;
+  private readonly COMPLEXITY_THRESHOLDS = METRIC_THRESHOLDS.COMPLEXITY_THRESHOLDS;
 
   calculateMaintainabilityIndex(lines: number, complexity: number): number {
     const volume = Math.log2(lines) * 10;

@@ -1,10 +1,29 @@
 
+/**
+ * Test Case Updater
+ * Updates test cases after refactoring operations
+ */
+
+/** Test update constants */
+const UPDATE_CONSTANTS = {
+  BATCH_SIZE: 5,
+  UPDATE_TIMEOUT: 8000,
+  VALIDATION_RETRIES: 3,
+  MIN_COVERAGE_THRESHOLD: 80,
+  TARGET_COVERAGE: 95
+} as const;
+
+/** Refactored component interface */
 interface RefactoredComponent {
   originalFile: string;
   newFiles: string[];
   refactorType: 'component-split' | 'hook-extraction' | 'utility-extraction';
 }
 
+/**
+ * Automated test case updater
+ * Maintains test synchronization with refactored code
+ */
 export class TestCaseUpdater {
   private readonly COMMON_REFACTOR_PATTERNS = {
     'QARunner.tsx': {
@@ -141,7 +160,7 @@ export class TestCaseUpdater {
       coverage: Math.random() * 40 + 60 // 60-100% coverage
     }));
     
-    const lowCoverageFiles = mockCoverage.filter(f => f.coverage < 80);
+    const lowCoverageFiles = mockCoverage.filter(f => f.coverage < UPDATE_CONSTANTS.MIN_COVERAGE_THRESHOLD);
     
     if (lowCoverageFiles.length > 0) {
       console.warn(`⚠️ Low test coverage detected in ${lowCoverageFiles.length} files:`, lowCoverageFiles);
@@ -163,7 +182,7 @@ export class TestCaseUpdater {
     - Add integration tests if missing
     - Test async operations and promises
     - Add performance and load tests
-    - Target 95%+ test coverage`;
+    - Target ${UPDATE_CONSTANTS.TARGET_COVERAGE}%+ test coverage`;
     
     this.dispatchTestUpdateMessage(testMessage);
   }

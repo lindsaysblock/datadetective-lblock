@@ -1,13 +1,32 @@
 
+/**
+ * Refactor Executor
+ * Executes automated code refactoring operations
+ */
+
 import { RefactoringSuggestion } from '../autoRefactorSystem';
 import { TestCaseUpdater } from './testCaseUpdater';
 
-export class RefactorExecutor {
-  private readonly COMPLEXITY_THRESHOLDS = {
+/** Refactor execution constants */
+const EXECUTOR_CONSTANTS = {
+  MAX_CONCURRENT_REFACTORS: 3,
+  BACKUP_RETENTION_DAYS: 7,
+  VALIDATION_TIMEOUT: 10000,
+  AUTO_REFACTOR_THRESHOLD: 220,
+  REFACTOR_DELAY: 1500,
+  COMPLEXITY_THRESHOLDS: {
     low: 10,
     medium: 20,
     high: 30
-  };
+  }
+} as const;
+
+/**
+ * Automated refactoring executor
+ * Safely executes code refactoring operations with validation
+ */
+export class RefactorExecutor {
+  private readonly COMPLEXITY_THRESHOLDS = EXECUTOR_CONSTANTS.COMPLEXITY_THRESHOLDS;
   
   private testCaseUpdater = new TestCaseUpdater();
 
@@ -19,7 +38,7 @@ export class RefactorExecutor {
         suggestion.priority === 'critical' ||
         suggestion.maintainabilityIndex < 30 ||
         suggestion.complexity > this.COMPLEXITY_THRESHOLDS.high ||
-        suggestion.currentLines > 220 // Auto-refactor threshold
+        suggestion.currentLines > EXECUTOR_CONSTANTS.AUTO_REFACTOR_THRESHOLD
       );
       
       if (shouldTrigger) {
@@ -71,7 +90,7 @@ export class RefactorExecutor {
         await this.testCaseUpdater.updateTestCasesAfterRefactoring(suggestion.file);
         
         // Small delay between refactorings
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, EXECUTOR_CONSTANTS.REFACTOR_DELAY));
       }
       
       // Verify test coverage after all refactoring

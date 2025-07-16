@@ -1,5 +1,26 @@
+/**
+ * Performance Optimizer
+ * Optimizes system performance during QA testing
+ */
+
 import { diskIOOptimizer } from '../../performance/diskIOOptimizer';
 
+/** Performance optimization constants */
+const PERFORMANCE_CONSTANTS = {
+  MEMORY_THRESHOLD: 0.8,
+  CPU_THRESHOLD: 0.9,
+  OPTIMIZATION_INTERVAL: 2000,
+  MEMORY_CONVERSION: 1024 * 1024,
+  MEMORY_LEAK_THRESHOLD: 5 * 1024 * 1024, // 5MB
+  SNAPSHOT_RETENTION: 5,
+  METRIC_RETENTION_TIME: 5 * 60 * 1000, // 5 minutes
+  MEMORY_BASELINE: 25 // MB
+} as const;
+
+/**
+ * System performance optimizer
+ * Manages performance optimization during QA operations
+ */
 export class PerformanceOptimizer {
   private performanceMetrics = new Map<string, number>();
   private memorySnapshots: Array<{ timestamp: Date; usage: number }> = [];
@@ -61,10 +82,10 @@ export class PerformanceOptimizer {
     if (this.memorySnapshots.length === 0) return 100;
     
     const latestSnapshot = this.memorySnapshots[this.memorySnapshots.length - 1];
-    const memoryUsageMB = latestSnapshot.usage / (1024 * 1024);
+    const memoryUsageMB = latestSnapshot.usage / PERFORMANCE_CONSTANTS.MEMORY_CONVERSION;
     
     // More aggressive memory efficiency calculation
-    return Math.max(0, Math.min(100, 100 - Math.max(0, (memoryUsageMB - 25) * 4)));
+    return Math.max(0, Math.min(100, 100 - Math.max(0, (memoryUsageMB - PERFORMANCE_CONSTANTS.MEMORY_BASELINE) * 4)));
   }
 
   takeMemorySnapshot(): void {
@@ -75,8 +96,8 @@ export class PerformanceOptimizer {
         usage
       });
       
-      // Keep only last 5 snapshots for reduced memory usage
-      if (this.memorySnapshots.length > 5) {
+      // Keep only last snapshots for reduced memory usage
+      if (this.memorySnapshots.length > PERFORMANCE_CONSTANTS.SNAPSHOT_RETENTION) {
         this.memorySnapshots.shift();
       }
       
@@ -94,7 +115,7 @@ export class PerformanceOptimizer {
       return snapshot.usage > recent[index - 1].usage;
     });
     
-    return isIncreasing && (recent[2].usage - recent[0].usage) > 5 * 1024 * 1024; // 5MB increase
+    return isIncreasing && (recent[2].usage - recent[0].usage) > PERFORMANCE_CONSTANTS.MEMORY_LEAK_THRESHOLD;
   }
 
   optimizeIO(): void {
@@ -102,7 +123,7 @@ export class PerformanceOptimizer {
     diskIOOptimizer.flushPendingWrites();
     
     // Clear old metrics to free memory
-    const cutoffTime = Date.now() - 5 * 60 * 1000; // 5 minutes
+    const cutoffTime = Date.now() - PERFORMANCE_CONSTANTS.METRIC_RETENTION_TIME;
     const recentMetrics = new Map<string, number>();
     
     for (const [key, value] of this.performanceMetrics) {

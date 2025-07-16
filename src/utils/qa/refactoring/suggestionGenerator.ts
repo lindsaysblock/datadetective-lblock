@@ -1,7 +1,32 @@
 
+/**
+ * Suggestion Generator
+ * Generates refactoring suggestions based on code analysis
+ */
+
 import { RefactoringSuggestion } from '../autoRefactorSystem';
 import { FileMetricsCalculator } from './fileMetrics';
 
+/** Suggestion generation constants */
+const SUGGESTION_CONSTANTS = {
+  MIN_CONFIDENCE_SCORE: 0.7,
+  MAX_SUGGESTIONS_PER_FILE: 5,
+  PRIORITY_WEIGHTS: {
+    high: 3,
+    medium: 2,
+    low: 1
+  },
+  URGENCY_THRESHOLDS: {
+    high: 70,
+    medium: 40
+  },
+  MAINTAINABILITY_THRESHOLD: 40
+} as const;
+
+/**
+ * Refactoring suggestion generator
+ * Creates prioritized suggestions for code improvements
+ */
 export class RefactoringSuggestionGenerator {
   private metricsCalculator = new FileMetricsCalculator();
 
@@ -21,7 +46,8 @@ export class RefactoringSuggestionGenerator {
       complexity: file.complexity,
       maintainabilityIndex,
       issues: this.identifyIssues(file),
-      estimatedImpact: urgencyScore > 70 ? 'high' : urgencyScore > 40 ? 'medium' : 'low',
+      estimatedImpact: urgencyScore > SUGGESTION_CONSTANTS.URGENCY_THRESHOLDS.high ? 'high' : 
+                       urgencyScore > SUGGESTION_CONSTANTS.URGENCY_THRESHOLDS.medium ? 'medium' : 'low',
       urgencyScore
     };
   }
@@ -57,7 +83,7 @@ export class RefactoringSuggestionGenerator {
     }
     
     const maintainability = this.metricsCalculator.calculateMaintainabilityIndex(file.lines, file.complexity);
-    if (maintainability < 40) {
+    if (maintainability < SUGGESTION_CONSTANTS.MAINTAINABILITY_THRESHOLD) {
       reasons.push('has low maintainability index');
     }
     
