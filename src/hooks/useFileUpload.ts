@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import Papa from 'papaparse';
+import { validateFile } from '@/utils/fileValidation';
 
 export const useFileUpload = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -30,6 +31,19 @@ export const useFileUpload = () => {
 
     setUploading(true);
     setParsing(true);
+
+    // Validate file first
+    const validation = validateFile(file);
+    if (!validation.isValid) {
+      toast({
+        title: "File Validation Failed",
+        description: validation.error,
+        variant: "destructive",
+      });
+      setParsing(false);
+      setUploading(false);
+      return;
+    }
 
     try {
       const fileExtension = file.name?.split('.').pop()?.toLowerCase();
@@ -160,9 +174,10 @@ export const useFileUpload = () => {
         };
         reader.readAsText(file);
       } else {
+        // This should never happen due to validation above
         toast({
-          title: "Unsupported File Type",
-          description: `File type .${fileExtension} is not supported. Please upload CSV, JSON, or TXT files.`,
+          title: "File Processing Error",
+          description: `Unexpected file type encountered. Please contact support.`,
           variant: "destructive",
         });
         setParsing(false);

@@ -21,6 +21,7 @@ export interface ParsedData {
 
 import { parseCSV } from './parsers/csvParser';
 import { parseJSON } from './parsers/jsonParser';
+import { validateFile } from './fileValidation';
 
 export const parseFile = async (file: File): Promise<ParsedData> => {
   console.log('🔍 Starting file parsing:', {
@@ -37,7 +38,13 @@ export const parseFile = async (file: File): Promise<ParsedData> => {
     throw new Error('File size exceeds 100MB limit');
   }
   
-  const extension = file?.name?.split('.').pop()?.toLowerCase();
+  // Use unified validation
+  const validation = validateFile(file);
+  if (!validation.isValid) {
+    throw new Error(validation.error);
+  }
+  
+  const extension = file.name?.split('.').pop()?.toLowerCase();
   
   let parsedData: ParsedData;
   
@@ -58,7 +65,7 @@ export const parseFile = async (file: File): Promise<ParsedData> => {
         }
         break;
       default:
-        throw new Error(`Unsupported file type: ${extension}. Please upload CSV, JSON, or TXT files.`);
+        throw new Error(`File type .${extension} is not supported. Supported types: CSV, JSON, TXT, XLSX`);
     }
     
     // Validate parsed data

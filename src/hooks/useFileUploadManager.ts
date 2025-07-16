@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
+import { validateFile } from '@/utils/fileValidation';
 
 export interface FileUploadResult {
   id: string;
@@ -51,6 +52,12 @@ export const useFileUploadManager = () => {
   }, [user?.id, generateUniqueFilename]);
 
   const parseFileData = useCallback(async (file: File): Promise<any> => {
+    // Validate file first
+    const validation = validateFile(file);
+    if (!validation.isValid) {
+      throw new Error(validation.error);
+    }
+    
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
@@ -140,7 +147,7 @@ export const useFileUploadManager = () => {
               });
             }
           } else {
-            reject(new Error(`Unsupported file type: ${extension}. Please upload CSV, JSON, or TXT files.`));
+            reject(new Error(`File type .${extension} is not supported. Supported types: CSV, JSON, TXT`));
           }
         } catch (error) {
           reject(error);

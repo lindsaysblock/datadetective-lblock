@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, FileText, Database } from 'lucide-react';
 import { File as FileIcon } from 'lucide-react';
+import { getAcceptString } from '@/utils/fileValidation';
 
 interface FileUploadSectionProps {
   file: File | null;
@@ -66,7 +67,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
         id="upload"
         className="hidden"
         onChange={onFileChange}
-        accept=".csv,.json,.txt"
+        accept={getAcceptString()}
       />
       
       {!file ? (

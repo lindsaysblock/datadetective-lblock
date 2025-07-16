@@ -70,7 +70,7 @@ export class AnalyticsExportImport {
     results: AnalysisResult[];
     metadata: any;
   }> {
-    const extension = file.name.split('.').pop()?.toLowerCase();
+    const extension = file.name?.split('.').pop()?.toLowerCase();
     
     switch (extension) {
       case 'json':

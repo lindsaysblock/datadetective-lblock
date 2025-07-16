@@ -45,7 +45,7 @@ Bob Johnson,35,Chicago`;
       }
       
       // Test file parsing logic
-      const extension = testFile.name.split('.').pop()?.toLowerCase();
+      const extension = testFile.name?.split('.').pop()?.toLowerCase();
       if (extension !== 'csv') {
         throw new Error('File extension detection failed');
       }
@@ -144,7 +144,7 @@ Bob Johnson,35,Chicago`;
           throw new Error('File name is undefined');
         }
         
-        const extension = file.name.split('.').pop()?.toLowerCase();
+        const extension = file.name?.split('.').pop()?.toLowerCase();
         const content = await file.text();
         
         results.push({
@@ -196,7 +196,7 @@ Bob Johnson,35,Chicago`;
       // Test file without extension
       const noExtFile = createTestFile('noextension', 'test data', 'text/plain');
       const fileName = noExtFile.name;
-      const extension = fileName.split('.').pop();
+      const extension = fileName?.split('.').pop();
       
       if (extension === 'noextension') {
         console.log('File without extension handled correctly');

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, FileText, Database, ArrowLeft } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
+import { getDropzoneAccept } from '@/utils/fileValidation';
 
 interface DataSourceOptionsProps {
   onFileUpload: (files: File[]) => void;
@@ -29,13 +30,7 @@ const DataSourceOptions: React.FC<DataSourceOptionsProps> = ({
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
-    accept: {
-      'text/csv': ['.csv'],
-      'application/json': ['.json'],
-      'text/plain': ['.txt'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-      'application/vnd.ms-excel': ['.xls']
-    },
+    accept: getDropzoneAccept(),
     multiple: true,
     noClick: true
   });

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getAcceptString } from '@/utils/fileValidation';
 
 interface FileUploadInputProps {
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -16,7 +17,7 @@ const FileUploadInput: React.FC<FileUploadInputProps> = ({ onFileChange }) => {
       <Input
         id="file-upload"
         type="file"
-        accept=".csv,.json,.txt,.xlsx"
+        accept={getAcceptString()}
         onChange={onFileChange}
         className="cursor-pointer"
       />

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { usePrivacyModal } from '@/hooks/usePrivacyModal';
+import { getDropzoneAccept, validateFile as validateFileUnified } from '@/utils/fileValidation';
 import PrivacySecurityModal from './PrivacySecurityModal';
 
 interface RateLimitedDropzoneProps {
@@ -53,12 +54,12 @@ const RateLimitedDropzone: React.FC<RateLimitedDropzoneProps> = ({
       };
     }
 
-    // Check file type
-    const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    if (!fileExtension || !allowedTypes.includes(fileExtension)) {
+    // Use unified validation
+    const validation = validateFileUnified(file);
+    if (!validation.isValid) {
       return {
         isValid: false,
-        error: `File type .${fileExtension} not supported. Allowed types: ${allowedTypes.join(', ')}`
+        error: validation.error || 'File validation failed'
       };
     }
 
@@ -123,12 +124,7 @@ const RateLimitedDropzone: React.FC<RateLimitedDropzoneProps> = ({
     onDrop,
     onDragEnter,
     onDragLeave,
-    accept: {
-      'text/csv': ['.csv'],
-      'application/json': ['.json'],
-      'text/plain': ['.txt'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
-    },
+    accept: getDropzoneAccept(),
     maxFiles: 1,
     maxSize: maxFileSize * 1024 * 1024,
     noClick: true

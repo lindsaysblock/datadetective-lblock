@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Papa from 'papaparse';
 import { ColumnMapping } from '../components/data/ColumnIdentificationStep';
+import { validateFile } from '@/utils/fileValidation';
 
 export const useProjectFormState = () => {
   console.log('useProjectFormState initializing');
@@ -39,6 +40,12 @@ export const useProjectFormState = () => {
   };
 
   const parseFile = async (file: File): Promise<any> => {
+    // Validate file first
+    const validation = validateFile(file);
+    if (!validation.isValid) {
+      throw new Error(validation.error);
+    }
+    
     return new Promise((resolve, reject) => {
       const fileExtension = file.name?.split('.').pop()?.toLowerCase();
 
@@ -125,7 +132,7 @@ export const useProjectFormState = () => {
         };
         reader.readAsText(file);
       } else {
-        reject(new Error(`Unsupported file type: ${fileExtension}. Please upload CSV, JSON, or TXT files.`));
+        reject(new Error(`File type .${fileExtension} is not supported. Supported types: CSV, JSON, TXT`));
       }
     });
   };

@@ -135,7 +135,7 @@ const UserProfilePanel: React.FC = () => {
     try {
       setLoading(true);
       
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name?.split('.').pop();
       const fileName = `${user?.id}/avatar.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage

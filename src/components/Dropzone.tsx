@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { usePrivacyModal } from '@/hooks/usePrivacyModal';
+import { getDropzoneAccept } from '@/utils/fileValidation';
 import PrivacySecurityModal from './PrivacySecurityModal';
 
 interface DropzoneProps {
@@ -49,11 +50,7 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFileProcessed }) => {
     onDragEnter,
     onDragLeave,
     onDropRejected,
-    accept: {
-      'text/csv': ['.csv'],
-      'application/json': ['.json'],
-      'text/plain': ['.txt']
-    },
+    accept: getDropzoneAccept(),
     maxFiles: 1,
     noClick: true
   });

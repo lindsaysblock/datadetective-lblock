@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Upload, File, X, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { getAcceptString } from '@/utils/fileValidation';
 
 interface FileUploadSectionProps {
   files: File[];
@@ -62,7 +63,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
               type="file"
               onChange={handleFileInputChange}
               multiple
-              accept=".csv,.json,.xlsx,.xls,.txt"
+              accept={getAcceptString()}
               className="hidden"
               id="file-upload"
             />
