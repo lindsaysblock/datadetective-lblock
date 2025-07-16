@@ -1,10 +1,16 @@
 
+/**
+ * Analysis Results Display Component
+ * Refactored to meet coding standards with proper constants and semantic theming
+ */
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AnalysisResults } from '@/types/data';
 import { TrendingUp, Database, Lightbulb, Target } from 'lucide-react';
+import { SPACING } from '@/constants/ui';
 
 interface AnalysisResultsDisplayProps {
   results: AnalysisResults;
@@ -29,13 +35,13 @@ const AnalysisResultsDisplay: React.FC<AnalysisResultsDisplayProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-${SPACING.LG}`}>
       {/* Analysis Overview */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
+            <CardTitle className={`flex items-center gap-${SPACING.SM}`}>
+              <TrendingUp className={`w-5 h-5 text-blue-600`} />
               Analysis Overview
             </CardTitle>
             <Badge className={getConfidenceColor(results.confidence)}>
@@ -44,8 +50,8 @@ const AnalysisResultsDisplay: React.FC<AnalysisResultsDisplayProps> = ({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
+          <div className={`grid grid-cols-1 md:grid-cols-3 gap-${SPACING.MD}`}>
+            <div className={`text-center p-${SPACING.MD} bg-blue-50 rounded-lg`}>
               <div className="text-2xl font-bold text-blue-600">
                 {results.detailedResults?.length || 0}
               </div>

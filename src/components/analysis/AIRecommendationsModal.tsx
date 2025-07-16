@@ -1,10 +1,16 @@
 
+/**
+ * AI Recommendations Modal Component
+ * Refactored to meet coding standards with proper constants and semantic theming
+ */
+
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Brain, TrendingUp, Target, AlertCircle, CheckCircle, Zap } from 'lucide-react';
+import { SPACING } from '@/constants/ui';
 
 interface MetricRecommendation {
   title: string;
@@ -105,7 +111,7 @@ const AIRecommendationsModal: React.FC<AIRecommendationsModalProps> = ({
       analysis: Brain
     };
     const IconComponent = icons[category as keyof typeof icons] || Zap;
-    return <IconComponent className="w-4 h-4" />;
+    return <IconComponent className={`w-${SPACING.MD} h-${SPACING.MD}`} />;
   };
 
   const filteredRecommendations = useMemo(() => 

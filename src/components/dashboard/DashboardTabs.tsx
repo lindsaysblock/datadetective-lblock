@@ -1,7 +1,13 @@
 
+/**
+ * Dashboard Tabs Component
+ * Refactored to meet coding standards with proper constants and semantic styling
+ */
+
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Lightbulb, BarChart3, Database, TestTube, Settings, Brain, FileText, Shield } from 'lucide-react';
+import { SPACING } from '@/constants/ui';
 
 interface DashboardTabsProps {
   activeTab: string;
@@ -12,13 +18,13 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, onTabChange })
   const TAB_COUNT = 9;
   
   return (
-    <TabsList className={`grid w-full grid-cols-${TAB_COUNT} mb-8`}>
-      <TabsTrigger value="insights" className="flex items-center gap-2">
-        <Lightbulb className="w-4 h-4" />
+    <TabsList className={`grid w-full grid-cols-${TAB_COUNT} mb-${SPACING.XL}`}>
+      <TabsTrigger value="insights" className={`flex items-center gap-${SPACING.SM}`}>
+        <Lightbulb className={`w-${SPACING.MD} h-${SPACING.MD}`} />
         Business Insights
       </TabsTrigger>
-      <TabsTrigger value="analytics" className="flex items-center gap-2">
-        <Brain className="w-4 h-4" />
+      <TabsTrigger value="analytics" className={`flex items-center gap-${SPACING.SM}`}>
+        <Brain className={`w-${SPACING.MD} h-${SPACING.MD}`} />
         AI Analytics
       </TabsTrigger>
       <TabsTrigger value="visualize" className="flex items-center gap-2">

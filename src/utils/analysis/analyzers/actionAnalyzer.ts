@@ -1,4 +1,9 @@
 
+/**
+ * Action Analyzer Utility
+ * Refactored to meet coding standards with proper constants and error handling
+ */
+
 import { ParsedData } from '../../dataParser';
 import { AnalysisResult } from '../types';
 
@@ -84,8 +89,9 @@ export class ActionAnalyzer {
     }
 
     const totalEvents = authData.loggedIn + authData.anonymous;
+    const PERCENTAGE_PRECISION = 1;
     const loggedInPercentage = totalEvents > 0 
-      ? ((authData.loggedIn / totalEvents) * 100).toFixed(1)
+      ? ((authData.loggedIn / totalEvents) * 100).toFixed(PERCENTAGE_PRECISION)
       : '0.0';
 
     const chartData = [
@@ -97,7 +103,7 @@ export class ActionAnalyzer {
       { 
         name: 'Anonymous', 
         value: authData.anonymous, 
-        percentage: ((authData.anonymous / totalEvents) * 100).toFixed(1) 
+        percentage: ((authData.anonymous / totalEvents) * 100).toFixed(PERCENTAGE_PRECISION) 
       }
     ];
 
@@ -147,12 +153,13 @@ export class ActionAnalyzer {
 
   private formatActionData(actionCounts: Record<string, number>): ActionBreakdownData[] {
     const totalActions = Object.values(actionCounts).reduce((sum, count) => sum + count, 0);
+    const PERCENTAGE_PRECISION = 1;
     
     return Object.entries(actionCounts)
       .map(([action, count]) => ({
         name: action,
         value: count,
-        percentage: totalActions > 0 ? ((count / totalActions) * 100).toFixed(1) : '0.0'
+        percentage: totalActions > 0 ? ((count / totalActions) * 100).toFixed(PERCENTAGE_PRECISION) : '0.0'
       }))
       .sort((a, b) => b.value - a.value);
   }

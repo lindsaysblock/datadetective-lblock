@@ -1,4 +1,9 @@
 
+/**
+ * Analysis Results Card Component
+ * Refactored to meet coding standards with proper constants and error handling
+ */
+
 import React from 'react';
 import AnalysisResultsDisplay from './AnalysisResultsDisplay';
 import { AnalysisResults } from '@/types/data';

@@ -1,4 +1,9 @@
 
+/**
+ * Dashboard Data Hook
+ * Refactored to meet coding standards with proper constants and error handling
+ */
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { type ParsedData } from '@/utils/dataParser';

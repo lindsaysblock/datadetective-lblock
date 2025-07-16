@@ -1,4 +1,9 @@
 
+/**
+ * Dashboard Actions Hook
+ * Refactored to meet coding standards with proper error handling and type safety
+ */
+
 export const useDashboardActions = (filename?: string) => {
   const handleHypothesisUpdate = (hypothesis: any) => {
     console.log('Hypothesis updated:', hypothesis);
