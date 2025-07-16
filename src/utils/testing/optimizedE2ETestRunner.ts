@@ -307,7 +307,7 @@ Jane Smith,25,Los Angeles
   };
 
   const runTests = async (): Promise<E2ETestResult[]> => {
-    console.log('🚀 Starting Optimized E2E Test Suite...');
+    console.log('🚀 Starting Data Detective E2E Pipeline Test Suite...');
     
     const tests = [
       testNewProjectFlow,
@@ -397,7 +397,7 @@ Jane Smith,25,Los Angeles
   };
 
   return {
-    name: 'Optimized E2E Test Suite with File Upload Testing',
+    name: 'Data Detective E2E Pipeline Test Suite',
     runTests
   };
 };

@@ -414,7 +414,7 @@ export const createDataPipelineTestSuite = (): DataPipelineTestSuite => {
   };
 
   const runAllTests = async (): Promise<DataPipelineTestResult[]> => {
-    console.log('🚀 Running Data Pipeline Test Suite...');
+    console.log('🚀 Running Data Detective E2E Pipeline Test Suite...');
     
     const tests = [
       testEndToEndPipeline,
@@ -449,7 +449,7 @@ export const createDataPipelineTestSuite = (): DataPipelineTestSuite => {
   };
 
   return {
-    name: 'Data Pipeline Test Suite',
+    name: 'Data Detective E2E Pipeline Test Suite',
     testEndToEndPipeline,
     testAnalysisEngine,
     testDataTransformation,
