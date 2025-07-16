@@ -108,10 +108,10 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     // Validate data structure
     const hasValidData = parsedData.some(data => 
       data && 
-      (data.rowCount > 0 || data.rows > 0) && 
-      data.columnInfo && 
-      Array.isArray(data.columnInfo) && 
-      data.columnInfo.length > 0
+      (data.rowCount > 0 || (data.rows && data.rows.length > 0)) && 
+      data.columns && 
+      Array.isArray(data.columns) && 
+      data.columns.length > 0
     );
 
     if (!hasValidData) {
