@@ -65,6 +65,59 @@ export type Database = {
           },
         ]
       }
+      analysis_sessions: {
+        Row: {
+          completed_at: string | null
+          id: string
+          insights: Json | null
+          metadata: Json | null
+          project_id: string
+          recommendations: Json | null
+          session_type: string
+          sql_queries: Json | null
+          started_at: string
+          status: string
+          user_id: string
+          visualizations: Json | null
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          insights?: Json | null
+          metadata?: Json | null
+          project_id: string
+          recommendations?: Json | null
+          session_type?: string
+          sql_queries?: Json | null
+          started_at?: string
+          status?: string
+          user_id: string
+          visualizations?: Json | null
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          insights?: Json | null
+          metadata?: Json | null
+          project_id?: string
+          recommendations?: Json | null
+          session_type?: string
+          sql_queries?: Json | null
+          started_at?: string
+          status?: string
+          user_id?: string
+          visualizations?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_sessions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       datasets: {
         Row: {
           created_at: string | null
@@ -144,6 +197,139 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      project_files: {
+        Row: {
+          column_mapping: Json | null
+          created_at: string
+          file_size: number
+          filename: string
+          id: string
+          mime_type: string
+          original_filename: string
+          parsed_data: Json | null
+          processed_at: string | null
+          project_id: string
+          storage_path: string
+        }
+        Insert: {
+          column_mapping?: Json | null
+          created_at?: string
+          file_size: number
+          filename: string
+          id?: string
+          mime_type: string
+          original_filename: string
+          parsed_data?: Json | null
+          processed_at?: string | null
+          project_id: string
+          storage_path: string
+        }
+        Update: {
+          column_mapping?: Json | null
+          created_at?: string
+          file_size?: number
+          filename?: string
+          id?: string
+          mime_type?: string
+          original_filename?: string
+          parsed_data?: Json | null
+          processed_at?: string | null
+          project_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          business_context: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          mode: string
+          name: string
+          research_question: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_context?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          mode?: string
+          name: string
+          research_question: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_context?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          mode?: string
+          name?: string
+          research_question?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      research_questions: {
+        Row: {
+          analysis_session_id: string
+          answer: string | null
+          answered_at: string | null
+          asked_at: string
+          confidence_level: string | null
+          id: string
+          question: string
+          sql_query: string | null
+          visualization_data: Json | null
+        }
+        Insert: {
+          analysis_session_id: string
+          answer?: string | null
+          answered_at?: string | null
+          asked_at?: string
+          confidence_level?: string | null
+          id?: string
+          question: string
+          sql_query?: string | null
+          visualization_data?: Json | null
+        }
+        Update: {
+          analysis_session_id?: string
+          answer?: string | null
+          answered_at?: string | null
+          asked_at?: string
+          confidence_level?: string | null
+          id?: string
+          question?: string
+          sql_query?: string | null
+          visualization_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_questions_analysis_session_id_fkey"
+            columns: ["analysis_session_id"]
+            isOneToOne: false
+            referencedRelation: "analysis_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

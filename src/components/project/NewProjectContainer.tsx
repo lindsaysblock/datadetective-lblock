@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useNewProjectForm } from '@/hooks/useNewProjectForm';
+import { useOptimizedNewProjectForm } from '@/hooks/useOptimizedNewProjectForm';
 import NewProjectLayout from './NewProjectLayout';
 import NewProjectContent from './NewProjectContent';
 
@@ -9,29 +9,49 @@ const NewProjectContainer: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isInitialized, setIsInitialized] = useState(false);
+  
   const {
     formData,
     isLoading,
     error,
-    actions: {
-      setContinueCaseData,
-      resetForm,
-    }
-  } = useNewProjectForm();
+    nextStep,
+    prevStep,
+    goToStep,
+    updateField,
+    setResearchQuestion,
+    setProjectName,
+    setBusinessContext,
+    handleFileSelection,
+    removeFile,
+    startAnalysis,
+    resetForm,
+    loadProject,
+    uploadProgress,
+    processingStatus,
+  } = useOptimizedNewProjectForm();
 
-  console.log('NewProjectContainer rendering with formData:', formData);
+  console.log('NewProjectContainer rendering with optimized formData:', {
+    step: formData.step,
+    projectName: formData.projectName,
+    researchQuestion: formData.researchQuestion,
+    hasFiles: formData.selectedFiles.length > 0 || formData.uploadedFiles.length > 0,
+  });
 
   // Handle continue investigation from route state
   useEffect(() => {
     if (!isInitialized && location.state?.continueInvestigation && location.state?.dataset) {
-      console.log('🔄 Initializing continue case:', location.state.dataset);
-      setContinueCaseData(location.state.dataset);
+      console.log('🔄 Loading existing project:', location.state.dataset);
+      
+      // If we have a dataset with an ID, load the full project
+      if (location.state.dataset.id) {
+        loadProject(location.state.dataset.id);
+      }
       setIsInitialized(true);
     } else if (!isInitialized) {
       // Normal initialization
       setIsInitialized(true);
     }
-  }, [location.state, setContinueCaseData, isInitialized]);
+  }, [location.state, loadProject, isInitialized]);
 
   // Show loading state during initialization
   if (!isInitialized || isLoading) {
@@ -71,23 +91,56 @@ const NewProjectContainer: React.FC = () => {
     );
   }
 
-  const handleStartAnalysis = (educationalMode?: boolean, projectName?: string) => {
-    console.log('Starting analysis with:', { educationalMode, projectName, formData });
-    // Navigate to analysis or handle analysis start
-    navigate('/analysis', { 
-      state: { 
-        formData, 
-        educationalMode, 
-        projectName 
-      } 
-    });
+  // Create enhanced form data object for backward compatibility
+  const enhancedFormData = {
+    ...formData,
+    // Add action functions for components
+    setResearchQuestion,
+    setProjectName,
+    setAdditionalContext: setBusinessContext,
+    nextStep,
+    prevStep,
+    goToStep,
+    onFileChange: (files: FileList | null) => {
+      if (files) {
+        handleFileSelection(Array.from(files));
+      }
+    },
+    handleFileUpload: async () => {
+      // Files are processed automatically when analysis starts
+      return true;
+    },
+    removeFile: (index: number) => {
+      const fileToRemove = formData.selectedFiles[index];
+      if (fileToRemove) {
+        const newFiles = formData.selectedFiles.filter((_, i) => i !== index);
+        updateField('selectedFiles', newFiles);
+      }
+    },
+    setColumnMapping: (mapping: Record<string, string>) => {
+      console.log('Column mapping set:', mapping);
+      // Column mapping will be handled in the file upload process
+    },
+    // Computed properties
+    files: formData.selectedFiles,
+    uploading: processingStatus && Object.values(processingStatus).some(status => status === 'uploading'),
+    parsing: processingStatus && Object.values(processingStatus).some(status => status === 'parsing'),
+    parsedData: formData.parsedData,
+    processedFiles: formData.uploadedFiles,
+    columnMapping: {},
+    analysisResults: null,
+    analysisCompleted: false,
+    isProcessingAnalysis: formData.isProcessing,
+    hasData: formData.selectedFiles.length > 0 || formData.uploadedFiles.length > 0,
+    businessContext: formData.businessContext,
+    additionalContext: formData.businessContext,
   };
 
   return (
     <NewProjectLayout>
       <NewProjectContent
-        formData={formData}
-        onStartAnalysis={handleStartAnalysis}
+        formData={enhancedFormData}
+        onStartAnalysis={startAnalysis}
       />
     </NewProjectLayout>
   );

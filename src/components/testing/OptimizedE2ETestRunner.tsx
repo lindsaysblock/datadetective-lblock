@@ -1,363 +1,224 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Play, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
-import { useOptimizedDataPipeline } from '@/hooks/useOptimizedDataPipeline';
-import { useAnalyticsManager } from '@/hooks/useAnalyticsManager';
-import { performanceMonitor } from '@/utils/performance/performanceMonitor';
+import { Play, CheckCircle, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
+import { OptimizedE2ETestRunner, E2ETestResult } from '../../utils/testing/optimizedE2ETestRunner';
+import TestResultCard from './TestResultCard';
 
-interface TestResult {
-  id: string;
-  name: string;
-  status: 'running' | 'passed' | 'failed' | 'warning';
-  duration: number;
-  message: string;
-  details?: any;
-}
-
-const OptimizedE2ETestRunner: React.FC = () => {
+const OptimizedE2ETestRunnerComponent: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [currentTest, setCurrentTest] = useState('');
-  const [results, setResults] = useState<TestResult[]>([]);
+  const [testResults, setTestResults] = useState<E2ETestResult[]>([]);
+  const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
   const { toast } = useToast();
-  const dataPipeline = useOptimizedDataPipeline();
-  const analyticsManager = useAnalyticsManager();
 
-  const testSuites = [
-    { id: 'auth', name: 'Authentication', weight: 20 },
-    { id: 'pipeline', name: 'Data Pipeline', weight: 25 },
-    { id: 'analytics', name: 'Analytics Engine', weight: 30 },
-    { id: 'performance', name: 'Performance', weight: 25 }
-  ];
-
-  const runComprehensiveTests = async () => {
+  const runOptimizedE2ETest = async () => {
     setIsRunning(true);
-    setProgress(0);
-    setResults([]);
-    setCurrentTest('Initializing comprehensive test suite...');
-
+    setTestResults([]);
+    
     try {
-      performanceMonitor.startMetric('e2e-test-suite');
-      
-      let cumulativeProgress = 0;
-
-      // Run Authentication Tests
-      setCurrentTest('Testing Authentication...');
-      const authResults = await runAuthTests();
-      cumulativeProgress += testSuites[0].weight;
-      setProgress(cumulativeProgress);
-      setResults(prev => [...prev, ...authResults]);
-
-      // Run Data Pipeline Tests
-      setCurrentTest('Testing Data Pipeline...');
-      const pipelineResults = await runPipelineTests();
-      cumulativeProgress += testSuites[1].weight;
-      setProgress(cumulativeProgress);
-      setResults(prev => [...prev, ...pipelineResults]);
-
-      // Run Analytics Tests
-      setCurrentTest('Testing Analytics Engine...');
-      const analyticsResults = await runAnalyticsTests();
-      cumulativeProgress += testSuites[2].weight;
-      setProgress(cumulativeProgress);
-      setResults(prev => [...prev, ...analyticsResults]);
-
-      // Run Performance Tests
-      setCurrentTest('Testing Performance...');
-      const performanceResults = await runPerformanceTests();
-      cumulativeProgress += testSuites[3].weight;
-      setProgress(cumulativeProgress);
-      setResults(prev => [...prev, ...performanceResults]);
-
-      const totalDuration = performanceMonitor.endMetric('e2e-test-suite') || 0;
-      const passedCount = results.filter(r => r.status === 'passed').length;
-      const totalCount = results.length;
-
       toast({
-        title: "E2E Tests Complete",
-        description: `${passedCount}/${totalCount} tests passed in ${totalDuration.toFixed(0)}ms`,
-        duration: 5000,
+        title: "🧪 E2E Testing Started",
+        description: "Running optimized comprehensive test suite...",
       });
 
-    } catch (error) {
-      console.error('E2E test execution failed:', error);
+      const testRunner = new OptimizedE2ETestRunner(toast);
+      const results = await testRunner.runFullE2ETest();
+      
+      setTestResults(results);
+      setLastRunTime(new Date());
+      
+      const passed = results.filter(r => r.status === 'pass').length;
+      const failed = results.filter(r => r.status === 'fail').length;
+      const warnings = results.filter(r => r.status === 'warning').length;
+      
       toast({
-        title: "Test Execution Failed",
-        description: "Critical error during E2E testing",
-        variant: "destructive"
+        title: "🎯 E2E Testing Complete",
+        description: `${passed} passed, ${failed} failed, ${warnings} warnings`,
+        variant: failed > 0 ? "destructive" : "default",
+      });
+      
+    } catch (error) {
+      console.error('E2E testing failed:', error);
+      toast({
+        title: "❌ E2E Testing Failed",
+        description: "An error occurred during testing. Check console for details.",
+        variant: "destructive",
       });
     } finally {
       setIsRunning(false);
-      setCurrentTest('');
     }
   };
 
-  const runAuthTests = async (): Promise<TestResult[]> => {
-    const results: TestResult[] = [];
-    const startTime = performance.now();
-
-    try {
-      // Test auth state management
-      const authState = { user: null, session: null, isLoading: false };
-      
-      results.push({
-        id: 'auth-state',
-        name: 'Auth State Management',
-        status: 'passed',
-        duration: performance.now() - startTime,
-        message: 'Auth state properly initialized'
-      });
-
-      // Test route protection
-      const protectedRoutes = ['/dashboard', '/query-history'];
-      const routeTest = protectedRoutes.every(route => route.startsWith('/'));
-      
-      results.push({
-        id: 'route-protection',
-        name: 'Route Protection',
-        status: routeTest ? 'passed' : 'failed',
-        duration: performance.now() - startTime,
-        message: routeTest ? 'Protected routes configured' : 'Route protection failed'
-      });
-
-    } catch (error) {
-      results.push({
-        id: 'auth-error',
-        name: 'Auth Error',
-        status: 'failed',
-        duration: performance.now() - startTime,
-        message: `Auth test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      });
-    }
-
-    return results;
-  };
-
-  const runPipelineTests = async (): Promise<TestResult[]> => {
-    const results: TestResult[] = [];
-    const startTime = performance.now();
-
-    try {
-      // Test file processing
-      const mockFile = new File(['name,age\nJohn,25\nJane,30'], 'test.csv', { type: 'text/csv' });
-      
-      const parsedData = await dataPipeline.processFile(mockFile);
-      
-      results.push({
-        id: 'file-processing',
-        name: 'File Processing',
-        status: parsedData.rowCount > 0 ? 'passed' : 'failed',
-        duration: performance.now() - startTime,
-        message: `Processed ${parsedData.rowCount} rows successfully`
-      });
-
-      // Test data validation
-      const hasValidColumns = parsedData.columns.length > 0;
-      
-      results.push({
-        id: 'data-validation',
-        name: 'Data Validation',
-        status: hasValidColumns ? 'passed' : 'failed',
-        duration: performance.now() - startTime,
-        message: hasValidColumns ? 'Data validation passed' : 'Data validation failed'
-      });
-
-    } catch (error) {
-      results.push({
-        id: 'pipeline-error',
-        name: 'Pipeline Error',
-        status: 'failed',
-        duration: performance.now() - startTime,
-        message: `Pipeline test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      });
-    }
-
-    return results;
-  };
-
-  const runAnalyticsTests = async (): Promise<TestResult[]> => {
-    const results: TestResult[] = [];
-    const startTime = performance.now();
-
-    try {
-      // Test analytics engine
-      const mockData = {
-        columns: [
-          { name: 'name', type: 'string' as const, samples: ['John', 'Jane'] },
-          { name: 'age', type: 'number' as const, samples: [25, 30] }
-        ],
-        rows: [
-          { name: 'John', age: 25 },
-          { name: 'Jane', age: 30 }
-        ],
-        rowCount: 2,
-        fileSize: 100,
-        summary: {
-          totalRows: 2,
-          totalColumns: 2,
-          possibleUserIdColumns: [],
-          possibleEventColumns: [],
-          possibleTimestampColumns: []
-        }
-      };
-
-      const analysisResults = await analyticsManager.runAnalysis(mockData);
-      
-      results.push({
-        id: 'analytics-engine',
-        name: 'Analytics Engine',
-        status: analysisResults.length > 0 ? 'passed' : 'failed',
-        duration: performance.now() - startTime,
-        message: `Generated ${analysisResults.length} analysis results`
-      });
-
-    } catch (error) {
-      results.push({
-        id: 'analytics-error',
-        name: 'Analytics Error',
-        status: 'failed',
-        duration: performance.now() - startTime,
-        message: `Analytics test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      });
-    }
-
-    return results;
-  };
-
-  const runPerformanceTests = async (): Promise<TestResult[]> => {
-    const results: TestResult[] = [];
-    const startTime = performance.now();
-
-    try {
-      // Test memory usage
-      const memorySnapshot = performanceMonitor.takeMemorySnapshot();
-      const memoryUsage = memorySnapshot?.usedJSHeapSize || 0;
-      
-      results.push({
-        id: 'memory-usage',
-        name: 'Memory Usage',
-        status: memoryUsage < 50 * 1024 * 1024 ? 'passed' : 'warning', // 50MB threshold
-        duration: performance.now() - startTime,
-        message: `Memory usage: ${(memoryUsage / 1024 / 1024).toFixed(2)}MB`
-      });
-
-      // Test performance metrics
-      const performanceReport = performanceMonitor.generateReport();
-      
-      results.push({
-        id: 'performance-metrics',
-        name: 'Performance Metrics',
-        status: performanceReport.summary.averageDuration < 1000 ? 'passed' : 'warning',
-        duration: performance.now() - startTime,
-        message: `Average operation: ${performanceReport.summary.averageDuration.toFixed(2)}ms`
-      });
-
-    } catch (error) {
-      results.push({
-        id: 'performance-error',
-        name: 'Performance Error',
-        status: 'failed',
-        duration: performance.now() - startTime,
-        message: `Performance test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      });
-    }
-
-    return results;
-  };
-
-  const getStatusIcon = (status: TestResult['status']) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'passed':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'pass':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'fail':
+        return <XCircle className="w-5 h-5 text-red-600" />;
       case 'warning':
-        return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
-      case 'failed':
-        return <XCircle className="w-4 h-4 text-red-600" />;
+        return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
       default:
-        return <div className="w-4 h-4 bg-blue-600 rounded-full animate-pulse" />;
+        return <RefreshCw className="w-5 h-5 text-blue-600" />;
     }
   };
 
-  // Auto-run tests on mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      runComprehensiveTests();
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
+  const passed = testResults.filter(r => r.status === 'pass').length;
+  const failed = testResults.filter(r => r.status === 'fail').length;
+  const warnings = testResults.filter(r => r.status === 'warning').length;
+  const total = testResults.length;
+  const passRate = total > 0 ? ((passed / total) * 100).toFixed(0) : '0';
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-6xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Play className="w-5 h-5 text-blue-600" />
-          Optimized E2E Test Suite
+          <Play className="w-5 h-5 text-brand-blue" />
+          🕵️ Data Detective E2E Test Suite
         </CardTitle>
         <CardDescription>
-          Comprehensive testing with performance monitoring and analytics validation
+          Comprehensive optimized testing of the complete data analysis pipeline including text input, file upload, form persistence, and analysis flow
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-center justify-between">
           <Button 
-            onClick={runComprehensiveTests}
+            onClick={runOptimizedE2ETest}
             disabled={isRunning}
             size="lg"
-            className="bg-gradient-to-r from-blue-600 to-purple-600"
+            className="bg-gradient-to-r from-brand-blue via-brand-purple to-brand-pink hover:from-brand-blue/90 hover:via-brand-purple/90 hover:to-brand-pink/90 text-white"
           >
             <Play className="w-4 h-4 mr-2" />
-            {isRunning ? 'Running Tests...' : 'Run Comprehensive Tests'}
+            {isRunning ? '🔍 Running Investigation Tests...' : '🚀 Run Data Detective E2E Tests'}
           </Button>
           
-          {isRunning && (
+          {total > 0 && (
             <div className="text-right">
-              <div className="text-2xl font-bold text-blue-600">{progress}%</div>
-              <div className="text-xs text-gray-500">Complete</div>
+              <div className="text-3xl font-bold text-brand-blue">
+                {passRate}%
+              </div>
+              <div className="text-xs text-muted-foreground">Success Rate</div>
+              {lastRunTime && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Last run: {lastRunTime.toLocaleTimeString()}
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {isRunning && (
-          <div className="space-y-2">
-            <Progress value={progress} className="w-full" />
-            <p className="text-sm text-gray-600">{currentTest}</p>
-          </div>
+          <Card className="bg-gradient-to-r from-brand-blue/10 to-brand-purple/10 border-brand-blue/20">
+            <CardContent className="p-6 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-brand-blue border-t-transparent mx-auto mb-4"></div>
+              <h3 className="text-lg font-semibold text-brand-blue mb-2">🔍 Investigating System Health</h3>
+              <p className="text-brand-purple">Running comprehensive tests on the Data Detective platform...</p>
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                <div className="p-2 bg-white/50 rounded">📝 Form Tests</div>
+                <div className="p-2 bg-white/50 rounded">📁 File Tests</div>
+                <div className="p-2 bg-white/50 rounded">🔄 Flow Tests</div>
+                <div className="p-2 bg-white/50 rounded">📊 Data Tests</div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
-        {results.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Test Results</h3>
-            <div className="grid gap-2">
-              {results.map((result) => (
-                <div key={result.id} className="flex items-center gap-3 p-3 rounded-lg border">
-                  {getStatusIcon(result.status)}
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{result.name}</span>
-                      <span className="text-xs text-gray-500">
-                        {result.duration.toFixed(2)}ms
-                      </span>
+        {testResults.length > 0 && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div className="bg-gradient-to-br from-green-500/10 to-green-500/20 p-4 rounded-lg border border-green-500/20">
+                <div className="text-3xl font-bold text-green-600">{passed}</div>
+                <div className="text-sm text-green-700">✅ Passed</div>
+              </div>
+              <div className="bg-gradient-to-br from-red-500/10 to-red-500/20 p-4 rounded-lg border border-red-500/20">
+                <div className="text-3xl font-bold text-red-600">{failed}</div>
+                <div className="text-sm text-red-700">❌ Failed</div>
+              </div>
+              <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/20 p-4 rounded-lg border border-yellow-500/20">
+                <div className="text-3xl font-bold text-yellow-600">{warnings}</div>
+                <div className="text-sm text-yellow-700">⚠️ Warnings</div>
+              </div>
+              <div className="bg-gradient-to-br from-brand-blue/10 to-brand-purple/20 p-4 rounded-lg border border-brand-blue/20">
+                <div className="text-3xl font-bold text-brand-blue">{total}</div>
+                <div className="text-sm text-brand-blue">🧪 Total Tests</div>
+              </div>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  🔍 Investigation Results
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {testResults.map((result, index) => (
+                  <TestResultCard
+                    key={index}
+                    result={{
+                      step: result.testName,
+                      status: result.status === 'pass' ? 'success' : result.status === 'fail' ? 'error' : 'warning',
+                      details: result.error || result.message,
+                      timestamp: new Date()
+                    }}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Performance Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5 text-brand-purple" />
+                  📊 Performance Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+                    <div className="text-xl font-bold text-blue-600">
+                      {testResults.reduce((sum, r) => sum + r.duration, 0)}ms
                     </div>
-                    <p className="text-sm text-gray-600">{result.message}</p>
+                    <div className="text-sm text-blue-700">Total Duration</div>
+                  </div>
+                  <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
+                    <div className="text-xl font-bold text-purple-600">
+                      {Math.round(testResults.reduce((sum, r) => sum + r.duration, 0) / testResults.length)}ms
+                    </div>
+                    <div className="text-sm text-purple-700">Avg Test Time</div>
+                  </div>
+                  <div className="text-center p-4 bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg">
+                    <div className="text-xl font-bold text-pink-600">
+                      {failed === 0 ? '🎯' : failed <= 2 ? '👍' : '⚠️'}
+                    </div>
+                    <div className="text-sm text-pink-700">Health Status</div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
-        <div className="bg-blue-50 rounded-lg p-4 text-sm text-blue-700">
-          <strong>Optimized E2E Testing:</strong> This suite runs focused tests on authentication, 
-          data pipeline, analytics engine, and performance with real-time monitoring and validation.
+        <div className="bg-gradient-to-r from-brand-blue/5 to-brand-purple/5 rounded-lg p-6 border border-brand-blue/20">
+          <h4 className="font-semibold text-foreground mb-2">🕵️ Data Detective E2E Testing</h4>
+          <p className="text-sm text-muted-foreground mb-3">
+            This optimized test suite validates the complete data investigation workflow including:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
+            <div>✅ Research question text input functionality</div>
+            <div>✅ Form validation and error handling</div>
+            <div>✅ File upload and processing pipeline</div>
+            <div>✅ Data persistence and state management</div>
+            <div>✅ Navigation between investigation steps</div>
+            <div>✅ Analysis flow and route functionality</div>
+            <div>✅ UI responsiveness and accessibility</div>
+            <div>✅ Performance monitoring and optimization</div>
+          </div>
         </div>
       </CardContent>
     </Card>
   );
 };
 
-export default OptimizedE2ETestRunner;
+export default OptimizedE2ETestRunnerComponent;

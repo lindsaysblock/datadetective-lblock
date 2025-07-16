@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import LegalFooter from '@/components/LegalFooter';
 import E2ETestRunner from '@/components/testing/E2ETestRunner';
 import NewProjectE2ETestRunner from '@/components/testing/NewProjectE2ETestRunner';
+import OptimizedE2ETestRunner from '@/components/testing/OptimizedE2ETestRunner';
 
 const Admin = () => {
   return (
@@ -57,6 +58,7 @@ const Admin = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  <OptimizedE2ETestRunner />
                   <NewProjectE2ETestRunner />
                   <E2ETestRunner />
                 </CardContent>
