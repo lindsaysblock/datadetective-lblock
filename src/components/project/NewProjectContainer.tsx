@@ -13,12 +13,10 @@ const NewProjectContainer: React.FC = () => {
     formData,
     isLoading,
     error,
-    updateFormData,
-    nextStep,
-    prevStep,
-    goToStep,
-    setContinueCaseData,
-    resetForm,
+    actions: {
+      setContinueCaseData,
+      resetForm,
+    }
   } = useNewProjectForm();
 
   console.log('NewProjectContainer rendering with formData:', formData);
