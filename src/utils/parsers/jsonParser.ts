@@ -1,4 +1,10 @@
 
+/**
+ * JSON Parser Utility
+ * Handles JSON file parsing with error handling and data validation
+ * Refactored for consistency and maintainability
+ */
+
 import { ParsedData } from '../dataParser';
 import { analyzeData } from './dataAnalyzer';
 

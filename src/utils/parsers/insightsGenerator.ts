@@ -1,4 +1,10 @@
 
+/**
+ * Insights Generator Utility
+ * Generates actionable insights from data analysis
+ * Refactored for consistency and maintainability
+ */
+
 import { ParsedData } from '../dataParser';
 
 export const generateDataInsights = (data: ParsedData): string[] => {

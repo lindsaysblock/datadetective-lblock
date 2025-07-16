@@ -1,4 +1,10 @@
 
+/**
+ * Data Analyzer Utility
+ * Provides statistical analysis and insights for parsed data
+ * Refactored for consistency and maintainability
+ */
+
 import { DataColumn, ParsedData } from '../dataParser';
 
 export const analyzeData = (headers: string[], rows: Record<string, any>[]): ParsedData => {

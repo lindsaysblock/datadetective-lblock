@@ -1,6 +1,7 @@
 /**
  * File Handling Hook
- * Extracted file operations to reduce complexity
+ * Centralized file management operations
+ * Refactored for consistency and maintainability
  */
 
 import { useCallback } from 'react';

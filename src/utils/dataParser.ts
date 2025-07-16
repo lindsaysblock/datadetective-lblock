@@ -1,4 +1,17 @@
 
+/**
+ * Data Parser Utilities
+ * Handles parsing of various file formats with error recovery
+ * Refactored for consistency and maintainability
+ */
+
+import Papa from 'papaparse';
+import { toast } from '@/hooks/use-toast';
+import { parseCSV } from './parsers/csvParser';
+import { parseJSON } from './parsers/jsonParser';
+import { validateFile } from './fileValidation';
+import { FILE_SIZES } from '@/constants/ui';
+
 export interface DataColumn {
   name: string;
   type: 'string' | 'number' | 'date' | 'boolean';
@@ -18,11 +31,6 @@ export interface ParsedData {
     possibleTimestampColumns?: string[];
   };
 }
-
-import { parseCSV } from './parsers/csvParser';
-import { parseJSON } from './parsers/jsonParser';
-import { validateFile } from './fileValidation';
-import { FILE_SIZES } from '@/constants/ui';
 
 export const parseFile = async (file: File): Promise<ParsedData> => {
   console.log('🔍 Starting file parsing:', {

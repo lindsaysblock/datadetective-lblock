@@ -1,4 +1,12 @@
 
+/**
+ * Data Quality Analyzer
+ * Analyzes data quality metrics and provides recommendations
+ * Refactored for consistency and maintainability
+ */
+
+import { ANALYSIS_CONSTANTS } from '@/constants/analysis';
+
 export interface DataQualityMetrics {
   completeness: number;
   consistency: number;

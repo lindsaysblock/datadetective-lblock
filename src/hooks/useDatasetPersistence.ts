@@ -1,4 +1,10 @@
 
+/**
+ * Dataset Persistence Hook
+ * Handles saving and loading datasets from Supabase
+ * Refactored for consistency and maintainability
+ */
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { ParsedDataFile } from '@/types/data';

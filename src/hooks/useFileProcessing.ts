@@ -1,7 +1,14 @@
 
+/**
+ * File Processing Hook
+ * Handles file upload, parsing, and processing operations
+ * Refactored for consistency and maintainability
+ */
+
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile, type ParsedData } from '@/utils/dataParser';
+import { TIMEOUTS } from '@/constants/ui';
 
 export interface FileProcessingState {
   uploading: boolean;

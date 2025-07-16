@@ -1,6 +1,10 @@
 /**
- * Unified file validation utility to ensure consistent file type checking across the entire application
+ * File Validation Utilities
+ * Handles file type validation, size checks, and security validation
+ * Refactored for consistency and maintainability
  */
+
+import { FILE_SIZES } from '@/constants/ui';
 
 export interface FileValidationResult {
   isValid: boolean;
@@ -81,12 +85,12 @@ export const validateFile = (file: File): FileValidationResult => {
   }
 
   // File size check (100MB limit)
-  const maxSizeBytes = 100 * 1024 * 1024;
+  const maxSizeBytes = FILE_SIZES.MAX_FILE_SIZE;
   if (file.size > maxSizeBytes) {
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
     return {
       isValid: false,
-      error: `File size (${fileSizeMB}MB) exceeds limit of 100MB`
+      error: `File size (${fileSizeMB}MB) exceeds limit of ${FILE_SIZES.MAX_FILE_SIZE / (1024 * 1024)}MB`
     };
   }
 

@@ -1,28 +1,9 @@
 
-export interface DataQualityReport {
-  completeness: number;
-  consistency: number;
-  accuracy: number;
-  duplicates: number;
-  outliers: string[];
-  recommendations: string[];
-}
-
-export interface ColumnProfile {
-  name: string;
-  type: 'numeric' | 'categorical' | 'datetime' | 'text' | 'boolean';
-  nullCount: number;
-  uniqueCount: number;
-  duplicateCount: number;
-  sampleValues: any[];
-  statistics?: {
-    min?: number;
-    max?: number;
-    mean?: number;
-    median?: number;
-    standardDeviation?: number;
-  };
-}
+/**
+ * Data Quality Analyzer
+ * Advanced data quality analysis and reporting
+ * Refactored for consistency and maintainability
+ */
 
 export class DataQualityAnalyzer {
   private data: any[];

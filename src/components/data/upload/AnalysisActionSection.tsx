@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, BarChart3, TrendingUp, Users, ShoppingCart } from 'lucide-react';
+import { SPACING } from '@/constants/ui';
 
 interface AnalysisActionSectionProps {
   researchQuestion: string;
@@ -71,9 +72,9 @@ export const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
   };
 
   return (
-    <Card className="border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50">
+    <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-indigo-800">
+        <CardTitle className="flex items-center gap-2 text-primary">
           <BarChart3 className="w-5 h-5" />
           Ready to Investigate
         </CardTitle>
@@ -81,12 +82,12 @@ export const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
           Your data and research question are set. Let's generate actionable insights.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className={`space-y-${SPACING.SM}`}>
         {/* Data Quality Indicators */}
         {dataInsights && dataInsights.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">Data Capabilities Detected:</h4>
-            <div className="flex flex-wrap gap-2">
+          <div className={`space-y-${SPACING.XS}`}>
+            <h4 className="text-sm font-medium text-foreground">Data Capabilities Detected:</h4>
+            <div className={`flex flex-wrap gap-${SPACING.XS}`}>
               {dataInsights.map((insight, index) => (
                 <Badge key={index} variant="secondary" className={`${insight.color} flex items-center gap-1`}>
                   <insight.icon className="w-3 h-3" />
@@ -99,17 +100,17 @@ export const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
 
         {/* Analysis Preview */}
         {researchQuestion && (
-          <div className="bg-white/50 p-3 rounded-lg border border-indigo-100">
-            <h4 className="text-sm font-medium text-gray-700 mb-1">Analysis Preview:</h4>
-            <p className="text-sm text-gray-600">{getAnalysisPreview()}</p>
+          <div className={`bg-background/50 p-${SPACING.XS} rounded-lg border border-primary/10`}>
+            <h4 className="text-sm font-medium text-foreground mb-1">Analysis Preview:</h4>
+            <p className="text-sm text-muted-foreground">{getAnalysisPreview()}</p>
           </div>
         )}
 
         {/* Dataset Summary */}
         {parsedData && (
-          <div className="bg-white/50 p-3 rounded-lg border border-indigo-100">
-            <h4 className="text-sm font-medium text-gray-700 mb-1">Dataset Summary:</h4>
-            <p className="text-sm text-gray-600">
+          <div className={`bg-background/50 p-${SPACING.XS} rounded-lg border border-primary/10`}>
+            <h4 className="text-sm font-medium text-foreground mb-1">Dataset Summary:</h4>
+            <p className="text-sm text-muted-foreground">
               {parsedData.summary?.totalRows || parsedData.rows?.length || 0} rows × {' '}
               {parsedData.summary?.totalColumns || parsedData.columns?.length || 0} columns
             </p>
@@ -119,7 +120,7 @@ export const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
         <Button 
           onClick={onStartAnalysis}
           disabled={!isReadyForAnalysis}
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+          className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground"
           size="lg"
         >
           {!parsedData ? (
@@ -135,7 +136,7 @@ export const AnalysisActionSection: React.FC<AnalysisActionSectionProps> = ({
         </Button>
 
         {isReadyForAnalysis && (
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-muted-foreground text-center">
             This will run comprehensive analysis including all 9 test question categories
           </p>
         )}
