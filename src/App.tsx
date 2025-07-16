@@ -20,6 +20,7 @@ import Analysis from '@/pages/Analysis';
 import Profile from '@/pages/Profile';
 import Admin from '@/pages/Admin';
 import NotFound from '@/pages/NotFound';
+import DataValidationDebug from '@/pages/DataValidationDebug';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,6 +53,7 @@ const App = () => {
                   <Route path="/analysis" element={<Analysis />} />
                   <Route path={ROUTES.PROFILE} element={<Profile />} />
                   <Route path={ROUTES.ADMIN} element={<Admin />} />
+                  <Route path="/debug" element={<DataValidationDebug />} />
                   <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />
                 </Routes>
               </Suspense>
