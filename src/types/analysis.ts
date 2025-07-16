@@ -86,3 +86,48 @@ export interface DataInsight {
 
 // Import the DataAnalysisContext to avoid circular dependencies
 import { DataAnalysisContext } from './data';
+
+/**
+ * Advanced Analytics Types
+ * Additional types for enhanced analytics functionality
+ */
+
+export interface AnalyticsInsight {
+  id: string;
+  title: string;
+  description: string;
+  type: 'trend' | 'anomaly' | 'correlation' | 'prediction' | 'opportunity';
+  confidence: number;
+  impact: 'high' | 'medium' | 'low';
+  status: 'new' | 'reviewed' | 'implemented';
+  createdAt: Date;
+  data?: Record<string, unknown>;
+}
+
+export interface AnalysisMetrics {
+  totalInsights: number;
+  avgConfidence: number;
+  highImpactCount: number;
+  completionRate: number;
+}
+
+export interface AnalysisState {
+  isAnalyzing: boolean;
+  error: string | null;
+  progress: number;
+  insights: AnalyticsInsight[];
+}
+
+export interface AnalysisActions {
+  startAnalysis: () => Promise<void>;
+  generateInsight: () => Promise<AnalyticsInsight>;
+  updateInsightStatus: (id: string, status: AnalyticsInsight['status']) => void;
+  clearError: () => void;
+}
+
+export interface AnalysisConfig {
+  enableAutoAnalysis: boolean;
+  insightThreshold: number;
+  maxInsights: number;
+  analysisTimeout: number;
+}

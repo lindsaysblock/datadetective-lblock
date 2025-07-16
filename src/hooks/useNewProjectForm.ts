@@ -1,9 +1,16 @@
 
+/**
+ * New Project Form Hook
+ * Refactored to meet coding standards: reduced complexity, better separation of concerns
+ */
+
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useContinueCase } from './useContinueCase';
-import { useFileProcessing, type ProcessedFileData } from './useFileProcessing';
-import { validateFile } from '@/utils/fileValidation';
+import { useFormValidation } from './useFormValidation';
+import { useFileHandling } from './useFileHandling';
+import { ProcessedFileData } from './useFileProcessing';
+import { FORM_STEPS } from '@/constants/ui';
 
 export interface FormData {
   projectName: string;
@@ -37,7 +44,7 @@ const initialFormData: FormData = {
   isProcessingAnalysis: false,
   uploading: false,
   parsing: false,
-  step: 1,
+  step: FORM_STEPS.RESEARCH_QUESTION,
   processedFiles: [],
 };
 
@@ -45,24 +52,24 @@ export const useNewProjectForm = () => {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const { reconstructAnalysisState, createMockFilesFromParsedData } = useContinueCase();
-  const fileProcessing = useFileProcessing();
 
+  // Hooks
+  const { toast } = useToast();
+  const validationSchema = {
+    projectName: { required: true, minLength: 3 },
+    researchQuestion: { required: true, minLength: 10 }
+  };
+  const { validateForm } = useFormValidation(validationSchema);
+  const { addFile, removeFile, processFiles, processingState } = useFileHandling();
+  const { reconstructAnalysisState, createMockFilesFromParsedData } = useContinueCase();
+
+  // Form data updates
   const updateFormData = useCallback((updates: Partial<FormData>) => {
     console.log('📝 updateFormData called with:', updates);
-    setFormData(prev => {
-      const updated = { ...prev, ...updates };
-      console.log('📝 Form data after update:', {
-        projectName: updated.projectName,
-        step: updated.step,
-        hasData: !!(updated.parsedData && updated.parsedData.length > 0),
-        processedFilesCount: updated.processedFiles?.length || 0
-      });
-      return updated;
-    });
+    setFormData(prev => ({ ...prev, ...updates }));
   }, []);
 
+  // Navigation
   const nextStep = useCallback(() => {
     setFormData(prev => ({ ...prev, step: prev.step + 1 }));
   }, []);
@@ -75,113 +82,62 @@ export const useNewProjectForm = () => {
     setFormData(prev => ({ ...prev, step }));
   }, []);
 
+  // Field setters
   const setProjectName = useCallback((value: string) => {
     console.log('🎯 setProjectName called with:', value);
-    setFormData(prev => {
-      const updated = { ...prev, projectName: value };
-      console.log('🎯 Project name set in state:', updated.projectName);
-      return updated;
-    });
-  }, []);
+    updateFormData({ projectName: value });
+  }, [updateFormData]);
 
   const setResearchQuestion = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, researchQuestion: value }));
-  }, []);
+    updateFormData({ researchQuestion: value });
+  }, [updateFormData]);
 
   const setAdditionalContext = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, businessContext: value }));
-  }, []);
-
-  const addFile = useCallback((file: File) => {
-    console.log('📁 Adding file:', { name: file.name, type: file.type, size: file.size });
-    
-    // Validate file before adding
-    const validation = validateFile(file);
-    if (!validation.isValid) {
-      console.error('❌ File validation failed:', validation.error);
-      toast({
-        title: "Invalid File",
-        description: validation.error,
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    console.log('✅ File validation passed, adding to files array');
-    setFormData(prev => ({ ...prev, files: [...prev.files, file] }));
-  }, [toast]);
-
-  const removeFile = useCallback((index: number) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      files: prev.files.filter((_, i) => i !== index) 
-    }));
-  }, []);
+    updateFormData({ businessContext: value });
+  }, [updateFormData]);
 
   const setColumnMapping = useCallback((mapping: Record<string, string>) => {
-    setFormData(prev => ({ ...prev, columnMapping: mapping }));
-  }, []);
+    updateFormData({ columnMapping: mapping });
+  }, [updateFormData]);
+
+  // File operations
+  const handleAddFile = useCallback((file: File) => {
+    const success = addFile(file, formData.files, (files) => updateFormData({ files }));
+    return success;
+  }, [addFile, formData.files, updateFormData]);
+
+  const handleRemoveFile = useCallback((index: number) => {
+    removeFile(index, formData.files, (files) => updateFormData({ files }));
+  }, [removeFile, formData.files, updateFormData]);
 
   const handleFileUpload = useCallback(async () => {
     console.log('🚀 handleFileUpload called with files:', formData.files.length);
-    
-    if (formData.files.length === 0) {
-      console.log('⚠️ No files to process');
-      return;
-    }
+
+    if (formData.files.length === 0) return;
 
     try {
-      // Update state to show processing
-      setFormData(prev => ({ 
-        ...prev, 
-        uploading: fileProcessing.state.uploading,
-        parsing: fileProcessing.state.parsing 
-      }));
+      updateFormData({ 
+        uploading: processingState.uploading,
+        parsing: processingState.parsing 
+      });
 
-      // Process files using the file processing hook
-      const processedFiles = await fileProcessing.processFiles(formData.files);
-      
-      // Convert processed files to parsedData format
-      const parsedData = processedFiles.map(pf => ({
-        id: pf.id,
-        name: pf.name,
-        rows: pf.parsedData.rows,
-        summary: pf.parsedData.summary,
-        columns: pf.parsedData.columns,
-        rowCount: pf.parsedData.rowCount
-      }));
+      const { processedFiles, parsedData } = await processFiles(formData.files);
 
-      // Update form data with processed results
-      setFormData(prev => ({ 
-        ...prev,
+      updateFormData({
         processedFiles,
         parsedData,
         uploadedData: parsedData,
         uploading: false,
         parsing: false
-      }));
-
-      console.log('✅ File upload completed successfully:', {
-        processedCount: processedFiles.length,
-        totalRows: parsedData.reduce((sum, pd) => sum + (pd.rowCount || 0), 0)
       });
 
     } catch (error) {
-      console.error('❌ File upload failed:', error);
-      setFormData(prev => ({ 
-        ...prev, 
-        uploading: false, 
-        parsing: false 
-      }));
-      
-      toast({
-        title: "Upload Failed",
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-        variant: "destructive",
-      });
+      updateFormData({ uploading: false, parsing: false });
+      // Error handling is done in useFileHandling
     }
-  }, [formData.files, fileProcessing, toast]);
+  }, [formData.files, processFiles, processingState, updateFormData]);
 
+  // Continue case handling
   const setContinueCaseData = useCallback((dataset: any) => {
     console.log('🔄 Setting continue case data:', dataset);
     
@@ -190,27 +146,12 @@ export const useNewProjectForm = () => {
       setError(null);
 
       const reconstructedState = reconstructAnalysisState(dataset);
-      
-      console.log('📊 Reconstructed state:', {
-        projectName: reconstructedState.projectName,
-        parsedDataLength: reconstructedState.parsedData?.length || 0,
-        originalFileSize: dataset.file_size
-      });
-
       const mockFiles = createMockFilesFromParsedData(
         reconstructedState.parsedData, 
         dataset.file_size
       );
 
-      console.log('📁 Created mock files:', mockFiles.map(f => ({ 
-        name: f.name, 
-        size: f.size,
-        isReconstructed: (f as any).isReconstructed 
-      })));
-
-      const projectNameToSet = reconstructedState.projectName || dataset.name || dataset.summary?.projectName || 'Untitled Project';
-      
-      console.log('🎯 CRITICAL: Final project name to set:', projectNameToSet);
+      const projectNameToSet = reconstructedState.projectName || dataset.name || 'Untitled Project';
 
       setFormData({
         ...initialFormData,
@@ -225,8 +166,6 @@ export const useNewProjectForm = () => {
         processedFiles: [],
       });
 
-      console.log('✅ CONTINUE CASE DATA SET - Project Name:', projectNameToSet);
-      
       toast({
         title: "Investigation Loaded",
         description: `Continuing with "${projectNameToSet}"`,
@@ -250,15 +189,14 @@ export const useNewProjectForm = () => {
     console.log('Resetting form data');
     setFormData(initialFormData);
     setError(null);
-    fileProcessing.clearAll();
-  }, [fileProcessing]);
+  }, []);
 
   return {
     formData: {
       ...formData,
-      uploading: fileProcessing.state.uploading,
-      parsing: fileProcessing.state.parsing,
-      // Add missing form action functions
+      uploading: processingState.uploading,
+      parsing: processingState.parsing,
+      // Form action functions
       setProjectName,
       setResearchQuestion,
       setAdditionalContext,
@@ -266,29 +204,21 @@ export const useNewProjectForm = () => {
       prevStep,
       goToStep,
       onFileChange: (fileOrEvent: File | React.ChangeEvent<HTMLInputElement>) => {
-        console.log('🔧 onFileChange called with:', fileOrEvent);
-        
-        // Handle both File objects and change events
         if ('target' in fileOrEvent && fileOrEvent.target && 'files' in fileOrEvent.target) {
-          // It's a change event - extract files
           const files = fileOrEvent.target.files;
           if (files && files.length > 0) {
-            Array.from(files).forEach(file => addFile(file));
+            Array.from(files).forEach(file => handleAddFile(file));
           }
         } else if (fileOrEvent && typeof fileOrEvent === 'object' && 'name' in fileOrEvent) {
-          // It's a File object
-          addFile(fileOrEvent as File);
-        } else {
-          console.error('❌ Invalid file or event object:', fileOrEvent);
+          handleAddFile(fileOrEvent as File);
         }
       },
       handleFileUpload,
-      removeFile,
+      removeFile: handleRemoveFile,
       setColumnMapping,
     },
     isLoading,
     error,
-    fileProcessing,
     actions: {
       updateFormData,
       nextStep,
@@ -297,12 +227,13 @@ export const useNewProjectForm = () => {
       setProjectName,
       setResearchQuestion,
       setAdditionalContext,
-      addFile,
-      removeFile,
+      addFile: handleAddFile,
+      removeFile: handleRemoveFile,
       setColumnMapping,
       handleFileUpload,
       setContinueCaseData,
       resetForm,
+      validateFormData: (projectName: string) => validateForm({ projectName, researchQuestion: formData.researchQuestion }),
     }
   };
 };
