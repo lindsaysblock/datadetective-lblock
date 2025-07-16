@@ -26,6 +26,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useSafeInterval } from '@/utils/performance/memoryOptimization';
 
 interface DataStream {
   id: string;
@@ -104,10 +105,11 @@ const RealTimeDataStreaming: React.FC = () => {
   });
 
   const { toast } = useToast();
+  const { safeSetInterval, clearSafeInterval } = useSafeInterval();
 
-  // Simulate real-time updates
+  // Simulate real-time updates with memory-safe interval
   useEffect(() => {
-    const interval = setInterval(() => {
+    safeSetInterval(() => {
       setActiveStreams(prev => prev.map(stream => {
         if (stream.status === 'active') {
           return {
@@ -121,8 +123,10 @@ const RealTimeDataStreaming: React.FC = () => {
       }));
     }, 2000);
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      clearSafeInterval();
+    };
+  }, [safeSetInterval, clearSafeInterval]);
 
   const handleStreamControl = (streamId: string, action: 'play' | 'pause' | 'stop') => {
     setActiveStreams(prev => prev.map(stream => {
