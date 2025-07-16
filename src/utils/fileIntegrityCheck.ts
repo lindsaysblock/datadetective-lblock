@@ -58,10 +58,13 @@ export const validateFileIntegrity = async (file: File): Promise<FileValidationR
     // Content validation
     const contentValidation = validateFileContent(content, fileType);
     if (!contentValidation.isValid) {
-      return { isValid: false, error: contentValidation.error || 'Content validation failed' };
+      return { 
+        isValid: false, 
+        error: 'error' in contentValidation ? contentValidation.error : 'Content validation failed' 
+      };
     }
 
-    if (contentValidation.warnings) {
+    if ('warnings' in contentValidation && contentValidation.warnings) {
       result.warnings?.push(...contentValidation.warnings);
     }
 
@@ -180,7 +183,7 @@ const checkCSVCorruption = (content: string) => {
     isCorrupted: false,
     corruption: {
       type: '',
-      severity: 'low' as const,
+      severity: 'low' as 'low' | 'medium' | 'high',
       details: ''
     }
   };
@@ -228,7 +231,7 @@ const checkJSONCorruption = (content: string) => {
     isCorrupted: false,
     corruption: {
       type: '',
-      severity: 'low' as const,
+      severity: 'low' as 'low' | 'medium' | 'high',
       details: ''
     }
   };
@@ -250,7 +253,7 @@ const checkJSONCorruption = (content: string) => {
 /**
  * Validate file content structure
  */
-const validateFileContent = (content: string, fileType: string) => {
+const validateFileContent = (content: string, fileType: string): { isValid: boolean; error?: string; warnings?: string[] } => {
   const result = {
     isValid: true,
     warnings: [] as string[]
@@ -278,9 +281,9 @@ const validateFileContent = (content: string, fileType: string) => {
 };
 
 /**
- * Validate CSV content structure
+ * Validate CSV content structure  
  */
-const validateCSVContent = (content: string) => {
+const validateCSVContent = (content: string): { isValid: boolean; error?: string; warnings?: string[] } => {
   const result = { isValid: true, warnings: [] as string[] };
   
   const lines = content.split('\n').filter(line => line.trim().length > 0);
@@ -306,7 +309,7 @@ const validateCSVContent = (content: string) => {
 /**
  * Validate JSON content structure
  */
-const validateJSONContent = (content: string) => {
+const validateJSONContent = (content: string): { isValid: boolean; error?: string; warnings?: string[] } => {
   const result = { isValid: true, warnings: [] as string[] };
   
   try {
