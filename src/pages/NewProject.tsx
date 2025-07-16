@@ -6,5 +6,3 @@ const NewProject: React.FC = () => {
 };
 
 export default NewProject;
-
-export default NewProject;
