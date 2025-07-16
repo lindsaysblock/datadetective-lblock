@@ -34,7 +34,7 @@ export const createDataColumn = (
  * Gets default samples for a given data type
  */
 const getDefaultSamples = (type: 'string' | 'number' | 'date' | 'boolean'): any[] => {
-  return COLUMN_CONSTANTS.DEFAULT_SAMPLES[type] || [];
+  return [...(COLUMN_CONSTANTS.DEFAULT_SAMPLES[type] || [])];
 };
 
 /**
