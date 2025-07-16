@@ -106,13 +106,26 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     }
 
     // Validate data structure
-    const hasValidData = parsedData.some(data => 
-      data && 
-      (data.rowCount > 0 || (data.rows && data.rows.length > 0)) && 
-      data.columns && 
-      Array.isArray(data.columns) && 
-      data.columns.length > 0
-    );
+    console.log('🔍 Validating data structure:', parsedData);
+    
+    const hasValidData = parsedData.some(data => {
+      console.log('🔍 Checking data item:', {
+        hasData: !!data,
+        rowCount: data?.rowCount,
+        rowsLength: data?.rows?.length,
+        hasColumns: !!data?.columns,
+        isColumnsArray: Array.isArray(data?.columns),
+        columnsLength: data?.columns?.length
+      });
+      
+      return data && 
+        (data.rowCount > 0 || (data.rows && data.rows.length > 0)) && 
+        data.columns && 
+        Array.isArray(data.columns) && 
+        data.columns.length > 0;
+    });
+    
+    console.log('🔍 Final validation result:', hasValidData);
 
     if (!hasValidData) {
       console.error('❌ Invalid data structure:', parsedData);
