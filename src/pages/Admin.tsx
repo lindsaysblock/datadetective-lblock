@@ -1,15 +1,56 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, TestTube, Settings, Users } from 'lucide-react';
+import { Shield, TestTube, Settings, Users, Play, Activity } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import LegalFooter from '@/components/LegalFooter';
 import E2ETestRunner from '@/components/testing/E2ETestRunner';
 import NewProjectE2ETestRunner from '@/components/testing/NewProjectE2ETestRunner';
 import OptimizedE2ETestRunner from '@/components/testing/OptimizedE2ETestRunner';
+import createDataPipelineTestSuite from '@/utils/testing/dataPipelineTestSuite';
 
 const Admin = () => {
+  const [pipelineTestResults, setPipelineTestResults] = useState<any[]>([]);
+  const [isRunningPipelineTests, setIsRunningPipelineTests] = useState(false);
+  const { toast } = useToast();
+  
+  const runDataPipelineTests = async () => {
+    setIsRunningPipelineTests(true);
+    setPipelineTestResults([]);
+    
+    try {
+      toast({
+        title: "🔬 Testing Data Pipeline",
+        description: "Running comprehensive pipeline and analysis tests...",
+      });
+      
+      const testSuite = createDataPipelineTestSuite();
+      const results = await testSuite.runAllTests();
+      
+      setPipelineTestResults(results);
+      
+      const passed = results.filter(r => r.success).length;
+      const failed = results.filter(r => !r.success).length;
+      
+      toast({
+        title: "🔬 Pipeline Tests Complete",
+        description: `${passed} passed, ${failed} failed`,
+        variant: failed > 0 ? "destructive" : "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Pipeline Test Failed",
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: "destructive",
+      });
+    } finally {
+      setIsRunningPipelineTests(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Header />
