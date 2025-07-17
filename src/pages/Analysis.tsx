@@ -159,8 +159,8 @@ const Analysis = () => {
 
   const generateMockVisualizations = async (formData: any) => {
     const recommendations = generateVisualizationRecommendations(
-      formData.parsedData || [],
-      formData.researchQuestion || ''
+      formData.researchQuestion || '',
+      formData.parsedData || { columns: [], rows: [], summary: { totalRows: 0, totalColumns: 0, possibleUserIdColumns: [], possibleTimestampColumns: [] } }
     );
     
     return recommendations.slice(0, 3); // Return top 3 visualizations
