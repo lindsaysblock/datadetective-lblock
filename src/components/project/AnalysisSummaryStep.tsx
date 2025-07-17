@@ -143,6 +143,38 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
         <p className="text-muted-foreground text-lg">Review your case details before starting the investigation</p>
       </div>
 
+      {/* TEST INPUT - COMPLETELY ISOLATED */}
+      <Card className="border-4 border-red-500 bg-yellow-100 p-4">
+        <CardHeader>
+          <CardTitle className="text-red-600">🚨 TEST INPUT - DOES THIS WORK?</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-black mb-2">
+                TEST: Type anything here
+              </label>
+              <input
+                type="text"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontSize: '16px',
+                  border: '3px solid #000',
+                  backgroundColor: '#fff',
+                  color: '#000',
+                }}
+                placeholder="Type here..."
+                onChange={(e) => console.log('🔥 TEST INPUT:', e.target.value)}
+              />
+            </div>
+            <div>
+              <p className="text-sm text-black">Current value: {caseNameValue}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Project Name Input */}
       <Card className="border-2 border-brand-blue/20 bg-gradient-to-br from-white to-brand-blue/5">
         <CardHeader>
