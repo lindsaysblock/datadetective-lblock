@@ -344,6 +344,15 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
           <Play className="w-4 h-4" />
           {isProcessingAnalysis ? '🔍 Starting the Case...' : '🕵️ Start the Case'}
         </Button>
+        
+        {/* Debug Info */}
+        {(!researchQuestion || !projectName?.trim() || !parsedData || parsedData.length === 0) && (
+          <div className="text-xs text-red-500 mt-2">
+            Debug: {!researchQuestion && 'No research question'} 
+            {!projectName?.trim() && ' | No project name'} 
+            {(!parsedData || parsedData.length === 0) && ' | No parsed data'}
+          </div>
+        )}
       </div>
     </div>
   );
