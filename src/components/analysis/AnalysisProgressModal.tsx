@@ -115,7 +115,7 @@ const AnalysisProgressModal: React.FC<AnalysisProgressModalProps> = ({
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-gray-500" />
                 <span className="text-sm text-gray-500">
-                  {progress < 100 ? `${eta}s remaining` : 'Redirecting...'}
+                  {progress < 100 ? `${eta}s remaining` : 'Completing...'}
                 </span>
               </div>
             </div>

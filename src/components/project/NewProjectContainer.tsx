@@ -24,7 +24,7 @@ const NewProjectContainer: React.FC = () => {
     console.log('🔍 [CONTAINER] Analysis state check:', { progress, hasReport: !!report, isAnalyzing });
     if (progress >= 100 && report && !isAnalyzing) {
       console.log('🎯 [CONTAINER] Analysis detected as complete, triggering handleAnalysisComplete');
-      handleAnalysisComplete();
+      handleAnalysisComplete(formData.projectName);
     }
   }, [progress, report, isAnalyzing]);
 
@@ -40,6 +40,12 @@ const NewProjectContainer: React.FC = () => {
 
   const handleStartAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
     console.log('🚀 [PIPELINE] Starting analysis from container:', { educationalMode, projectName });
+    
+    // CRITICAL: Update formData with the project name first
+    if (projectName && projectName.trim()) {
+      console.log('📝 [PIPELINE] Updating formData with project name:', projectName);
+      actions.setProjectName(projectName.trim());
+    }
     
     try {
       // STEP 1: Validate form data before starting analysis
@@ -98,7 +104,7 @@ const NewProjectContainer: React.FC = () => {
     }
   };
 
-  const handleAnalysisComplete = () => {
+  const handleAnalysisComplete = (projectName?: string) => {
     console.log('✅ [PIPELINE] STEP 4 - Analysis completed, preparing navigation');
     
     // CRITICAL DEBUG: Check what formData actually contains
@@ -125,8 +131,11 @@ const NewProjectContainer: React.FC = () => {
     }
     
     // STEP 5: Prepare navigation state with only serializable data
+    const finalProjectName = projectName || formData.projectName || 'Untitled Investigation';
+    console.log('📝 [PIPELINE] Final project name for navigation:', finalProjectName);
+    
     const serializableFormData = {
-      projectName: formData.projectName || 'Untitled Investigation',
+      projectName: finalProjectName,
       researchQuestion: formData.researchQuestion || '',
       businessContext: formData.businessContext || '',
       file: null, // File objects are not serializable
@@ -146,7 +155,7 @@ const NewProjectContainer: React.FC = () => {
     const navigationState = {
       formData: serializableFormData,
       educationalMode: false,
-      projectName: formData.projectName || 'Untitled Investigation',
+      projectName: finalProjectName,
       analysisReport: report
     };
 
