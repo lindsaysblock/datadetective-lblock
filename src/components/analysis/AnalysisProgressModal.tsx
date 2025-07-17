@@ -75,12 +75,18 @@ const AnalysisProgressModal: React.FC<AnalysisProgressModalProps> = ({
 
   // Auto-close and redirect when complete
   useEffect(() => {
+    console.log('🔍 [MODAL] Progress check:', { progress, isComplete: progress >= 100 });
     if (progress >= 100) {
+      console.log('✅ [MODAL] Analysis complete! Setting 2-second timer before calling onComplete');
       const timer = setTimeout(() => {
+        console.log('🚀 [MODAL] Timer fired, calling onComplete callback now');
         onComplete();
       }, 2000); // Wait 2 seconds to show completion state
 
-      return () => clearTimeout(timer);
+      return () => {
+        console.log('🧹 [MODAL] Cleaning up completion timer');
+        clearTimeout(timer);
+      };
     }
   }, [progress, onComplete]);
 
