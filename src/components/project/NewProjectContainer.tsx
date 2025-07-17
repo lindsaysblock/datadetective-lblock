@@ -81,42 +81,60 @@ const NewProjectContainer: React.FC = () => {
 
   const handleAnalysisComplete = () => {
     console.log('✅ [PIPELINE] STEP 4 - Analysis completed, preparing navigation');
-    console.log('📊 [PIPELINE] STEP 4 - Current state check:', {
-      formData: {
-        projectName: formData.projectName,
-        researchQuestion: formData.researchQuestion,
-        parsedDataCount: formData.parsedData?.length || 0,
-        hasBusinessContext: !!formData.businessContext
-      },
-      analysisReport: report ? {
-        id: report.id,
-        resultsCount: report.results?.length || 0,
-        insightsCount: report.insights?.length || 0,
-        confidence: report.confidence
-      } : 'No report available'
+    
+    // CRITICAL DEBUG: Check what formData actually contains
+    console.log('🔍 [PIPELINE] STEP 4 - CRITICAL FORMDATA CHECK:', {
+      formDataType: typeof formData,
+      formDataKeys: formData ? Object.keys(formData) : 'formData is null/undefined',
+      formDataValue: formData,
+      hasResearchQuestion: !!(formData?.researchQuestion),
+      hasParsedData: !!(formData?.parsedData),
+      parsedDataLength: formData?.parsedData?.length || 0,
+      hasProjectName: !!(formData?.projectName)
     });
     
-    // STEP 5: Prepare navigation state
+    console.log('📊 [PIPELINE] STEP 4 - Analysis report check:', {
+      reportExists: !!report,
+      reportId: report?.id || 'No report ID',
+      reportType: typeof report
+    });
+    
+    // Check if formData is valid before navigation
+    if (!formData) {
+      console.error('❌ [PIPELINE] CRITICAL ERROR: formData is null/undefined during navigation!');
+      return;
+    }
+    
+    // STEP 5: Prepare navigation state with explicit formData structure
     const navigationState = {
-      formData: formData,
+      formData: {
+        projectName: formData.projectName || 'Untitled Investigation',
+        researchQuestion: formData.researchQuestion || '',
+        businessContext: formData.businessContext || '',
+        parsedData: formData.parsedData || [],
+        // Include all other formData properties
+        ...formData
+      },
       educationalMode: false,
       projectName: formData.projectName || 'Untitled Investigation',
       analysisReport: report
     };
 
-    console.log('🚀 [PIPELINE] STEP 5 - Navigating to analysis page with state:', {
+    console.log('🚀 [PIPELINE] STEP 5 - Final navigation state prepared:', {
       stateKeys: Object.keys(navigationState),
       formDataKeys: Object.keys(navigationState.formData),
-      hasAnalysisReport: !!navigationState.analysisReport,
-      projectName: navigationState.projectName
+      formDataValid: !!navigationState.formData,
+      researchQuestionValid: !!navigationState.formData.researchQuestion,
+      parsedDataValid: !!navigationState.formData.parsedData,
+      projectNameValid: !!navigationState.projectName
     });
     
-    // Navigate to analysis page with the completed analysis data in the expected format
+    // Navigate to analysis page
     navigate('/analysis', {
       state: navigationState
     });
 
-    console.log('✅ [PIPELINE] STEP 5 - Navigation initiated');
+    console.log('✅ [PIPELINE] STEP 5 - Navigation initiated with validated state');
   };
 
   if (error) {
