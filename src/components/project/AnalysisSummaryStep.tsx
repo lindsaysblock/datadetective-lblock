@@ -38,14 +38,17 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   // Get project name directly from formData
   const projectName = formData?.projectName || '';
 
-  console.log('🔍 AnalysisSummaryStep render - PROJECT NAME:', {
+  console.log('🔍 AnalysisSummaryStep render - PROJECT NAME DEBUG:', {
     projectName: projectName,
     projectNameLength: projectName?.length || 0,
     formDataProjectName: formData?.projectName,
-    hasSetProjectName: !!formData?.setProjectName,
+    formDataKeys: formData ? Object.keys(formData) : 'NO FORM DATA',
+    hasActions: !!formData?.actions,
+    actionsKeys: formData?.actions ? Object.keys(formData.actions) : 'NO ACTIONS',
+    hasSetProjectName: !!formData?.actions?.setProjectName,
+    setProjectNameType: typeof formData?.actions?.setProjectName,
     researchQuestion: researchQuestion,
-    hasData: !!(parsedData && parsedData.length > 0),
-    formDataKeys: formData ? Object.keys(formData) : 'NO FORM DATA'
+    hasData: !!(parsedData && parsedData.length > 0)
   });
 
   // Auto-set a default project name if none exists and we have a research question
@@ -66,10 +69,19 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
 
   const handleProjectNameChange = (value: string) => {
     console.log('🎯 Project name input changed to:', value);
+    console.log('🎯 Form data structure:', {
+      hasFormData: !!formData,
+      hasActions: !!formData?.actions,
+      hasSetProjectName: !!formData?.actions?.setProjectName,
+      setProjectNameType: typeof formData?.actions?.setProjectName
+    });
+    
     if (formData?.actions?.setProjectName) {
+      console.log('✅ Calling setProjectName with:', value);
       formData.actions.setProjectName(value);
     } else {
       console.error('❌ setProjectName function not available in formData.actions');
+      console.error('❌ Available actions:', formData?.actions ? Object.keys(formData.actions) : 'No actions');
     }
   };
 
