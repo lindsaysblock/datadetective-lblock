@@ -4,17 +4,20 @@
  */
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import { useAnalysisEngine } from '@/hooks/useAnalysisEngine';
 import NewProjectLayout from './NewProjectLayout';
 import NewProjectContent from './NewProjectContent';
+import AnalysisProgressModal from '@/components/analysis/AnalysisProgressModal';
 import { SPACING } from '@/constants/ui';
 
 const NewProjectContainer: React.FC = () => {
   console.log('🔍 NewProjectContainer rendering with proper form integration');
+  const navigate = useNavigate();
 
   const { formData, isLoading, error, actions } = useNewProjectForm();
-  const { startAnalysis, isAnalyzing } = useAnalysisEngine();
+  const { startAnalysis, isAnalyzing, progress, report } = useAnalysisEngine();
 
   const handleStartAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
     console.log('🚀 Starting analysis from container:', { educationalMode, projectName });
@@ -40,6 +43,18 @@ const NewProjectContainer: React.FC = () => {
     }
   };
 
+  const handleAnalysisComplete = () => {
+    console.log('✅ Analysis completed, redirecting to analysis page');
+    // Navigate to analysis page with the completed analysis
+    navigate('/analysis', {
+      state: {
+        analysisReport: report,
+        projectName: formData.projectName,
+        researchQuestion: formData.researchQuestion
+      }
+    });
+  };
+
   if (error) {
     return (
       <NewProjectLayout>
@@ -60,13 +75,23 @@ const NewProjectContainer: React.FC = () => {
   }
 
   return (
-    <NewProjectLayout>
-      <NewProjectContent
-        formData={formData}
-        onStartAnalysis={handleStartAnalysis}
-        isLoading={isLoading || isAnalyzing}
+    <>
+      <NewProjectLayout>
+        <NewProjectContent
+          formData={formData}
+          onStartAnalysis={handleStartAnalysis}
+          isLoading={isLoading || isAnalyzing}
+        />
+      </NewProjectLayout>
+      
+      {/* Analysis Progress Modal */}
+      <AnalysisProgressModal
+        isOpen={isAnalyzing}
+        progress={progress}
+        onComplete={handleAnalysisComplete}
+        projectName={formData.projectName || 'Untitled Investigation'}
       />
-    </NewProjectLayout>
+    </>
   );
 };
 
