@@ -1,195 +1,117 @@
+/**
+ * Project Form Actions Hook
+ * Orchestrates file handling and complex form operations
+ */
 
+import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useFileHandling } from './useFileHandling';
+import { useContinueCase } from './useContinueCase';
+import { FormData } from './useProjectFormData';
 
 export const useProjectFormActions = (
-  formState: any,
-  analysis: any,
-  auth: any,
-  dialogs: any,
-  saveFormData: any,
-  clearFormData: any,
-  getFormData: any
+  formData: FormData,
+  updateFormData: (updates: Partial<FormData>) => void,
+  resetForm: () => void
 ) => {
   const { toast } = useToast();
+  const { addFile, removeFile, processFiles, processingState } = useFileHandling();
+  const { reconstructAnalysisState, createMockFilesFromParsedData } = useContinueCase();
 
-  const handleRestoreData = () => {
-    console.log('handleRestoreData called');
+  const handleAddFile = useCallback(async (file: File) => {
+    const success = await addFile(file, formData.files, (files) => updateFormData({ files }));
+    return success;
+  }, [addFile, formData.files, updateFormData]);
+
+  const handleRemoveFile = useCallback((index: number) => {
+    removeFile(index, formData.files, (files) => updateFormData({ files }));
+  }, [removeFile, formData.files, updateFormData]);
+
+  const handleFileUpload = useCallback(async () => {
+    console.log('🚀 handleFileUpload called with files:', formData.files.length);
+
+    if (formData.files.length === 0) return;
+
     try {
-      const savedData = getFormData();
-      console.log('Restoring data:', savedData);
-      
-      formState.setResearchQuestion(savedData.researchQuestion || '');
-      formState.setAdditionalContext(savedData.additionalContext || '');
-      formState.setParsedData(savedData.parsedData || []);
-      formState.setStep(savedData.currentStep || 1);
-      
-      if (savedData.files && savedData.files.length > 0) {
-        const mockFiles = savedData.files.map(fileData => 
-          new File([''], fileData.name, {
-            type: fileData.type,
-            lastModified: fileData.lastModified
-          })
-        );
-        formState.setFiles(mockFiles);
-      }
-      
-      dialogs.setShowRecoveryDialog(false);
-      dialogs.setRecoveryDialogDismissed(true);
-      
-      toast({
-        title: "Progress Restored",
-        description: "Your previous work has been restored successfully.",
+      updateFormData({ 
+        uploading: processingState.uploading,
+        parsing: processingState.parsing 
       });
+
+      const { processedFiles, parsedData } = await processFiles(formData.files);
+
+      updateFormData({
+        processedFiles,
+        parsedData,
+        uploadedData: parsedData,
+        uploading: false,
+        parsing: false
+      });
+
     } catch (error) {
-      console.error('Error restoring data:', error);
-      toast({
-        title: "Restoration Failed",
-        description: "Unable to restore previous progress. Starting fresh.",
-        variant: "destructive",
-      });
-      handleStartFresh();
+      updateFormData({ uploading: false, parsing: false });
     }
-  };
+  }, [formData.files, processFiles, processingState, updateFormData]);
 
-  const handleStartFresh = () => {
-    console.log('handleStartFresh called');
-    clearFormData();
-    formState.resetForm();
-    dialogs.setShowRecoveryDialog(false);
-    dialogs.setRecoveryDialogDismissed(true);
+  const setContinueCaseData = useCallback((dataset: any) => {
+    console.log('🔄 Setting continue case data:', dataset);
     
-    toast({
-      title: "Starting Fresh",
-      description: "Previous progress cleared. Starting with a clean slate.",
-    });
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = event.target.files;
-    if (selectedFiles && selectedFiles.length > 0) {
-      Array.from(selectedFiles).forEach(file => {
-        formState.addFile(file);
-      });
-    }
-  };
-
-  const handleFileUpload = () => {
-    formState.handleFileUpload();
-  };
-
-  const removeFile = (index: number) => {
-    formState.removeFile(index);
-  };
-
-  const saveProjectToHistory = async (projectName: string, researchQuestion: string, additionalContext: string, parsedData: any[]) => {
     try {
-      const { supabase } = await import('@/integrations/supabase/client');
+      const reconstructedState = reconstructAnalysisState(dataset);
+      const mockFiles = createMockFilesFromParsedData(
+        reconstructedState.parsedData, 
+        dataset.file_size
+      );
+
+      const projectNameToSet = reconstructedState.projectName || dataset.name || 'Untitled Project';
+
+      updateFormData({
+        projectName: projectNameToSet,
+        researchQuestion: reconstructedState.researchQuestion || '',
+        businessContext: reconstructedState.additionalContext || '',
+        file: mockFiles[0] || null,
+        files: mockFiles,
+        uploadedData: reconstructedState.parsedData,
+        parsedData: reconstructedState.parsedData,
+        step: reconstructedState.step,
+        processedFiles: [],
+      });
+
+      toast({
+        title: "Investigation Loaded",
+        description: `Continuing with "${projectNameToSet}"`,
+      });
+
+    } catch (error) {
+      console.error('❌ Error setting continue case data:', error);
       
-      if (!auth.user) {
-        throw new Error('User not authenticated');
-      }
-
-      // Save each file as a dataset in the database
-      for (const data of parsedData) {
-        const metadata = {
-          columns: data.columns || [],
-          sample_rows: data.rows?.slice(0, 10) || []
-        };
-
-        const summary = {
-          projectName,
-          researchQuestion,
-          description: additionalContext,
-          totalRows: data.summary?.totalRows || data.rowCount || 0,
-          totalColumns: data.summary?.totalColumns || data.columns?.length || 0,
-          ...data.summary
-        };
-
-        await supabase
-          .from('datasets')
-          .insert([{
-            user_id: auth.user.id,
-            name: projectName,
-            original_filename: data.name || 'uploaded_file.csv',
-            file_size: null,
-            mime_type: data.name?.endsWith('.csv') ? 'text/csv' : 'application/json',
-            metadata: metadata,
-            summary: summary
-          }]);
-      }
-
       toast({
-        title: "Project Saved",
-        description: `"${projectName}" has been saved to your project history.`,
-      });
-
-      return true;
-    } catch (error: any) {
-      console.error('Error saving project:', error);
-      toast({
-        title: "Save Failed",
-        description: error.message || "Failed to save project to history",
+        title: "Load Error",
+        description: "Failed to load the investigation. Please try again.",
         variant: "destructive",
       });
-      return false;
     }
-  };
+  }, [toast, reconstructAnalysisState, createMockFilesFromParsedData, updateFormData]);
 
-  const handleStartAnalysisClick = async (educationalMode: boolean = false, projectName: string = '') => {
-    if (!auth.user) {
-      auth.setShowSignInModal(true);
-      return;
+  const onFileChange = useCallback(async (fileOrEvent: File | React.ChangeEvent<HTMLInputElement>) => {
+    if ('target' in fileOrEvent && fileOrEvent.target && 'files' in fileOrEvent.target) {
+      const files = fileOrEvent.target.files;
+      if (files && files.length > 0) {
+        for (const file of Array.from(files)) {
+          await handleAddFile(file);
+        }
+      }
+    } else if (fileOrEvent && typeof fileOrEvent === 'object' && 'name' in fileOrEvent) {
+      await handleAddFile(fileOrEvent as File);
     }
-
-    if (!projectName.trim()) {
-      toast({
-        title: "Project Name Required",
-        description: "Please enter a project name before starting analysis.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Save project to history first
-    const projectSaved = await saveProjectToHistory(
-      projectName, 
-      formState.researchQuestion, 
-      formState.additionalContext, 
-      formState.parsedData
-    );
-
-    if (!projectSaved) {
-      return; // Error already shown in saveProjectToHistory
-    }
-
-    // Start analysis
-    analysis.startAnalysis(formState.researchQuestion, formState.additionalContext, educationalMode, formState.parsedData);
-    
-    // Show project naming dialog
-    dialogs.setShowProjectDialog(true);
-  };
-
-  const handleProjectConfirm = (projectName: string) => {
-    console.log('Project named:', projectName);
-    formState.setCurrentProjectName(projectName);
-    
-    // Don't clear form data or navigate yet - wait for analysis completion
-    // The dialog will handle the waiting state and progress display
-  };
-
-  const handleBackToProject = () => {
-    analysis.resetAnalysis();
-    formState.setCurrentProjectName('');
-  };
+  }, [handleAddFile]);
 
   return {
-    handleRestoreData,
-    handleStartFresh,
-    handleFileChange,
+    handleAddFile,
+    handleRemoveFile,
     handleFileUpload,
-    removeFile,
-    handleStartAnalysisClick,
-    handleProjectConfirm,
-    handleBackToProject
+    setContinueCaseData,
+    onFileChange,
+    processingState
   };
 };

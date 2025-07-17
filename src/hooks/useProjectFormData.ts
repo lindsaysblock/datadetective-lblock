@@ -1,191 +1,86 @@
+/**
+ * Project Form Data Hook
+ * Manages core form data state and basic setters
+ */
 
 import { useState, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { parseFile, type ParsedData } from '@/utils/dataParser';
+import { FORM_STEPS } from '@/constants/ui';
+import { ProcessedFileData } from './useFileProcessing';
+
+export interface FormData {
+  projectName: string;
+  researchQuestion: string;
+  businessContext: string;
+  file: File | null;
+  files: File[];
+  uploadedData: any;
+  parsedData: any[];
+  columnMapping: Record<string, string>;
+  analysisResults: any;
+  analysisCompleted: boolean;
+  isProcessingAnalysis: boolean;
+  uploading: boolean;
+  parsing: boolean;
+  step: number;
+  processedFiles: ProcessedFileData[];
+}
+
+const initialFormData: FormData = {
+  projectName: '',
+  researchQuestion: '',
+  businessContext: '',
+  file: null,
+  files: [],
+  uploadedData: null,
+  parsedData: [],
+  columnMapping: {},
+  analysisResults: null,
+  analysisCompleted: false,
+  isProcessingAnalysis: false,
+  uploading: false,
+  parsing: false,
+  step: FORM_STEPS.RESEARCH_QUESTION,
+  processedFiles: [],
+};
 
 export const useProjectFormData = () => {
-  const INITIAL_STEP = 1;
-  const MAX_STEP = 4;
-  const MIN_STEP = 1;
-  
-  const [step, setStep] = useState(INITIAL_STEP);
-  const [researchQuestion, setResearchQuestion] = useState('');
-  const [additionalContext, setAdditionalContext] = useState('');
-  const [files, setFiles] = useState<File[]>([]);
-  const [parsedData, setParsedData] = useState<ParsedData[]>([]);
-  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
-  const [uploading, setUploading] = useState(false);
-  const [parsing, setParsing] = useState(false);
-  const { toast } = useToast();
+  const [formData, setFormData] = useState<FormData>(initialFormData);
 
-  const addFile = useCallback((file: File) => {
-    console.log('Adding file:', file.name);
-    setFiles(prev => {
-      const exists = prev.some(f => f.name === file.name && f.size === file.size);
-      if (exists) {
-        toast({
-          title: "File already added",
-          description: `${file.name} is already in your project.`,
-        });
-        return prev;
-      }
-      return [...prev, file];
-    });
-  }, [toast]);
+  const updateFormData = useCallback((updates: Partial<FormData>) => {
+    console.log('📝 updateFormData called with:', updates);
+    setFormData(prev => ({ ...prev, ...updates }));
+  }, []);
 
-  const removeFile = useCallback((index: number) => {
-    console.log('Removing file at index:', index);
-    
-    if (index < 0 || index >= files.length) {
-      console.error('Invalid file index:', index);
-      toast({
-        title: "Error",
-        description: "Invalid file index.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const setProjectName = useCallback((value: string) => {
+    console.log('🎯 setProjectName called with:', value);
+    updateFormData({ projectName: value });
+  }, [updateFormData]);
 
-    setFiles(prev => prev.filter((_, i) => i !== index));
-    setParsedData(prev => prev.filter((_, i) => i !== index));
+  const setResearchQuestion = useCallback((value: string) => {
+    updateFormData({ researchQuestion: value });
+  }, [updateFormData]);
 
-    toast({
-      title: "File Removed",
-      description: "The selected file has been removed from your project.",
-    });
-  }, [files.length, toast]);
+  const setAdditionalContext = useCallback((value: string) => {
+    updateFormData({ businessContext: value });
+  }, [updateFormData]);
 
-  const handleFileUpload = useCallback(async () => {
-    console.log('handleFileUpload called with files:', files.length);
-    
-    if (files.length === 0) {
-      console.log('No files to upload - files array is empty');
-      toast({
-        title: "No files selected",
-        description: "Please select at least one file to upload.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log('Starting file upload process for files:', files.map(f => f.name));
-    setUploading(true);
-    setParsing(true);
-
-    try {
-      const parsedResults: ParsedData[] = [];
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        console.log(`Processing file ${i + 1}/${files.length}:`, file.name);
-        
-        try {
-          const parsed = await parseFile(file);
-          console.log('File parsed successfully:', {
-            fileName: file.name,
-            rows: parsed.rows?.length || 0,
-            columns: parsed.columns?.length || 0
-          });
-          parsedResults.push(parsed);
-        } catch (fileError) {
-          console.error(`Error parsing file ${file.name}:`, fileError);
-          toast({
-            title: `Failed to parse ${file.name}`,
-            description: fileError instanceof Error ? fileError.message : 'Unknown parsing error',
-            variant: "destructive",
-          });
-        }
-      }
-      
-      if (parsedResults.length > 0) {
-        setParsedData(parsedResults);
-        console.log('All files processed successfully:', {
-          totalFiles: parsedResults.length,
-          totalRows: parsedResults.reduce((sum, data) => sum + (data.rows?.length || 0), 0)
-        });
-        
-        toast({
-          title: "Files Uploaded Successfully!",
-          description: `Processed ${parsedResults.length} file(s) with ${parsedResults.reduce((total, data) => total + (data.summary?.totalRows || 0), 0)} total rows.`,
-        });
-      } else {
-        throw new Error('No files were successfully processed');
-      }
-      
-    } catch (error: any) {
-      console.error('File upload error:', error);
-      toast({
-        title: "Upload Failed",
-        description: error.message || 'Failed to process the files.',
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-      setParsing(false);
-    }
-  }, [files, toast]);
-
-  // Fixed file change handler - removed problematic auto-upload
-  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('handleFileChange called');
-    const selectedFiles = event.target.files;
-    
-    if (!selectedFiles || selectedFiles.length === 0) {
-      console.log('No files selected in event');
-      return;
-    }
-
-    console.log('Files selected:', Array.from(selectedFiles).map(f => f.name));
-    
-    // Add files to state
-    Array.from(selectedFiles).forEach(file => {
-      addFile(file);
-    });
-
-    // Clear the input value to allow re-uploading the same file
-    event.target.value = '';
-  }, [addFile]);
-
-  const nextStep = useCallback(() => {
-    console.log('Moving to next step from:', step);
-    setStep(prev => Math.min(prev + 1, MAX_STEP));
-  }, [step]);
-
-  const prevStep = useCallback(() => {
-    console.log('Moving to previous step from:', step);
-    setStep(prev => Math.max(prev - 1, MIN_STEP));
-  }, [step]);
+  const setColumnMapping = useCallback((mapping: Record<string, string>) => {
+    updateFormData({ columnMapping: mapping });
+  }, [updateFormData]);
 
   const resetForm = useCallback(() => {
-    console.log('Resetting form');
-    setStep(INITIAL_STEP);
-    setResearchQuestion('');
-    setAdditionalContext('');
-    setFiles([]);
-    setParsedData([]);
-    setColumnMapping({});
-    setUploading(false);
-    setParsing(false);
+    console.log('Resetting form data');
+    setFormData(initialFormData);
   }, []);
 
   return {
-    step,
-    researchQuestion,
-    additionalContext,
-    files,
-    parsedData,
-    columnMapping,
-    uploading,
-    parsing,
+    formData,
+    updateFormData,
+    setProjectName,
     setResearchQuestion,
     setAdditionalContext,
     setColumnMapping,
-    addFile,
-    removeFile,
-    handleFileChange,
-    handleFileUpload,
-    nextStep,
-    prevStep,
-    resetForm
+    resetForm,
+    initialFormData
   };
 };
