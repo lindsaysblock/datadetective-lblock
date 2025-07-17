@@ -133,8 +133,27 @@ const NewProjectContainer: React.FC = () => {
       });
 
       // CRITICAL: Transform data to match expected ParsedData structure
-      const transformedData = formData.parsedData.map(data => {
-        console.log('🔧 Transforming data structure for analysis:', data);
+      console.log('🔥 [CRITICAL] About to transform parsedData:', {
+        parsedDataExists: !!formData.parsedData,
+        parsedDataLength: formData.parsedData?.length,
+        firstDataItemKeys: formData.parsedData?.[0] ? Object.keys(formData.parsedData[0]) : 'No first item',
+        firstDataItemType: typeof formData.parsedData?.[0],
+        fullFirstDataItem: formData.parsedData?.[0]
+      });
+
+      const transformedData = formData.parsedData.map((data, index) => {
+        console.log(`🔧 [${index}] Transforming data structure for analysis:`, {
+          dataType: typeof data,
+          dataKeys: Object.keys(data),
+          hasRows: !!data.rows,
+          rowsLength: data.rows?.length,
+          hasColumns: !!data.columns,
+          columnsLength: data.columns?.length,
+          hasSummary: !!data.summary,
+          summaryType: typeof data.summary,
+          summaryKeys: data.summary ? Object.keys(data.summary) : 'No summary',
+          fullData: data
+        });
         
         // Ensure the data has the required structure for analysis functions
         const transformedItem = {
