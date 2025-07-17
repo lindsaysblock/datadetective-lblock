@@ -163,6 +163,8 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, actions
             onStartAnalysis={handleStartAnalysisWrapper}
             onPrevious={actions.prevStep}
             formData={{ ...formData, actions }}
+            projectName={formData.projectName}
+            onProjectNameChange={actions.setProjectName}
           />
         );
       default:

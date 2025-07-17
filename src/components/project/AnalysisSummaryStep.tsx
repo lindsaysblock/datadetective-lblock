@@ -19,6 +19,8 @@ interface AnalysisSummaryStepProps {
   onStartAnalysis: (educationalMode: boolean, projectName: string) => void;
   onPrevious: () => void;
   formData: any;
+  projectName?: string;
+  onProjectNameChange?: (value: string) => void;
 }
 
 const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
@@ -31,62 +33,44 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   isProcessingAnalysis,
   onStartAnalysis,
   onPrevious,
-  formData
+  formData,
+  projectName: propProjectName,
+  onProjectNameChange: propOnProjectNameChange
 }) => {
   const [educationalMode, setEducationalMode] = React.useState(false);
+  const [localProjectName, setLocalProjectName] = React.useState(propProjectName || formData?.projectName || '');
 
-  // Get project name directly from formData
-  const projectName = formData?.projectName || '';
+  // Use prop values if provided, otherwise fall back to formData
+  const projectName = propProjectName !== undefined ? propProjectName : formData?.projectName || localProjectName;
+  const onProjectNameChange = propOnProjectNameChange || formData?.actions?.setProjectName;
 
-  console.log('🔍 AnalysisSummaryStep render - PROJECT NAME DEBUG:', {
-    projectName: projectName,
-    projectNameLength: projectName?.length || 0,
+  console.log('🔍 AnalysisSummaryStep - Case Name Debug:', {
+    projectName,
+    localProjectName,
+    propProjectName,
     formDataProjectName: formData?.projectName,
-    formDataKeys: formData ? Object.keys(formData) : 'NO FORM DATA',
-    hasActions: !!formData?.actions,
-    actionsKeys: formData?.actions ? Object.keys(formData.actions) : 'NO ACTIONS',
-    hasSetProjectName: !!formData?.actions?.setProjectName,
-    setProjectNameType: typeof formData?.actions?.setProjectName,
-    researchQuestion: researchQuestion,
-    hasData: !!(parsedData && parsedData.length > 0)
+    hasOnChangeHandler: !!onProjectNameChange
   });
 
   // Auto-set a default project name if none exists and we have a research question
   useEffect(() => {
-    console.log('🔍 AnalysisSummaryStep useEffect - Auto project name check:', {
-      currentProjectName: projectName,
-      hasResearchQuestion: !!researchQuestion,
-      hasSetProjectName: !!formData?.actions?.setProjectName,
-      shouldAutoSet: !projectName && researchQuestion && formData?.actions?.setProjectName
-    });
-    
-    if (!projectName && researchQuestion && formData?.actions?.setProjectName) {
+    if (!projectName && researchQuestion && onProjectNameChange) {
       const defaultName = `Analysis: ${researchQuestion.substring(0, 30)}${researchQuestion.length > 30 ? '...' : ''}`;
-      console.log('🎯 Auto-setting default project name:', defaultName);
-      formData.actions.setProjectName(defaultName);
+      onProjectNameChange(defaultName);
+      setLocalProjectName(defaultName);
     }
-  }, [projectName, researchQuestion, formData?.actions?.setProjectName]);
+  }, [projectName, researchQuestion, onProjectNameChange]);
 
   const handleProjectNameChange = (value: string) => {
-    console.log('🎯 Project name input changed to:', value);
-    console.log('🎯 Form data structure:', {
-      hasFormData: !!formData,
-      hasActions: !!formData?.actions,
-      hasSetProjectName: !!formData?.actions?.setProjectName,
-      setProjectNameType: typeof formData?.actions?.setProjectName
-    });
-    
-    if (formData?.actions?.setProjectName) {
-      console.log('✅ Calling setProjectName with:', value);
-      formData.actions.setProjectName(value);
-    } else {
-      console.error('❌ setProjectName function not available in formData.actions');
-      console.error('❌ Available actions:', formData?.actions ? Object.keys(formData.actions) : 'No actions');
+    console.log('🎯 Project name changing to:', value);
+    setLocalProjectName(value);
+    if (onProjectNameChange) {
+      onProjectNameChange(value);
     }
   };
 
   const handleStartAnalysis = () => {
-    const finalProjectName = projectName?.trim();
+    const finalProjectName = localProjectName?.trim() || projectName?.trim();
     
     console.log('🚀 Starting analysis with:', {
       projectName: finalProjectName,
@@ -185,12 +169,12 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             <Label htmlFor="projectName">Give your investigation a memorable name</Label>
             <Input
               id="projectName"
-              value={projectName}
+              value={localProjectName}
               onChange={(e) => handleProjectNameChange(e.target.value)}
               placeholder="e.g., Customer Behavior Investigation"
               className="w-full focus:ring-2 focus:ring-brand-purple focus:border-brand-purple"
             />
-            {!projectName && (
+            {!localProjectName && (
               <p className="text-sm text-destructive">Case name is required to start investigation</p>
             )}
           </div>
