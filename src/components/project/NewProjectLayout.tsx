@@ -7,7 +7,7 @@ interface NewProjectLayoutProps {
 }
 
 const NewProjectLayout: React.FC<NewProjectLayoutProps> = ({ children }) => {
-  console.log('NewProjectLayout rendering');
+  console.log('🚀 NewProjectLayout rendering with Header component');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">

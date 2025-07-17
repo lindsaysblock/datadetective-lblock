@@ -25,7 +25,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
   const { saveAnalysisProject } = useDatasetPersistence();
   const { toast } = useToast();
 
-  console.log('NewProjectContent formData:', {
+  console.log('🔍 NewProjectContent formData:', {
     step: formData.step,
     researchQuestion: formData.researchQuestion,
     hasResearchQuestion: !!formData.researchQuestion,
@@ -37,6 +37,8 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
     parsing: formData.parsing,
     setResearchQuestionType: typeof formData.setResearchQuestion
   });
+  
+  console.log('📝 NewProjectContent - DataDetectiveHeader should NOT be rendered here');
 
   const handleStartAnalysisWrapper = async (educationalMode: boolean = false, projectName: string = '') => {
     console.log('NewProjectContent starting analysis:', { educationalMode, projectName });
