@@ -155,7 +155,7 @@ const NewProjectContainer: React.FC = () => {
           fullData: data
         });
         
-        // Ensure the data has the required structure for analysis functions
+        // Ensure the data has the required ParsedData structure for analysis functions
         const transformedItem = {
           ...data,
           // Ensure summary object exists with required properties
