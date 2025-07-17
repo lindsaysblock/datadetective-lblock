@@ -61,15 +61,15 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   const handleStartAnalysis = () => {
     const finalProjectName = caseNameValue?.trim();
     
-    console.log('🚀 Starting analysis with:', {
-      projectName: finalProjectName,
-      researchQuestion,
-      hasData: !!(parsedData && parsedData.length > 0),
-      dataValidation: parsedData?.map(d => ({
-        name: d?.name,
-        rows: d?.rowCount || d?.rows,
-        hasColumnInfo: !!(d?.columnInfo && Array.isArray(d.columnInfo) && d.columnInfo.length > 0)
-      }))
+    console.log('🎯 [BUTTON] Start Analysis clicked with debug info:', {
+      hasResearchQuestion: !!researchQuestion,
+      researchQuestionText: researchQuestion,
+      hasCaseName: !!finalProjectName,
+      caseNameText: finalProjectName,
+      hasParsedData: !!parsedData,
+      parsedDataLength: parsedData?.length || 0,
+      isProcessingAnalysis,
+      buttonShouldBeDisabled: !researchQuestion || !finalProjectName || !parsedData || parsedData.length === 0 || isProcessingAnalysis
     });
 
     if (!finalProjectName) {

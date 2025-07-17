@@ -44,7 +44,27 @@ const initialFormData: FormData = {
 };
 
 export const useProjectFormData = () => {
-  const [formData, setFormData] = useState<FormData>(initialFormData);
+  // Initialize with potential localStorage data
+  const [formData, setFormData] = useState<FormData>(() => {
+    try {
+      const saved = localStorage.getItem('dataDetective_projectForm');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        console.log('🔄 Restoring form data from localStorage:', parsed);
+        return {
+          ...initialFormData,
+          projectName: parsed.researchQuestion || '', // Temporary fix
+          researchQuestion: parsed.researchQuestion || '',
+          businessContext: parsed.additionalContext || '',
+          parsedData: parsed.parsedData || [],
+          step: parsed.currentStep || FORM_STEPS.RESEARCH_QUESTION
+        };
+      }
+    } catch (error) {
+      console.error('Failed to restore form data:', error);
+    }
+    return initialFormData;
+  });
 
   const updateFormData = useCallback((updates: Partial<FormData>) => {
     console.log('📝 updateFormData called with:', updates);

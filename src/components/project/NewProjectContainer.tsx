@@ -44,6 +44,11 @@ const NewProjectContainer: React.FC = () => {
 
   const handleStartAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
     console.log('🚀 [PIPELINE] Starting analysis from container:', { educationalMode, projectName });
+    console.log('🔍 [PIPELINE] User auth status:', { 
+      isAuthenticated: !!user, 
+      userId: user?.id, 
+      userEmail: user?.email 
+    });
     
     // CRITICAL: Update formData with the project name first
     if (projectName && projectName.trim()) {
@@ -69,9 +74,12 @@ const NewProjectContainer: React.FC = () => {
       // STEP 2: Check for authentication first
       if (!user) {
         console.error('❌ [PIPELINE] User not authenticated - analysis requires sign in');
+        console.error('❌ [PIPELINE] Auth state:', { user, loading });
         alert('Please sign in to run analysis. Your data and results will be saved to your account.');
         return;
       }
+      
+      console.log('✅ [PIPELINE] User authenticated:', { userId: user.id, email: user.email });
 
       // STEP 3: Check for required data
       if (!formData.researchQuestion?.trim()) {
