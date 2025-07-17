@@ -19,12 +19,14 @@ const ResearchQuestionStep: React.FC<ResearchQuestionStepProps> = ({
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
-    console.log('Text change detected:', value);
+    console.log('📝 Research question text change:', value);
+    console.log('📝 Current value length:', value.length);
     
     if (typeof setResearchQuestion === 'function') {
       setResearchQuestion(value);
+      console.log('✅ Research question updated successfully');
     } else {
-      console.error('setResearchQuestion is not a function!');
+      console.error('❌ setResearchQuestion is not a function!');
     }
   };
 
@@ -63,12 +65,31 @@ const ResearchQuestionStep: React.FC<ResearchQuestionStepProps> = ({
         {/* Next Button */}
         <div className="flex justify-end mt-8">
           <Button 
-            onClick={onNext}
+            onClick={() => {
+              console.log('🚀 Next button clicked!');
+              console.log('📝 Research question for validation:', researchQuestion);
+              console.log('📝 Is button disabled?', !researchQuestion?.trim());
+              if (researchQuestion?.trim()) {
+                console.log('✅ Proceeding to next step');
+                onNext();
+              } else {
+                console.log('❌ Cannot proceed - no research question');
+              }
+            }}
             disabled={!researchQuestion?.trim()}
-            className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-lg flex items-center gap-2 text-base font-medium transition-all duration-200"
+            className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-lg flex items-center gap-2 text-base font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next <ArrowRight className="w-5 h-5" />
           </Button>
+          
+          {/* Debug info */}
+          <div className="ml-4 text-sm text-gray-500">
+            {researchQuestion ? (
+              <span className="text-green-600">✓ Question: {researchQuestion.length} chars</span>
+            ) : (
+              <span className="text-red-600">✗ No question entered</span>
+            )}
+          </div>
         </div>
       </div>
     </div>
