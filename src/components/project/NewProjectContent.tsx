@@ -8,7 +8,8 @@ import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
 import { useToast } from '@/hooks/use-toast';
-import { ResearchQuestionStep, DataSourceStep, BusinessContextStep } from './QuickFormSteps';
+import { ResearchQuestionStep, DataSourceStep } from './QuickFormSteps';
+import BusinessContextStep from './BusinessContextStep';
 import AnalysisSummaryStep from './AnalysisSummaryStep';
 import DataDetectiveHeader from './DataDetectiveHeader';
 import StepIndicator from './StepIndicator';
@@ -150,6 +151,9 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
           <BusinessContextStep
             additionalContext={formData.businessContext}
             setAdditionalContext={formData.setAdditionalContext}
+            parsedData={formData.parsedData}
+            columnMapping={formData.columnMapping}
+            onColumnMapping={formData.setColumnMapping}
             onNext={formData.nextStep}
             onPrevious={formData.prevStep}
           />
