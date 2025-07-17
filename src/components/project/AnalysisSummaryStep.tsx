@@ -84,11 +84,22 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
       return;
     }
 
+    console.log('🔍 [CRITICAL] Checking parsedData existence:', {
+      hasParsedData: !!parsedData,
+      parsedDataType: typeof parsedData,
+      parsedDataLength: parsedData?.length,
+      isArray: Array.isArray(parsedData),
+      parsedDataValue: parsedData
+    });
+
     if (!parsedData || parsedData.length === 0) {
-      console.error('❌ No data available');
+      console.error('❌ No data available - STOPPING HERE');
+      console.error('❌ parsedData details:', { parsedData, length: parsedData?.length });
       alert('Please upload data before starting analysis');
       return;
     }
+
+    console.log('✅ parsedData check passed, proceeding to structure validation...');
 
     // Validate data structure - enhanced debugging
     console.log('🔍 Starting detailed data structure validation...');
