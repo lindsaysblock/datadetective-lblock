@@ -84,7 +84,6 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
       return;
     }
 
-    console.log('✅ [STEP 1] Research question validation passed');
     console.log('🔍 [STEP 2] About to check parsedData...');
 
     console.log('🔍 [CRITICAL] Checking parsedData existence:', {
@@ -92,7 +91,15 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
       parsedDataType: typeof parsedData,
       parsedDataLength: parsedData?.length,
       isArray: Array.isArray(parsedData),
-      parsedDataValue: parsedData
+      parsedDataValue: parsedData,
+      firstDataItem: parsedData?.[0],
+      firstDataItemKeys: parsedData?.[0] ? Object.keys(parsedData[0]) : 'No first item',
+      firstDataItemStructure: parsedData?.[0] ? {
+        hasRows: !!parsedData[0].rows,
+        hasColumns: !!parsedData[0].columns, 
+        hasSummary: !!parsedData[0].summary,
+        summaryStructure: parsedData[0].summary ? Object.keys(parsedData[0].summary) : 'No summary'
+      } : 'No structure'
     });
 
     if (!parsedData || parsedData.length === 0) {
