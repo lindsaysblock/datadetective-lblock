@@ -181,7 +181,6 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className={`container mx-auto px-${SPACING.MD} py-${SPACING.XL}`}>
-        <DataDetectiveHeader />
         <div className="max-w-4xl mx-auto">
           {/* Step Indicator */}
           <StepIndicator currentStep={formData.step} />
