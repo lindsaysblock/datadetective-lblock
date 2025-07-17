@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, TestTube, Settings, Users, Play, Activity } from 'lucide-react';
+import { Shield, TestTube, Settings, Users, Play, Activity, Bug } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import LegalFooter from '@/components/LegalFooter';
@@ -17,6 +17,7 @@ import createDataPipelineTestSuite from '@/utils/testing/dataPipelineTestSuite';
 const Admin = () => {
   const [pipelineTestResults, setPipelineTestResults] = useState<any[]>([]);
   const [isRunningPipelineTests, setIsRunningPipelineTests] = useState(false);
+  const [debugResults, setDebugResults] = useState<any[]>([]);
   const { toast } = useToast();
   
   const runDataPipelineTests = async () => {
@@ -52,6 +53,95 @@ const Admin = () => {
       setIsRunningPipelineTests(false);
     }
   };
+
+  const testDataValidation = () => {
+    // Data validation test logic from DataValidationDebug
+    const parsedData = [
+      {
+        "id": "Sample_Behavior_Data_with_Commerce_Purchases.csv-1752694579685-0",
+        "name": "Sample_Behavior_Data_with_Commerce_Purchases.csv",
+        "rows": [
+          {
+            "timestamp": "2025-07-01 05:45:34.664282",
+            "session_id": "5b8d89b1-8769-4e69-a2b0-7051d0e811c1",
+            "user_id": "7f8c156e-4142-4807-bf08-b09a69493672",
+            "user_type": "logged_in",
+            "product_id": "e18b7971-87ca-4c99-bcf2-5efcda680e62",
+            "category": "Category_7",
+            "action": "view",
+            "price": "196.73",
+            "cost": "116.66",
+            "quantity": "",
+            "discount": "0.0",
+            "shipping_cost": "0.0",
+            "payment_method": "",
+            "total_order_value": "0.0",
+            "time_spent_sec": "119.79"
+          }
+        ],
+        "columns": [
+          {
+            "name": "timestamp",
+            "type": "date",
+            "samples": ["2025-07-01 05:45:34.664282"]
+          },
+          {
+            "name": "session_id", 
+            "type": "string",
+            "samples": ["5b8d89b1-8769-4e69-a2b0-7051d0e811c1"]
+          }
+        ],
+        "rowCount": 10,
+        "summary": {
+          "totalRows": 10,
+          "totalColumns": 15
+        }
+      }
+    ];
+
+    console.log('🔍 Testing validation with actual data structure:', parsedData);
+    
+    const validationResults = parsedData.map((data, index) => {
+      const hasData = !!data;
+      const hasRowCount = data?.rowCount > 0;
+      const hasRows = data?.rows && data?.rows.length > 0;
+      const hasColumns = !!data?.columns;
+      const isColumnsArray = Array.isArray(data?.columns);
+      const hasColumnsLength = data?.columns?.length > 0;
+      
+      const rowCondition = hasRowCount || hasRows;
+      const columnCondition = hasColumns && isColumnsArray && hasColumnsLength;
+      const finalResult = hasData && rowCondition && columnCondition;
+      
+      return {
+        index,
+        hasData,
+        hasRowCount,
+        hasRows,
+        hasColumns,
+        isColumnsArray,
+        hasColumnsLength,
+        rowCondition,
+        columnCondition,
+        finalResult,
+        data: data
+      };
+    });
+
+    console.log('🔍 Validation results:', validationResults);
+    
+    const hasValidData = parsedData.some(data => 
+      data && 
+      (data.rowCount > 0 || (data.rows && data.rows.length > 0)) && 
+      data.columns && 
+      Array.isArray(data.columns) && 
+      data.columns.length > 0
+    );
+    
+    console.log('🔍 Final hasValidData result:', hasValidData);
+    
+    setDebugResults(validationResults);
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Header />
@@ -69,7 +159,7 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="testing" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="testing" className="flex items-center gap-2">
                 <TestTube className="w-4 h-4" />
                 Testing
@@ -93,6 +183,10 @@ const Admin = () => {
               <TabsTrigger value="analytics" className="flex items-center gap-2">
                 <Shield className="w-4 h-4" />
                 Analytics
+              </TabsTrigger>
+              <TabsTrigger value="debug" className="flex items-center gap-2">
+                <Bug className="w-4 h-4" />
+                Debug
               </TabsTrigger>
             </TabsList>
 
@@ -200,6 +294,52 @@ const Admin = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600">Analytics dashboard coming soon...</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="debug" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bug className="w-5 h-5" />
+                    Data Validation Debug
+                  </CardTitle>
+                  <CardDescription>Test and debug data validation logic</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={testDataValidation} className="mb-4">
+                    Test Validation Logic
+                  </Button>
+                  
+                  {debugResults.length > 0 && (
+                    <div className="space-y-4">
+                      {debugResults.map((result, index) => (
+                        <div key={index} className="bg-muted p-4 rounded-lg">
+                          <h3 className="font-semibold mb-2">Data Item {index}:</h3>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>Has Data: {result.hasData ? '✅' : '❌'}</div>
+                            <div>Has Row Count: {result.hasRowCount ? '✅' : '❌'}</div>
+                            <div>Has Rows: {result.hasRows ? '✅' : '❌'}</div>
+                            <div>Has Columns: {result.hasColumns ? '✅' : '❌'}</div>
+                            <div>Is Columns Array: {result.isColumnsArray ? '✅' : '❌'}</div>
+                            <div>Has Columns Length: {result.hasColumnsLength ? '✅' : '❌'}</div>
+                            <div>Row Condition: {result.rowCondition ? '✅' : '❌'}</div>
+                            <div>Column Condition: {result.columnCondition ? '✅' : '❌'}</div>
+                            <div className="col-span-2 font-bold">
+                              Final Result: {result.finalResult ? '✅ VALID' : '❌ INVALID'}
+                            </div>
+                          </div>
+                          <details className="mt-2">
+                            <summary className="cursor-pointer">View Raw Data</summary>
+                            <pre className="mt-2 text-xs bg-background p-2 rounded overflow-auto">
+                              {JSON.stringify(result.data, null, 2)}
+                            </pre>
+                          </details>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
