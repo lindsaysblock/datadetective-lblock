@@ -96,11 +96,20 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
       firstDataItemKeys: parsedData?.[0] ? Object.keys(parsedData[0]) : 'No first item',
       firstDataItemStructure: parsedData?.[0] ? {
         hasRows: !!parsedData[0].rows,
+        rowsType: typeof parsedData[0].rows,
+        rowsLength: parsedData[0].rows?.length,
         hasColumns: !!parsedData[0].columns, 
+        columnsType: typeof parsedData[0].columns,
+        columnsLength: parsedData[0].columns?.length,
         hasSummary: !!parsedData[0].summary,
-        summaryStructure: parsedData[0].summary ? Object.keys(parsedData[0].summary) : 'No summary'
+        summaryType: typeof parsedData[0].summary,
+        summaryStructure: parsedData[0].summary ? Object.keys(parsedData[0].summary) : 'No summary',
+        summaryContent: parsedData[0].summary,
+        allKeys: Object.keys(parsedData[0])
       } : 'No structure'
     });
+
+    console.log('🔍 [RAW DATA] First data item full structure:', JSON.stringify(parsedData?.[0], null, 2));
 
     if (!parsedData || parsedData.length === 0) {
       console.error('❌ No data available - STOPPING HERE');
