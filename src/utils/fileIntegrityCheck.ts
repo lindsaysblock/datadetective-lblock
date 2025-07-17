@@ -15,6 +15,12 @@ export interface FileValidationResult {
   };
 }
 
+interface ContentValidationResult {
+  isValid: boolean;
+  error?: string;
+  warnings?: string[];
+}
+
 /**
  * Enhanced file validation with corruption detection
  */
@@ -253,7 +259,7 @@ const checkJSONCorruption = (content: string) => {
 /**
  * Validate file content structure
  */
-const validateFileContent = (content: string, fileType: string): { isValid: boolean; error?: string; warnings?: string[] } => {
+const validateFileContent = (content: string, fileType: string): ContentValidationResult => {
   const result = {
     isValid: true,
     warnings: [] as string[]
@@ -283,7 +289,7 @@ const validateFileContent = (content: string, fileType: string): { isValid: bool
 /**
  * Validate CSV content structure  
  */
-const validateCSVContent = (content: string): { isValid: boolean; error?: string; warnings?: string[] } => {
+const validateCSVContent = (content: string): ContentValidationResult => {
   const result = { isValid: true, warnings: [] as string[] };
   
   const lines = content.split('\n').filter(line => line.trim().length > 0);
@@ -309,7 +315,7 @@ const validateCSVContent = (content: string): { isValid: boolean; error?: string
 /**
  * Validate JSON content structure
  */
-const validateJSONContent = (content: string): { isValid: boolean; error?: string; warnings?: string[] } => {
+const validateJSONContent = (content: string): ContentValidationResult => {
   const result = { isValid: true, warnings: [] as string[] };
   
   try {
