@@ -53,23 +53,23 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     console.log('🔍 AnalysisSummaryStep useEffect - Auto project name check:', {
       currentProjectName: projectName,
       hasResearchQuestion: !!researchQuestion,
-      hasSetProjectName: !!formData?.setProjectName,
-      shouldAutoSet: !projectName && researchQuestion && formData?.setProjectName
+      hasSetProjectName: !!formData?.actions?.setProjectName,
+      shouldAutoSet: !projectName && researchQuestion && formData?.actions?.setProjectName
     });
     
-    if (!projectName && researchQuestion && formData?.setProjectName) {
+    if (!projectName && researchQuestion && formData?.actions?.setProjectName) {
       const defaultName = `Analysis: ${researchQuestion.substring(0, 30)}${researchQuestion.length > 30 ? '...' : ''}`;
       console.log('🎯 Auto-setting default project name:', defaultName);
-      formData.setProjectName(defaultName);
+      formData.actions.setProjectName(defaultName);
     }
-  }, [projectName, researchQuestion, formData?.setProjectName]);
+  }, [projectName, researchQuestion, formData?.actions?.setProjectName]);
 
   const handleProjectNameChange = (value: string) => {
     console.log('🎯 Project name input changed to:', value);
-    if (formData?.setProjectName) {
-      formData.setProjectName(value);
+    if (formData?.actions?.setProjectName) {
+      formData.actions.setProjectName(value);
     } else {
-      console.error('❌ setProjectName function not available in formData');
+      console.error('❌ setProjectName function not available in formData.actions');
     }
   };
 

@@ -162,7 +162,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, actions
             isProcessingAnalysis={formData.isProcessingAnalysis || isLoading}
             onStartAnalysis={handleStartAnalysisWrapper}
             onPrevious={actions.prevStep}
-            formData={formData}
+            formData={{ ...formData, actions }}
           />
         );
       default:
