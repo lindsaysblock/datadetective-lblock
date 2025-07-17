@@ -19,6 +19,16 @@ const NewProjectContainer: React.FC = () => {
   const { formData, isLoading, error, actions } = useNewProjectForm();
   const { startAnalysis, isAnalyzing, progress, report } = useAnalysisEngine();
 
+  // CRITICAL DEBUG: Check formData every render
+  console.log('🔥 [CONTAINER] FormData check on render:', {
+    formDataExists: !!formData,
+    formDataType: typeof formData,
+    formDataKeys: formData ? Object.keys(formData) : 'No formData',
+    researchQuestion: formData?.researchQuestion || 'Missing',
+    parsedDataCount: formData?.parsedData?.length || 0,
+    projectName: formData?.projectName || 'Missing'
+  });
+
   const handleStartAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
     console.log('🚀 [PIPELINE] Starting analysis from container:', { educationalMode, projectName });
     
