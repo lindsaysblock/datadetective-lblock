@@ -45,12 +45,19 @@ const NewProjectContainer: React.FC = () => {
 
   const handleAnalysisComplete = () => {
     console.log('✅ Analysis completed, redirecting to analysis page');
-    // Navigate to analysis page with the completed analysis
+    console.log('📊 Passing analysis data:', {
+      formData: formData,
+      report: report,
+      projectName: formData.projectName
+    });
+    
+    // Navigate to analysis page with the completed analysis data in the expected format
     navigate('/analysis', {
       state: {
-        analysisReport: report,
+        formData: formData,
+        educationalMode: false, // Add this if needed
         projectName: formData.projectName,
-        researchQuestion: formData.researchQuestion
+        analysisReport: report
       }
     });
   };
