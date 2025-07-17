@@ -27,9 +27,16 @@ const Analysis = () => {
 
   useEffect(() => {
     const state = location.state;
-    console.log('Analysis page loaded with state:', state);
+    console.log('🔍 Analysis page loaded with navigation state:', state);
+    console.log('🔍 State keys:', state ? Object.keys(state) : 'No state');
+    console.log('🔍 FormData exists:', !!(state && state.formData));
+    console.log('🔍 FormData content:', state?.formData);
 
     if (!state || !state.formData) {
+      console.log('❌ Missing state or formData, redirecting to new-project');
+      console.log('❌ State object:', state);
+      console.log('❌ FormData:', state?.formData);
+      
       toast({
         title: "No Investigation Data",
         description: "No case data found. Starting new investigation.",
