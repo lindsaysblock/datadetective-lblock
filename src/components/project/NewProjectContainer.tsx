@@ -23,14 +23,14 @@ const NewProjectContainer: React.FC = () => {
     console.log('🚀 Starting analysis from container:', { educationalMode, projectName });
     
     try {
-      // Validate form data before starting analysis
-      const validation = actions.validateFormData(projectName);
-      if (!validation) {
-        console.error('❌ Form validation failed');
-        return;
-      }
+      console.log('🔍 Starting analysis engine with data:', {
+        researchQuestion: formData.researchQuestion,
+        businessContext: formData.businessContext,
+        parsedDataCount: formData.parsedData?.length || 0,
+        educationalMode
+      });
 
-      // Start the analysis engine  
+      // Start the analysis engine
       await startAnalysis({
         researchQuestion: formData.researchQuestion,
         additionalContext: formData.businessContext,
