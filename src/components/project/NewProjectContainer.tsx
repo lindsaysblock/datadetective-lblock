@@ -21,6 +21,7 @@ const NewProjectContainer: React.FC = () => {
 
   // Watch for analysis completion and trigger navigation
   useEffect(() => {
+    console.log('🔍 [CONTAINER] Analysis state check:', { progress, hasReport: !!report, isAnalyzing });
     if (progress >= 100 && report && !isAnalyzing) {
       console.log('🎯 [CONTAINER] Analysis detected as complete, triggering handleAnalysisComplete');
       handleAnalysisComplete();
@@ -159,11 +160,12 @@ const NewProjectContainer: React.FC = () => {
     });
     
     // Navigate to analysis page
+    console.log('🚀 [CONTAINER] About to navigate to /analysis with state');
     navigate('/analysis', {
       state: navigationState
     });
 
-    console.log('✅ [PIPELINE] STEP 5 - Navigation initiated with validated state');
+    console.log('✅ [CONTAINER] Navigation call completed - should now be on analysis page');
   };
 
   if (error) {

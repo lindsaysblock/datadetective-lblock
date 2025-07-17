@@ -77,11 +77,11 @@ const AnalysisProgressModal: React.FC<AnalysisProgressModalProps> = ({
   useEffect(() => {
     console.log('🔍 [MODAL] Progress check:', { progress, isComplete: progress >= 100 });
     if (progress >= 100) {
-      console.log('✅ [MODAL] Analysis complete! Setting 2-second timer before calling onComplete');
+      console.log('✅ [MODAL] Analysis complete! Setting 1-second timer before calling onComplete');
       const timer = setTimeout(() => {
         console.log('🚀 [MODAL] Timer fired, calling onComplete callback now');
         onComplete();
-      }, 2000); // Wait 2 seconds to show completion state
+      }, 1000); // Reduced to 1 second for faster navigation
 
       return () => {
         console.log('🧹 [MODAL] Cleaning up completion timer');
