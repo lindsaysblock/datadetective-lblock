@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import Papa from 'papaparse';
 import { validateFile } from '@/utils/fileValidation';
+import { validateFileIntegrity } from '@/utils/fileIntegrityCheck';
 
 export const useFileUpload = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -32,7 +33,7 @@ export const useFileUpload = () => {
     setUploading(true);
     setParsing(true);
 
-    // Validate file first
+    // Basic file validation first
     const validation = validateFile(file);
     if (!validation.isValid) {
       toast({
@@ -43,6 +44,28 @@ export const useFileUpload = () => {
       setParsing(false);
       setUploading(false);
       return;
+    }
+
+    // Check file integrity and detect corruption
+    const integrityCheck = await validateFileIntegrity(file);
+    if (!integrityCheck.isValid) {
+      toast({
+        title: "File Corruption Detected",
+        description: integrityCheck.error || "File appears to be corrupted",
+        variant: "destructive",
+      });
+      setParsing(false);
+      setUploading(false);
+      return;
+    }
+
+    // Show warnings if any
+    if (integrityCheck.warnings && integrityCheck.warnings.length > 0) {
+      toast({
+        title: "File Warning",
+        description: integrityCheck.warnings.join(', '),
+        variant: "default",
+      });
     }
 
     try {

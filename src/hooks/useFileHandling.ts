@@ -7,6 +7,7 @@
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { validateFile } from '@/utils/fileValidation';
+import { validateFileIntegrity } from '@/utils/fileIntegrityCheck';
 import { useFileProcessing } from './useFileProcessing';
 import { TIMEOUTS } from '@/constants/ui';
 
@@ -14,10 +15,10 @@ export const useFileHandling = () => {
   const { toast } = useToast();
   const fileProcessing = useFileProcessing();
 
-  const addFile = useCallback((file: File, currentFiles: File[], setFiles: (files: File[]) => void) => {
+  const addFile = useCallback(async (file: File, currentFiles: File[], setFiles: (files: File[]) => void) => {
     console.log('📁 Adding file:', { name: file.name, type: file.type, size: file.size });
     
-    // Validate file before adding
+    // Basic file validation first
     const validation = validateFile(file);
     if (!validation.isValid) {
       console.error('❌ File validation failed:', validation.error);
@@ -29,7 +30,39 @@ export const useFileHandling = () => {
       return false;
     }
     
-    console.log('✅ File validation passed, adding to files array');
+    // Check file integrity and detect corruption
+    try {
+      const integrityCheck = await validateFileIntegrity(file);
+      if (!integrityCheck.isValid) {
+        console.error('❌ File integrity check failed:', integrityCheck.error);
+        toast({
+          title: "File Corruption Detected",
+          description: integrityCheck.error || "File appears to be corrupted",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Show warnings if any
+      if (integrityCheck.warnings && integrityCheck.warnings.length > 0) {
+        console.warn('⚠️ File integrity warnings:', integrityCheck.warnings);
+        toast({
+          title: "File Warning",
+          description: integrityCheck.warnings.join(', '),
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      console.error('❌ File integrity check error:', error);
+      toast({
+        title: "File Check Failed",
+        description: "Could not verify file integrity",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    console.log('✅ File validation and integrity check passed, adding to files array');
     setFiles([...currentFiles, file]);
     return true;
   }, [toast]);

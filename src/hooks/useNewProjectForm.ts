@@ -101,8 +101,8 @@ export const useNewProjectForm = () => {
   }, [updateFormData]);
 
   // File operations
-  const handleAddFile = useCallback((file: File) => {
-    const success = addFile(file, formData.files, (files) => updateFormData({ files }));
+  const handleAddFile = useCallback(async (file: File) => {
+    const success = await addFile(file, formData.files, (files) => updateFormData({ files }));
     return success;
   }, [addFile, formData.files, updateFormData]);
 
@@ -203,14 +203,16 @@ export const useNewProjectForm = () => {
       nextStep,
       prevStep,
       goToStep,
-      onFileChange: (fileOrEvent: File | React.ChangeEvent<HTMLInputElement>) => {
+      onFileChange: async (fileOrEvent: File | React.ChangeEvent<HTMLInputElement>) => {
         if ('target' in fileOrEvent && fileOrEvent.target && 'files' in fileOrEvent.target) {
           const files = fileOrEvent.target.files;
           if (files && files.length > 0) {
-            Array.from(files).forEach(file => handleAddFile(file));
+            for (const file of Array.from(files)) {
+              await handleAddFile(file);
+            }
           }
         } else if (fileOrEvent && typeof fileOrEvent === 'object' && 'name' in fileOrEvent) {
-          handleAddFile(fileOrEvent as File);
+          await handleAddFile(fileOrEvent as File);
         }
       },
       handleFileUpload,
