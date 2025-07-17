@@ -25,26 +25,16 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
   const { saveAnalysisProject } = useDatasetPersistence();
   const { toast } = useToast();
 
-  console.log('🔍 NewProjectContent formData:', {
-    step: formData.step,
-    researchQuestion: formData.researchQuestion,
-    hasResearchQuestion: !!formData.researchQuestion,
-    researchQuestionLength: formData.researchQuestion?.length || 0,
-    projectName: formData.projectName,
-    hasData: !!(formData.parsedData && formData.parsedData.length > 0),
-    processedFilesCount: formData.processedFiles?.length || 0,
-    uploading: formData.uploading,
-    parsing: formData.parsing,
-    setResearchQuestionType: typeof formData.setResearchQuestion
-  });
+  console.log('🔍 NewProjectContent - DEBUGGING RENDER');
+  console.log('🔍 Current step:', formData.step);
+  console.log('🔍 Research question:', formData.researchQuestion);
+  console.log('🔍 Component should ONLY render step indicator and current step form');
   
-  console.log('📝 NewProjectContent - DataDetectiveHeader should NOT be rendered here');
-
   const handleStartAnalysisWrapper = async (educationalMode: boolean = false, projectName: string = '') => {
     console.log('NewProjectContent starting analysis:', { educationalMode, projectName });
     
     try {
-      // Validate required fields
+      // Validation logic
       if (!formData.researchQuestion?.trim()) {
         toast({
           title: "Research Question Required",
@@ -178,6 +168,8 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
         return null;
     }
   };
+
+  console.log('🔍 About to render - checking what will be displayed');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
