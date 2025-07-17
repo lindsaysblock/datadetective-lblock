@@ -84,6 +84,9 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
       return;
     }
 
+    console.log('✅ [STEP 1] Research question validation passed');
+    console.log('🔍 [STEP 2] About to check parsedData...');
+
     console.log('🔍 [CRITICAL] Checking parsedData existence:', {
       hasParsedData: !!parsedData,
       parsedDataType: typeof parsedData,
@@ -139,7 +142,10 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     }
 
     console.log('✅ All validation passed! Calling onStartAnalysis...');
+    console.log('🔍 About to call onStartAnalysis with:', { educationalMode: false, projectName: finalProjectName });
+    
     try {
+      console.log('🚀 CALLING onStartAnalysis NOW...');
       onStartAnalysis(false, finalProjectName);
       console.log('✅ onStartAnalysis called successfully');
     } catch (error) {
