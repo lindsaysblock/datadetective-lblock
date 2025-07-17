@@ -53,8 +53,9 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
 
   const handleCaseNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    console.log('📝 TYPING:', newValue);
+    console.log('📝 NEW HANDLER - TYPING:', newValue);
     setCaseNameValue(newValue);
+    e.stopPropagation(); // Prevent any interference
   };
 
   const handleStartAnalysis = () => {
