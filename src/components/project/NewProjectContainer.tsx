@@ -22,11 +22,13 @@ const NewProjectContainer: React.FC = () => {
   // Watch for analysis completion and trigger navigation
   useEffect(() => {
     console.log('🔍 [CONTAINER] Analysis state check:', { progress, hasReport: !!report, isAnalyzing });
-    if (progress >= 100 && report && !isAnalyzing) {
+    
+    // Navigate when progress is 100% AND we have a report (regardless of isAnalyzing state)
+    if (progress >= 100 && report) {
       console.log('🎯 [CONTAINER] Analysis detected as complete, triggering handleAnalysisComplete');
       handleAnalysisComplete(formData.projectName);
     }
-  }, [progress, report, isAnalyzing]);
+  }, [progress, report]); // Removed isAnalyzing dependency to avoid race conditions
 
   // CRITICAL DEBUG: Check formData every render
   console.log('🔥 [CONTAINER] FormData check on render:', {
