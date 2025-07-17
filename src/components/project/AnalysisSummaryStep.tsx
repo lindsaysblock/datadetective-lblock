@@ -90,22 +90,29 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
       return;
     }
 
-    // Validate data structure - fixed validation logic
-    console.log('🔍 Validating data structure:', parsedData);
+    // Validate data structure - enhanced debugging
+    console.log('🔍 Starting detailed data structure validation...');
+    console.log('🔍 Raw parsedData:', parsedData);
     
     const hasValidData = parsedData && parsedData.length > 0 && parsedData.some(data => {
-      const isValidStructure = data && 
-        ((data.rowCount && data.rowCount > 0) || (data.rows && Array.isArray(data.rows) && data.rows.length > 0)) && 
-        data.columns && 
-        Array.isArray(data.columns) && 
-        data.columns.length > 0;
+      console.log('🔍 Validating individual data item:', data);
       
-      console.log('🔍 Data validation:', { 
+      const hasRowCount = data?.rowCount && data.rowCount > 0;
+      const hasRowsArray = data?.rows && Array.isArray(data.rows) && data.rows.length > 0;
+      const hasColumns = data?.columns && Array.isArray(data.columns) && data.columns.length > 0;
+      
+      const isValidStructure = data && (hasRowCount || hasRowsArray) && hasColumns;
+      
+      console.log('🔍 Data validation details:', { 
         hasData: !!data,
+        hasRowCount,
+        hasRowsArray,
+        hasColumns,
         rowCount: data?.rowCount,
         rowsLength: data?.rows?.length,
         columnsLength: data?.columns?.length,
-        isValid: isValidStructure
+        isValid: isValidStructure,
+        dataKeys: data ? Object.keys(data) : 'No data object'
       });
       
       return isValidStructure;
@@ -114,13 +121,16 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
     console.log('🔍 Final validation result:', hasValidData);
 
     if (!hasValidData) {
-      console.error('❌ Invalid data structure:', parsedData);
+      console.error('❌ Data structure validation failed!');
+      console.error('❌ Invalid data structure details:', parsedData);
       alert('The uploaded data appears to be corrupted or empty. Please try uploading again.');
       return;
     }
 
+    console.log('✅ All validation passed! Calling onStartAnalysis...');
     try {
-      onStartAnalysis(educationalMode, finalProjectName);
+      onStartAnalysis(false, finalProjectName);
+      console.log('✅ onStartAnalysis called successfully');
     } catch (error) {
       console.error('❌ Error starting analysis:', error);
       alert('An error occurred while starting the analysis. Please try again.');
