@@ -132,10 +132,41 @@ const NewProjectContainer: React.FC = () => {
         educationalMode
       });
 
+      // CRITICAL: Transform data to match expected ParsedData structure
+      const transformedData = formData.parsedData.map(data => {
+        console.log('🔧 Transforming data structure for analysis:', data);
+        
+        // Ensure the data has the required structure for analysis functions
+        const transformedItem = {
+          ...data,
+          // Ensure summary object exists with required properties
+          summary: {
+            totalRows: data.summary?.totalRows || data.rowCount || data.rows?.length || 0,
+            totalColumns: data.summary?.totalColumns || data.columns?.length || 0,
+            possibleUserIdColumns: data.summary?.possibleUserIdColumns || [],
+            possibleTimestampColumns: data.summary?.possibleTimestampColumns || [],
+            possibleEventColumns: data.summary?.possibleEventColumns || []
+          },
+          // Ensure rows and columns exist
+          rows: data.rows || [],
+          columns: data.columns || []
+        };
+        
+        console.log('✅ Transformed data structure:', {
+          originalKeys: Object.keys(data),
+          transformedKeys: Object.keys(transformedItem),
+          summaryKeys: Object.keys(transformedItem.summary),
+          totalRows: transformedItem.summary.totalRows,
+          totalColumns: transformedItem.summary.totalColumns
+        });
+        
+        return transformedItem;
+      });
+
       await startAnalysis({
         researchQuestion: formData.researchQuestion,
         additionalContext: formData.businessContext,
-        parsedData: formData.parsedData || [],
+        parsedData: transformedData,
         educationalMode
       });
 
