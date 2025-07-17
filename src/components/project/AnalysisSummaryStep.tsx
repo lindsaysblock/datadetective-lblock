@@ -38,39 +38,52 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   onProjectNameChange: propOnProjectNameChange
 }) => {
   const [educationalMode, setEducationalMode] = React.useState(false);
-  const [localProjectName, setLocalProjectName] = React.useState(propProjectName || formData?.projectName || '');
+  const [projectNameInput, setProjectNameInput] = React.useState(propProjectName || formData?.projectName || '');
 
-  // Use prop values if provided, otherwise fall back to formData
-  const projectName = propProjectName !== undefined ? propProjectName : formData?.projectName || localProjectName;
-  const onProjectNameChange = propOnProjectNameChange || formData?.actions?.setProjectName;
+  // Update local state when props change
+  React.useEffect(() => {
+    if (propProjectName !== undefined) {
+      setProjectNameInput(propProjectName);
+    } else if (formData?.projectName) {
+      setProjectNameInput(formData.projectName);
+    }
+  }, [propProjectName, formData?.projectName]);
 
-  console.log('🔍 AnalysisSummaryStep - Case Name Debug:', {
-    projectName,
-    localProjectName,
+  console.log('🔍 Case Name Input Debug:', {
+    projectNameInput,
     propProjectName,
-    formDataProjectName: formData?.projectName,
-    hasOnChangeHandler: !!onProjectNameChange
+    formDataProjectName: formData?.projectName
   });
 
-  // Auto-set a default project name if none exists and we have a research question
-  useEffect(() => {
-    if (!projectName && researchQuestion && onProjectNameChange) {
+  // Auto-set default project name
+  React.useEffect(() => {
+    if (!projectNameInput && researchQuestion) {
       const defaultName = `Analysis: ${researchQuestion.substring(0, 30)}${researchQuestion.length > 30 ? '...' : ''}`;
-      onProjectNameChange(defaultName);
-      setLocalProjectName(defaultName);
+      setProjectNameInput(defaultName);
+      // Also update the form state if possible
+      if (propOnProjectNameChange) {
+        propOnProjectNameChange(defaultName);
+      } else if (formData?.actions?.setProjectName) {
+        formData.actions.setProjectName(defaultName);
+      }
     }
-  }, [projectName, researchQuestion, onProjectNameChange]);
+  }, [projectNameInput, researchQuestion, propOnProjectNameChange, formData?.actions?.setProjectName]);
 
-  const handleProjectNameChange = (value: string) => {
-    console.log('🎯 Project name changing to:', value);
-    setLocalProjectName(value);
-    if (onProjectNameChange) {
-      onProjectNameChange(value);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log('📝 Input changing to:', value);
+    setProjectNameInput(value);
+    
+    // Sync with form state
+    if (propOnProjectNameChange) {
+      propOnProjectNameChange(value);
+    } else if (formData?.actions?.setProjectName) {
+      formData.actions.setProjectName(value);
     }
   };
 
   const handleStartAnalysis = () => {
-    const finalProjectName = localProjectName?.trim() || projectName?.trim();
+    const finalProjectName = projectNameInput?.trim();
     
     console.log('🚀 Starting analysis with:', {
       projectName: finalProjectName,
@@ -169,12 +182,14 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
             <Label htmlFor="projectName">Give your investigation a memorable name</Label>
             <Input
               id="projectName"
-              value={localProjectName}
-              onChange={(e) => handleProjectNameChange(e.target.value)}
+              type="text"
+              value={projectNameInput}
+              onChange={handleInputChange}
               placeholder="e.g., Customer Behavior Investigation"
               className="w-full focus:ring-2 focus:ring-brand-purple focus:border-brand-purple"
+              autoComplete="off"
             />
-            {!localProjectName && (
+            {!projectNameInput && (
               <p className="text-sm text-destructive">Case name is required to start investigation</p>
             )}
           </div>
@@ -334,7 +349,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
         
         <Button 
           onClick={handleStartAnalysis}
-          disabled={!researchQuestion || !projectName?.trim() || !parsedData || parsedData.length === 0 || isProcessingAnalysis}
+          disabled={!researchQuestion || !projectNameInput?.trim() || !parsedData || parsedData.length === 0 || isProcessingAnalysis}
           className="bg-gradient-to-r from-brand-blue via-brand-purple to-brand-pink hover:from-brand-blue/90 hover:via-brand-purple/90 hover:to-brand-pink/90 text-white flex items-center gap-2 px-8 py-2 shadow-lg hover:shadow-xl transition-all duration-200"
         >
           <Play className="w-4 h-4" />

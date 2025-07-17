@@ -38,7 +38,6 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <CodeQualityMonitor enabled={true} silentMode={false} />
         <ErrorBoundary>
           <Router>
             <div className="min-h-screen bg-background">
