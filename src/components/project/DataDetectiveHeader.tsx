@@ -23,34 +23,6 @@ const DataDetectiveHeader: React.FC = () => {
         </p>
       </div>
 
-      {/* Feature Highlights */}
-      <div className={`grid grid-cols-1 md:grid-cols-3 gap-${SPACING.LG} mt-${SPACING.XL} max-w-4xl mx-auto`}>
-        {[
-          {
-            icon: Search,
-            title: 'Smart Analysis',
-            description: 'AI-powered insights from your data'
-          },
-          {
-            icon: Database,
-            title: 'Multiple Formats',
-            description: 'CSV, JSON, Excel and more'
-          },
-          {
-            icon: TrendingUp,
-            title: 'Visual Reports',
-            description: 'Interactive charts and dashboards'
-          }
-        ].map((feature, index) => (
-          <div key={index} className={`text-center p-${SPACING.LG} bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow`}>
-            <div className={`w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center mx-auto mb-${SPACING.MD}`}>
-              <feature.icon className={`w-${SPACING.LG} h-${SPACING.LG} text-blue-600`} />
-            </div>
-            <h3 className="font-semibold text-gray-800 mb-2">{feature.title}</h3>
-            <p className="text-gray-600 text-sm">{feature.description}</p>
-          </div>
-        ))}
-      </div>
     </div>
   );
 };
