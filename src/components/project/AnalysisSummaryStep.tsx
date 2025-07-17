@@ -38,52 +38,27 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
   onProjectNameChange: propOnProjectNameChange
 }) => {
   const [educationalMode, setEducationalMode] = React.useState(false);
-  const [projectNameInput, setProjectNameInput] = React.useState(propProjectName || formData?.projectName || '');
+  const [caseNameValue, setCaseNameValue] = React.useState('');
 
-  // Update local state when props change
+  // Simple logging
+  console.log('🔍 Simple case name value:', caseNameValue);
+
+  // Initialize with default if empty
   React.useEffect(() => {
-    if (propProjectName !== undefined) {
-      setProjectNameInput(propProjectName);
-    } else if (formData?.projectName) {
-      setProjectNameInput(formData.projectName);
-    }
-  }, [propProjectName, formData?.projectName]);
-
-  console.log('🔍 Case Name Input Debug:', {
-    projectNameInput,
-    propProjectName,
-    formDataProjectName: formData?.projectName
-  });
-
-  // Auto-set default project name
-  React.useEffect(() => {
-    if (!projectNameInput && researchQuestion) {
+    if (!caseNameValue && researchQuestion) {
       const defaultName = `Analysis: ${researchQuestion.substring(0, 30)}${researchQuestion.length > 30 ? '...' : ''}`;
-      setProjectNameInput(defaultName);
-      // Also update the form state if possible
-      if (propOnProjectNameChange) {
-        propOnProjectNameChange(defaultName);
-      } else if (formData?.actions?.setProjectName) {
-        formData.actions.setProjectName(defaultName);
-      }
+      setCaseNameValue(defaultName);
     }
-  }, [projectNameInput, researchQuestion, propOnProjectNameChange, formData?.actions?.setProjectName]);
+  }, [caseNameValue, researchQuestion]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    console.log('📝 Input changing to:', value);
-    setProjectNameInput(value);
-    
-    // Sync with form state
-    if (propOnProjectNameChange) {
-      propOnProjectNameChange(value);
-    } else if (formData?.actions?.setProjectName) {
-      formData.actions.setProjectName(value);
-    }
+  const handleCaseNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    console.log('📝 TYPING:', newValue);
+    setCaseNameValue(newValue);
   };
 
   const handleStartAnalysis = () => {
-    const finalProjectName = projectNameInput?.trim();
+    const finalProjectName = caseNameValue?.trim();
     
     console.log('🚀 Starting analysis with:', {
       projectName: finalProjectName,
@@ -180,17 +155,18 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
         <CardContent>
           <div className="space-y-2">
             <Label htmlFor="projectName">Give your investigation a memorable name</Label>
-            <Input
+            <input
               id="projectName"
               type="text"
-              value={projectNameInput}
-              onChange={handleInputChange}
-              placeholder="e.g., Customer Behavior Investigation"
-              className="w-full focus:ring-2 focus:ring-brand-purple focus:border-brand-purple"
+              value={caseNameValue}
+              onChange={handleCaseNameChange}
+              placeholder="Type your case name here..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               autoComplete="off"
+              autoFocus
             />
-            {!projectNameInput && (
-              <p className="text-sm text-destructive">Case name is required to start investigation</p>
+            {!caseNameValue && (
+              <p className="text-sm text-red-600">Case name is required to start investigation</p>
             )}
           </div>
         </CardContent>
@@ -349,7 +325,7 @@ const AnalysisSummaryStep: React.FC<AnalysisSummaryStepProps> = ({
         
         <Button 
           onClick={handleStartAnalysis}
-          disabled={!researchQuestion || !projectNameInput?.trim() || !parsedData || parsedData.length === 0 || isProcessingAnalysis}
+          disabled={!researchQuestion || !caseNameValue?.trim() || !parsedData || parsedData.length === 0 || isProcessingAnalysis}
           className="bg-gradient-to-r from-brand-blue via-brand-purple to-brand-pink hover:from-brand-blue/90 hover:via-brand-purple/90 hover:to-brand-pink/90 text-white flex items-center gap-2 px-8 py-2 shadow-lg hover:shadow-xl transition-all duration-200"
         >
           <Play className="w-4 h-4" />
