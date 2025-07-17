@@ -13,6 +13,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import '@/utils/performance/optimizationCenter'; // Initialize performance optimizations
 import { ROUTES } from '@/config/routes';
 import { CACHE_TIMES, RETRY_COUNTS, SPACING } from '@/constants/ui';
+import CodeQualityMonitor from '@/components/qa/CodeQualityMonitor';
 import Index from '@/pages/Index';
 import QueryHistory from '@/pages/QueryHistory';
 import Auth from '@/pages/Auth';
@@ -38,6 +39,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <CodeQualityMonitor enabled={true} silentMode={false} />
         <ErrorBoundary>
           <Router>
             <div className="min-h-screen bg-background">

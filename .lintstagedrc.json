@@ -1,0 +1,10 @@
+{
+  "*.{ts,tsx}": [
+    "eslint --config .eslintrc.enhanced.js --fix",
+    "git add"
+  ],
+  "*.{js,jsx}": [
+    "eslint --config .eslintrc.enhanced.js --fix", 
+    "git add"
+  ]
+}

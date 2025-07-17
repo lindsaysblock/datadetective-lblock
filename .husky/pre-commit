@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit code quality checks..."
+
+# Run ESLint with auto-fix
+npm run lint -- --fix
+
+# Run build-time validation
+node -e "
+const { BuildTimeValidator } = require('./src/utils/qa/buildTimeValidator.ts');
+BuildTimeValidator.validateProject().then(violations => {
+  if (violations.length > 0) {
+    console.log('❌ Code quality violations found:');
+    console.log(BuildTimeValidator.generateReport(violations));
+    console.log('💡 Run auto-refactoring to fix these issues.');
+    process.exit(1);
+  }
+  console.log('✅ Code quality checks passed');
+});
+"
