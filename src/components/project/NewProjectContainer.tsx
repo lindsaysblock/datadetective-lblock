@@ -7,6 +7,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import { useAnalysisEngine } from '@/hooks/useAnalysisEngine';
+import { useAuth } from '@/contexts/AuthContext';
 import NewProjectLayout from './NewProjectLayout';
 import NewProjectContent from './NewProjectContent';
 import AnalysisProgressModal from '@/components/analysis/AnalysisProgressModal';
@@ -15,6 +16,7 @@ import { SPACING } from '@/constants/ui';
 const NewProjectContainer: React.FC = () => {
   console.log('🔍 NewProjectContainer rendering with proper form integration');
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   const { formData, isLoading, error, actions } = useNewProjectForm();
   const { startAnalysis, isAnalyzing, progress, report } = useAnalysisEngine();
@@ -64,7 +66,14 @@ const NewProjectContainer: React.FC = () => {
         educationalMode
       });
 
-      // STEP 2: Check for required data
+      // STEP 2: Check for authentication first
+      if (!user) {
+        console.error('❌ [PIPELINE] User not authenticated - analysis requires sign in');
+        alert('Please sign in to run analysis. Your data and results will be saved to your account.');
+        return;
+      }
+
+      // STEP 3: Check for required data
       if (!formData.researchQuestion?.trim()) {
         console.error('❌ [PIPELINE] Missing research question');
         return;
@@ -103,10 +112,10 @@ const NewProjectContainer: React.FC = () => {
         return;
       }
 
-      console.log('✅ [PIPELINE] STEP 2 - Form data validation passed');
+      console.log('✅ [PIPELINE] STEP 4 - Form data validation passed');
 
-      // STEP 3: Start the analysis engine
-      console.log('🔍 [PIPELINE] STEP 3 - Starting analysis engine with data:', {
+      // STEP 5: Start the analysis engine
+      console.log('🔍 [PIPELINE] STEP 5 - Starting analysis engine with data:', {
         researchQuestion: formData.researchQuestion,
         additionalContext: formData.businessContext,
         parsedDataFiles: formData.parsedData.length,
