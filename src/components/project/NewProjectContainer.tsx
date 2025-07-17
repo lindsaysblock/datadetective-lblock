@@ -3,7 +3,7 @@
  * Refactored to meet coding standards and implement proper Data Detective branding
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNewProjectForm } from '@/hooks/useNewProjectForm';
 import { useAnalysisEngine } from '@/hooks/useAnalysisEngine';
@@ -18,6 +18,14 @@ const NewProjectContainer: React.FC = () => {
 
   const { formData, isLoading, error, actions } = useNewProjectForm();
   const { startAnalysis, isAnalyzing, progress, report } = useAnalysisEngine();
+
+  // Watch for analysis completion and trigger navigation
+  useEffect(() => {
+    if (progress >= 100 && report && !isAnalyzing) {
+      console.log('🎯 [CONTAINER] Analysis detected as complete, triggering handleAnalysisComplete');
+      handleAnalysisComplete();
+    }
+  }, [progress, report, isAnalyzing]);
 
   // CRITICAL DEBUG: Check formData every render
   console.log('🔥 [CONTAINER] FormData check on render:', {
