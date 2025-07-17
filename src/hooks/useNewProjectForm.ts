@@ -196,28 +196,6 @@ export const useNewProjectForm = () => {
       ...formData,
       uploading: processingState.uploading,
       parsing: processingState.parsing,
-      // Form action functions
-      setProjectName,
-      setResearchQuestion,
-      setAdditionalContext,
-      nextStep,
-      prevStep,
-      goToStep,
-      onFileChange: async (fileOrEvent: File | React.ChangeEvent<HTMLInputElement>) => {
-        if ('target' in fileOrEvent && fileOrEvent.target && 'files' in fileOrEvent.target) {
-          const files = fileOrEvent.target.files;
-          if (files && files.length > 0) {
-            for (const file of Array.from(files)) {
-              await handleAddFile(file);
-            }
-          }
-        } else if (fileOrEvent && typeof fileOrEvent === 'object' && 'name' in fileOrEvent) {
-          await handleAddFile(fileOrEvent as File);
-        }
-      },
-      handleFileUpload,
-      removeFile: handleRemoveFile,
-      setColumnMapping,
     },
     isLoading,
     error,
@@ -232,6 +210,18 @@ export const useNewProjectForm = () => {
       addFile: handleAddFile,
       removeFile: handleRemoveFile,
       setColumnMapping,
+      onFileChange: async (fileOrEvent: File | React.ChangeEvent<HTMLInputElement>) => {
+        if ('target' in fileOrEvent && fileOrEvent.target && 'files' in fileOrEvent.target) {
+          const files = fileOrEvent.target.files;
+          if (files && files.length > 0) {
+            for (const file of Array.from(files)) {
+              await handleAddFile(file);
+            }
+          }
+        } else if (fileOrEvent && typeof fileOrEvent === 'object' && 'name' in fileOrEvent) {
+          await handleAddFile(fileOrEvent as File);
+        }
+      },
       handleFileUpload,
       setContinueCaseData,
       resetForm,

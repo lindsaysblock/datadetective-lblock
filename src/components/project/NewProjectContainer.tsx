@@ -123,16 +123,27 @@ const NewProjectContainer: React.FC = () => {
       return;
     }
     
-    // STEP 5: Prepare navigation state with explicit formData structure
+    // STEP 5: Prepare navigation state with only serializable data
+    const serializableFormData = {
+      projectName: formData.projectName || 'Untitled Investigation',
+      researchQuestion: formData.researchQuestion || '',
+      businessContext: formData.businessContext || '',
+      file: null, // File objects are not serializable
+      files: [], // File arrays are not serializable
+      uploadedData: formData.uploadedData,
+      parsedData: formData.parsedData || [],
+      columnMapping: formData.columnMapping || {},
+      analysisResults: formData.analysisResults,
+      analysisCompleted: formData.analysisCompleted || false,
+      isProcessingAnalysis: false,
+      uploading: false,
+      parsing: false,
+      step: formData.step || 1,
+      processedFiles: formData.processedFiles || [],
+    };
+
     const navigationState = {
-      formData: {
-        projectName: formData.projectName || 'Untitled Investigation',
-        researchQuestion: formData.researchQuestion || '',
-        businessContext: formData.businessContext || '',
-        parsedData: formData.parsedData || [],
-        // Include all other formData properties
-        ...formData
-      },
+      formData: serializableFormData,
       educationalMode: false,
       projectName: formData.projectName || 'Untitled Investigation',
       analysisReport: report
@@ -179,6 +190,7 @@ const NewProjectContainer: React.FC = () => {
       <NewProjectLayout>
         <NewProjectContent
           formData={formData}
+          actions={actions}
           onStartAnalysis={handleStartAnalysis}
           isLoading={isLoading || isAnalyzing}
         />

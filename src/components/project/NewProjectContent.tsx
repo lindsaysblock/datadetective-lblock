@@ -16,11 +16,12 @@ import { SPACING, FORM_STEPS } from '@/constants/ui';
 
 interface NewProjectContentProps {
   formData: any;
+  actions: any;
   onStartAnalysis: (educationalMode?: boolean, projectName?: string) => void;
   isLoading?: boolean;
 }
 
-const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStartAnalysis, isLoading = false }) => {
+const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, actions, onStartAnalysis, isLoading = false }) => {
   const { user } = useAuth();
   const { saveAnalysisProject } = useDatasetPersistence();
   const { toast } = useToast();
@@ -116,8 +117,8 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
         return (
           <ResearchQuestionStep
             researchQuestion={formData.researchQuestion}
-            setResearchQuestion={formData.setResearchQuestion}
-            onNext={formData.nextStep}
+            setResearchQuestion={actions.setResearchQuestion}
+            onNext={actions.nextStep}
           />
         );
       case FORM_STEPS.DATA_SOURCE:
@@ -129,24 +130,24 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
             parsedData={formData.parsedData}
             processedFiles={formData.processedFiles}
             columnMapping={formData.columnMapping}
-            onFileChange={formData.onFileChange}
-            onFileUpload={formData.handleFileUpload}
-            onRemoveFile={formData.removeFile}
-            onColumnMapping={formData.setColumnMapping}
-            onNext={formData.nextStep}
-            onPrevious={formData.prevStep}
+            onFileChange={actions.onFileChange}
+            onFileUpload={actions.handleFileUpload}
+            onRemoveFile={actions.removeFile}
+            onColumnMapping={actions.setColumnMapping}
+            onNext={actions.nextStep}
+            onPrevious={actions.prevStep}
           />
         );
       case FORM_STEPS.BUSINESS_CONTEXT:
         return (
           <BusinessContextStep
             additionalContext={formData.businessContext}
-            setAdditionalContext={formData.setAdditionalContext}
+            setAdditionalContext={actions.setAdditionalContext}
             parsedData={formData.parsedData}
             columnMapping={formData.columnMapping}
-            onColumnMapping={formData.setColumnMapping}
-            onNext={formData.nextStep}
-            onPrevious={formData.prevStep}
+            onColumnMapping={actions.setColumnMapping}
+            onNext={actions.nextStep}
+            onPrevious={actions.prevStep}
           />
         );
       case FORM_STEPS.ANALYSIS_SUMMARY:
@@ -160,7 +161,7 @@ const NewProjectContent: React.FC<NewProjectContentProps> = ({ formData, onStart
             analysisCompleted={formData.analysisCompleted}
             isProcessingAnalysis={formData.isProcessingAnalysis || isLoading}
             onStartAnalysis={handleStartAnalysisWrapper}
-            onPrevious={formData.prevStep}
+            onPrevious={actions.prevStep}
             formData={formData}
           />
         );
