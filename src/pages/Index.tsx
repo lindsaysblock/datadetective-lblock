@@ -17,6 +17,7 @@ import MainTabsView from '@/components/query/MainTabsView';
 import AnalysisView from '@/components/query/AnalysisView';
 import Header from '@/components/Header';
 import LegalFooter from '@/components/LegalFooter';
+import { TrendingUp } from 'lucide-react';
 
 const Index = () => {
   const location = useLocation();
@@ -289,16 +290,25 @@ const Index = () => {
 
   // Show main dashboard
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className={`container mx-auto px-${SPACING.MD} py-${SPACING.XL}`}>
-        <div className={`mb-${SPACING.XL} text-center`}>
-          <h1 className={`${TEXT_SIZES.HERO} font-bold text-gray-800 mb-${SPACING.MD}`}>
-            Welcome to Data Detective
-          </h1>
-          <p className={`${TEXT_SIZES.SUBHEADING} text-gray-600`}>
-            Uncover insights hidden in your data with AI-powered analysis
-          </p>
+      <div className="container mx-auto px-6 py-8">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 mb-8">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <TrendingUp className="w-8 h-8 text-blue-600" />
+              <h1 className="text-4xl font-bold text-gray-900">
+                Start Your Investigation
+              </h1>
+            </div>
+            
+            <p className="text-lg text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              Transform your data into actionable insights with our AI-powered analytics engine. Upload your 
+              datasets, ask research questions, and let our platform uncover hidden patterns, trends, and 
+              correlations that drive informed decision-making.
+            </p>
+          </div>
         </div>
 
         <MainTabsView

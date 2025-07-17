@@ -74,29 +74,30 @@ const Home = () => {
         <div className="max-w-6xl mx-auto">
           {/* Hero Section */}
           <div className="text-center mb-20">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 mb-16">
-              <div className="flex items-center justify-center gap-3 mb-6">
-                <TrendingUp className="w-8 h-8 text-blue-600" />
-                <h1 className="text-4xl font-bold text-gray-900">
-                  Start Your Investigation
-                </h1>
-              </div>
-              
-              <p className="text-lg text-gray-600 max-w-4xl mx-auto leading-relaxed">
-                Transform your data into actionable insights with our AI-powered analytics engine. Upload your 
-                datasets, ask research questions, and let our platform uncover hidden patterns, trends, and 
-                correlations that drive informed decision-making.
-              </p>
+            <div className="mb-8">
+              <DataDetectiveLogo />
             </div>
+            
+            <h1 className="text-5xl font-bold text-gray-900 mb-6">
+              Uncover insights from your data with{' '}
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                AI-powered analysis
+              </span>
+            </h1>
+            
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed mb-8">
+              Transform raw data into actionable insights with our intelligent data analysis platform. 
+              Upload, analyze, and visualize your data with the power of artificial intelligence.
+            </p>
 
             {/* CTA Buttons */}
             <div className="flex gap-4 justify-center mb-20">
               <Button 
                 size="lg" 
-                onClick={() => navigate('/new-project')}
+                onClick={() => navigate('/auth')}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg rounded-lg"
               >
-                Start New Project
+                Get Started
               </Button>
               <Button 
                 size="lg" 
