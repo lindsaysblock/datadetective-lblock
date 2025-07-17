@@ -11,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import { ResearchQuestionStep, DataSourceStep } from './QuickFormSteps';
 import BusinessContextStep from './BusinessContextStep';
 import AnalysisSummaryStep from './AnalysisSummaryStep';
-import DataDetectiveHeader from './DataDetectiveHeader';
 import StepIndicator from './StepIndicator';
 import { SPACING, FORM_STEPS } from '@/constants/ui';
 
