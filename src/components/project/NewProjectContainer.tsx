@@ -20,17 +20,51 @@ const NewProjectContainer: React.FC = () => {
   const { startAnalysis, isAnalyzing, progress, report } = useAnalysisEngine();
 
   const handleStartAnalysis = async (educationalMode: boolean = false, projectName: string = '') => {
-    console.log('🚀 Starting analysis from container:', { educationalMode, projectName });
+    console.log('🚀 [PIPELINE] Starting analysis from container:', { educationalMode, projectName });
     
     try {
-      console.log('🔍 Starting analysis engine with data:', {
+      // STEP 1: Validate form data before starting analysis
+      console.log('🔍 [PIPELINE] STEP 1 - Validating form data:', {
         researchQuestion: formData.researchQuestion,
         businessContext: formData.businessContext,
         parsedDataCount: formData.parsedData?.length || 0,
+        parsedDataSample: formData.parsedData?.[0] ? {
+          hasRows: !!formData.parsedData[0].rows,
+          rowCount: formData.parsedData[0].rows?.length || 0,
+          hasColumns: !!formData.parsedData[0].columns,
+          columnCount: formData.parsedData[0].columns?.length || 0
+        } : 'No parsed data',
         educationalMode
       });
 
-      // Start the analysis engine
+      // STEP 2: Check for required data
+      if (!formData.researchQuestion?.trim()) {
+        console.error('❌ [PIPELINE] Missing research question');
+        return;
+      }
+
+      if (!formData.parsedData || formData.parsedData.length === 0) {
+        console.error('❌ [PIPELINE] Missing parsed data');
+        return;
+      }
+
+      if (!formData.parsedData[0]?.rows || formData.parsedData[0].rows.length === 0) {
+        console.error('❌ [PIPELINE] No data rows found');
+        return;
+      }
+
+      console.log('✅ [PIPELINE] STEP 2 - Form data validation passed');
+
+      // STEP 3: Start the analysis engine
+      console.log('🔍 [PIPELINE] STEP 3 - Starting analysis engine with data:', {
+        researchQuestion: formData.researchQuestion,
+        additionalContext: formData.businessContext,
+        parsedDataFiles: formData.parsedData.length,
+        firstFileRows: formData.parsedData[0].rows?.length,
+        firstFileColumns: formData.parsedData[0].columns?.length,
+        educationalMode
+      });
+
       await startAnalysis({
         researchQuestion: formData.researchQuestion,
         additionalContext: formData.businessContext,
@@ -38,28 +72,51 @@ const NewProjectContainer: React.FC = () => {
         educationalMode
       });
 
+      console.log('✅ [PIPELINE] STEP 3 - Analysis engine started successfully');
+
     } catch (error) {
-      console.error('❌ Analysis failed to start:', error);
+      console.error('❌ [PIPELINE] Analysis failed to start:', error);
     }
   };
 
   const handleAnalysisComplete = () => {
-    console.log('✅ Analysis completed, redirecting to analysis page');
-    console.log('📊 Passing analysis data:', {
+    console.log('✅ [PIPELINE] STEP 4 - Analysis completed, preparing navigation');
+    console.log('📊 [PIPELINE] STEP 4 - Current state check:', {
+      formData: {
+        projectName: formData.projectName,
+        researchQuestion: formData.researchQuestion,
+        parsedDataCount: formData.parsedData?.length || 0,
+        hasBusinessContext: !!formData.businessContext
+      },
+      analysisReport: report ? {
+        id: report.id,
+        resultsCount: report.results?.length || 0,
+        insightsCount: report.insights?.length || 0,
+        confidence: report.confidence
+      } : 'No report available'
+    });
+    
+    // STEP 5: Prepare navigation state
+    const navigationState = {
       formData: formData,
-      report: report,
-      projectName: formData.projectName
+      educationalMode: false,
+      projectName: formData.projectName || 'Untitled Investigation',
+      analysisReport: report
+    };
+
+    console.log('🚀 [PIPELINE] STEP 5 - Navigating to analysis page with state:', {
+      stateKeys: Object.keys(navigationState),
+      formDataKeys: Object.keys(navigationState.formData),
+      hasAnalysisReport: !!navigationState.analysisReport,
+      projectName: navigationState.projectName
     });
     
     // Navigate to analysis page with the completed analysis data in the expected format
     navigate('/analysis', {
-      state: {
-        formData: formData,
-        educationalMode: false, // Add this if needed
-        projectName: formData.projectName,
-        analysisReport: report
-      }
+      state: navigationState
     });
+
+    console.log('✅ [PIPELINE] STEP 5 - Navigation initiated');
   };
 
   if (error) {

@@ -37,7 +37,22 @@ export const useAnalysisEngine = (): UseAnalysisEngineReturn => {
   }, []);
 
   const startAnalysis = useCallback(async (context: DataAnalysisContext): Promise<void> => {
-    console.log('🚀 Starting analysis with new engine', context);
+    console.log('🚀 [ENGINE] Starting analysis with new engine', context);
+    console.log('🔍 [ENGINE] Context validation:', {
+      hasResearchQuestion: !!context.researchQuestion,
+      researchQuestionLength: context.researchQuestion?.length || 0,
+      hasAdditionalContext: !!context.additionalContext,
+      parsedDataCount: context.parsedData?.length || 0,
+      firstFileStructure: context.parsedData?.[0] ? {
+        rowCount: context.parsedData[0].rows || 0,
+        columnCount: context.parsedData[0].columns || 0,
+        hasData: !!context.parsedData[0].data,
+        dataLength: context.parsedData[0].data?.length || 0,
+        hasPreview: !!context.parsedData[0].preview,
+        previewLength: context.parsedData[0].preview?.length || 0
+      } : 'No data file',
+      educationalMode: context.educationalMode
+    });
     
     setIsAnalyzing(true);
     setError(null);
@@ -45,10 +60,21 @@ export const useAnalysisEngine = (): UseAnalysisEngineReturn => {
     setProgress(0);
     
     try {
+      console.log('🔍 [ENGINE] PHASE 1 - Starting progress simulation');
       // Start progress simulation
       await simulateProgress();
+      console.log('✅ [ENGINE] PHASE 1 - Progress simulation completed');
       
+      console.log('🔍 [ENGINE] PHASE 2 - Executing analysis with coordinator');
       const analysisReport = await AnalysisCoordinator.executeAnalysis(context);
+      console.log('✅ [ENGINE] PHASE 2 - Analysis coordinator completed:', {
+        reportId: analysisReport.id,
+        resultsCount: analysisReport.results?.length || 0,
+        insightsCount: analysisReport.insights?.length || 0,
+        confidence: analysisReport.confidence,
+        hasSQL: !!analysisReport.sqlQuery
+      });
+      
       setReport(analysisReport);
       const COMPLETE_PROGRESS = 100;
       setProgress(COMPLETE_PROGRESS);
@@ -58,9 +84,15 @@ export const useAnalysisEngine = (): UseAnalysisEngineReturn => {
         description: "Your data investigation has been completed successfully.",
       });
       
-      console.log('✅ Analysis completed successfully');
+      console.log('✅ [ENGINE] Analysis completed successfully - report set in state');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      console.error('❌ [ENGINE] Analysis failed:', {
+        error: err,
+        errorMessage,
+        stack: err instanceof Error ? err.stack : 'No stack trace'
+      });
+      
       setError(errorMessage);
       
       toast({
@@ -68,10 +100,10 @@ export const useAnalysisEngine = (): UseAnalysisEngineReturn => {
         description: errorMessage,
         variant: "destructive",
       });
-      
-      console.error('❌ Analysis failed:', err);
     } finally {
+      console.log('🔍 [ENGINE] PHASE 3 - Finalizing analysis state');
       setIsAnalyzing(false);
+      console.log('✅ [ENGINE] PHASE 3 - Analysis state finalized');
     }
   }, [simulateProgress, toast]);
 
