@@ -40,7 +40,7 @@ const RefactoredE2ERunner: React.FC = () => {
         failed: unitReport.failedTests,
         total: unitReport.totalTests,
         status: unitReport.overall,
-        duration: unitReport.duration
+        duration: 0
       }]);
 
       // Step 2: E2E Flow Tests (50%)

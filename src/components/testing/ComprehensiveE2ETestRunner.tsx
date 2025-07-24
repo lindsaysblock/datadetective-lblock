@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Play, Activity, Settings, BarChart3, Zap, CheckCircle, AlertTriangle, Code, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { E2ETestOrchestrator, E2ETestReport, RefactoringOpportunity } from '@/utils/testing/core/E2ETestOrchestrator';
+import { E2ETestRunner } from '@/utils/testing/e2eTestRunner';
 
 const ComprehensiveE2ETestRunner: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
