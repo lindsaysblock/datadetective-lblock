@@ -5,8 +5,8 @@ import { DataParserTestSuite } from './testSuites/dataParserTests';
 import { ComponentTestSuite } from './testSuites/componentTests';
 import { IntegrationTestSuite } from './testSuites/integrationTests';
 import { UtilityTestSuite } from './testSuites/utilityTests';
-import { UnitTestResult, UnitTestReport } from './types';
 import { FileRemovalTestSuite } from './testSuites/fileRemovalTests';
+import { UnitTestResult, TestReport, TestSuite, TestResultUnifier } from './core/TestResultUnifier';
 
 export class UnitTestingSystem {
   private csvParserTests = new CSVParserTestSuite();
@@ -17,7 +17,7 @@ export class UnitTestingSystem {
   private utilityTests = new UtilityTestSuite();
   private fileRemovalTests = new FileRemovalTestSuite();
 
-  async runAllTests(): Promise<UnitTestReport> {
+  async runAllTests(): Promise<TestReport> {
     console.log('🚀 Starting comprehensive unit testing...');
     
     const allResults: UnitTestResult[] = [];
@@ -44,14 +44,14 @@ export class UnitTestingSystem {
       
     } catch (error) {
       console.error('❌ Error during testing:', error);
-      allResults.push({
-        testName: 'System Error',
-        status: 'fail',
-        duration: 0,
-        error: `Testing system error: ${error}`,
-        assertions: 0,
-        passedAssertions: 0
-      });
+      allResults.push(TestResultUnifier.createUnitTestResult(
+        'System Error',
+        'fail',
+        0,
+        0,
+        0,
+        `Testing system error: ${error}`
+      ));
     }
     
     // Calculate results
@@ -70,14 +70,13 @@ export class UnitTestingSystem {
     
     console.log(`✅ Unit testing completed: ${passedTests}/${totalTests} tests passed`);
     
-    return {
-      totalTests,
-      passedTests,
-      failedTests,
-      testResults: allResults,
-      overall,
-      timestamp: new Date(),
-      skippedTests: allResults.filter(r => r.status === 'skip').length,
+    // Create test suite for reporting
+    const testSuite: TestSuite = {
+      suiteName: 'Comprehensive Unit Tests',
+      tests: allResults,
+      setupTime: 0,
+      teardownTime: 0,
+      totalDuration: allResults.reduce((sum, test) => sum + test.duration, 0),
       coverage: {
         statements: 85,
         branches: 78,
@@ -85,5 +84,7 @@ export class UnitTestingSystem {
         lines: 87
       }
     };
+
+    return TestResultUnifier.generateTestReport([testSuite]);
   }
 }
