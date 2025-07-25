@@ -81,8 +81,10 @@ export class QualityMetricsVisualizer {
   }
 
   private createOverallMetrics(systemHealth: any, realTimeMetrics: any): MetricVisualization {
-    const overallScore = systemHealth?.scores 
-      ? Object.values(systemHealth.scores).reduce((sum: number, score: any) => sum + Number(score || 0), 0) / Object.values(systemHealth.scores).length
+    const scoreValues = systemHealth?.scores ? Object.values(systemHealth.scores) : [];
+    const validScores = scoreValues.filter((score): score is number => typeof score === 'number' && !isNaN(score));
+    const overallScore = validScores.length > 0 
+      ? validScores.reduce((sum, score) => sum + score, 0) / validScores.length
       : Number(realTimeMetrics?.qualityScore) || 0;
 
     return {
@@ -267,13 +269,19 @@ export class QualityMetricsVisualizer {
   }
 
   private createTrendMetrics(sessionHistory: any[]): MetricVisualization {
-    const trendData = sessionHistory.slice(0, 10).reverse().map((session, index) => ({
-      label: `Session ${index + 1}`,
-      value: session.health?.scores ? 
-        Object.values(session.health.scores).reduce((sum: number, score: any) => sum + Number(score || 0), 0) / Object.values(session.health.scores).length :
-        75 + Math.random() * 20,
-      timestamp: new Date(session.startTime)
-    }));
+    const trendData = sessionHistory.slice(0, 10).reverse().map((session, index) => {
+      const sessionScores = session.health?.scores ? Object.values(session.health.scores) : [];
+      const validSessionScores = sessionScores.filter((score): score is number => typeof score === 'number' && !isNaN(score));
+      const value = validSessionScores.length > 0
+        ? validSessionScores.reduce((sum, score) => sum + score, 0) / validSessionScores.length
+        : 75 + Math.random() * 20;
+      
+      return {
+        label: `Session ${index + 1}`,
+        value,
+        timestamp: new Date(session.startTime)
+      };
+    });
 
     return {
       type: 'trend',
