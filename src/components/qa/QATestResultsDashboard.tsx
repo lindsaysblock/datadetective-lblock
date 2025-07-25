@@ -1,25 +1,24 @@
 /**
- * QA Test Results Dashboard Component
- * Displays comprehensive test results with expandable cards and detailed reporting
+ * QA Test Results Dashboard Component - Main Entry Point
+ * Displays comprehensive test results with expandable cards
  */
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronRight, CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react';
+import { TestSuiteCard } from './TestSuiteCard';
+import { QAOverviewStats } from './QAOverviewStats';
 
 export interface QATestResult {
   id: string;
   name: string;
   category: 'authentication' | 'analysis' | 'workflow' | 'integration' | 'performance';
-  status: 'passed' | 'failed' | 'warning' | 'pending';
+  status: 'passed' | 'failed' | 'warning' | 'pending' | 'fixing';
   duration: number;
   error?: string;
   details?: string;
   timestamp: Date;
+  fixAttempts?: number;
 }
 
 export interface QATestSuite {
@@ -39,16 +38,18 @@ export interface QADashboardProps {
   onRetryTest?: (testId: string) => void;
   onRetryCategory?: (category: string) => void;
   onRunAllTests?: () => void;
+  onAutoFixTests?: () => void;
 }
 
 export const QATestResultsDashboard: React.FC<QADashboardProps> = ({
   testSuites,
   onRetryTest,
   onRetryCategory,
-  onRunAllTests
+  onRunAllTests,
+  onAutoFixTests
 }) => {
-  const [expandedSuites, setExpandedSuites] = useState<Set<string>>(new Set());
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedSuites, setExpandedSuites] = useState<Set<string>>(new Set(['Authentication Tests']));
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['authentication']));
 
   // Calculate overall statistics
   const overallStats = testSuites.reduce(
@@ -96,6 +97,8 @@ export const QATestResultsDashboard: React.FC<QADashboardProps> = ({
         return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
       case 'pending':
         return <Clock className="w-4 h-4 text-gray-500" />;
+      case 'fixing':
+        return <RotateCcw className="w-4 h-4 text-blue-500 animate-spin" />;
     }
   };
 
@@ -109,6 +112,8 @@ export const QATestResultsDashboard: React.FC<QADashboardProps> = ({
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'pending':
         return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'fixing':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
     }
   };
 
@@ -133,172 +138,31 @@ export const QATestResultsDashboard: React.FC<QADashboardProps> = ({
               Comprehensive testing results across all test suites
             </CardDescription>
           </div>
-          <Button onClick={onRunAllTests} variant="outline">
+          <Button onClick={onRunAllTests} variant="outline" className="mr-2">
             Run All Tests
           </Button>
+          <Button onClick={onAutoFixTests} variant="default">
+            Auto-Fix Failed Tests
+          </Button>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{overallStats.total}</div>
-              <div className="text-sm text-muted-foreground">Total Tests</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{overallStats.passed}</div>
-              <div className="text-sm text-muted-foreground">Passed</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{overallStats.failed}</div>
-              <div className="text-sm text-muted-foreground">Failed</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-600">{overallStats.warning}</div>
-              <div className="text-sm text-muted-foreground">Warnings</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-600">{overallStats.pending}</div>
-              <div className="text-sm text-muted-foreground">Pending</div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Test Coverage</span>
-              <span>{overallCoverage.toFixed(1)}%</span>
-            </div>
-            <Progress value={overallCoverage} className="h-2" />
-          </div>
-
-          <div className="space-y-2 mt-4">
-            <div className="flex justify-between text-sm">
-              <span>Success Rate</span>
-              <span>{overallStats.total > 0 ? ((overallStats.passed / overallStats.total) * 100).toFixed(1) : 0}%</span>
-            </div>
-            <Progress 
-              value={overallStats.total > 0 ? (overallStats.passed / overallStats.total) * 100 : 0} 
-              className="h-2" 
-            />
-          </div>
-        </CardContent>
+        <QAOverviewStats 
+          overallStats={overallStats}
+          overallCoverage={overallCoverage}
+        />
       </Card>
 
       {/* Test Suites */}
       {testSuites.map((suite) => (
-        <Card key={suite.name}>
-          <Collapsible 
-            open={expandedSuites.has(suite.name)}
-            onOpenChange={() => toggleSuite(suite.name)}
-          >
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    {expandedSuites.has(suite.name) ? 
-                      <ChevronDown className="w-4 h-4" /> : 
-                      <ChevronRight className="w-4 h-4" />
-                    }
-                    <CardTitle>{suite.name}</CardTitle>
-                    <Badge variant="outline">
-                      {suite.passedTests}/{suite.totalTests} passed
-                    </Badge>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-muted-foreground">
-                      {suite.duration.toFixed(1)}s
-                    </span>
-                    <div className="w-32">
-                      <Progress 
-                        value={(suite.passedTests / suite.totalTests) * 100} 
-                        className="h-2" 
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-            </CollapsibleTrigger>
-            
-            <CollapsibleContent>
-              <CardContent className="pt-0">
-                {/* Category Groups */}
-                {Object.entries(groupTestsByCategory(suite.results)).map(([category, tests]) => (
-                  <div key={category} className="mb-4">
-                    <Collapsible 
-                      open={expandedCategories.has(category)}
-                      onOpenChange={() => toggleCategory(category)}
-                    >
-                      <CollapsibleTrigger asChild>
-                        <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 cursor-pointer">
-                          <div className="flex items-center space-x-2">
-                            {expandedCategories.has(category) ? 
-                              <ChevronDown className="w-3 h-3" /> : 
-                              <ChevronRight className="w-3 h-3" />
-                            }
-                            <span className="font-medium capitalize">{category} Tests</span>
-                            <Badge variant="secondary">
-                              {tests.filter(t => t.status === 'passed').length}/{tests.length}
-                            </Badge>
-                          </div>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRetryCategory?.(category);
-                            }}
-                          >
-                            Retry Category
-                          </Button>
-                        </div>
-                      </CollapsibleTrigger>
-
-                      <CollapsibleContent>
-                        <div className="ml-4 mt-2 space-y-2">
-                          {tests.map((test) => (
-                            <div 
-                              key={test.id}
-                              className={`p-3 rounded-lg border ${getStatusColor(test.status)}`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                  {getStatusIcon(test.status)}
-                                  <span className="font-medium">{test.name}</span>
-                                  <span className="text-sm text-muted-foreground">
-                                    {test.duration.toFixed(2)}ms
-                                  </span>
-                                </div>
-                                {test.status === 'failed' && (
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost"
-                                    onClick={() => onRetryTest?.(test.id)}
-                                  >
-                                    Retry
-                                  </Button>
-                                )}
-                              </div>
-                              
-                              {test.error && (
-                                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-800">
-                                  <strong>Error:</strong> {test.error}
-                                </div>
-                              )}
-                              
-                              {test.details && (
-                                <div className="mt-2 text-sm text-muted-foreground">
-                                  {test.details}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </div>
-                ))}
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
+        <TestSuiteCard
+          key={suite.name}
+          suite={suite}
+          isExpanded={expandedSuites.has(suite.name)}
+          onToggle={() => toggleSuite(suite.name)}
+          onRetryTest={onRetryTest}
+          onRetryCategory={onRetryCategory}
+          expandedCategories={expandedCategories}
+          onToggleCategory={toggleCategory}
+        />
       ))}
 
       {/* Action Items */}
