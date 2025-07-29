@@ -10,7 +10,7 @@ import Header from '@/components/Header';
 import LegalFooter from '@/components/LegalFooter';
 import E2ETestRunner from '@/components/testing/E2ETestRunner';
 import OptimizedQARunner from '@/components/testing/OptimizedQARunner';
-import OptimizationControls from '@/components/testing/OptimizationControls';
+import SimpleOptimizationRunner from '@/components/testing/SimpleOptimizationRunner';
 import createEnhancedDataPipelineTestSuite from '@/utils/testing/enhancedDataPipelineTestSuite';
 
 const Admin = () => {
@@ -264,7 +264,7 @@ const Admin = () => {
             </TabsContent>
 
             <TabsContent value="performance" className="space-y-6">
-              <OptimizationControls onOptimizationComplete={(metrics) => console.log('Optimization complete:', metrics)} />
+              <SimpleOptimizationRunner />
             </TabsContent>
 
             <TabsContent value="users">

@@ -12,10 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Play, Activity, Zap, TrendingUp, CheckCircle, AlertTriangle, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import TestResultCard from './TestResultCard';
-import SystemMetricsDisplay from './SystemMetricsDisplay';
-import OptimizationControls from './OptimizationControls';
-import { optimizedQASystem } from '@/utils/qa/optimizedQASystem';
-import { coreSystemOptimizer } from '@/utils/performance/coreSystemOptimizer';
+import { optimizedQASystem } from '@/utils/qa/simpleQASystem';
+import { simpleOptimizer } from '@/utils/performance/simpleOptimizer';
 import { QAReport } from '@/utils/qa/types';
 
 const OptimizedQARunner: React.FC = () => {
@@ -29,7 +27,7 @@ const OptimizedQARunner: React.FC = () => {
   // Real-time metrics updates
   useEffect(() => {
     const updateMetrics = () => {
-      const metrics = coreSystemOptimizer.getMetrics();
+      const metrics = simpleOptimizer.getMetrics();
       const health = optimizedQASystem.getSystemHealth();
       setOptimizationMetrics(metrics);
       setSystemHealth(health);
@@ -64,7 +62,7 @@ const OptimizedQARunner: React.FC = () => {
       setQaReport(report);
       
       // Update metrics after QA run
-      const metrics = coreSystemOptimizer.getMetrics();
+      const metrics = simpleOptimizer.getMetrics();
       const health = optimizedQASystem.getSystemHealth();
       setOptimizationMetrics(metrics);
       setSystemHealth(health);
@@ -95,11 +93,11 @@ const OptimizedQARunner: React.FC = () => {
       description: "Applying system optimizations...",
     });
 
-    coreSystemOptimizer.runBasicOptimizations();
+    simpleOptimizer.runBasicOptimizations();
 
     // Update metrics
     setTimeout(() => {
-      const metrics = coreSystemOptimizer.getMetrics();
+      const metrics = simpleOptimizer.getMetrics();
       setOptimizationMetrics(metrics);
       
       toast({
