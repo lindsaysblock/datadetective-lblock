@@ -30,6 +30,7 @@ class SystemOptimizer {
   private static instance: SystemOptimizer;
   private metrics: OptimizationMetrics;
   private eventListenerRegistry = new Map<string, { element: EventTarget; type: string; listener: EventListener; options?: any }>();
+  private initialized = false;
   private errorBoundaries = new Set<string>();
   private lazyImages = new Set<HTMLImageElement>();
   private memoryCleanupTasks = new Set<() => void>();
@@ -45,7 +46,7 @@ class SystemOptimizer {
       totalOptimizations: 0,
       systemEfficiency: 0
     };
-    this.initializeOptimizations();
+    // Remove automatic initialization to prevent infinite recursion
   }
 
   static getInstance(): SystemOptimizer {
@@ -506,15 +507,11 @@ class SystemOptimizer {
       });
   }
 
-  // Initialize all optimizations
+  // Initialize optimizations manually (prevent recursion)
   private initializeOptimizations(): void {
-    // Wait for DOM to be ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => {
-        this.runAllOptimizations();
-      });
-    } else {
-      this.runAllOptimizations();
+    // Only initialize once
+    if (typeof window !== 'undefined' && !this.initialized) {
+      this.initialized = true;
     }
   }
 
