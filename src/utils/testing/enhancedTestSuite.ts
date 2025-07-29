@@ -2,6 +2,7 @@
 import { UnitTestResult } from './testRunner';
 import { EnhancedAnalyticsTests } from './suites/enhancedAnalyticsTests';
 import { autoComplianceSystem } from '../qa/standards/autoComplianceSystem';
+import { ProductionReadinessTests } from './productionReadinessTests';
 
 export class EnhancedTestSuite {
   static async runCompleteTestSuite(): Promise<{
@@ -39,6 +40,10 @@ export class EnhancedTestSuite {
       // Run data integrity tests
       const dataResults = await EnhancedAnalyticsTests.runDataIntegrityTests();
       allResults.push(...dataResults);
+
+      // Run production readiness tests (authentication, guided tour, persistence)
+      const productionResults = await ProductionReadinessTests.runCompleteProductionTests();
+      allResults.push(...productionResults.results);
 
       const summary = this.calculateSummary(allResults);
       const duration = performance.now() - startTime;

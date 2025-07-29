@@ -82,6 +82,47 @@ export class ComprehensiveE2ETestSuite {
       ],
       expectedOutcome: 'User successfully signed out and redirected'
     },
+    
+    // Guided Tour Tests (Critical)
+    {
+      name: 'Guided Tour Database Persistence for Authenticated Users',
+      category: 'auth',
+      priority: 'critical',
+      steps: [
+        'Sign in as authenticated user',
+        'Complete guided tour',
+        'Verify tour_completed saved to database',
+        'Sign out and sign back in',
+        'Verify tour does not show again'
+      ],
+      expectedOutcome: 'Guided tour completion persists across sessions for authenticated users'
+    },
+    {
+      name: 'Guided Tour Skip Functionality',
+      category: 'auth',
+      priority: 'high',
+      steps: [
+        'Start guided tour as authenticated user',
+        'Click skip tour button',
+        'Verify tour_completed marked in database',
+        'Refresh page',
+        'Verify tour does not show again'
+      ],
+      expectedOutcome: 'Skip tour functionality properly marks completion in database'
+    },
+    {
+      name: 'Guest User Tour Behavior',
+      category: 'auth',
+      priority: 'high',
+      steps: [
+        'Access application without authentication',
+        'Verify guided tour shows',
+        'Complete or skip tour',
+        'Refresh page',
+        'Verify tour shows again (no persistence for guests)'
+      ],
+      expectedOutcome: 'Guest users see tour every time with no persistence'
+    },
 
     // Real Analysis Tests (Critical)
     {
