@@ -17,6 +17,7 @@ import MainTabsView from '@/components/query/MainTabsView';
 import AnalysisView from '@/components/query/AnalysisView';
 import Header from '@/components/Header';
 import LegalFooter from '@/components/LegalFooter';
+import { UserProfileService } from '@/services/userProfileService';
 import { TrendingUp } from 'lucide-react';
 
 const Index = () => {
@@ -32,16 +33,7 @@ const Index = () => {
   // State management
   const [activeTab, setActiveTab] = useState('upload');
   // Onboarding state management
-  const [showOnboarding, setShowOnboarding] = useState(() => {
-    if (!user) {
-      // Always show for unauthenticated users
-      return true;
-    } else {
-      // For authenticated users, check if they've seen it before
-      const hasSeenOnboarding = localStorage.getItem(`onboarding_completed_${user.id}`);
-      return !hasSeenOnboarding;
-    }
-  });
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [analysisData, setAnalysisData] = useState<any>(null);
   const [currentFilename, setCurrentFilename] = useState('');
   const [findings, setFindings] = useState<any[]>([]);
@@ -99,22 +91,39 @@ const Index = () => {
 
   // Update onboarding visibility when user auth state changes
   useEffect(() => {
-    if (!user) {
-      // Always show for unauthenticated users
-      setShowOnboarding(true);
-    } else {
-      // For authenticated users, check if they've seen it before
-      const hasSeenOnboarding = localStorage.getItem(`onboarding_completed_${user.id}`);
-      setShowOnboarding(!hasSeenOnboarding);
-    }
+    const checkTourStatus = async () => {
+      if (!user) {
+        // Always show for unauthenticated users
+        setShowOnboarding(true);
+      } else {
+        // For authenticated users, check database
+        try {
+          const tourCompleted = await UserProfileService.hasTourCompleted(user.id);
+          setShowOnboarding(!tourCompleted);
+        } catch (error) {
+          console.error('Error checking tour status:', error);
+          // Fall back to localStorage for error cases
+          const hasSeenOnboarding = localStorage.getItem(`onboarding_completed_${user.id}`);
+          setShowOnboarding(!hasSeenOnboarding);
+        }
+      }
+    };
+
+    checkTourStatus();
   }, [user]);
   // Event handlers
-  const handleOnboardingComplete = () => {
+  const handleOnboardingComplete = async () => {
     setShowOnboarding(false);
     
-    // For authenticated users, mark onboarding as completed
+    // For authenticated users, mark onboarding as completed in database
     if (user) {
-      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+      try {
+        await UserProfileService.markTourCompleted(user.id);
+      } catch (error) {
+        console.error('Failed to save tour completion:', error);
+        // Fall back to localStorage
+        localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+      }
     }
     
     toast({
@@ -123,8 +132,19 @@ const Index = () => {
     });
   };
 
-  const handleOnboardingSkip = () => {
+  const handleOnboardingSkip = async () => {
     setShowOnboarding(false);
+    
+    // For authenticated users, mark onboarding as completed in database
+    if (user) {
+      try {
+        await UserProfileService.markTourCompleted(user.id);
+      } catch (error) {
+        console.error('Failed to save tour completion:', error);
+        // Fall back to localStorage
+        localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+      }
+    }
   };
 
   const handleStartNewProject = () => {
