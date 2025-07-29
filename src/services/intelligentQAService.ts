@@ -105,16 +105,21 @@ export class IntelligentQAService {
   }
 
   private buildAnalysisMessages(context: AnalysisContext, dataInsights: any): AIMessage[] {
-    const prompt = this.buildAnalysisPrompt(context, dataInsights);
+    const provider = this.preferredProvider 
+      ? aiProviderManager.getProvider(this.preferredProvider)
+      : aiProviderManager.getBestProvider(context.question);
+    
+    const providerType = provider?.type || 'openai';
+    const { PromptBuilder } = require('@/services/ai/prompt/promptBuilder');
     
     return [
       {
         role: 'system',
-        content: 'You are a data analysis expert specializing in business intelligence and statistical analysis. Provide precise, actionable insights based on the data context provided. Focus on statistical patterns, business implications, and specific recommendations. Be thorough but concise.'
+        content: PromptBuilder.buildSystemPrompt(providerType)
       },
       {
         role: 'user',
-        content: prompt
+        content: PromptBuilder.buildAnalysisPrompt(context, dataInsights, providerType)
       }
     ];
   }
@@ -148,95 +153,28 @@ Focus on actionable insights that can drive business decisions. Be specific and 
   }
 
   private analyzeDataContext(context: AnalysisContext): any {
-    const data = context.data;
-    
-    if (!data || (!data.rows && !Array.isArray(data))) {
-      return {
-        rowCount: 0,
-        columnCount: 0,
-        columnTypes: [],
-        sampleData: {},
-        patterns: ['No data available for analysis']
-      };
-    }
-
-    const rows = data.rows || data;
-    const columns = data.columns || (rows.length > 0 ? Object.keys(rows[0]) : []);
-    
-    return {
-      rowCount: rows.length,
-      columnCount: columns.length,
-      columnTypes: this.inferColumnTypes(rows, columns),
-      sampleData: rows.slice(0, 3),
-      patterns: this.identifyDataPatterns(rows, columns)
-    };
+    const { DataAnalyzer } = require('@/services/ai/analysis/dataAnalyzer');
+    return DataAnalyzer.analyzeDataContext(context);
   }
 
+  // Legacy methods - kept for backward compatibility but now delegate to specialized services
   private inferColumnTypes(rows: any[], columns: string[]): string[] {
-    return columns.map(col => {
-      const sample = rows.slice(0, 10).map(row => row[col]).filter(val => val != null);
-      
-      if (sample.every(val => typeof val === 'number' || !isNaN(Number(val)))) {
-        return 'numeric';
-      } else if (sample.every(val => !isNaN(Date.parse(val)))) {
-        return 'date';
-      } else if (sample.every(val => typeof val === 'boolean' || val === 'true' || val === 'false')) {
-        return 'boolean';
-      } else {
-        return 'text';
-      }
-    });
+    const { DataAnalyzer } = require('@/services/ai/analysis/dataAnalyzer');
+    return DataAnalyzer.inferColumnTypes(rows, columns);
   }
 
   private identifyDataPatterns(rows: any[], columns: string[]): string[] {
-    const patterns: string[] = [];
-    
-    // Check for missing data
-    const missingDataCols = columns.filter(col => {
-      const missing = rows.filter(row => row[col] == null || row[col] === '').length;
-      return missing / rows.length > 0.1;
-    });
-    
-    if (missingDataCols.length > 0) {
-      patterns.push(`High missing data in columns: ${missingDataCols.join(', ')}`);
-    }
-    
-    // Check for potential ID columns
-    const idColumns = columns.filter(col => 
-      col.toLowerCase().includes('id') && 
-      new Set(rows.map(row => row[col])).size === rows.length
-    );
-    
-    if (idColumns.length > 0) {
-      patterns.push(`Unique identifier columns detected: ${idColumns.join(', ')}`);
-    }
-    
-    // Check for temporal data
-    const dateColumns = columns.filter(col => 
-      col.toLowerCase().includes('date') || 
-      col.toLowerCase().includes('time') ||
-      rows.some(row => !isNaN(Date.parse(row[col])))
-    );
-    
-    if (dateColumns.length > 0) {
-      patterns.push(`Time-series data available in: ${dateColumns.join(', ')}`);
-    }
-    
-    return patterns;
+    const { DataAnalyzer } = require('@/services/ai/analysis/dataAnalyzer');
+    const insights = DataAnalyzer.analyzeDataContext({ data: { rows, columns } });
+    return insights.patterns;
   }
 
   private calculateConfidence(response: any, context: AnalysisContext, providerType?: AIProviderType): number {
-    let confidence = providerType === 'claude' ? 0.7 : providerType === 'perplexity' ? 0.65 : 0.6;
+    const { ConfidenceCalculator } = require('@/services/ai/confidence/confidenceCalculator');
+    const { DataAnalyzer } = require('@/services/ai/analysis/dataAnalyzer');
     
-    // Increase confidence based on data quality
-    if (this.getRowCount(context.data) > 100) confidence += 0.15;
-    if (this.getColumnCount(context.data) > 5) confidence += 0.1;
-    if (context.fileTypes.includes('xlsx') || context.fileTypes.includes('csv')) confidence += 0.1;
-    
-    // Increase confidence based on token usage (more detailed analysis)
-    if (response.usage && response.usage.total_tokens > 800) confidence += 0.05;
-    
-    return Math.min(confidence, 1.0);
+    const dataInsights = DataAnalyzer.analyzeDataContext(context);
+    return ConfidenceCalculator.calculate(response, context, dataInsights, providerType || 'openai');
   }
 
   private getRowCount(data: any): number {

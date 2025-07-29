@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Brain, Loader2, CheckCircle, AlertTriangle, Sparkles } from 'lucide-react';
 import { EnhancedAnalysisEngine, type EnhancedAnalysisContext, type EnhancedAnalysisResult } from '@/services/enhancedAnalysisEngine';
-import { PerplexityApiKeyModal } from './PerplexityApiKeyModal';
+import { MultiProviderApiKeyModal } from './MultiProviderApiKeyModal';
 import { useToast } from '@/hooks/use-toast';
 import { ParsedData } from '@/utils/dataParser';
 
@@ -313,10 +313,16 @@ export const UniversalQAComponent: React.FC<UniversalQAComponentProps> = ({
       )}
 
       {/* API Key Modal */}
-      <PerplexityApiKeyModal
+      <MultiProviderApiKeyModal
         open={showApiKeyModal}
         onOpenChange={setShowApiKeyModal}
-        onApiKeySubmit={handleApiKeySubmit}
+        onSuccess={() => {
+          toast({
+            title: "AI Providers Configured",
+            description: "Multi-AI integration is now active. Try your analysis again!",
+          });
+          setTimeout(() => handleAnalyze(), 500);
+        }}
       />
     </div>
   );
