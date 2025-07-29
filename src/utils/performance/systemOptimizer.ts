@@ -60,13 +60,16 @@ class SystemOptimizer {
   optimizeEventListeners(): void {
     console.log('🔧 Optimizing event listeners...');
     
+    // Store reference to avoid calling getInstance in overrides
+    const optimizerInstance = this;
+    
     // Enhanced event listener management
     const originalAddEventListener = EventTarget.prototype.addEventListener;
     const originalRemoveEventListener = EventTarget.prototype.removeEventListener;
 
     EventTarget.prototype.addEventListener = function(type: string, listener: EventListener, options?: any) {
       const id = `${Date.now()}-${Math.random()}`;
-      SystemOptimizer.getInstance().eventListenerRegistry.set(id, {
+      optimizerInstance.eventListenerRegistry.set(id, {
         element: this,
         type,
         listener,
@@ -76,16 +79,16 @@ class SystemOptimizer {
       // Auto-cleanup for components
       if (options?.autoCleanup) {
         setTimeout(() => {
-          SystemOptimizer.getInstance().removeEventListener(id);
+          optimizerInstance.removeEventListener(id);
         }, options.autoCleanup);
       }
 
-      SystemOptimizer.getInstance().metrics.eventListenersOptimized++;
+      optimizerInstance.metrics.eventListenersOptimized++;
       return originalAddEventListener.call(this, type, listener, options);
     };
 
     EventTarget.prototype.removeEventListener = function(type: string, listener: EventListener, options?: any) {
-      SystemOptimizer.getInstance().metrics.eventListenersOptimized++;
+      optimizerInstance.metrics.eventListenersOptimized++;
       return originalRemoveEventListener.call(this, type, listener, options);
     };
 
@@ -97,8 +100,10 @@ class SystemOptimizer {
 
   private addPassiveListeners(): void {
     const passiveEvents = ['touchstart', 'touchmove', 'wheel', 'scroll'];
+    const originalAddEventListener = EventTarget.prototype.addEventListener;
+    
     passiveEvents.forEach(eventType => {
-      document.addEventListener(eventType, () => {}, { passive: true });
+      originalAddEventListener.call(document, eventType, () => {}, { passive: true });
     });
   }
 
