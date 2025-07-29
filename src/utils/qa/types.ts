@@ -13,6 +13,12 @@ export interface QATestResult {
   suggestions?: string[];
   isDataRelated?: boolean;
   category?: string;
+  error?: string;
+  optimizations?: string[];
+  fullDetails?: string;
+  stackTrace?: string;
+  fixSuggestions?: string[];
+  relatedFiles?: string[];
 }
 
 /** QA report interface */

@@ -95,7 +95,16 @@ export class QAOrchestrator {
         testName: 'QA System Error',
         status: 'fail',
         message: `QA system failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        suggestions: ['Check system resources', 'Review error logs', 'Restart QA system']
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        stackTrace: error instanceof Error ? error.stack : undefined,
+        suggestions: ['Check system resources', 'Review error logs', 'Restart QA system'],
+        fullDetails: `QA system encountered a critical error during execution. Error type: ${error?.constructor?.name || 'Unknown'}. This may be due to resource constraints, configuration issues, or code compilation errors.`,
+        fixSuggestions: [
+          'Restart the application',
+          'Check browser console for additional errors',
+          'Clear browser cache and reload',
+          'Verify all dependencies are installed correctly'
+        ]
       }],
       performanceMetrics: {
         renderTime: 0,

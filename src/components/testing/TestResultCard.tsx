@@ -15,6 +15,10 @@ interface TestResult {
   duration?: number;
   optimizations?: string[];
   fullDetails?: string;
+  stackTrace?: string;
+  fixSuggestions?: string[];
+  suggestions?: string[];
+  relatedFiles?: string[];
 }
 
 interface TestResultCardProps {
@@ -46,7 +50,8 @@ const TestResultCard: React.FC<TestResultCardProps> = ({ result }) => {
     }
   };
 
-  const hasExpandableContent = result?.error || result?.optimizations?.length || result?.fullDetails;
+  const hasExpandableContent = result?.error || result?.optimizations?.length || result?.fullDetails || 
+    result?.fixSuggestions?.length || result?.stackTrace || result?.suggestions?.length;
 
   return (
     <div className="border rounded-lg bg-background">
@@ -94,6 +99,41 @@ const TestResultCard: React.FC<TestResultCardProps> = ({ result }) => {
                   </div>
                 </div>
               )}
+
+              {result?.stackTrace && (
+                <div className="mt-3">
+                  <h4 className="text-sm font-medium text-destructive mb-2">Stack Trace:</h4>
+                  <div className="text-xs text-destructive bg-destructive/10 p-2 rounded border border-destructive/20 font-mono max-h-32 overflow-y-auto">
+                    {result.stackTrace}
+                  </div>
+                </div>
+              )}
+
+              {result?.suggestions && result.suggestions.length > 0 && (
+                <div className="mt-3">
+                  <h4 className="text-sm font-medium text-orange-700 mb-2">Suggestions:</h4>
+                  <div className="space-y-1">
+                    {result.suggestions.map((suggestion, index) => (
+                      <div key={index} className="text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-200">
+                        • {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {result?.fixSuggestions && result.fixSuggestions.length > 0 && (
+                <div className="mt-3">
+                  <h4 className="text-sm font-medium text-green-700 mb-2">Fix Suggestions:</h4>
+                  <div className="space-y-1">
+                    {result.fixSuggestions.map((suggestion, index) => (
+                      <div key={index} className="text-xs text-green-600 bg-green-50 p-2 rounded border border-green-200">
+                        🔧 {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               
               {result?.optimizations && result.optimizations.length > 0 && (
                 <div className="mt-3">
@@ -101,7 +141,7 @@ const TestResultCard: React.FC<TestResultCardProps> = ({ result }) => {
                   <div className="space-y-1">
                     {result.optimizations.map((opt, index) => (
                       <div key={index} className="text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">
-                        • {opt}
+                        ⚡ {opt}
                       </div>
                     ))}
                   </div>

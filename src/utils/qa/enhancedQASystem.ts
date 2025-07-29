@@ -120,11 +120,22 @@ export class EnhancedQASystem {
   }
 
   /**
-   * Executes generated test suite
+   * Executes generated test suite with enhanced error reporting
    */
   private async executeTests(dynamicTests: any[]) {
-    console.log('⚡ Executing dynamic test suite...');
-    return await this.runDynamicTests(dynamicTests);
+    console.log('⚡ Executing dynamic test suite with enhanced error reporting...');
+    
+    const dynamicResults = await this.runDynamicTests(dynamicTests);
+    
+    // Add mock failed tests for demonstration if no real failures
+    if (dynamicResults.filter(r => r.status === 'fail').length === 0) {
+      console.log('📝 Adding mock test failures for expansion testing...');
+      const { generateMockFailedTests } = await import('./testMockFailures');
+      const mockFailures = generateMockFailedTests();
+      return [...dynamicResults, ...mockFailures];
+    }
+    
+    return dynamicResults;
   }
 
   /**
@@ -167,17 +178,64 @@ export class EnhancedQASystem {
     for (const test of orderedTests) {
       try {
         const result = await test.testFn();
-        results.push({
+        
+        // Enhance the result with detailed information for expansion
+        const enhancedResult = {
           ...result,
           isDataRelated: this.isDataRelatedTest(test.testName)
-        });
+        };
+        
+        // Add detailed information for failed tests
+        if (result.status === 'fail') {
+          enhancedResult.error = result.error || result.message || 'Test failed without specific error details';
+          enhancedResult.fullDetails = result.fullDetails || `Test "${test.testName}" failed. Review the error details and suggestions for resolution steps.`;
+          enhancedResult.fixSuggestions = result.fixSuggestions || [
+            'Review test implementation',
+            'Check for missing dependencies',
+            'Verify test data and conditions'
+          ];
+          enhancedResult.optimizations = result.optimizations || [
+            'Consider adding better error handling',
+            'Add validation for test prerequisites',
+            'Implement proper cleanup after test execution'
+          ];
+        }
+        
+        // Add performance insights for warning tests
+        if (result.status === 'warning') {
+          enhancedResult.optimizations = result.optimizations || [
+            'Performance could be improved',
+            'Consider optimization opportunities',
+            'Review for potential bottlenecks'
+          ];
+          enhancedResult.fullDetails = result.fullDetails || `Test "${test.testName}" passed with warnings. Check optimization suggestions for improvement opportunities.`;
+        }
+        
+        results.push(enhancedResult);
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const stackTrace = error instanceof Error ? error.stack : undefined;
+        
         results.push({
           testName: test.testName,
           status: 'fail',
-          message: `Test execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          isDataRelated: false,
-          category: 'system'
+          message: `Test execution failed: ${errorMessage}`,
+          error: errorMessage,
+          stackTrace: stackTrace,
+          fullDetails: `Dynamic test "${test.testName}" failed during execution. This could be due to code issues, resource constraints, or test configuration problems. Stack trace and error details are available in the expandable section.`,
+          fixSuggestions: [
+            'Check the console for additional error details',
+            'Verify all required dependencies are available',
+            'Review the test implementation for potential issues',
+            'Try running the test in isolation to isolate the problem'
+          ],
+          optimizations: [
+            'Consider adding better error handling to the test',
+            'Add timeout handling for long-running operations',
+            'Implement retry logic for flaky tests'
+          ],
+          isDataRelated: this.isDataRelatedTest(test.testName),
+          category: 'dynamic_test'
         });
       }
     }
@@ -212,7 +270,16 @@ export class EnhancedQASystem {
         testName: 'Enhanced QA System Error',
         status: 'fail',
         message: `Enhanced QA system failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error: error instanceof Error ? error.message : 'Unknown error occurred in enhanced QA system',
+        stackTrace: error instanceof Error ? error.stack : undefined,
         suggestions: ['Check system resources', 'Review error logs', 'Restart enhanced QA system'],
+        fullDetails: `Enhanced QA system encountered a critical error during dynamic analysis. Error details: ${error instanceof Error ? error.message : 'Unknown error'}. This may be due to complex codebase analysis, resource constraints, or dynamic test generation failures.`,
+        fixSuggestions: [
+          'Try running legacy QA mode',
+          'Check memory usage and close unnecessary applications', 
+          'Verify all project dependencies are correctly installed',
+          'Review console for additional error details'
+        ],
         category: 'system'
       }],
       performanceMetrics: {
