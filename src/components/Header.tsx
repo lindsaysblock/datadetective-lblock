@@ -14,8 +14,19 @@ import { Search, Database, User, LogOut, Plus, History } from 'lucide-react';
 import { SPACING, TEXT_SIZES } from '@/constants/ui';
 
 const Header: React.FC = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
+  // Add error boundary for router hooks
+  let location;
+  let navigate;
+  
+  try {
+    location = useLocation();
+    navigate = useNavigate();
+  } catch (error) {
+    console.error('Header: Router context not available:', error);
+    // Fallback when router is not available
+    location = { pathname: '/' };
+    navigate = () => {};
+  }
   const { user, loading } = useAuthState();
   const { toast } = useToast();
 
