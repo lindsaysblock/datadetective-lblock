@@ -1,6 +1,7 @@
+
 /**
- * Perplexity API Key Input Component
- * For users to input their Perplexity API key when needed
+ * OpenAI API Key Input Component
+ * For users to input their OpenAI API key when needed
  */
 
 import React, { useState } from 'react';
@@ -11,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, ExternalLink, Key } from 'lucide-react';
 
-interface PerplexityApiKeyModalProps {
+interface OpenAIApiKeyModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onApiKeySubmit: (apiKey: string) => void;
@@ -19,12 +20,12 @@ interface PerplexityApiKeyModalProps {
   description?: string;
 }
 
-export const PerplexityApiKeyModal: React.FC<PerplexityApiKeyModalProps> = ({
+export const PerplexityApiKeyModal: React.FC<OpenAIApiKeyModalProps> = ({
   open,
   onOpenChange,
   onApiKeySubmit,
-  title = "Perplexity API Key Required",
-  description = "To provide intelligent analysis and answer your questions, Data Detective needs access to Perplexity AI."
+  title = "OpenAI API Key Required",
+  description = "To provide intelligent analysis and answer your questions, Data Detective needs access to OpenAI's GPT models."
 }) => {
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
@@ -66,17 +67,17 @@ export const PerplexityApiKeyModal: React.FC<PerplexityApiKeyModalProps> = ({
           <Alert>
             <AlertDescription>
               <strong>Note:</strong> This project is connected to Supabase. For production use, 
-              add your Perplexity API key to the Edge Function secrets instead of entering it here.
+              add your OpenAI API key to the Edge Function secrets instead of entering it here.
             </AlertDescription>
           </Alert>
 
           <div className="space-y-2">
-            <Label htmlFor="perplexity-api-key">Perplexity API Key</Label>
+            <Label htmlFor="openai-api-key">OpenAI API Key</Label>
             <div className="relative">
               <Input
-                id="perplexity-api-key"
+                id="openai-api-key"
                 type={showApiKey ? 'text' : 'password'}
-                placeholder="pplx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -96,16 +97,16 @@ export const PerplexityApiKeyModal: React.FC<PerplexityApiKeyModalProps> = ({
 
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
-              Don't have a Perplexity API key?
+              Don't have an OpenAI API key?
             </p>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.open('https://docs.perplexity.ai/guides/getting-started', '_blank')}
+              onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}
               className="w-full"
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              Get Perplexity API Key
+              Get OpenAI API Key
             </Button>
           </div>
 
@@ -137,3 +138,6 @@ export const PerplexityApiKeyModal: React.FC<PerplexityApiKeyModalProps> = ({
     </Dialog>
   );
 };
+
+// Export with the original name for backward compatibility
+export const OpenAIApiKeyModal = PerplexityApiKeyModal;

@@ -36,12 +36,12 @@ export class EnhancedAnalysisEngine {
 
   async analyzeWithQuestion(context: EnhancedAnalysisContext): Promise<EnhancedAnalysisResult> {
     try {
-      // Check if Perplexity API key is available
-      if (!this.orchestrator.hasPerplexityApiKey()) {
+      // Check if OpenAI API key is available
+      if (!this.orchestrator.hasOpenAIApiKey()) {
         return {
           success: false,
           requiresApiKey: true,
-          error: 'Perplexity API key required for intelligent analysis'
+          error: 'OpenAI API key required for intelligent analysis'
         };
       }
 
@@ -137,15 +137,22 @@ export class EnhancedAnalysisEngine {
     return Array.from(types);
   }
 
+  setOpenAIApiKey(apiKey: string): void {
+    this.orchestrator.setOpenAIApiKey(apiKey);
+  }
+
+  hasOpenAIApiKey(): boolean {
+    return this.orchestrator.hasOpenAIApiKey();
+  }
+
   setPerplexityApiKey(apiKey: string): void {
-    this.orchestrator.setPerplexityApiKey(apiKey);
+    this.setOpenAIApiKey(apiKey);
   }
 
   hasPerplexityApiKey(): boolean {
-    return this.orchestrator.hasPerplexityApiKey();
+    return this.hasOpenAIApiKey();
   }
 
-  // Static method for quick file type support check
   static getSupportedFileTypes(): string[] {
     return ['csv', 'xlsx', 'xls', 'json', 'txt'];
   }
@@ -155,7 +162,6 @@ export class EnhancedAnalysisEngine {
     return extension ? this.getSupportedFileTypes().includes(extension) : false;
   }
 
-  // Test method to verify the engine works
   async testAnalysis(): Promise<boolean> {
     try {
       const testRequest: UniversalAnalysisRequest = {
@@ -170,8 +176,8 @@ export class EnhancedAnalysisEngine {
         fileTypes: ['csv']
       };
 
-      if (!this.orchestrator.hasPerplexityApiKey()) {
-        console.log('⚠️ Test skipped: No Perplexity API key');
+      if (!this.orchestrator.hasOpenAIApiKey()) {
+        console.log('⚠️ Test skipped: No OpenAI API key');
         return false;
       }
 

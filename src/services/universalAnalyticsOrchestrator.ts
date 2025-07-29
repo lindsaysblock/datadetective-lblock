@@ -31,12 +31,21 @@ export class UniversalAnalyticsOrchestrator {
     this.qaService = new IntelligentQAService();
   }
 
-  setPerplexityApiKey(apiKey: string): void {
+  setOpenAIApiKey(apiKey: string): void {
     this.qaService.setApiKey(apiKey);
   }
 
-  hasPerplexityApiKey(): boolean {
+  hasOpenAIApiKey(): boolean {
     return this.qaService.hasApiKey();
+  }
+
+  // Keep backward compatibility with Perplexity method names
+  setPerplexityApiKey(apiKey: string): void {
+    this.setOpenAIApiKey(apiKey);
+  }
+
+  hasPerplexityApiKey(): boolean {
+    return this.hasOpenAIApiKey();
   }
 
   async analyzeQuestion(request: UniversalAnalysisRequest): Promise<AnalysisResult> {

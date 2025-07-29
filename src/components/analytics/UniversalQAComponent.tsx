@@ -1,6 +1,7 @@
+
 /**
  * Enhanced Question-Answer Component
- * Universal component that handles any data source and file type
+ * Universal component that handles any data source and file type using OpenAI
  */
 
 import React, { useState } from 'react';
@@ -9,8 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { MessageSquare, Brain, FileText, Database, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { MessageSquare, Brain, Loader2, CheckCircle, AlertTriangle, Sparkles } from 'lucide-react';
 import { EnhancedAnalysisEngine, type EnhancedAnalysisContext, type EnhancedAnalysisResult } from '@/services/enhancedAnalysisEngine';
 import { PerplexityApiKeyModal } from './PerplexityApiKeyModal';
 import { useToast } from '@/hooks/use-toast';
@@ -72,7 +72,7 @@ export const UniversalQAComponent: React.FC<UniversalQAComponentProps> = ({
       if (analysisResult.success) {
         toast({
           title: "Analysis Complete! 🎉",
-          description: "Your question has been analyzed successfully.",
+          description: "Your question has been analyzed using OpenAI GPT.",
         });
       } else {
         toast({
@@ -94,10 +94,10 @@ export const UniversalQAComponent: React.FC<UniversalQAComponentProps> = ({
   };
 
   const handleApiKeySubmit = (apiKey: string) => {
-    engine.setPerplexityApiKey(apiKey);
+    engine.setOpenAIApiKey(apiKey);
     toast({
-      title: "API Key Configured",
-      description: "Perplexity AI integration is now active. Try your analysis again!",
+      title: "OpenAI API Key Configured",
+      description: "GPT integration is now active. Try your analysis again!",
     });
     
     // Automatically retry the analysis
@@ -136,8 +136,11 @@ export const UniversalQAComponent: React.FC<UniversalQAComponentProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Brain className="w-5 h-5 text-primary" />
+            <Sparkles className="w-5 h-5 text-primary" />
             Ask Questions About Your Data
+            <Badge variant="outline" className="ml-auto text-xs">
+              Powered by OpenAI
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -180,7 +183,8 @@ export const UniversalQAComponent: React.FC<UniversalQAComponentProps> = ({
 • Which factors drive the highest performance?
 • Are there any patterns or anomalies I should know about?
 • How do different segments compare?
-• What insights can help improve my business?"
+• What insights can help improve my business?
+• Can you identify any correlations in the data?"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               rows={4}
@@ -198,7 +202,7 @@ export const UniversalQAComponent: React.FC<UniversalQAComponentProps> = ({
             {isAnalyzing ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Analyzing with AI...
+                Analyzing with OpenAI GPT...
               </>
             ) : (
               <>
@@ -230,7 +234,7 @@ export const UniversalQAComponent: React.FC<UniversalQAComponentProps> = ({
               ) : (
                 <AlertTriangle className="w-5 h-5 text-red-500" />
               )}
-              Analysis Results
+              AI Analysis Results
               {result.confidence && (
                 <Badge variant="outline" className="ml-auto">
                   {Math.round(result.confidence * 100)}% confidence
@@ -243,7 +247,10 @@ export const UniversalQAComponent: React.FC<UniversalQAComponentProps> = ({
               <>
                 {/* Main Answer */}
                 <div className="space-y-2">
-                  <h4 className="font-semibold">Answer:</h4>
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Brain className="w-4 h-4 text-primary" />
+                    Answer:
+                  </h4>
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <p className="whitespace-pre-wrap">{result.answer}</p>
                   </div>

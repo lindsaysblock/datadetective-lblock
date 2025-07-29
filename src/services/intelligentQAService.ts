@@ -1,6 +1,6 @@
 /**
  * Intelligent Question Answering Service
- * Integrates Perplexity AI for smart analysis and answers
+ * Integrates OpenAI GPT for smart analysis and answers
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -30,7 +30,7 @@ export interface AnalysisContext {
 }
 
 export class IntelligentQAService {
-  private perplexityApiKey: string | null = null;
+  private openaiApiKey: string | null = null;
   
   constructor() {
     this.loadApiKey();
@@ -40,48 +40,48 @@ export class IntelligentQAService {
     try {
       // Try to get from Supabase Edge Function secrets first
       const { data, error } = await supabase.functions.invoke('get-secrets', {
-        body: { secretName: 'PERPLEXITY_API_KEY' }
+        body: { secretName: 'OPENAI_API_KEY' }
       });
       
       if (!error && data?.value) {
-        this.perplexityApiKey = data.value;
-        console.log('✅ Perplexity API key loaded from Supabase');
+        this.openaiApiKey = data.value;
+        console.log('✅ OpenAI API key loaded from Supabase');
         return;
       }
     } catch (error) {
-      console.warn('⚠️ Could not load Perplexity API key from Supabase:', error);
+      console.warn('⚠️ Could not load OpenAI API key from Supabase:', error);
     }
     
     // Fallback: check if user has provided key in session
-    this.perplexityApiKey = sessionStorage.getItem('perplexity_api_key');
+    this.openaiApiKey = sessionStorage.getItem('openai_api_key');
   }
 
   setApiKey(apiKey: string): void {
-    this.perplexityApiKey = apiKey;
-    sessionStorage.setItem('perplexity_api_key', apiKey);
+    this.openaiApiKey = apiKey;
+    sessionStorage.setItem('openai_api_key', apiKey);
   }
 
   hasApiKey(): boolean {
-    return !!this.perplexityApiKey;
+    return !!this.openaiApiKey;
   }
 
   async answerQuestion(context: AnalysisContext): Promise<QuestionAnswer> {
-    if (!this.perplexityApiKey) {
-      throw new Error('Perplexity API key not configured');
+    if (!this.openaiApiKey) {
+      throw new Error('OpenAI API key not configured');
     }
 
     try {
       const dataInsights = this.analyzeDataContext(context);
       const enhancedPrompt = this.buildAnalysisPrompt(context, dataInsights);
       
-      const perplexityResponse = await this.callPerplexityAPI(enhancedPrompt);
+      const openaiResponse = await this.callOpenAIAPI(enhancedPrompt);
       
       const answer: QuestionAnswer = {
         id: crypto.randomUUID(),
         question: context.question,
-        answer: perplexityResponse.answer,
-        confidence: this.calculateConfidence(perplexityResponse, context),
-        sources: perplexityResponse.sources || [],
+        answer: openaiResponse.answer,
+        confidence: this.calculateConfidence(openaiResponse, context),
+        sources: [], // OpenAI doesn't provide sources like Perplexity
         timestamp: new Date(),
         dataContext: {
           fileTypes: context.fileTypes,
@@ -103,19 +103,19 @@ export class IntelligentQAService {
     }
   }
 
-  private async callPerplexityAPI(prompt: string): Promise<any> {
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+  private async callOpenAIAPI(prompt: string): Promise<any> {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.perplexityApiKey}`,
+        'Authorization': `Bearer ${this.openaiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: 'You are a data analysis expert. Provide precise, actionable insights based on the data context provided. Focus on statistical patterns, business implications, and specific recommendations.'
+            content: 'You are a data analysis expert specializing in business intelligence and statistical analysis. Provide precise, actionable insights based on the data context provided. Focus on statistical patterns, business implications, and specific recommendations. Be thorough but concise.'
           },
           {
             role: 'user',
@@ -123,26 +123,23 @@ export class IntelligentQAService {
           }
         ],
         temperature: 0.2,
-        top_p: 0.9,
         max_tokens: 1500,
-        return_images: false,
-        return_related_questions: true,
-        search_recency_filter: 'month',
-        frequency_penalty: 1,
-        presence_penalty: 0
+        top_p: 0.9,
+        frequency_penalty: 0.1,
+        presence_penalty: 0.1
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Perplexity API error: ${response.status}`);
+      const error = await response.json();
+      throw new Error(`OpenAI API error: ${response.status} - ${error.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
     
     return {
       answer: data.choices[0]?.message?.content || 'No answer provided',
-      sources: data.choices[0]?.message?.sources || [],
-      relatedQuestions: data.related_questions || []
+      usage: data.usage
     };
   }
 
@@ -170,7 +167,7 @@ Please provide:
 4. Potential next analysis steps
 5. Data quality observations
 
-Focus on actionable insights that can drive business decisions.
+Focus on actionable insights that can drive business decisions. Be specific and provide concrete examples where possible.
     `;
   }
 
@@ -253,15 +250,15 @@ Focus on actionable insights that can drive business decisions.
   }
 
   private calculateConfidence(response: any, context: AnalysisContext): number {
-    let confidence = 0.5; // Base confidence
+    let confidence = 0.6; // Base confidence for OpenAI
     
     // Increase confidence based on data quality
-    if (this.getRowCount(context.data) > 100) confidence += 0.2;
+    if (this.getRowCount(context.data) > 100) confidence += 0.15;
     if (this.getColumnCount(context.data) > 5) confidence += 0.1;
     if (context.fileTypes.includes('xlsx') || context.fileTypes.includes('csv')) confidence += 0.1;
     
-    // Increase confidence if sources are provided
-    if (response.sources && response.sources.length > 0) confidence += 0.1;
+    // Increase confidence based on token usage (more detailed analysis)
+    if (response.usage && response.usage.total_tokens > 800) confidence += 0.05;
     
     return Math.min(confidence, 1.0);
   }
