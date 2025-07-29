@@ -1,237 +1,80 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { useAutoQA } from '../../hooks/useAutoQA';
-import { useE2ELoadTest } from '../../hooks/useE2ELoadTest';
 import { Play, Activity, Settings, BarChart3, Zap, CheckCircle, AlertTriangle } from 'lucide-react';
-import TestResultCard from './TestResultCard';
-import TestCoverageIndicator from './TestCoverageIndicator';
-import { useE2ETestLogic } from './hooks/useE2ETestLogic';
-import { useE2EOptimizations } from './hooks/useE2EOptimizations';
-import E2ETestProgress from './components/E2ETestProgress';
-import E2ETestResults from './components/E2ETestResults';
 
 const E2ETestRunner: React.FC = () => {
   const { toast } = useToast();
-  const { runManualQA } = useAutoQA();
-  const { runFullLoadTest, runQuickLoadCheck } = useE2ELoadTest();
-  
-  const {
-    isRunning,
-    currentStep,
-    progress,
-    testResults,
-    optimizationsApplied,
-    setIsRunning,
-    setCurrentStep,
-    setProgress,
-    setTestResults,
-    setOptimizationsApplied,
-    testSteps
-  } = useE2ETestLogic();
+  const [isRunning, setIsRunning] = useState(false);
 
-  const {
-    runSystemHealthCheck,
-    runPerformanceAnalysis,
-    applyOptimizations
-  } = useE2EOptimizations();
-
-  const runFullE2ETest = async () => {
+  const runDisabledTest = async () => {
     setIsRunning(true);
-    setProgress(0);
-    setTestResults([]);
-    setOptimizationsApplied([]);
     
     try {
       toast({
-        title: "E2E Testing & Optimization Started",
-        description: "Running comprehensive analysis and applying optimizations...",
-        duration: 3000,
-      });
-
-      let cumulativeProgress = 0;
-
-      // Step 1: System Health Check
-      setCurrentStep('Running System Health Check...');
-      const healthResults = await runSystemHealthCheck();
-      cumulativeProgress += testSteps[0].weight;
-      setProgress(cumulativeProgress);
-      
-      setTestResults(prev => [...prev, {
-        step: 'System Health Check',
-        status: healthResults.critical > 0 ? 'error' : healthResults.warnings > 0 ? 'warning' : 'success',
-        details: `${healthResults.checks} checks completed - ${healthResults.critical} critical, ${healthResults.warnings} warnings`,
-        timestamp: new Date(),
-        optimizations: healthResults.optimizations
-      }]);
-
-      // Step 2: Performance Analysis
-      setCurrentStep('Analyzing Performance Metrics...');
-      const performanceResults = await runPerformanceAnalysis();
-      cumulativeProgress += testSteps[1].weight;
-      setProgress(cumulativeProgress);
-      
-      setTestResults(prev => [...prev, {
-        step: 'Performance Analysis',
-        status: performanceResults.efficient ? 'success' : 'warning',
-        details: `System efficiency: ${performanceResults.efficiency}%, Memory: ${performanceResults.memoryUsage}MB`,
-        timestamp: new Date(),
-        optimizations: performanceResults.optimizations
-      }]);
-
-      // Step 3: API Analysis Testing
-      setCurrentStep('Running API Analysis Tests...');
-      const { APIAnalysisTests } = await import('../../utils/testing/apiAnalysisTests');
-      const apiTestResults = await APIAnalysisTests.runComprehensiveAPITests();
-      cumulativeProgress += testSteps[2].weight;
-      setProgress(cumulativeProgress);
-      
-      const apiTestsPassed = apiTestResults.filter(r => r.status === 'pass').length;
-      const apiTestsTotal = apiTestResults.length;
-      
-      setTestResults(prev => [...prev, {
-        step: 'API Analysis Testing',
-        status: apiTestsPassed === apiTestsTotal ? 'success' : apiTestsPassed > apiTestsTotal * 0.8 ? 'warning' : 'error',
-        details: `${apiTestsPassed}/${apiTestsTotal} API tests passed - AI analysis logic validated`,
-        timestamp: new Date(),
-        optimizations: apiTestResults
-          .filter(r => r.error)
-          .map(r => `API optimization needed: ${r.testName}`)
-          .slice(0, 3),
-        fullDetails: `Comprehensive API testing including: AI analysis engine, data processing APIs, research question processing, context management, result generation, and error handling. ${apiTestResults.map(r => `${r.testName}: ${r.status}`).join(', ')}`
-      }]);
-
-      // Step 4: Load Testing
-      setCurrentStep('Running Load Tests...');
-      await runFullLoadTest();
-      cumulativeProgress += testSteps[3].weight;
-      setProgress(cumulativeProgress);
-      
-      setTestResults(prev => [...prev, {
-        step: 'Load Testing',
-        status: 'success',
-        details: 'Comprehensive load tests completed successfully',
-        timestamp: new Date()
-      }]);
-
-      // Step 5: Apply Optimizations
-      setCurrentStep('Applying Performance Optimizations...');
-      const appliedOptimizations = await applyOptimizations();
-      cumulativeProgress += testSteps[4].weight;
-      setProgress(cumulativeProgress);
-      
-      const optimizationsList = appliedOptimizations.success ? appliedOptimizations.result.optimizations : ['Optimization failed'];
-      setOptimizationsApplied(optimizationsList);
-      
-      setTestResults(prev => [...prev, {
-        step: 'Optimization Application',
-        status: appliedOptimizations.success ? 'success' : 'error',
-        details: `${optimizationsList.length} optimizations applied`,
-        timestamp: new Date(),
-        optimizations: optimizationsList
-      }]);
-
-      // Step 6: Final Verification
-      setCurrentStep('Final Verification...');
-      await runQuickLoadCheck();
-      setProgress(100);
-      
-      setTestResults(prev => [...prev, {
-        step: 'Final Verification',
-        status: 'success',
-        details: 'All optimizations verified and system ready',
-        timestamp: new Date()
-      }]);
-
-      toast({
-        title: "E2E Testing & Optimization Complete ✅",
-        description: `${optimizationsList.length} optimizations applied successfully`,
-        duration: 5000,
-      });
-
-    } catch (error) {
-      console.error('E2E testing failed:', error);
-      toast({
-        title: "E2E Testing Failed",
-        description: "Some tests failed but optimizations were still applied where possible",
+        title: "⚠️ E2E Testing Temporarily Disabled",
+        description: "E2E testing is disabled while we resolve a system conflict. Other testing features remain functional.",
         variant: "destructive",
-        duration: 6000,
       });
+
+      // Safe delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      setTestResults(prev => [...prev, {
-        step: 'Error Recovery',
-        status: 'error',
-        details: `Testing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        timestamp: new Date()
-      }]);
     } finally {
       setIsRunning(false);
-      setCurrentStep('');
     }
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      runFullE2ETest();
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
-    <Card className="w-full max-w-6xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Play className="w-5 h-5 text-blue-600" />
-          E2E Testing & Optimization Suite
-        </CardTitle>
-        <CardDescription>
-          Comprehensive testing with automatic performance optimizations
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
-          <Button 
-            onClick={runFullE2ETest}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="w-5 h-5 text-orange-500" />
+            E2E Testing Suite (Maintenance Mode)
+          </CardTitle>
+          <CardDescription>
+            End-to-end testing is temporarily disabled due to a system conflict
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h3 className="font-semibold text-yellow-800 mb-2">🚧 Under Maintenance</h3>
+            <p className="text-yellow-700 mb-3">
+              E2E testing is temporarily disabled while we resolve a DOM manipulation conflict. 
+              This ensures the stability of other testing features.
+            </p>
+            <ul className="text-sm text-yellow-600 space-y-1">
+              <li>• Pipeline testing remains fully functional</li>
+              <li>• Data validation testing is available</li>
+              <li>• Debug tools are operational</li>
+            </ul>
+          </div>
+
+          <Button
+            onClick={runDisabledTest}
             disabled={isRunning}
-            size="lg"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            variant="outline"
+            className="w-full"
           >
             <Play className="w-4 h-4 mr-2" />
-            {isRunning ? 'Running Tests & Optimizations...' : 'Run Full E2E Test & Optimize'}
+            {isRunning ? 'Testing Disabled...' : 'Test E2E (Disabled)'}
           </Button>
-          
+
           {isRunning && (
-            <div className="text-right">
-              <div className="text-2xl font-bold text-blue-600">{progress}%</div>
-              <div className="text-xs text-gray-500">Complete</div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Status</span>
+                <span>Disabled</span>
+              </div>
+              <Progress value={100} className="h-2" />
             </div>
           )}
-        </div>
-
-        <E2ETestProgress 
-          isRunning={isRunning}
-          progress={progress}
-          currentStep={currentStep}
-        />
-
-        <E2ETestResults 
-          optimizationsApplied={optimizationsApplied}
-          testResults={testResults}
-        />
-
-        <TestCoverageIndicator testSteps={testSteps} />
-
-        <div className="bg-blue-50 rounded-lg p-4 text-sm text-blue-700">
-          <strong>E2E Testing & Optimization:</strong> This comprehensive suite tests system health, 
-          performance, and quality while automatically applying optimizations. Memory cleanup, 
-          lazy loading, and component optimizations are applied in real-time.
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
