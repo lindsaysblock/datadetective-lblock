@@ -10,7 +10,7 @@ import Header from '@/components/Header';
 import LegalFooter from '@/components/LegalFooter';
 import E2ETestRunner from '@/components/testing/E2ETestRunner';
 import DiskIOBandwidthTest from '@/components/testing/DiskIOBandwidthTest';
-import createDataPipelineTestSuite from '@/utils/testing/dataPipelineTestSuite';
+import createEnhancedDataPipelineTestSuite from '@/utils/testing/enhancedDataPipelineTestSuite';
 
 const Admin = () => {
   const [pipelineTestResults, setPipelineTestResults] = useState<any[]>([]);
@@ -28,7 +28,7 @@ const Admin = () => {
         description: "Running comprehensive pipeline and analysis tests...",
       });
       
-      const testSuite = createDataPipelineTestSuite();
+      const testSuite = createEnhancedDataPipelineTestSuite();
       const results = await testSuite.runAllTests();
       
       setPipelineTestResults(results);
