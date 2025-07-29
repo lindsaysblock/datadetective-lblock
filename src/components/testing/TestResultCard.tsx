@@ -3,7 +3,6 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, AlertTriangle, XCircle, Activity, ChevronDown, ChevronRight, Zap, Bug, Lightbulb } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { systemOptimizer } from '@/utils/performance/systemOptimizer';
 
 interface TestResult {
   step?: string;
@@ -29,14 +28,9 @@ interface TestResultCardProps {
 const TestResultCard: React.FC<TestResultCardProps> = ({ result }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Optimize expansion toggle with useCallback
   const handleExpansionToggle = useCallback(() => {
     setIsExpanded(prev => !prev);
-    
-    // Track expansion analytics
-    systemOptimizer.addMemoryCleanupTask(() => {
-      console.log('QA card interaction tracked');
-    });
+    console.log('QA card interaction tracked');
   }, []);
 
   // Memoize expensive computations

@@ -12,14 +12,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Play, Activity, Zap, TrendingUp, CheckCircle, AlertTriangle, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import TestResultCard from './TestResultCard';
+import SystemMetricsDisplay from './SystemMetricsDisplay';
+import OptimizationControls from './OptimizationControls';
 import { optimizedQASystem } from '@/utils/qa/optimizedQASystem';
-import { systemOptimizer, OptimizationMetrics } from '@/utils/performance/systemOptimizer';
+import { coreSystemOptimizer } from '@/utils/performance/coreSystemOptimizer';
 import { QAReport } from '@/utils/qa/types';
 
 const OptimizedQARunner: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [qaReport, setQaReport] = useState<QAReport | null>(null);
-  const [optimizationMetrics, setOptimizationMetrics] = useState<OptimizationMetrics | null>(null);
+  const [optimizationMetrics, setOptimizationMetrics] = useState<any>(null);
   const [systemHealth, setSystemHealth] = useState<any>(null);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
@@ -27,7 +29,7 @@ const OptimizedQARunner: React.FC = () => {
   // Real-time metrics updates
   useEffect(() => {
     const updateMetrics = () => {
-      const metrics = systemOptimizer.getMetrics();
+      const metrics = coreSystemOptimizer.getMetrics();
       const health = optimizedQASystem.getSystemHealth();
       setOptimizationMetrics(metrics);
       setSystemHealth(health);
@@ -62,7 +64,7 @@ const OptimizedQARunner: React.FC = () => {
       setQaReport(report);
       
       // Update metrics after QA run
-      const metrics = systemOptimizer.getMetrics();
+      const metrics = coreSystemOptimizer.getMetrics();
       const health = optimizedQASystem.getSystemHealth();
       setOptimizationMetrics(metrics);
       setSystemHealth(health);
@@ -93,18 +95,11 @@ const OptimizedQARunner: React.FC = () => {
       description: "Applying system optimizations...",
     });
 
-    systemOptimizer.runAllOptimizations({
-      eventListenerCleanup: true,
-      errorHandling: true,
-      memoryReduction: true,
-      loadTimeOptimization: true,
-      imageLazyLoading: true,
-      codeSplitting: true
-    });
+    coreSystemOptimizer.runBasicOptimizations();
 
     // Update metrics
     setTimeout(() => {
-      const metrics = systemOptimizer.getMetrics();
+      const metrics = coreSystemOptimizer.getMetrics();
       setOptimizationMetrics(metrics);
       
       toast({
