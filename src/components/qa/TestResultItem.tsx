@@ -67,9 +67,17 @@ export const TestResultItem: React.FC<TestResultItemProps> = ({
             size="sm" 
             variant="ghost"
             onClick={() => onRetry?.(test.id)}
-            disabled={test.status === 'fixing'}
           >
-            {test.status === 'fixing' ? 'Fixing...' : 'Retry'}
+            Retry
+          </Button>
+        )}
+        {test.status === 'fixing' && (
+          <Button 
+            size="sm" 
+            variant="ghost"
+            disabled
+          >
+            Fixing...
           </Button>
         )}
       </div>
