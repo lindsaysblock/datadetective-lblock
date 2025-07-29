@@ -265,14 +265,15 @@ export const useE2EOptimizations = () => {
     const elementsWithManyClasses = document.querySelectorAll('[class]');
     let cleanedClasses = 0;
     elementsWithManyClasses.forEach(el => {
-      const className = el.className;
-      if (typeof className === 'string' && className.trim()) {
+      // Safely get className as string
+      const className = el instanceof Element ? el.getAttribute('class') || '' : '';
+      if (className && className.trim()) {
         const classList = className.split(' ');
         if (classList.length > 10) {
           // Remove potential duplicate classes
           const uniqueClasses = [...new Set(classList)];
           if (uniqueClasses.length < classList.length) {
-            el.className = uniqueClasses.join(' ');
+            el.setAttribute('class', uniqueClasses.join(' '));
             cleanedClasses++;
           }
         }
