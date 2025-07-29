@@ -9,8 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import LegalFooter from '@/components/LegalFooter';
 import E2ETestRunner from '@/components/testing/E2ETestRunner';
-import OptimizedQARunner from '@/components/testing/OptimizedQARunner';
-import SimpleOptimizationRunner from '@/components/testing/SimpleOptimizationRunner';
+
+
 import createEnhancedDataPipelineTestSuite from '@/utils/testing/enhancedDataPipelineTestSuite';
 
 const Admin = () => {
@@ -194,7 +194,15 @@ const Admin = () => {
             </TabsList>
 
             <TabsContent value="optimized" className="space-y-6">
-              <OptimizedQARunner />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Optimized QA</CardTitle>
+                  <CardDescription>Quality assurance tools temporarily disabled for maintenance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600">QA tools are being updated...</p>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="testing" className="space-y-6">
@@ -264,7 +272,15 @@ const Admin = () => {
             </TabsContent>
 
             <TabsContent value="performance" className="space-y-6">
-              <SimpleOptimizationRunner />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performance Optimization</CardTitle>
+                  <CardDescription>Performance tools temporarily disabled for maintenance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600">Performance optimization tools are being updated...</p>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="users">
