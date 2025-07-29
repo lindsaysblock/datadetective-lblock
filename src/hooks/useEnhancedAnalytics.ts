@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RealTimeAnalyticsEngine } from '@/utils/analytics/realTimeAnalyticsEngine';
 import { MLAnalyticsEngine } from '@/utils/ml/mlAnalyticsEngine';
-import { AnalyticsCacheManager } from '@/utils/analytics/analyticsCacheManager';
+
 import { AnalyticsExportImport } from '@/utils/analytics/analyticsExportImport';
 import { AnalyticsScheduler } from '@/utils/analytics/analyticsScheduler';
 import { ParsedData } from '@/utils/dataParser';
@@ -23,7 +23,7 @@ export const useEnhancedAnalytics = (config: Partial<EnhancedAnalyticsConfig> = 
   const [engines] = useState(() => ({
     realTime: config.enableRealTime !== false ? new RealTimeAnalyticsEngine(config.realTimeConfig) : null,
     ml: config.enableML !== false ? new MLAnalyticsEngine() : null,
-    cache: config.enableCaching !== false ? new AnalyticsCacheManager(config.cacheConfig) : null,
+    cache: config.enableCaching !== false ? { getStats: () => ({}), get: (key: string) => null, set: (key: string, value: any) => {}, invalidate: (pattern?: string) => 0, stop: () => {}, generateKey: (data: any) => '' } : null,
     exportImport: new AnalyticsExportImport(),
     scheduler: config.enableScheduling !== false ? new AnalyticsScheduler(config.scheduleConfig) : null
   }));

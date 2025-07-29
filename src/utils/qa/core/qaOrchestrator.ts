@@ -2,14 +2,14 @@ import { QAReport } from '../types';
 import { QATestSuites } from '../qaTestSuites';
 import { TestOrchestrator } from '../testOrchestrator';
 import { EnhancedQASystem } from '../enhancedQASystem';
-import { PerformanceOptimizer } from '../performance/performanceOptimizer';
+import { simpleOptimizer } from '../../performance/simpleOptimizer';
 import { TestRunner } from '../testRunner';
 
 export class QAOrchestrator {
   private qaTestSuites: QATestSuites;
   private testOrchestrator: TestOrchestrator;
   private enhancedQASystem = new EnhancedQASystem();
-  private performanceOptimizer = new PerformanceOptimizer();
+  private performanceOptimizer = simpleOptimizer;
   private useEnhancedMode: boolean = true;
 
   constructor() {
@@ -64,9 +64,9 @@ export class QAOrchestrator {
 
     const enhancedMetrics = {
       ...performanceMetrics,
-      testExecutionMetrics: Object.fromEntries(this.performanceOptimizer.getMetrics()),
-      systemEfficiency: this.performanceOptimizer.calculateSystemEfficiency(),
-      memoryEfficiency: this.performanceOptimizer.calculateMemoryEfficiency(),
+      testExecutionMetrics: this.performanceOptimizer.getMetrics(),
+      systemEfficiency: this.performanceOptimizer.getMetrics().systemEfficiency,
+      memoryEfficiency: Math.max(0, 100 - (this.performanceOptimizer.getMetrics().memoryReduced / 10)),
       enhancedMode: this.useEnhancedMode
     };
 

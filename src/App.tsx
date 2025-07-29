@@ -10,7 +10,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/contexts/AuthContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import '@/utils/performance/optimizationCenter'; // Initialize performance optimizations
+
 import { ROUTES } from '@/config/routes';
 import { CACHE_TIMES, RETRY_COUNTS, SPACING } from '@/constants/ui';
 import CodeQualityMonitor from '@/components/qa/CodeQualityMonitor';

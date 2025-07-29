@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { RealTimeAnalyticsEngine } from '@/utils/analytics/realTimeAnalyticsEngine';
 import { MLAnalyticsEngine } from '@/utils/ml/mlAnalyticsEngine';
-import { AnalyticsCacheManager } from '@/utils/analytics/analyticsCacheManager';
+
 import { AnalyticsExportImport } from '@/utils/analytics/analyticsExportImport';
 import { AnalyticsScheduler } from '@/utils/analytics/analyticsScheduler';
 import { ParsedData } from '@/utils/dataParser';
@@ -38,7 +38,7 @@ const EnhancedAnalyticsDashboard: React.FC<EnhancedAnalyticsDashboardProps> = ({
 }) => {
   const [realTimeEngine] = useState(() => new RealTimeAnalyticsEngine());
   const [mlEngine] = useState(() => new MLAnalyticsEngine());
-  const [cacheManager] = useState(() => new AnalyticsCacheManager());
+  const [cacheManager] = useState(() => ({ getStats: () => ({}), invalidate: (pattern?: string) => 0, stop: () => {} }));
   const [exportImport] = useState(() => new AnalyticsExportImport());
   const [scheduler] = useState(() => new AnalyticsScheduler());
   

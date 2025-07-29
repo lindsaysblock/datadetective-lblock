@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
-import { useOptimizedDataPipeline } from '@/hooks/useOptimizedDataPipeline';
+
 import { useAnalyticsManager } from '@/hooks/useAnalyticsManager';
 import { useToast } from '@/hooks/use-toast';
 import { parseFile } from '@/utils/dataParser';
@@ -47,7 +47,7 @@ const Index = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [estimatedTime, setEstimatedTime] = useState(0);
 
-  const dataPipeline = useOptimizedDataPipeline();
+  
   const analyticsManager = useAnalyticsManager();
 
   // Handle route state for continuing investigations
