@@ -170,31 +170,46 @@ export type Database = {
       }
       profiles: {
         Row: {
+          api_keys_configured: Json | null
           avatar_url: string | null
           created_at: string | null
+          display_name: string | null
           email: string | null
           full_name: string | null
           id: string
           preferences: Json | null
+          tour_completed: boolean | null
           updated_at: string | null
+          usage_stats: Json | null
+          user_id: string | null
         }
         Insert: {
+          api_keys_configured?: Json | null
           avatar_url?: string | null
           created_at?: string | null
+          display_name?: string | null
           email?: string | null
           full_name?: string | null
           id: string
           preferences?: Json | null
+          tour_completed?: boolean | null
           updated_at?: string | null
+          usage_stats?: Json | null
+          user_id?: string | null
         }
         Update: {
+          api_keys_configured?: Json | null
           avatar_url?: string | null
           created_at?: string | null
+          display_name?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
           preferences?: Json | null
+          tour_completed?: boolean | null
           updated_at?: string | null
+          usage_stats?: Json | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -330,6 +345,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_analysis_sessions: {
+        Row: {
+          ai_provider: string | null
+          analysis_results: Json | null
+          confidence_score: number | null
+          created_at: string
+          file_data: Json | null
+          id: string
+          is_public: boolean | null
+          question: string
+          session_name: string
+          status: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          ai_provider?: string | null
+          analysis_results?: Json | null
+          confidence_score?: number | null
+          created_at?: string
+          file_data?: Json | null
+          id?: string
+          is_public?: boolean | null
+          question: string
+          session_name: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          ai_provider?: string | null
+          analysis_results?: Json | null
+          confidence_score?: number | null
+          created_at?: string
+          file_data?: Json | null
+          id?: string
+          is_public?: boolean | null
+          question?: string
+          session_name?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
