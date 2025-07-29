@@ -45,7 +45,7 @@ class AdvancedMemoryIOOptimizer {
       bandwidthSaved: 0,
       gcCycles: 0
     };
-    this.initializeOptimizations();
+    // Disable automatic initialization to prevent recursion
   }
 
   static getInstance(): AdvancedMemoryIOOptimizer {

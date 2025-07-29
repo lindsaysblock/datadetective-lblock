@@ -514,10 +514,8 @@ class SystemOptimizer {
 
   // Initialize optimizations manually (prevent recursion)
   private initializeOptimizations(): void {
-    // Only initialize once
-    if (typeof window !== 'undefined' && !this.initialized) {
-      this.initialized = true;
-    }
+    // Completely disabled to prevent recursion
+    // Only manual initialization allowed
   }
 
   // Run all optimizations
@@ -604,6 +602,7 @@ class SystemOptimizer {
   }
 }
 
-// Export singleton instance
+// Export singleton instance - NO automatic initialization
+// Must be manually triggered via Admin panel buttons
 export const systemOptimizer = SystemOptimizer.getInstance();
 export type { OptimizationMetrics, OptimizationConfig };

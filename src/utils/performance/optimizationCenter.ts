@@ -273,12 +273,8 @@ if (typeof window !== 'undefined') {
     optimizeImages();
     enablePerformanceMonitoring();
     
-    // Initialize system optimizer
-    setTimeout(() => {
-      import('./systemOptimizer').then(({ systemOptimizer }) => {
-        systemOptimizer.runAllOptimizations();
-        console.log('🚀 Performance Optimization Center initialized with SystemOptimizer');
-      });
-    }, 1000);
+    // Initialize system optimizer - DISABLED to prevent recursion
+    // Manual initialization only via Admin panel
+    console.log('🚀 Performance Optimization Center initialized - SystemOptimizer disabled for manual use');
   });
 }
