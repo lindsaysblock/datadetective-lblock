@@ -10,7 +10,7 @@ import Header from '@/components/Header';
 import LegalFooter from '@/components/LegalFooter';
 import E2ETestRunner from '@/components/testing/E2ETestRunner';
 import OptimizedQARunner from '@/components/testing/OptimizedQARunner';
-import DiskIOBandwidthTest from '@/components/testing/DiskIOBandwidthTest';
+import ComprehensiveSystemMonitor from '@/components/testing/ComprehensiveSystemMonitor';
 import createEnhancedDataPipelineTestSuite from '@/utils/testing/enhancedDataPipelineTestSuite';
 
 const Admin = () => {
@@ -264,7 +264,7 @@ const Admin = () => {
             </TabsContent>
 
             <TabsContent value="performance" className="space-y-6">
-              <DiskIOBandwidthTest />
+              <ComprehensiveSystemMonitor />
             </TabsContent>
 
             <TabsContent value="users">

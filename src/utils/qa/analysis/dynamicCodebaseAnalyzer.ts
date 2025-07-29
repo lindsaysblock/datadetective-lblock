@@ -222,10 +222,11 @@ export class DynamicCodebaseAnalyzer {
     
     for (const file of files.filter(f => f.fileType === 'component' || f.fileType === 'page')) {
       const componentName = file.exports[0];
-      const element = reactElements.find(el => 
-        el.className.includes(componentName) || 
-        el.getAttribute('data-component') === componentName
-      );
+      const element = reactElements.find(el => {
+        const className = el.className;
+        return (typeof className === 'string' && className.includes(componentName)) ||
+          el.getAttribute('data-component') === componentName;
+      });
       
       components.push({
         name: componentName,

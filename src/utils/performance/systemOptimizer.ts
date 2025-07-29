@@ -1,7 +1,10 @@
 /**
- * System Performance Optimizer
+ * System Performance Optimizer - Enhanced Version
  * Comprehensive optimizations for event listeners, error handling, memory, load time, lazy loading, and code splitting
+ * Now integrates with advanced memory and I/O optimization
  */
+
+import { memoryIOOptimizer } from './memoryIOOptimizer';
 
 interface OptimizationConfig {
   eventListenerCleanup: boolean;
@@ -527,12 +530,20 @@ class SystemOptimizer {
       ...config
     };
 
-    console.log('🚀 Starting system optimizations...');
+    console.log('🚀 Starting enhanced system optimizations...');
 
     if (defaultConfig.eventListenerCleanup) this.optimizeEventListeners();
     if (defaultConfig.errorHandling) this.optimizeErrorHandling();
-    if (defaultConfig.memoryReduction) this.optimizeMemoryUsage();
-    if (defaultConfig.loadTimeOptimization) this.optimizeLoadTime();
+    if (defaultConfig.memoryReduction) {
+      this.optimizeMemoryUsage();
+      // Run advanced memory optimization
+      memoryIOOptimizer.optimizeMemory().catch(console.error);
+    }
+    if (defaultConfig.loadTimeOptimization) {
+      this.optimizeLoadTime();
+      // Run I/O bandwidth optimization
+      memoryIOOptimizer.optimizeIOBandwidth().catch(console.error);
+    }
     if (defaultConfig.imageLazyLoading) this.optimizeImageLazyLoading();
     if (defaultConfig.codeSplitting) this.optimizeCodeSplitting();
 
@@ -557,19 +568,29 @@ class SystemOptimizer {
   }
 
   private logOptimizationResults(): void {
-    console.log('📊 System Optimization Results:');
+    const memoryIOMetrics = memoryIOOptimizer.getMetrics();
+    
+    console.log('📊 Enhanced System Optimization Results:');
     console.log(`✅ Event Listeners Optimized: ${this.metrics.eventListenersOptimized}`);
     console.log(`✅ Error Handlers Added: ${this.metrics.errorHandlersAdded}`);
-    console.log(`✅ Memory Reduced: ${this.metrics.memoryReduced}KB`);
+    console.log(`✅ Memory Reduced: ${this.metrics.memoryReduced + memoryIOMetrics.memoryFreed}KB`);
     console.log(`✅ Load Time Improved: ${this.metrics.loadTimeImproved}ms`);
     console.log(`✅ Images Lazy Loaded: ${this.metrics.imagesLazyLoaded}`);
     console.log(`✅ Code Chunks Created: ${this.metrics.chunksCreated}`);
+    console.log(`✅ I/O Operations Optimized: ${memoryIOMetrics.ioOperationsOptimized}`);
+    console.log(`✅ Bandwidth Saved: ${memoryIOMetrics.bandwidthSaved}KB`);
+    console.log(`✅ GC Cycles: ${memoryIOMetrics.gcCycles}`);
     console.log(`🎯 System Efficiency: ${this.metrics.systemEfficiency.toFixed(1)}%`);
   }
 
-  // Get current metrics
+  // Get current metrics (enhanced with memory/IO data)
   getMetrics(): OptimizationMetrics {
-    return { ...this.metrics };
+    const memoryIOMetrics = memoryIOOptimizer.getMetrics();
+    return { 
+      ...this.metrics,
+      memoryReduced: this.metrics.memoryReduced + memoryIOMetrics.memoryFreed,
+      totalOptimizations: this.metrics.totalOptimizations + memoryIOMetrics.ioOperationsOptimized
+    };
   }
 
   // Force cleanup
