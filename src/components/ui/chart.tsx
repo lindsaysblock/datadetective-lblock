@@ -74,25 +74,41 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null
   }
 
+  // Sanitize the CSS content before rendering
+  const sanitizedCSS = Object.entries(THEMES)
+    .map(([theme, prefix]) => {
+      const sanitizedPrefix = prefix.replace(/[^a-zA-Z0-9\-_.\s]/g, '');
+      const sanitizedId = id.replace(/[^a-zA-Z0-9\-_]/g, '');
+      
+      const colorRules = colorConfig
+        .map(([key, itemConfig]) => {
+          const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+          const sanitizedKey = key.replace(/[^a-zA-Z0-9\-_]/g, '');
+          
+          // Validate color value for security
+          if (!color || typeof color !== 'string') return null;
+          
+          // Allow only safe color formats
+          const safeColorPattern = /^(#[0-9a-fA-F]{3,8}|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)|transparent|inherit|initial|unset|[a-z]+)$/i;
+          
+          if (!safeColorPattern.test(color)) {
+            console.warn(`Unsafe color value detected and filtered: ${color}`);
+            return null;
+          }
+          
+          return `  --color-${sanitizedKey}: ${color};`;
+        })
+        .filter(Boolean)
+        .join("\n");
+
+      return `${sanitizedPrefix} [data-chart=${sanitizedId}] {\n${colorRules}\n}`;
+    })
+    .join("\n");
+
   return (
     <style
       dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
-  })
-  .join("\n")}
-}
-`
-          )
-          .join("\n"),
+        __html: sanitizedCSS,
       }}
     />
   )

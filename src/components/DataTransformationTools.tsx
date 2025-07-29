@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Wand2, Filter, Merge, Split, Calculator, Calendar, Type, Hash } from 'lucide-react';
 import { type ParsedData } from '../utils/dataParser';
+import { SafeMathEvaluator } from '../utils/security/mathEvaluator';
 
 interface DataTransformationToolsProps {
   data: ParsedData;
@@ -182,29 +183,25 @@ const DataTransformationTools: React.FC<DataTransformationToolsProps> = ({
 
   const applyCalculate = (rows: Record<string, any>[], rule: TransformationRule) => {
     return rows.map(row => {
-      let calculatedValue;
+      const expression = rule.value || '';
+      
+      // Create variables object with sanitized column names
+      const variables: Record<string, number> = {};
+      data.columns.forEach(col => {
+        const sanitizedName = SafeMathEvaluator.sanitizeColumnName(col.name);
+        const value = parseFloat(row[col.name]) || 0;
+        variables[sanitizedName] = value;
+      });
 
-      try {
-        // Simple expression evaluation (in real app, use a safe expression parser)
-        const expression = rule.value || '';
-        const columns = data.columns.map(col => col.name);
-        let evaluableExpression = expression;
+      // Replace original column names in expression with sanitized ones
+      let sanitizedExpression = expression;
+      data.columns.forEach(col => {
+        const sanitizedName = SafeMathEvaluator.sanitizeColumnName(col.name);
+        const regex = new RegExp(`\\b${col.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+        sanitizedExpression = sanitizedExpression.replace(regex, sanitizedName);
+      });
 
-        // Replace column names with actual values
-        columns.forEach(colName => {
-          const regex = new RegExp(`\\b${colName}\\b`, 'g');
-          evaluableExpression = evaluableExpression.replace(regex, `(${row[colName] || 0})`);
-        });
-
-        // Basic math operations only for safety
-        if (/^[\d\s+\-*/().,]+$/.test(evaluableExpression)) {
-          calculatedValue = eval(evaluableExpression);
-        } else {
-          calculatedValue = 'Invalid expression';
-        }
-      } catch (error) {
-        calculatedValue = 'Error';
-      }
+      const calculatedValue = SafeMathEvaluator.evaluate(sanitizedExpression, variables);
 
       return { ...row, [rule.newColumn || 'calculated']: calculatedValue };
     });

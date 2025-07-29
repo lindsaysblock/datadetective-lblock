@@ -1,6 +1,9 @@
 
 project_id = "ayqsgubaggljcoqftfyz"
 
+[functions.get-secrets]
+verify_jwt = true
+
 [functions.process-dataset]
 verify_jwt = true
 
