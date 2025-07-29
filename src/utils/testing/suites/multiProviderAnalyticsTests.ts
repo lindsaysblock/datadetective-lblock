@@ -359,9 +359,6 @@ export class MultiProviderAnalyticsTests {
       const result = await engine.analyzeWithQuestion({
         question: 'What patterns do you see in this data?',
         parsedData: [{
-          originalFile: 'test.csv',
-          rowCount: 3,
-          columnCount: 2,
           columns: [
             { name: 'name', type: 'string', samples: ['A', 'B', 'C'] },
             { name: 'value', type: 'number', samples: [10, 20, 30] }
@@ -370,7 +367,16 @@ export class MultiProviderAnalyticsTests {
             { name: 'A', value: 10 },
             { name: 'B', value: 20 },
             { name: 'C', value: 30 }
-          ]
+          ],
+          rowCount: 3,
+          fileSize: 1024,
+          summary: {
+            totalRows: 3,
+            totalColumns: 2,
+            possibleUserIdColumns: [],
+            possibleEventColumns: [],
+            possibleTimestampColumns: []
+          }
         }]
       });
       
