@@ -1,4 +1,5 @@
 import { AIProvider, AIMessage, AIResponse, AIProviderConfig } from '@/types/aiProvider';
+import { ErrorHandler } from '@/services/ai/error/errorHandler';
 
 export class ClaudeProvider implements AIProvider {
   type = 'claude' as const;
@@ -39,48 +40,74 @@ export class ClaudeProvider implements AIProvider {
   async call(messages: AIMessage[], config?: Partial<AIProviderConfig>): Promise<AIResponse> {
     const apiKey = config?.apiKey || this.apiKey;
     if (!apiKey) {
-      throw new Error('Claude API key not configured');
+      const error = ErrorHandler.handleProviderError(
+        new Error('API key not configured'), 
+        'claude'
+      );
+      ErrorHandler.logError(error);
+      throw new Error(error.userMessage);
     }
 
-    // Convert system message to Claude format
-    const systemMessage = messages.find(m => m.role === 'system');
-    const userMessages = messages.filter(m => m.role !== 'system');
+    try {
+      // Convert system message to Claude format
+      const systemMessage = messages.find(m => m.role === 'system');
+      const userMessages = messages.filter(m => m.role !== 'system');
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: config?.model || this.defaultModel,
-        messages: userMessages,
-        system: systemMessage?.content,
-        max_tokens: 2000,
-      }),
-    });
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: config?.model || this.defaultModel,
+          messages: userMessages,
+          system: systemMessage?.content,
+          max_tokens: 3000, // Claude can handle more tokens for detailed analysis
+        }),
+      });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Claude API error: ${error}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        const error = ErrorHandler.handleProviderError(
+          new Error(`HTTP ${response.status}: ${errorText}`),
+          'claude'
+        );
+        ErrorHandler.logError(error);
+        throw new Error(error.userMessage);
+      }
+
+      const data = await response.json();
+      const content = data.content?.[0]?.text;
+      
+      if (!content) {
+        const error = ErrorHandler.handleProviderError(
+          new Error('No response from Claude'),
+          'claude'
+        );
+        ErrorHandler.logError(error);
+        throw new Error(error.userMessage);
+      }
+
+      return {
+        content,
+        usage: data.usage ? {
+          input_tokens: data.usage.input_tokens,
+          output_tokens: data.usage.output_tokens,
+          total_tokens: data.usage.input_tokens + data.usage.output_tokens,
+        } : undefined,
+        model: data.model,
+      };
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Your ')) {
+        // Already processed by error handler
+        throw error;
+      }
+      
+      const aiError = ErrorHandler.handleProviderError(error, 'claude');
+      ErrorHandler.logError(aiError);
+      throw new Error(aiError.userMessage);
     }
-
-    const data = await response.json();
-    const content = data.content?.[0]?.text;
-    
-    if (!content) {
-      throw new Error('No response from Claude');
-    }
-
-    return {
-      content,
-      usage: data.usage ? {
-        input_tokens: data.usage.input_tokens,
-        output_tokens: data.usage.output_tokens,
-        total_tokens: data.usage.input_tokens + data.usage.output_tokens,
-      } : undefined,
-      model: data.model,
-    };
   }
 }

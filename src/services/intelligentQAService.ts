@@ -63,19 +63,15 @@ export class IntelligentQAService {
   }
 
   async answerQuestion(context: AnalysisContext): Promise<QuestionAnswer> {
-    const provider = this.preferredProvider 
-      ? aiProviderManager.getProvider(this.preferredProvider)
-      : aiProviderManager.getBestProvider(context.question);
-
-    if (!provider || !provider.isConfigured) {
-      throw new Error('No AI provider configured. Please add API keys for OpenAI, Claude, or Perplexity.');
-    }
-
     try {
       const dataInsights = this.analyzeDataContext(context);
       const messages = this.buildAnalysisMessages(context, dataInsights);
       
-      const aiResponse = await provider.call(messages);
+      // Use provider manager with retry and fallback logic
+      const { response: aiResponse, provider } = await aiProviderManager.callWithRetry(
+        messages,
+        this.preferredProvider || undefined
+      );
       
       const answer: QuestionAnswer = {
         id: crypto.randomUUID(),
@@ -97,6 +93,7 @@ export class IntelligentQAService {
         await this.storeAnswer(answer, context.userId);
       }
 
+      console.log(`✅ Analysis completed using ${provider.name} with ${answer.confidence.toFixed(2)} confidence`);
       return answer;
     } catch (error) {
       console.error('❌ Failed to answer question:', error);
@@ -124,32 +121,10 @@ export class IntelligentQAService {
     ];
   }
 
+  // Legacy method - now handled by PromptBuilder
   private buildAnalysisPrompt(context: AnalysisContext, dataInsights: any): string {
-    return `
-Analyze the following data context and answer the research question:
-
-**Research Question:** ${context.question}
-
-**Data Context:**
-- File Types: ${context.fileTypes.join(', ')}
-- Data Source: ${context.dataSource}
-- Total Rows: ${dataInsights.rowCount}
-- Total Columns: ${dataInsights.columnCount}
-- Column Types: ${dataInsights.columnTypes.join(', ')}
-- Sample Data Structure: ${JSON.stringify(dataInsights.sampleData).substring(0, 500)}
-
-**Data Insights:**
-${dataInsights.patterns.map((p: string) => `- ${p}`).join('\n')}
-
-Please provide:
-1. A direct answer to the research question
-2. Key statistical insights from the data
-3. Business implications and recommendations
-4. Potential next analysis steps
-5. Data quality observations
-
-Focus on actionable insights that can drive business decisions. Be specific and provide concrete examples where possible.
-    `;
+    const { PromptBuilder } = require('@/services/ai/prompt/promptBuilder');
+    return PromptBuilder.buildAnalysisPrompt(context, dataInsights, 'openai');
   }
 
   private analyzeDataContext(context: AnalysisContext): any {

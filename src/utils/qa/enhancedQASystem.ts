@@ -80,10 +80,32 @@ export class EnhancedQASystem {
    */
   private async generateTests(codebaseAnalysis: any) {
     console.log('🧪 Generating dynamic tests...');
-    return this.testGenerator.generateTestsForProject(
+    
+    // Include multi-provider analytics tests
+    const multiProviderTests = await this.generateMultiProviderTests();
+    const dynamicTests = this.testGenerator.generateTestsForProject(
       codebaseAnalysis.files, 
       codebaseAnalysis.components
     );
+    
+    return [...multiProviderTests, ...dynamicTests];
+  }
+
+  private async generateMultiProviderTests() {
+    try {
+      const { MultiProviderAnalyticsTests } = await import('@/utils/testing/suites/multiProviderAnalyticsTests');
+      const tests = await MultiProviderAnalyticsTests.runAllTests();
+      
+      // Convert to the expected test format
+      return tests.map(test => ({
+        testName: test.testName,
+        priority: test.status === 'fail' ? 'high' : 'medium',
+        testFn: async () => test
+      }));
+    } catch (error) {
+      console.warn('⚠️ Could not load multi-provider analytics tests:', error);
+      return [];
+    }
   }
 
   /**
