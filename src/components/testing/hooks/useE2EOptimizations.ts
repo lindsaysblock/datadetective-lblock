@@ -1,11 +1,6 @@
-import { useState, useCallback, useRef } from 'react';
-
-interface SystemHealthResult {
-  checks: number;
-  critical: number;
-  warnings: number;
-  optimizations: string[];
-}
+import { useState, useCallback } from 'react';
+import { getMemoryUsage, getDOMNodeCount, getEventListenerCount, getImageCount } from './optimizationHelpers';
+import { applyImmediateOptimizations } from './optimizationActions';
 
 interface PerformanceResult {
   efficient: boolean;
@@ -26,142 +21,16 @@ interface PerformanceResult {
   };
 }
 
+interface SystemHealthResult {
+  checks: number;
+  critical: number;
+  warnings: number;
+  optimizations: string[];
+}
+
 export const useE2EOptimizations = () => {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizationResults, setOptimizationResults] = useState<any[]>([]);
-  const abortController = useRef<AbortController | null>(null);
-
-  // Helper functions with safe DOM handling
-  const getMemoryUsage = (): number => {
-    try {
-      if ('memory' in performance) {
-        const memory = (performance as any).memory;
-        return memory.usedJSHeapSize / 1024 / 1024; // Convert to MB
-      }
-      return 0;
-    } catch {
-      return 0;
-    }
-  };
-
-  const getDOMNodeCount = (): number => {
-    try {
-      return document.querySelectorAll('*').length;
-    } catch {
-      return 0;
-    }
-  };
-
-  const getEventListenerCount = (): number => {
-    try {
-      // Estimate based on common elements that typically have listeners
-      const buttons = document.querySelectorAll('button').length;
-      const inputs = document.querySelectorAll('input').length;
-      const links = document.querySelectorAll('a').length;
-      return buttons + inputs + links;
-    } catch {
-      return 0;
-    }
-  };
-
-  const getImageCount = () => {
-    try {
-      const images = document.querySelectorAll('img');
-      let loaded = 0;
-      let total = images.length;
-      
-      images.forEach(img => {
-        if (img.complete && img.naturalHeight !== 0) {
-          loaded++;
-        }
-      });
-      
-      return { loaded, total };
-    } catch {
-      return { loaded: 0, total: 0 };
-    }
-  };
-
-  // Safe immediate optimizations without className.split
-  const applyImmediateOptimizations = async () => {
-    console.log('🚀 Applying safe immediate optimizations...');
-
-    try {
-      // 1. Memory optimization - Force garbage collection if available
-      if (typeof window !== 'undefined' && (window as any).gc) {
-        (window as any).gc();
-        console.log('✅ Forced garbage collection');
-      }
-
-      // 2. Image lazy loading optimization (safe version)
-      let optimizedImages = 0;
-      try {
-        const images = document.querySelectorAll('img:not([loading])');
-        images.forEach(img => {
-          try {
-            img.setAttribute('loading', 'lazy');
-            optimizedImages++;
-          } catch (e) {
-            // Ignore individual failures
-          }
-        });
-        console.log(`✅ Applied lazy loading to ${optimizedImages} images`);
-      } catch (e) {
-        console.log('⚠️ Image optimization skipped due to error');
-      }
-
-      // 3. Safe CSS class cleanup (no className.split)
-      let cleanedClasses = 0;
-      try {
-        const elementsWithManyClasses = document.querySelectorAll('[class]');
-        elementsWithManyClasses.forEach(el => {
-          try {
-            const classAttr = el.getAttribute('class');
-            if (classAttr && typeof classAttr === 'string' && classAttr.trim()) {
-              const classList = classAttr.split(' ').filter(cls => cls.trim());
-              if (classList.length > 10) {
-                // Remove potential duplicate classes
-                const uniqueClasses = [...new Set(classList)];
-                if (uniqueClasses.length < classList.length) {
-                  el.setAttribute('class', uniqueClasses.join(' '));
-                  cleanedClasses++;
-                }
-              }
-            }
-          } catch (e) {
-            // Ignore individual element failures
-          }
-        });
-        console.log(`✅ Cleaned up CSS classes on ${cleanedClasses} elements`);
-      } catch (e) {
-        console.log('⚠️ CSS cleanup skipped due to error');
-      }
-
-      // 4. Safe localStorage cleanup
-      try {
-        const storageKeys = Object.keys(localStorage);
-        const oldKeys = storageKeys.filter(key => 
-          key.startsWith('temp_') || 
-          key.includes('cache_') ||
-          key.includes('old_')
-        );
-        oldKeys.forEach(key => {
-          try {
-            localStorage.removeItem(key);
-          } catch (e) {
-            // Ignore individual key failures
-          }
-        });
-        console.log(`✅ Cleaned up ${oldKeys.length} localStorage entries`);
-      } catch (e) {
-        console.log('⚠️ Storage cleanup skipped due to error');
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-    } catch (error) {
-      console.error('Error in immediate optimizations:', error);
-    }
-  };
 
   const runPerformanceAnalysis = useCallback(async () => {
     console.log('🔍 Starting safe performance analysis...');
@@ -325,9 +194,6 @@ export const useE2EOptimizations = () => {
   }, []);
 
   const cancelOptimizations = useCallback(() => {
-    if (abortController.current) {
-      abortController.current.abort();
-    }
     setIsOptimizing(false);
     console.log('🛑 Optimizations cancelled');
   }, []);
