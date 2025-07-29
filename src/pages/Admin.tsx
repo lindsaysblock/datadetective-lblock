@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import LegalFooter from '@/components/LegalFooter';
 import E2ETestRunner from '@/components/testing/E2ETestRunner';
+import OptimizedQARunner from '@/components/testing/OptimizedQARunner';
 import DiskIOBandwidthTest from '@/components/testing/DiskIOBandwidthTest';
 import createEnhancedDataPipelineTestSuite from '@/utils/testing/enhancedDataPipelineTestSuite';
 
@@ -156,8 +157,12 @@ const Admin = () => {
             </p>
           </div>
 
-          <Tabs defaultValue="testing" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-7">
+          <Tabs defaultValue="optimized" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-8">
+              <TabsTrigger value="optimized" className="flex items-center gap-2">
+                <Activity className="w-4 h-4" />
+                Optimized QA
+              </TabsTrigger>
               <TabsTrigger value="testing" className="flex items-center gap-2">
                 <TestTube className="w-4 h-4" />
                 Testing
@@ -187,6 +192,10 @@ const Admin = () => {
                 Debug
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="optimized" className="space-y-6">
+              <OptimizedQARunner />
+            </TabsContent>
 
             <TabsContent value="testing" className="space-y-6">
               <Card>

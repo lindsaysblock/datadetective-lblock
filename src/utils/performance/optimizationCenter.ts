@@ -272,5 +272,13 @@ if (typeof window !== 'undefined') {
     initializeOptimizations();
     optimizeImages();
     enablePerformanceMonitoring();
+    
+    // Initialize system optimizer
+    setTimeout(() => {
+      import('./systemOptimizer').then(({ systemOptimizer }) => {
+        systemOptimizer.runAllOptimizations();
+        console.log('🚀 Performance Optimization Center initialized with SystemOptimizer');
+      });
+    }, 1000);
   });
 }
