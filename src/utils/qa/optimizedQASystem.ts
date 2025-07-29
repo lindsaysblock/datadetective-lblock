@@ -4,7 +4,7 @@
  */
 
 import { QATestResult, QAReport, PerformanceMetrics } from './types';
-import { systemOptimizer, OptimizationMetrics } from '../performance/systemOptimizer';
+import { coreSystemOptimizer, OptimizationMetrics } from '../performance/coreSystemOptimizer';
 
 interface OptimizedQAConfig {
   enableRealTimeOptimization: boolean;
@@ -41,7 +41,7 @@ class OptimizedQASystem {
     const qaResults = await this.runEnhancedQATests();
     
     // Track optimization metrics
-    const optimizationMetrics = systemOptimizer.getMetrics();
+    const optimizationMetrics = coreSystemOptimizer.getMetrics();
     this.optimizationHistory.push(optimizationMetrics);
     
     const endTime = performance.now();
@@ -57,15 +57,8 @@ class OptimizedQASystem {
   private async applyPreAnalysisOptimizations(): Promise<void> {
     console.log('🔧 Applying pre-analysis optimizations...');
     
-    // Run all system optimizations
-    systemOptimizer.runAllOptimizations({
-      eventListenerCleanup: true,
-      errorHandling: true,
-      memoryReduction: true,
-      loadTimeOptimization: true,
-      imageLazyLoading: true,
-      codeSplitting: true
-    });
+    // Run basic optimizations only to avoid issues
+    await coreSystemOptimizer.runBasicOptimizations();
     
     // Wait for optimizations to settle
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -102,7 +95,7 @@ class OptimizedQASystem {
     const results: QATestResult[] = [];
     
     // Overall system efficiency test
-    const metrics = systemOptimizer.getMetrics();
+    const metrics = coreSystemOptimizer.getMetrics();
     results.push({
       testName: 'System Efficiency Assessment',
       status: metrics.systemEfficiency > 80 ? 'pass' : metrics.systemEfficiency > 60 ? 'warning' : 'fail',
@@ -160,7 +153,7 @@ class OptimizedQASystem {
         status: usage < 60 ? 'pass' : usage < 80 ? 'warning' : 'fail',
         message: `Memory usage: ${usedHeapSize.toFixed(1)}MB (${usage.toFixed(1)}%)`,
         performance: usage,
-        optimizations: [`Memory reduced by ${systemOptimizer.getMetrics().memoryReduced}KB`],
+        optimizations: [`Memory reduced by ${coreSystemOptimizer.getMetrics().memoryReduced}KB`],
         suggestions: usage > 60 ? [
           'Implement component cleanup',
           'Use WeakMap for temporary references',
@@ -170,7 +163,7 @@ class OptimizedQASystem {
     }
 
     // Event listener memory test
-    const metrics = systemOptimizer.getMetrics();
+    const metrics = coreSystemOptimizer.getMetrics();
     results.push({
       testName: 'Event Listener Memory Management',
       status: 'pass',
@@ -215,7 +208,7 @@ class OptimizedQASystem {
   private async runEventListenerTests(): Promise<QATestResult[]> {
     const results: QATestResult[] = [];
     
-    const metrics = systemOptimizer.getMetrics();
+    const metrics = coreSystemOptimizer.getMetrics();
     
     results.push({
       testName: 'Event Listener Optimization',
@@ -235,7 +228,7 @@ class OptimizedQASystem {
   private async runErrorHandlingTests(): Promise<QATestResult[]> {
     const results: QATestResult[] = [];
     
-    const metrics = systemOptimizer.getMetrics();
+    const metrics = coreSystemOptimizer.getMetrics();
     
     results.push({
       testName: 'Error Handling Enhancement',
@@ -259,7 +252,7 @@ class OptimizedQASystem {
   private async runCodeSplittingTests(): Promise<QATestResult[]> {
     const results: QATestResult[] = [];
     
-    const metrics = systemOptimizer.getMetrics();
+    const metrics = coreSystemOptimizer.getMetrics();
     
     results.push({
       testName: 'Code Splitting Optimization',
@@ -283,7 +276,7 @@ class OptimizedQASystem {
   private async runImageOptimizationTests(): Promise<QATestResult[]> {
     const results: QATestResult[] = [];
     
-    const metrics = systemOptimizer.getMetrics();
+    const metrics = coreSystemOptimizer.getMetrics();
     const images = document.querySelectorAll('img');
     const lazyImages = Array.from(images).filter(img => img.loading === 'lazy' || img.dataset.src);
     
@@ -383,7 +376,7 @@ class OptimizedQASystem {
     performanceScore: number;
     recommendations: string[];
   } {
-    const metrics = systemOptimizer.getMetrics();
+    const metrics = coreSystemOptimizer.getMetrics();
     
     return {
       efficiency: metrics.systemEfficiency,

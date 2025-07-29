@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Zap, HardDrive, Play } from 'lucide-react';
+import { Zap, Play } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { coreSystemOptimizer } from '@/utils/performance/coreSystemOptimizer';
 
