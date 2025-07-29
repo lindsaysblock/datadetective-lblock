@@ -9,8 +9,6 @@ import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import LegalFooter from '@/components/LegalFooter';
 import E2ETestRunner from '@/components/testing/E2ETestRunner';
-import NewProjectE2ETestRunner from '@/components/testing/NewProjectE2ETestRunner';
-import OptimizedE2ETestRunner from '@/components/testing/OptimizedE2ETestRunner';
 import DiskIOBandwidthTest from '@/components/testing/DiskIOBandwidthTest';
 import createDataPipelineTestSuite from '@/utils/testing/dataPipelineTestSuite';
 
@@ -201,9 +199,7 @@ const Admin = () => {
                     Comprehensive end-to-end testing for all application flows
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <OptimizedE2ETestRunner />
-                  <NewProjectE2ETestRunner />
+                <CardContent>
                   <E2ETestRunner />
                 </CardContent>
               </Card>

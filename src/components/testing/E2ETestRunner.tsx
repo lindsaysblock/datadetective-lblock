@@ -82,17 +82,26 @@ const E2ETestRunner: React.FC = () => {
         optimizations: performanceResults.optimizations
       }]);
 
-      // Step 3: QA Analysis
-      setCurrentStep('Running QA Analysis...');
-      const qaReport = await runManualQA();
+      // Step 3: API Analysis Testing
+      setCurrentStep('Running API Analysis Tests...');
+      const { APIAnalysisTests } = await import('../../utils/testing/apiAnalysisTests');
+      const apiTestResults = await APIAnalysisTests.runComprehensiveAPITests();
       cumulativeProgress += testSteps[2].weight;
       setProgress(cumulativeProgress);
       
+      const apiTestsPassed = apiTestResults.filter(r => r.status === 'pass').length;
+      const apiTestsTotal = apiTestResults.length;
+      
       setTestResults(prev => [...prev, {
-        step: 'QA Analysis',
-        status: qaReport.overall === 'pass' ? 'success' : qaReport.overall === 'warning' ? 'warning' : 'error',
-        details: `${qaReport.passed}/${qaReport.totalTests} tests passed`,
-        timestamp: new Date()
+        step: 'API Analysis Testing',
+        status: apiTestsPassed === apiTestsTotal ? 'success' : apiTestsPassed > apiTestsTotal * 0.8 ? 'warning' : 'error',
+        details: `${apiTestsPassed}/${apiTestsTotal} API tests passed - AI analysis logic validated`,
+        timestamp: new Date(),
+        optimizations: apiTestResults
+          .filter(r => r.error)
+          .map(r => `API optimization needed: ${r.testName}`)
+          .slice(0, 3),
+        fullDetails: `Comprehensive API testing including: AI analysis engine, data processing APIs, research question processing, context management, result generation, and error handling. ${apiTestResults.map(r => `${r.testName}: ${r.status}`).join(', ')}`
       }]);
 
       // Step 4: Load Testing

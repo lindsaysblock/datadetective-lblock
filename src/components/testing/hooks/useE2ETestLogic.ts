@@ -20,7 +20,7 @@ export const useE2ETestLogic = () => {
   const testSteps = [
     { name: 'System Health Check', icon: Settings, weight: 15 },
     { name: 'Performance Analysis', icon: BarChart3, weight: 25 },
-    { name: 'QA Analysis', icon: Settings, weight: 20 },
+    { name: 'API Analysis Testing', icon: Settings, weight: 20 },
     { name: 'Load Testing', icon: Activity, weight: 20 },
     { name: 'Optimization Application', icon: Zap, weight: 15 },
     { name: 'Final Verification', icon: CheckCircle, weight: 5 }

@@ -185,10 +185,16 @@ const QADashboard: React.FC = () => {
       </Card>
 
       <Tabs defaultValue="e2e" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="e2e">E2E Testing</TabsTrigger>
-          <TabsTrigger value="results">Test Results</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 bg-white/50 backdrop-blur">
+          <TabsTrigger value="e2e" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            E2E Testing & Optimization
+          </TabsTrigger>
+          <TabsTrigger value="results" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            Test Results
+          </TabsTrigger>
+          <TabsTrigger value="performance" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            Performance
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="e2e" className="space-y-4">

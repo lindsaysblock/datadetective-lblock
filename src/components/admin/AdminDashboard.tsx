@@ -7,7 +7,7 @@ import QARunner from '../QARunner';
 import AutoRefactorPrompts from '../AutoRefactorPrompts';
 import LoadTestRunner from '../LoadTestRunner';
 import FinalQARunner from '../FinalQARunner';
-import ComprehensiveE2ETest from '../testing/ComprehensiveE2ETest';
+import E2ETestRunner from '../testing/E2ETestRunner';
 
 const AdminDashboard: React.FC = () => {
   return (
@@ -56,7 +56,7 @@ const AdminDashboard: React.FC = () => {
 
             <TabsContent value="e2e-testing" className="mt-6">
               <div className="space-y-6">
-                <ComprehensiveE2ETest />
+                <E2ETestRunner />
               </div>
             </TabsContent>
 
