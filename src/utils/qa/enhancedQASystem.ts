@@ -94,16 +94,27 @@ export class EnhancedQASystem {
   private async generateMultiProviderTests() {
     try {
       const { MultiProviderAnalyticsTests } = await import('@/utils/testing/suites/multiProviderAnalyticsTests');
-      const tests = await MultiProviderAnalyticsTests.runAllTests();
+      const { EndToEndAnalyticsTests } = await import('@/utils/testing/suites/endToEndAnalyticsTests');
+      const { APIIntegrationTests } = await import('@/utils/testing/suites/apiIntegrationTests');
+      const { MultiUserSessionTests } = await import('@/utils/testing/suites/multiUserSessionTests');
+      
+      const [providerTests, e2eTests, apiTests, sessionTests] = await Promise.all([
+        MultiProviderAnalyticsTests.runAllTests(),
+        EndToEndAnalyticsTests.runAllTests(),
+        APIIntegrationTests.runAllTests(),
+        MultiUserSessionTests.runAllTests()
+      ]);
+      
+      const allTests = [...providerTests, ...e2eTests, ...apiTests, ...sessionTests];
       
       // Convert to the expected test format
-      return tests.map(test => ({
+      return allTests.map(test => ({
         testName: test.testName,
         priority: test.status === 'fail' ? 'high' : 'medium',
         testFn: async () => test
       }));
     } catch (error) {
-      console.warn('⚠️ Could not load multi-provider analytics tests:', error);
+      console.warn('⚠️ Could not load comprehensive analytics tests:', error);
       return [];
     }
   }

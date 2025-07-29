@@ -36,12 +36,15 @@ export class EnhancedAnalysisEngine {
 
   async analyzeWithQuestion(context: EnhancedAnalysisContext): Promise<EnhancedAnalysisResult> {
     try {
-      // Check if OpenAI API key is available
-      if (!this.orchestrator.hasOpenAIApiKey()) {
+      // Check if any AI provider is available
+      const { aiProviderManager } = await import('@/services/ai/aiProviderManager');
+      const configuredProviders = aiProviderManager.getConfiguredProviders();
+      
+      if (configuredProviders.length === 0) {
         return {
           success: false,
           requiresApiKey: true,
-          error: 'OpenAI API key required for intelligent analysis'
+          error: 'At least one AI provider (OpenAI, Claude, or Perplexity) API key is required for intelligent analysis'
         };
       }
 
