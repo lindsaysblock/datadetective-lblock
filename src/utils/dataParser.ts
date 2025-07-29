@@ -9,6 +9,7 @@ import Papa from 'papaparse';
 import { toast } from '@/hooks/use-toast';
 import { parseCSV } from './parsers/csvParser';
 import { parseJSON } from './parsers/jsonParser';
+import { parseXLSX } from './parsers/xlsxParser';
 import { validateFile } from './fileValidation';
 import { FILE_SIZES } from '@/constants/ui';
 
@@ -72,6 +73,10 @@ export const parseFile = async (file: File): Promise<ParsedData> => {
         } catch {
           parsedData = await parseJSON(file);
         }
+        break;
+      case 'xlsx':
+      case 'xls':
+        parsedData = await parseXLSX(file);
         break;
       default:
         throw new Error(`File type .${extension} is not supported. Supported types: CSV, JSON, TXT, XLSX`);
