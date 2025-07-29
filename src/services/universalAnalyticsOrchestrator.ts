@@ -32,7 +32,7 @@ export class UniversalAnalyticsOrchestrator {
   }
 
   setOpenAIApiKey(apiKey: string): void {
-    this.qaService.setApiKey(apiKey);
+    this.qaService.setApiKey('openai', apiKey);
   }
 
   hasOpenAIApiKey(): boolean {

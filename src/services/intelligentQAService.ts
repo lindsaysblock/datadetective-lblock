@@ -1,9 +1,11 @@
 /**
  * Intelligent Question Answering Service
- * Integrates OpenAI GPT for smart analysis and answers
+ * Integrates multiple AI providers for smart analysis and answers
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { aiProviderManager } from '@/services/ai/aiProviderManager';
+import { AIMessage, AIProviderType } from '@/types/aiProvider';
 
 export interface QuestionAnswer {
   id: string;
@@ -30,58 +32,57 @@ export interface AnalysisContext {
 }
 
 export class IntelligentQAService {
-  private openaiApiKey: string | null = null;
+  private preferredProvider: AIProviderType | null = null;
   
   constructor() {
-    this.loadApiKey();
+    this.loadPreferredProvider();
   }
 
-  private async loadApiKey(): Promise<void> {
-    try {
-      // Try to get from Supabase Edge Function secrets first
-      const { data, error } = await supabase.functions.invoke('get-secrets', {
-        body: { secretName: 'OPENAI_API_KEY' }
-      });
-      
-      if (!error && data?.value) {
-        this.openaiApiKey = data.value;
-        console.log('✅ OpenAI API key loaded from Supabase');
-        return;
-      }
-    } catch (error) {
-      console.warn('⚠️ Could not load OpenAI API key from Supabase:', error);
+  private loadPreferredProvider(): void {
+    const stored = localStorage.getItem('preferred_ai_provider');
+    if (stored && ['openai', 'claude', 'perplexity'].includes(stored)) {
+      this.preferredProvider = stored as AIProviderType;
     }
-    
-    // Fallback: check if user has provided key in session
-    this.openaiApiKey = sessionStorage.getItem('openai_api_key');
   }
 
-  setApiKey(apiKey: string): void {
-    this.openaiApiKey = apiKey;
-    sessionStorage.setItem('openai_api_key', apiKey);
+  setPreferredProvider(provider: AIProviderType): void {
+    this.preferredProvider = provider;
+    localStorage.setItem('preferred_ai_provider', provider);
+  }
+
+  setApiKey(provider: AIProviderType, apiKey: string): void {
+    aiProviderManager.setApiKey(provider, apiKey);
   }
 
   hasApiKey(): boolean {
-    return !!this.openaiApiKey;
+    return aiProviderManager.getConfiguredProviders().length > 0;
+  }
+
+  getConfiguredProviders(): AIProviderType[] {
+    return aiProviderManager.getConfiguredProviders().map(p => p.type);
   }
 
   async answerQuestion(context: AnalysisContext): Promise<QuestionAnswer> {
-    if (!this.openaiApiKey) {
-      throw new Error('OpenAI API key not configured');
+    const provider = this.preferredProvider 
+      ? aiProviderManager.getProvider(this.preferredProvider)
+      : aiProviderManager.getBestProvider(context.question);
+
+    if (!provider || !provider.isConfigured) {
+      throw new Error('No AI provider configured. Please add API keys for OpenAI, Claude, or Perplexity.');
     }
 
     try {
       const dataInsights = this.analyzeDataContext(context);
-      const enhancedPrompt = this.buildAnalysisPrompt(context, dataInsights);
+      const messages = this.buildAnalysisMessages(context, dataInsights);
       
-      const openaiResponse = await this.callOpenAIAPI(enhancedPrompt);
+      const aiResponse = await provider.call(messages);
       
       const answer: QuestionAnswer = {
         id: crypto.randomUUID(),
         question: context.question,
-        answer: openaiResponse.answer,
-        confidence: this.calculateConfidence(openaiResponse, context),
-        sources: [], // OpenAI doesn't provide sources like Perplexity
+        answer: aiResponse.content,
+        confidence: this.calculateConfidence(aiResponse, context, provider.type),
+        sources: provider.type === 'perplexity' ? ['Perplexity AI with real-time data'] : [],
         timestamp: new Date(),
         dataContext: {
           fileTypes: context.fileTypes,
@@ -103,44 +104,19 @@ export class IntelligentQAService {
     }
   }
 
-  private async callOpenAIAPI(prompt: string): Promise<any> {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a data analysis expert specializing in business intelligence and statistical analysis. Provide precise, actionable insights based on the data context provided. Focus on statistical patterns, business implications, and specific recommendations. Be thorough but concise.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.2,
-        max_tokens: 1500,
-        top_p: 0.9,
-        frequency_penalty: 0.1,
-        presence_penalty: 0.1
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`OpenAI API error: ${response.status} - ${error.error?.message || 'Unknown error'}`);
-    }
-
-    const data = await response.json();
+  private buildAnalysisMessages(context: AnalysisContext, dataInsights: any): AIMessage[] {
+    const prompt = this.buildAnalysisPrompt(context, dataInsights);
     
-    return {
-      answer: data.choices[0]?.message?.content || 'No answer provided',
-      usage: data.usage
-    };
+    return [
+      {
+        role: 'system',
+        content: 'You are a data analysis expert specializing in business intelligence and statistical analysis. Provide precise, actionable insights based on the data context provided. Focus on statistical patterns, business implications, and specific recommendations. Be thorough but concise.'
+      },
+      {
+        role: 'user',
+        content: prompt
+      }
+    ];
   }
 
   private buildAnalysisPrompt(context: AnalysisContext, dataInsights: any): string {
@@ -249,8 +225,8 @@ Focus on actionable insights that can drive business decisions. Be specific and 
     return patterns;
   }
 
-  private calculateConfidence(response: any, context: AnalysisContext): number {
-    let confidence = 0.6; // Base confidence for OpenAI
+  private calculateConfidence(response: any, context: AnalysisContext, providerType?: AIProviderType): number {
+    let confidence = providerType === 'claude' ? 0.7 : providerType === 'perplexity' ? 0.65 : 0.6;
     
     // Increase confidence based on data quality
     if (this.getRowCount(context.data) > 100) confidence += 0.15;

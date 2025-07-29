@@ -109,8 +109,10 @@ export function useUniversalAnalytics(options: UseUniversalAnalyticsOptions = {}
 
   return {
     analyzeQuestion,
-    setPerplexityApiKey,
-    hasPerplexityApiKey,
+    setApiKey: (provider: 'openai' | 'claude' | 'perplexity', apiKey: string) => {
+      if (provider === 'openai') engine.setOpenAIApiKey(apiKey);
+    },
+    hasApiKey: () => engine.hasOpenAIApiKey(),
     testAnalysis,
     isAnalyzing,
     lastResult,
