@@ -122,14 +122,16 @@ const E2ETestRunner: React.FC = () => {
       const appliedOptimizations = await applyOptimizations();
       cumulativeProgress += testSteps[4].weight;
       setProgress(cumulativeProgress);
-      setOptimizationsApplied(appliedOptimizations);
+      
+      const optimizationsList = appliedOptimizations.success ? appliedOptimizations.result.optimizations : ['Optimization failed'];
+      setOptimizationsApplied(optimizationsList);
       
       setTestResults(prev => [...prev, {
         step: 'Optimization Application',
-        status: 'success',
-        details: `${appliedOptimizations.length} optimizations applied`,
+        status: appliedOptimizations.success ? 'success' : 'error',
+        details: `${optimizationsList.length} optimizations applied`,
         timestamp: new Date(),
-        optimizations: appliedOptimizations
+        optimizations: optimizationsList
       }]);
 
       // Step 6: Final Verification
@@ -146,7 +148,7 @@ const E2ETestRunner: React.FC = () => {
 
       toast({
         title: "E2E Testing & Optimization Complete ✅",
-        description: `${appliedOptimizations.length} optimizations applied successfully`,
+        description: `${optimizationsList.length} optimizations applied successfully`,
         duration: 5000,
       });
 

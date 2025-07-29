@@ -223,8 +223,8 @@ export class DynamicCodebaseAnalyzer {
     for (const file of files.filter(f => f.fileType === 'component' || f.fileType === 'page')) {
       const componentName = file.exports[0];
       const element = reactElements.find(el => {
-        const className = el.className;
-        return (typeof className === 'string' && className.includes(componentName)) ||
+        const className = el.getAttribute('class') || '';
+        return (className && className.includes(componentName)) ||
           el.getAttribute('data-component') === componentName;
       });
       
@@ -250,7 +250,8 @@ export class DynamicCodebaseAnalyzer {
   private hasErrorBoundary(element: Element | null): boolean {
     if (!element) return false;
     
+    const className = element.getAttribute('class') || '';
     return element.closest('[data-error-boundary]') !== null ||
-           element.className.includes('error-boundary');
+           className.includes('error-boundary');
   }
 }
