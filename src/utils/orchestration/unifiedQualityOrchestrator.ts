@@ -8,7 +8,7 @@ import { useCodeQualitySystem } from '@/hooks/useCodeQualitySystem';
 import { useAdvancedHookSystem } from '@/hooks/useAdvancedHookSystem';
 import { useIntelligentCodeGeneration } from '@/hooks/useIntelligentCodeGeneration';
 import { Phase3ComprehensiveTestRunner } from '@/utils/testing/enhanced/phase3ComprehensiveTestRunner';
-import { AdvancedPerformanceOptimizer } from '@/utils/performance/advanced/performanceOptimizer';
+import { simpleOptimizer } from '@/utils/performance/simpleOptimizer';
 
 export interface QualityOrchestrationConfig {
   enableAutoRefactoring: boolean;
@@ -76,7 +76,6 @@ export class UnifiedQualityOrchestrator {
   private sessions: Map<string, OrchestrationSession> = new Map();
   private autoRefactor: EnhancedAutoRefactor;
   private testRunner: Phase3ComprehensiveTestRunner;
-  private performanceOptimizer: AdvancedPerformanceOptimizer;
 
   constructor(config: Partial<QualityOrchestrationConfig> = {}) {
     this.config = {
@@ -97,7 +96,6 @@ export class UnifiedQualityOrchestrator {
 
     this.autoRefactor = new EnhancedAutoRefactor();
     this.testRunner = new Phase3ComprehensiveTestRunner();
-    this.performanceOptimizer = new AdvancedPerformanceOptimizer();
   }
 
   async startOrchestration(): Promise<string> {
@@ -122,7 +120,7 @@ export class UnifiedQualityOrchestrator {
 
     // Start monitoring systems
     if (this.config.enablePerformanceMonitoring) {
-      await this.performanceOptimizer.startPerformanceMonitoring();
+      await simpleOptimizer.runBasicOptimizations();
       this.addAction('optimize', 'Performance Monitor', 'success', 'Performance monitoring started', 'medium');
     }
 
@@ -241,8 +239,8 @@ export class UnifiedQualityOrchestrator {
     if (!this.currentSession || !this.config.enablePerformanceMonitoring) return;
 
     try {
-      const optimizationResult = await this.performanceOptimizer.optimizePerformance();
-      this.currentSession.metrics.performanceOptimizations = Array.isArray(optimizationResult) ? optimizationResult.length : 0;
+      const optimizationResult = await simpleOptimizer.runAllOptimizations();
+      this.currentSession.metrics.performanceOptimizations = optimizationResult.totalOptimizations;
       
       this.addAction('optimize', 'Performance', 'success', 
         `Applied ${this.currentSession.metrics.performanceOptimizations} performance optimizations`, 'medium');
@@ -366,7 +364,7 @@ export class UnifiedQualityOrchestrator {
 
     // Stop monitoring systems
     if (this.config.enablePerformanceMonitoring) {
-      this.performanceOptimizer.stopMonitoring();
+      simpleOptimizer.reset();
     }
 
     const session = { ...this.currentSession };

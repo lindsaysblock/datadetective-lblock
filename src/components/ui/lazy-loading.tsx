@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useRef, useEffect, ReactNode } from 'react';
-import { useSafeEventListener } from '@/utils/performance/memoryOptimization';
 
 interface LazyImageProps {
   src: string;
@@ -176,7 +175,6 @@ export const useVirtualScroll = <T,>(
   overscan: number = 5
 ) => {
   const [scrollTop, setScrollTop] = useState(0);
-  const { addSafeEventListener } = useSafeEventListener();
 
   const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
   const endIndex = Math.min(
@@ -196,9 +194,10 @@ export const useVirtualScroll = <T,>(
   useEffect(() => {
     const container = document.querySelector('[data-virtual-scroll]');
     if (container) {
-      addSafeEventListener(container, 'scroll', handleScroll);
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
     }
-  }, [addSafeEventListener]);
+  }, []);
 
   return {
     visibleItems,

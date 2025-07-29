@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { CodeQualityEngine } from '../utils/qa/enhanced/codeQualityEngine';
 import { RealTimeQualityMonitor } from '../utils/qa/enhanced/realTimeQualityMonitor';
 import { ComprehensiveE2ETestSuite } from '../utils/testing/enhanced/comprehensiveE2ETestSuite';
-import { AdvancedPerformanceOptimizer } from '../utils/performance/advanced/performanceOptimizer';
+import { simpleOptimizer } from '../utils/performance/simpleOptimizer';
 
 export const useCodeQualitySystem = () => {
   const [isMonitoring, setIsMonitoring] = useState(false);
@@ -18,12 +18,11 @@ export const useCodeQualitySystem = () => {
   const engine = new CodeQualityEngine();
   const monitor = new RealTimeQualityMonitor();
   const testSuite = new ComprehensiveE2ETestSuite();
-  const optimizer = new AdvancedPerformanceOptimizer();
 
   const startMonitoring = async () => {
     setIsMonitoring(true);
     monitor.startMonitoring();
-    await optimizer.startPerformanceMonitoring();
+    await simpleOptimizer.runAllOptimizations();
     
     const analysis = await engine.analyzeCodebase();
     setQualityScore(analysis.overallScore);
@@ -36,16 +35,14 @@ export const useCodeQualitySystem = () => {
   };
 
   const optimizePerformance = async () => {
-    const suggestions = await optimizer.optimizePerformance();
-    const metrics = await optimizer.collectMetrics();
+    const metrics = await simpleOptimizer.runAllOptimizations();
     setPerformanceMetrics(metrics);
-    return suggestions;
+    return metrics;
   };
 
   useEffect(() => {
     return () => {
       monitor.stopMonitoring();
-      optimizer.stopMonitoring();
     };
   }, []);
 
@@ -60,7 +57,6 @@ export const useCodeQualitySystem = () => {
     stopMonitoring: () => {
       setIsMonitoring(false);
       monitor.stopMonitoring();
-      optimizer.stopMonitoring();
     }
   };
 };
