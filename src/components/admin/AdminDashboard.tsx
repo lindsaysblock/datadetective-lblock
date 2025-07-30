@@ -8,6 +8,7 @@ import AutoRefactorPrompts from '../AutoRefactorPrompts';
 import LoadTestRunner from '../LoadTestRunner';
 import FinalQARunner from '../FinalQARunner';
 import E2ETestRunner from '../testing/E2ETestRunner';
+import DiagnosticTestRunner from '../testing/DiagnosticTestRunner';
 import { forceRefresh } from '../../utils/forceRefresh';
 
 const AdminDashboard: React.FC = () => {
@@ -64,6 +65,7 @@ const AdminDashboard: React.FC = () => {
 
             <TabsContent value="e2e-testing" className="mt-6">
               <div className="space-y-6">
+                <DiagnosticTestRunner />
                 <E2ETestRunner />
               </div>
             </TabsContent>
