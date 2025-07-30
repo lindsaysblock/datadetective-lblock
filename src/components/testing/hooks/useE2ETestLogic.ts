@@ -113,7 +113,7 @@ async function executeTest(testName: string, category: string): Promise<E2ETestR
 
 function testAuthentication(testName: string, startTime: number): E2ETestResult {
   // Safe DOM checks for auth elements
-  const authButtons = SafeDOMHelpers.querySelectorAll('[data-testid*="login"], button');
+  const authButtons = SafeDOMHelpers.querySelectorAll('button');
   const loginButtons = authButtons.filter(btn => btn.textContent?.toLowerCase().includes('login'));
   const hasLoginButton = loginButtons.length > 0;
   const hasAuthForms = SafeDOMHelpers.querySelectorAll('form').length > 0;
@@ -152,7 +152,7 @@ function testForms(testName: string, startTime: number): E2ETestResult {
 }
 
 function testDataLoading(testName: string, startTime: number): E2ETestResult {
-  const dataElements = SafeDOMHelpers.querySelectorAll('[data-loading], [data-testid*="data"], table, .data-table');
+  const dataElements = SafeDOMHelpers.querySelectorAll('table, .data-table');
   
   return {
     testName,
