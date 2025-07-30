@@ -39,34 +39,75 @@ const DiagnosticTestRunner: React.FC = () => {
         message: 'Hook loaded successfully - no disabled messages'
       });
 
-      // Test 3: Check current page content for disabled messages
+      // Test 3: Check current page content for ALL possible disabled/maintenance messages
       const bodyText = document.body.innerText.toLowerCase();
-      const disabledMessages = [
+      const allPossibleMessages = [
         'temporarily disabled',
-        'maintenance mode',
+        'maintenance mode', 
         'under maintenance',
         'system disabled',
         'qa system disabled',
-        'load testing disabled'
+        'load testing disabled',
+        'testing disabled',
+        'disabled during maintenance',
+        'system conflict',
+        'resolve a system conflict',
+        'performance optimization tools',
+        'oauth sign-in temporarily',
+        'investigation interrupted',
+        'something went wrong',
+        'system error',
+        'service unavailable',
+        'try refreshing'
       ];
       
-      const foundMessages = disabledMessages.filter(msg => bodyText.includes(msg));
+      const foundMessages = allPossibleMessages.filter(msg => bodyText.includes(msg));
       
       if (foundMessages.length > 0) {
         results.push({
           test: 'Page Content Check',
           status: 'fail',
-          message: `Found disabled messages: ${foundMessages.join(', ')}`
+          message: `🚨 FOUND DISABLED MESSAGES: "${foundMessages.join('", "')}"`
+        });
+        
+        // Also log the specific page sections where they appear
+        foundMessages.forEach(msg => {
+          const elements = Array.from(document.querySelectorAll('*')).filter(el => 
+            el.textContent?.toLowerCase().includes(msg) && 
+            el.children.length === 0 // Only text nodes
+          );
+          console.log(`🔍 Message "${msg}" found in:`, elements.map(el => ({
+            tag: el.tagName,
+            text: el.textContent?.substring(0, 100),
+            parent: el.parentElement?.tagName
+          })));
         });
       } else {
         results.push({
           test: 'Page Content Check', 
           status: 'pass',
-          message: 'No disabled messages found in page content'
+          message: '✅ No disabled/maintenance messages found in page content'
         });
       }
 
-      // Test 4: Check for cached component states
+      // Test 4: Check for component error states
+      const errorElements = document.querySelectorAll('[class*="error"], [class*="fail"], [class*="warning"]');
+      if (errorElements.length > 0) {
+        const errorTexts = Array.from(errorElements).map(el => el.textContent?.substring(0, 50)).filter(Boolean);
+        results.push({
+          test: 'Error Component Check',
+          status: 'warning',
+          message: `Found ${errorElements.length} error-related elements: ${errorTexts.join(', ')}`
+        });
+      } else {
+        results.push({
+          test: 'Error Component Check',
+          status: 'pass', 
+          message: 'No error components detected'
+        });
+      }
+
+      // Test 5: Check for cached component states
       const cacheKeys = Object.keys(localStorage).filter(key => 
         key.includes('component') || key.includes('cache') || key.includes('qa')
       );
