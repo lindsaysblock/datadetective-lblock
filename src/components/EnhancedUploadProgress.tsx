@@ -15,6 +15,7 @@ import {
   Save
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
 interface EnhancedUploadProgressProps {
@@ -40,6 +41,7 @@ const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({
 }) => {
   const [processingStage, setProcessingStage] = useState('parsing');
   const [backgroundTasks, setBackgroundTasks] = useState<string[]>([]);
+  const { user, session } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -64,6 +66,16 @@ const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({
 
   const runQualityCheck = async () => {
     if (!filename) return;
+    
+    // Check authentication before proceeding
+    if (!user || !session) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to run quality checks.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       const { data, error } = await supabase.functions.invoke('data-quality-check', {
@@ -215,7 +227,13 @@ const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({
               </Button>
             )}
             
-            <Button variant="outline" size="sm" onClick={runQualityCheck}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={runQualityCheck}
+              disabled={!user || !session}
+              title={!user || !session ? "Sign in to run quality checks" : "Run quality check"}
+            >
               <Zap className="w-4 h-4 mr-2" />
               Run Quality Check
             </Button>

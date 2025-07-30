@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, Download, Calendar, Database, FileText } from 'lucide-react';
 import { useDatasetPersistence } from '@/hooks/useDatasetPersistence';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import LoadingCard from './ui/loading-card';
 import EmptyState from './ui/empty-state';
@@ -18,10 +19,21 @@ interface DatasetLibraryProps {
 
 const DatasetLibrary: React.FC<DatasetLibraryProps> = ({ onDatasetSelect }) => {
   const { datasets, loading, deleteDataset } = useDatasetPersistence();
+  const { user, session } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleExport = async (dataset: any) => {
+    // Check authentication before proceeding
+    if (!user || !session) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to export datasets.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke('export-data', {
         body: {
@@ -155,6 +167,8 @@ const DatasetLibrary: React.FC<DatasetLibraryProps> = ({ onDatasetSelect }) => {
                   variant="outline" 
                   size="sm"
                   onClick={() => handleExport(dataset)}
+                  disabled={!user || !session}
+                  title={!user || !session ? "Sign in to export" : "Export dataset"}
                 >
                   <Download className="w-3 h-3" />
                 </Button>
