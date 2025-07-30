@@ -12,7 +12,7 @@ export const useAutoQA = () => {
       variant: "destructive",
     });
     return { 
-      overall: 'warning' as const,
+      overall: 'warning' as 'pass' | 'fail' | 'warning',
       message: 'QA disabled',
       timestamp: new Date(),
       totalTests: 0,
