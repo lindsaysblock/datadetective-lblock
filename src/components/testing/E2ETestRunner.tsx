@@ -7,6 +7,7 @@ import { Play, Activity, BarChart3, Zap, CheckCircle } from 'lucide-react';
 import { useE2ETestLogic } from './hooks/useE2ETestLogic';
 
 const E2ETestRunner: React.FC = () => {
+  console.log('🔍 E2ETestRunner: Component loaded with RESTORED functionality');
   const { toast } = useToast();
   const { runE2ETests, isRunning, progress, currentTest, results } = useE2ETestLogic();
 
