@@ -39,7 +39,7 @@ const AdminDashboard: React.FC = () => {
         </CardHeader>
         <CardContent className="p-6">
           <Tabs defaultValue="e2e-testing" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-5 gap-1">
               <TabsTrigger value="qa" className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
                 Quality Assurance
