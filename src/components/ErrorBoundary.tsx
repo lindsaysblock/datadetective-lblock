@@ -32,7 +32,26 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('Error caught by boundary:', error, errorInfo);
+    console.error('🚨 Error caught by ErrorBoundary:', error, errorInfo);
+    console.error('🚨 Component stack:', errorInfo.componentStack);
+    console.error('🚨 Error stack:', error.stack);
+    
+    // Check if this is a non-critical error we can ignore
+    const ignorableErrors = [
+      'ResizeObserver loop limit exceeded',
+      'Non-Error promise rejection captured',
+      'ChunkLoadError'
+    ];
+    
+    const shouldIgnore = ignorableErrors.some(ignorable => 
+      error.message?.includes(ignorable) || error.name?.includes(ignorable)
+    );
+    
+    if (shouldIgnore) {
+      console.log('🔄 Ignoring non-critical error, not showing error boundary');
+      return;
+    }
+    
     this.setState({
       error,
       errorInfo
