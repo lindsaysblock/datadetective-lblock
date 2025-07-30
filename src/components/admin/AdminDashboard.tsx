@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Settings, TestTube, Play, Bug } from 'lucide-react';
@@ -8,8 +8,13 @@ import AutoRefactorPrompts from '../AutoRefactorPrompts';
 import LoadTestRunner from '../LoadTestRunner';
 import FinalQARunner from '../FinalQARunner';
 import E2ETestRunner from '../testing/E2ETestRunner';
+import { forceRefresh } from '../../utils/forceRefresh';
 
 const AdminDashboard: React.FC = () => {
+  useEffect(() => {
+    // Force refresh components on mount to clear any cached disabled states
+    forceRefresh();
+  }, []);
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="mb-8">
