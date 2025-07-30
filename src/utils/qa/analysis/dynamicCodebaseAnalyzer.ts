@@ -1,4 +1,3 @@
-import { SafeDOMHelpers } from '../../dom/safeDOMHelpers';
 import { FileDiscovery, DiscoveredFile } from './fileDiscovery';
 import { MetricsCalculator } from './metricsCalculator';
 
@@ -219,14 +218,9 @@ export class DynamicCodebaseAnalyzer {
 
   private async analyzeComponents(files: FileAnalysis[]): Promise<ComponentAnalysis[]> {
     const components: ComponentAnalysis[] = [];
-    const reactElements = SafeDOMHelpers.querySelectorAll('[data-component], [class*="Component"]');
     
     for (const file of files.filter(f => f.fileType === 'component' || f.fileType === 'page')) {
       const componentName = file.exports[0];
-      const element = reactElements.find(el => {
-        return SafeDOMHelpers.classIncludes(el, componentName) ||
-          SafeDOMHelpers.getAttribute(el, 'data-component') === componentName;
-      });
       
       components.push({
         name: componentName,
@@ -235,7 +229,7 @@ export class DynamicCodebaseAnalyzer {
         stateVariables: file.hookCount,
         effectsCount: Math.floor(file.hookCount / 2),
         renderComplexity: Math.min(file.complexity, 20),
-        hasErrorBoundary: this.hasErrorBoundary(element),
+        hasErrorBoundary: this.hasErrorBoundaryStatic(file),
         isLargeComponent: file.lines > this.metricsCalculator.getThresholdForType(file.fileType)
       });
     }
@@ -247,10 +241,10 @@ export class DynamicCodebaseAnalyzer {
     return Math.min(Math.floor(file.complexity / 3), 10);
   }
 
-  private hasErrorBoundary(element: Element | null): boolean {
-    if (!element) return false;
-    
-    return SafeDOMHelpers.closest(element, '[data-error-boundary]') !== null ||
-           SafeDOMHelpers.classIncludes(element, 'error-boundary');
+  private hasErrorBoundaryStatic(file: FileAnalysis): boolean {
+    // Static analysis: check if file path or name suggests error boundary
+    return file.path.toLowerCase().includes('error') || 
+           file.path.toLowerCase().includes('boundary') ||
+           file.exports.some(exp => exp.toLowerCase().includes('error') || exp.toLowerCase().includes('boundary'));
   }
 }
