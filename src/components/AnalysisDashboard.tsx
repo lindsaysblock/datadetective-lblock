@@ -11,7 +11,7 @@ import ReportingTab from './dashboard/tabs/ReportingTab';
 import HypothesisTab from './dashboard/tabs/HypothesisTab';
 import FindingsTab from './dashboard/tabs/FindingsTab';
 import AuditTab from './dashboard/tabs/AuditTab';
-import QATab from './dashboard/tabs/QATab';
+
 import ManageTab from './dashboard/tabs/ManageTab';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useDashboardActions } from '../hooks/useDashboardActions';
@@ -66,7 +66,7 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
           onShareFinding={handleShareFinding}
         />
         <AuditTab />
-        <QATab />
+        
         <ManageTab 
           data={processedData}
           onDataUpdate={handleDataUpdate}

@@ -15,7 +15,7 @@ interface DashboardTabsProps {
 }
 
 const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, onTabChange }) => {
-  const TAB_COUNT = 9;
+  const TAB_COUNT = 8;
   
   return (
     <TabsList className={`grid w-full grid-cols-${TAB_COUNT} mb-${SPACING.XL}`}>
@@ -46,10 +46,6 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, onTabChange })
       <TabsTrigger value="audit" className="flex items-center gap-2">
         <Shield className="w-4 h-4" />
         Audit
-      </TabsTrigger>
-      <TabsTrigger value="qa" className="flex items-center gap-2">
-        <Settings className="w-4 h-4" />
-        QA
       </TabsTrigger>
       <TabsTrigger value="manage" className="flex items-center gap-2">
         <Settings className="w-4 h-4" />

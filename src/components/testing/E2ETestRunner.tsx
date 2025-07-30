@@ -52,6 +52,7 @@ const E2ETestRunner: React.FC = () => {
           <CardTitle className="flex items-center gap-2">
             <Activity className="w-5 h-5 text-primary" />
             E2E Testing Suite
+            <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Active</span>
           </CardTitle>
           <CardDescription>
             Comprehensive end-to-end testing for all application flows

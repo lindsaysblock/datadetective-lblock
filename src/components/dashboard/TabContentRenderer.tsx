@@ -13,7 +13,7 @@ import HypothesisTab from './tabs/HypothesisTab';
 import FindingsTab from './tabs/FindingsTab';
 import ReportingTab from './tabs/ReportingTab';
 import ManageTab from './tabs/ManageTab';
-import QATab from './tabs/QATab';
+
 import AuditTab from './tabs/AuditTab';
 import { ParsedData } from '@/utils/dataParser';
 
@@ -74,9 +74,6 @@ const TabContentRenderer: React.FC<TabContentRendererProps> = ({
         />
       </TabsContent>
       
-      <TabsContent value="qa">
-        <QATab />
-      </TabsContent>
       
       <TabsContent value="audit">
         <AuditTab />

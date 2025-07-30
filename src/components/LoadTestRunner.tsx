@@ -27,6 +27,7 @@ const LoadTestRunner: React.FC = () => {
         <CardTitle className="flex items-center gap-2">
           <Activity className="w-5 h-5 text-blue-600" />
           Load Management Testing
+          <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Active</span>
         </CardTitle>
         <CardDescription>
           Test system performance under various load conditions

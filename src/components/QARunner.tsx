@@ -231,6 +231,7 @@ const QARunner: React.FC = () => {
           <span className="flex items-center gap-2">
             <Wrench className="w-5 h-5" />
             QA Analysis Results
+            <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Active</span>
           </span>
           <Button 
             onClick={runQAAnalysis} 

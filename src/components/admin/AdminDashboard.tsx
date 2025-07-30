@@ -23,19 +23,22 @@ const AdminDashboard: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6">
-          <Tabs defaultValue="qa" className="w-full">
+          <Tabs defaultValue="e2e-testing" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="qa" className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
                 Quality Assurance
+                <span className="ml-1 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Active</span>
               </TabsTrigger>
               <TabsTrigger value="load-testing" className="flex items-center gap-2">
                 <TestTube className="w-4 h-4" />
                 Load Testing
+                <span className="ml-1 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Active</span>
               </TabsTrigger>
               <TabsTrigger value="e2e-testing" className="flex items-center gap-2">
                 <Bug className="w-4 h-4" />
                 E2E Testing
+                <span className="ml-1 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Active</span>
               </TabsTrigger>
               <TabsTrigger value="final-qa" className="flex items-center gap-2">
                 <Play className="w-4 h-4" />
