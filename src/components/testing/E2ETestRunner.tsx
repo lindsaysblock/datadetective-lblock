@@ -1,50 +1,46 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Play, Activity, Settings, BarChart3, Zap, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Play, Activity, BarChart3, Zap, CheckCircle } from 'lucide-react';
+import { useE2ETestLogic } from './hooks/useE2ETestLogic';
 
 const E2ETestRunner: React.FC = () => {
   const { toast } = useToast();
-  const [isRunning, setIsRunning] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [currentTest, setCurrentTest] = useState('');
+  const { runE2ETests, isRunning, progress, currentTest, results } = useE2ETestLogic();
 
-  const runE2ETests = async () => {
-    setIsRunning(true);
-    setProgress(0);
-    
+  const handleRunTests = async () => {
+    toast({
+      title: "🚀 E2E Testing Started",
+      description: "Running comprehensive end-to-end tests with safe DOM operations",
+    });
+
     try {
-      toast({
-        title: "🚀 E2E Testing Started",
-        description: "Running end-to-end tests with safe implementation",
-      });
-
-      const tests = [
-        'Authentication Flow',
-        'Navigation Tests',
-        'Form Validation',
-        'Data Loading',
-        'User Interactions',
-        'Error Handling'
-      ];
-
-      for (let i = 0; i < tests.length; i++) {
-        setCurrentTest(tests[i]);
-        setProgress((i + 1) * (100 / tests.length));
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-
-      toast({
-        title: "✅ E2E Tests Complete",
-        description: "All end-to-end tests passed successfully",
-      });
+      const testResults = await runE2ETests();
       
-    } finally {
-      setIsRunning(false);
-      setCurrentTest('');
-      setProgress(0);
+      const passed = testResults.filter(r => r.status === 'pass').length;
+      const failed = testResults.filter(r => r.status === 'fail').length;
+      const warnings = testResults.filter(r => r.status === 'warning').length;
+      
+      if (failed === 0) {
+        toast({
+          title: "✅ E2E Tests Complete",
+          description: `All tests completed: ${passed} passed, ${warnings} warnings`,
+        });
+      } else {
+        toast({
+          title: "⚠️ E2E Tests Complete",
+          description: `Tests completed: ${passed} passed, ${failed} failed, ${warnings} warnings`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "❌ E2E Test Error",
+        description: "An error occurred during testing",
+        variant: "destructive",
+      });
     }
   };
 
@@ -88,7 +84,7 @@ const E2ETestRunner: React.FC = () => {
           </div>
 
           <Button
-            onClick={runE2ETests}
+            onClick={handleRunTests}
             disabled={isRunning}
             className="w-full"
           >
@@ -106,6 +102,29 @@ const E2ETestRunner: React.FC = () => {
               <div className="text-center text-sm text-muted-foreground">
                 {Math.round(progress)}% Complete
               </div>
+            </div>
+          )}
+
+          {results.length > 0 && !isRunning && (
+            <div className="mt-4 space-y-2">
+              <h4 className="font-semibold">Test Results:</h4>
+              {results.map((result, index) => (
+                <div key={index} className="flex items-center justify-between p-2 border rounded">
+                  <span className="text-sm">{result.testName}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      result.status === 'pass' ? 'bg-green-100 text-green-800' :
+                      result.status === 'fail' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {result.status.toUpperCase()}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {result.duration.toFixed(0)}ms
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>

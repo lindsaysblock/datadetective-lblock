@@ -1,3 +1,4 @@
+import { SafeDOMHelpers } from '../../dom/safeDOMHelpers';
 import { FileDiscovery, DiscoveredFile } from './fileDiscovery';
 import { MetricsCalculator } from './metricsCalculator';
 
@@ -218,14 +219,13 @@ export class DynamicCodebaseAnalyzer {
 
   private async analyzeComponents(files: FileAnalysis[]): Promise<ComponentAnalysis[]> {
     const components: ComponentAnalysis[] = [];
-    const reactElements = Array.from(document.querySelectorAll('[data-component], [class*="Component"]'));
+    const reactElements = SafeDOMHelpers.querySelectorAll('[data-component], [class*="Component"]');
     
     for (const file of files.filter(f => f.fileType === 'component' || f.fileType === 'page')) {
       const componentName = file.exports[0];
       const element = reactElements.find(el => {
-        const className = el.getAttribute('class') || '';
-        return (className && className.includes(componentName)) ||
-          el.getAttribute('data-component') === componentName;
+        return SafeDOMHelpers.classIncludes(el, componentName) ||
+          SafeDOMHelpers.getAttribute(el, 'data-component') === componentName;
       });
       
       components.push({
@@ -250,8 +250,7 @@ export class DynamicCodebaseAnalyzer {
   private hasErrorBoundary(element: Element | null): boolean {
     if (!element) return false;
     
-    const className = element.getAttribute('class') || '';
-    return element.closest('[data-error-boundary]') !== null ||
-           className.includes('error-boundary');
+    return SafeDOMHelpers.closest(element, '[data-error-boundary]') !== null ||
+           SafeDOMHelpers.classIncludes(element, 'error-boundary');
   }
 }
