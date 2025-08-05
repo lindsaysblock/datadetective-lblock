@@ -5,7 +5,8 @@ import { Progress } from '../ui/progress';
 import { useToast } from '../ui/use-toast';
 import { Activity, Play, Clock } from 'lucide-react';
 import { TestResultCard } from '../../types/testing';
-import { TestRunners } from '../../utils/testing/testRunners';
+import { QATestSuites } from '../../utils/qa/qaTestSuites';
+import { TestRunner } from '../../utils/qa/testRunner';
 import TestResultCardComponent from './TestResultCard';
 
 export const E2ETestRunner: React.FC = () => {
@@ -29,9 +30,9 @@ export const E2ETestRunner: React.FC = () => {
     const results: TestResultCard[] = [];
     
     try {
-      // Run each QA test suite individually as separate test suites
-      const qaTestSuites = new (await import('../../utils/qa/qaTestSuites')).QATestSuites();
-      const testRunner = new (await import('../../utils/qa/testRunner')).TestRunner(qaTestSuites);
+      // Initialize QA test systems with static imports
+      const qaTestSuites = new QATestSuites();
+      const testRunner = new TestRunner(qaTestSuites);
       qaTestSuites.clearResults();
 
       const individualTestSuites = [
@@ -58,11 +59,55 @@ export const E2ETestRunner: React.FC = () => {
         const startCount = qaTestSuites.getResults().length;
         
         try {
-          // @ts-ignore - Dynamic method call
-          await qaTestSuites[suite.method]();
+          // Call specific test methods explicitly
+          switch (suite.method) {
+            case 'testComponents':
+              await qaTestSuites.testComponents();
+              break;
+            case 'testDataFlow':
+              await qaTestSuites.testDataFlow();
+              break;
+            case 'testDataValidation':
+              await qaTestSuites.testDataValidation();
+              break;
+            case 'testColumnIdentification':
+              await qaTestSuites.testColumnIdentification();
+              break;
+            case 'testAnalytics':
+              await qaTestSuites.testAnalytics();
+              break;
+            case 'testAnalyticsLoad':
+              await qaTestSuites.testAnalyticsLoad();
+              break;
+            case 'testAnalyticsPerformance':
+              await qaTestSuites.testAnalyticsPerformance();
+              break;
+            case 'testUserExperience':
+              await qaTestSuites.testUserExperience();
+              break;
+            case 'testDataIntegrity':
+              await qaTestSuites.testDataIntegrity();
+              break;
+            case 'testAuthentication':
+              await qaTestSuites.testAuthentication();
+              break;
+            case 'testRouting':
+              await qaTestSuites.testRouting();
+              break;
+            case 'testSystemHealth':
+              await qaTestSuites.testSystemHealth();
+              break;
+            case 'testAPIIntegration':
+              await qaTestSuites.testAPIIntegration();
+              break;
+            default:
+              throw new Error(`Unknown test method: ${suite.method}`);
+          }
           
           const endCount = qaTestSuites.getResults().length;
           const suiteTests = qaTestSuites.getResults().slice(startCount);
+          
+          console.log(`${suite.name}: ${suiteTests.length} tests, ${suiteTests.filter(t => t.status === 'pass').length} passed`);
           
           const passed = suiteTests.filter(t => t.status === 'pass').length;
           const failed = suiteTests.filter(t => t.status === 'fail').length;

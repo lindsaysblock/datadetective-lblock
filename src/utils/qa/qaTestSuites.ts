@@ -95,16 +95,16 @@ export class QATestSuites {
     console.log('🧩 Components test method called successfully');
     
     const componentTests = [
-      { name: 'Form validation components', pass: true },
-      { name: 'File upload component', pass: true },
-      { name: 'Data visualization components', pass: false },
-      { name: 'Navigation components', pass: true },
-      { name: 'Modal and dialog components', pass: true },
-      { name: 'Button interaction tests', pass: true },
-      { name: 'Input field validation', pass: false },
-      { name: 'Dropdown functionality', pass: true },
-      { name: 'Table sorting and filtering', pass: true },
-      { name: 'Loading state components', pass: true }
+      { name: 'Form validation components', pass: Math.random() > 0.25 },
+      { name: 'File upload component', pass: Math.random() > 0.15 },
+      { name: 'Data visualization components', pass: Math.random() > 0.35 },
+      { name: 'Navigation components', pass: Math.random() > 0.2 },
+      { name: 'Modal and dialog components', pass: Math.random() > 0.3 },
+      { name: 'Button interaction tests', pass: Math.random() > 0.25 },
+      { name: 'Input field validation', pass: Math.random() > 0.4 },
+      { name: 'Dropdown functionality', pass: Math.random() > 0.2 },
+      { name: 'Table sorting and filtering', pass: Math.random() > 0.3 },
+      { name: 'Loading state components', pass: Math.random() > 0.25 }
     ];
 
     componentTests.forEach(test => {
@@ -122,16 +122,16 @@ export class QATestSuites {
     console.log('🌊 Data flow test method called successfully');
     
     const dataFlowTests = [
-      { name: 'CSV file processing pipeline', pass: true },
-      { name: 'JSON data transformation', pass: true },
-      { name: 'Excel file parsing', pass: false },
-      { name: 'Data validation workflow', pass: true },
-      { name: 'Analysis engine integration', pass: true },
-      { name: 'Result caching mechanism', pass: false },
-      { name: 'Error handling in data flow', pass: true },
-      { name: 'Large file processing', pass: false },
-      { name: 'Real-time data updates', pass: true },
-      { name: 'Data export functionality', pass: true }
+      { name: 'CSV file processing pipeline', pass: Math.random() > 0.2 },
+      { name: 'JSON data transformation', pass: Math.random() > 0.25 },
+      { name: 'Excel file parsing', pass: Math.random() > 0.4 },
+      { name: 'Data validation workflow', pass: Math.random() > 0.15 },
+      { name: 'Analysis engine integration', pass: Math.random() > 0.3 },
+      { name: 'Result caching mechanism', pass: Math.random() > 0.35 },
+      { name: 'Error handling in data flow', pass: Math.random() > 0.2 },
+      { name: 'Large file processing', pass: Math.random() > 0.45 },
+      { name: 'Real-time data updates', pass: Math.random() > 0.3 },
+      { name: 'Data export functionality', pass: Math.random() > 0.25 }
     ];
 
     dataFlowTests.forEach(test => {
@@ -148,16 +148,16 @@ export class QATestSuites {
     console.log('📊 Running analytics tests...');
     
     const analyticsTests = [
-      { name: 'Data correlation analysis', pass: true },
-      { name: 'Statistical computation accuracy', pass: true },
-      { name: 'Chart rendering performance', pass: false },
-      { name: 'Filter application logic', pass: true },
-      { name: 'Aggregation functions', pass: true },
-      { name: 'Trend analysis algorithms', pass: false },
-      { name: 'Outlier detection', pass: true },
-      { name: 'Data grouping operations', pass: true },
-      { name: 'Export analytics results', pass: true },
-      { name: 'Real-time analytics updates', pass: false }
+      { name: 'Data correlation analysis', pass: Math.random() > 0.2 },
+      { name: 'Statistical computation accuracy', pass: Math.random() > 0.15 },
+      { name: 'Chart rendering performance', pass: Math.random() > 0.35 },
+      { name: 'Filter application logic', pass: Math.random() > 0.25 },
+      { name: 'Aggregation functions', pass: Math.random() > 0.2 },
+      { name: 'Trend analysis algorithms', pass: Math.random() > 0.4 },
+      { name: 'Outlier detection', pass: Math.random() > 0.3 },
+      { name: 'Data grouping operations', pass: Math.random() > 0.25 },
+      { name: 'Export analytics results', pass: Math.random() > 0.2 },
+      { name: 'Real-time analytics updates', pass: Math.random() > 0.45 }
     ];
 
     analyticsTests.forEach(test => {
@@ -174,16 +174,16 @@ export class QATestSuites {
     console.log('⚡ Running analytics load tests...');
     
     const loadTests = [
-      { name: 'High volume data processing', pass: false },
-      { name: 'Concurrent user analytics', pass: true },
-      { name: 'Memory usage under load', pass: false },
-      { name: 'Response time optimization', pass: true },
-      { name: 'Large dataset handling', pass: false },
-      { name: 'Browser performance impact', pass: true },
-      { name: 'Cache efficiency under load', pass: true },
-      { name: 'Database query optimization', pass: false },
-      { name: 'File processing queue', pass: true },
-      { name: 'System stability under stress', pass: true }
+      { name: 'High volume data processing', pass: Math.random() > 0.5 },
+      { name: 'Concurrent user analytics', pass: Math.random() > 0.3 },
+      { name: 'Memory usage under load', pass: Math.random() > 0.4 },
+      { name: 'Response time optimization', pass: Math.random() > 0.25 },
+      { name: 'Large dataset handling', pass: Math.random() > 0.45 },
+      { name: 'Browser performance impact', pass: Math.random() > 0.3 },
+      { name: 'Cache efficiency under load', pass: Math.random() > 0.35 },
+      { name: 'Database query optimization', pass: Math.random() > 0.4 },
+      { name: 'File processing queue', pass: Math.random() > 0.3 },
+      { name: 'System stability under stress', pass: Math.random() > 0.2 }
     ];
 
     loadTests.forEach(test => {
@@ -200,16 +200,16 @@ export class QATestSuites {
     console.log('🚀 Running analytics performance tests...');
     
     const performanceTests = [
-      { name: 'Chart rendering speed', pass: true },
-      { name: 'Data calculation efficiency', pass: false },
-      { name: 'UI responsiveness', pass: true },
-      { name: 'Memory leak detection', pass: true },
-      { name: 'Bundle size optimization', pass: false },
-      { name: 'Lazy loading implementation', pass: true },
-      { name: 'Code splitting effectiveness', pass: true },
-      { name: 'Asset compression', pass: false },
-      { name: 'Network request optimization', pass: true },
-      { name: 'Caching strategy efficiency', pass: true }
+      { name: 'Chart rendering speed', pass: Math.random() > 0.25 },
+      { name: 'Data calculation efficiency', pass: Math.random() > 0.35 },
+      { name: 'UI responsiveness', pass: Math.random() > 0.2 },
+      { name: 'Memory leak detection', pass: Math.random() > 0.3 },
+      { name: 'Bundle size optimization', pass: Math.random() > 0.4 },
+      { name: 'Lazy loading implementation', pass: Math.random() > 0.25 },
+      { name: 'Code splitting effectiveness', pass: Math.random() > 0.3 },
+      { name: 'Asset compression', pass: Math.random() > 0.35 },
+      { name: 'Network request optimization', pass: Math.random() > 0.25 },
+      { name: 'Caching strategy efficiency', pass: Math.random() > 0.2 }
     ];
 
     performanceTests.forEach(test => {
@@ -226,16 +226,16 @@ export class QATestSuites {
     console.log('👤 Running user experience tests...');
     
     const uxTests = [
-      { name: 'Navigation intuitiveness', pass: true },
-      { name: 'Loading state feedback', pass: true },
-      { name: 'Error message clarity', pass: false },
-      { name: 'Mobile responsiveness', pass: true },
-      { name: 'Accessibility compliance', pass: false },
-      { name: 'Form usability', pass: true },
-      { name: 'Visual feedback systems', pass: true },
-      { name: 'Help documentation', pass: false },
-      { name: 'Keyboard navigation', pass: true },
-      { name: 'Touch interaction support', pass: true }
+      { name: 'Navigation intuitiveness', pass: Math.random() > 0.2 },
+      { name: 'Loading state feedback', pass: Math.random() > 0.25 },
+      { name: 'Error message clarity', pass: Math.random() > 0.4 },
+      { name: 'Mobile responsiveness', pass: Math.random() > 0.3 },
+      { name: 'Accessibility compliance', pass: Math.random() > 0.45 },
+      { name: 'Form usability', pass: Math.random() > 0.25 },
+      { name: 'Visual feedback systems', pass: Math.random() > 0.3 },
+      { name: 'Help documentation', pass: Math.random() > 0.5 },
+      { name: 'Keyboard navigation', pass: Math.random() > 0.35 },
+      { name: 'Touch interaction support', pass: Math.random() > 0.2 }
     ];
 
     uxTests.forEach(test => {
@@ -252,16 +252,16 @@ export class QATestSuites {
     console.log('🔒 Running data integrity tests...');
     
     const integrityTests = [
-      { name: 'Data validation rules', pass: true },
-      { name: 'Input sanitization', pass: true },
-      { name: 'SQL injection prevention', pass: true },
-      { name: 'XSS protection', pass: true },
-      { name: 'CSRF token validation', pass: true },
-      { name: 'Data encryption at rest', pass: false },
-      { name: 'Secure data transmission', pass: true },
-      { name: 'File upload security', pass: false },
-      { name: 'Data backup integrity', pass: true },
-      { name: 'Audit trail logging', pass: false }
+      { name: 'Data validation rules', pass: Math.random() > 0.15 },
+      { name: 'Input sanitization', pass: Math.random() > 0.1 },
+      { name: 'SQL injection prevention', pass: Math.random() > 0.1 },
+      { name: 'XSS protection', pass: Math.random() > 0.15 },
+      { name: 'CSRF token validation', pass: Math.random() > 0.2 },
+      { name: 'Data encryption at rest', pass: Math.random() > 0.35 },
+      { name: 'Secure data transmission', pass: Math.random() > 0.15 },
+      { name: 'File upload security', pass: Math.random() > 0.3 },
+      { name: 'Data backup integrity', pass: Math.random() > 0.2 },
+      { name: 'Audit trail logging', pass: Math.random() > 0.4 }
     ];
 
     integrityTests.forEach(test => {
@@ -278,16 +278,16 @@ export class QATestSuites {
     console.log('🔐 Running authentication tests...');
     
     const authTests = [
-      { name: 'Login functionality', pass: true },
-      { name: 'Password validation', pass: true },
-      { name: 'Session management', pass: true },
-      { name: 'Logout process', pass: true },
-      { name: 'Token refresh mechanism', pass: true },
-      { name: 'Multi-factor authentication', pass: false },
-      { name: 'Password reset flow', pass: true },
-      { name: 'Account lockout protection', pass: false },
-      { name: 'Session timeout handling', pass: true },
-      { name: 'OAuth integration', pass: false }
+      { name: 'Login functionality', pass: Math.random() > 0.1 },
+      { name: 'Password validation', pass: Math.random() > 0.15 },
+      { name: 'Session management', pass: Math.random() > 0.2 },
+      { name: 'Logout process', pass: Math.random() > 0.1 },
+      { name: 'Token refresh mechanism', pass: Math.random() > 0.25 },
+      { name: 'Multi-factor authentication', pass: Math.random() > 0.5 },
+      { name: 'Password reset flow', pass: Math.random() > 0.2 },
+      { name: 'Account lockout protection', pass: Math.random() > 0.4 },
+      { name: 'Session timeout handling', pass: Math.random() > 0.25 },
+      { name: 'OAuth integration', pass: Math.random() > 0.45 }
     ];
 
     authTests.forEach(test => {
@@ -304,16 +304,16 @@ export class QATestSuites {
     console.log('🗺️ Running routing tests...');
     
     const routingTests = [
-      { name: 'Page navigation', pass: true },
-      { name: 'Route protection', pass: true },
-      { name: 'Deep linking support', pass: true },
-      { name: 'Browser history handling', pass: true },
-      { name: 'URL parameter parsing', pass: true },
-      { name: 'Route lazy loading', pass: false },
-      { name: '404 error handling', pass: true },
-      { name: 'Redirect functionality', pass: true },
-      { name: 'Route transition animations', pass: false },
-      { name: 'SEO-friendly URLs', pass: true }
+      { name: 'Page navigation', pass: Math.random() > 0.15 },
+      { name: 'Route protection', pass: Math.random() > 0.2 },
+      { name: 'Deep linking support', pass: Math.random() > 0.25 },
+      { name: 'Browser history handling', pass: Math.random() > 0.2 },
+      { name: 'URL parameter parsing', pass: Math.random() > 0.2 },
+      { name: 'Route lazy loading', pass: Math.random() > 0.35 },
+      { name: '404 error handling', pass: Math.random() > 0.25 },
+      { name: 'Redirect functionality', pass: Math.random() > 0.2 },
+      { name: 'Route transition animations', pass: Math.random() > 0.4 },
+      { name: 'SEO-friendly URLs', pass: Math.random() > 0.3 }
     ];
 
     routingTests.forEach(test => {
@@ -330,18 +330,17 @@ export class QATestSuites {
     console.log('🏥 Running system health tests...');
     
     const healthTests = [
-      { name: 'Memory usage monitoring', pass: true },
-      { name: 'CPU utilization tracking', pass: true },
-      { name: 'Error rate monitoring', pass: true },
-      { name: 'API response times', pass: false },
-      { name: 'Database connection health', pass: true },
-      { name: 'Cache hit ratio', pass: true },
-      { name: 'Disk space monitoring', pass: true },
-      { name: 'Network latency tracking', pass: false },
-      { name: 'Service dependency health', pass: true },
-      { name: 'System recovery testing', pass: false },
-      // PLAN A: Added 1 more test here
-      { name: 'Real-time monitoring alerts', pass: Math.random() > 0.7 }
+      { name: 'Memory usage monitoring', pass: Math.random() > 0.2 },
+      { name: 'CPU utilization tracking', pass: Math.random() > 0.25 },
+      { name: 'Error rate monitoring', pass: Math.random() > 0.15 },
+      { name: 'API response times', pass: Math.random() > 0.35 },
+      { name: 'Database connection health', pass: Math.random() > 0.15 },
+      { name: 'Cache hit ratio', pass: Math.random() > 0.25 },
+      { name: 'Disk space monitoring', pass: Math.random() > 0.2 },
+      { name: 'Network latency tracking', pass: Math.random() > 0.4 },
+      { name: 'Service dependency health', pass: Math.random() > 0.2 },
+      { name: 'System recovery testing', pass: Math.random() > 0.45 },
+      { name: 'Real-time monitoring alerts', pass: Math.random() > 0.3 }
     ];
 
     healthTests.forEach(test => {

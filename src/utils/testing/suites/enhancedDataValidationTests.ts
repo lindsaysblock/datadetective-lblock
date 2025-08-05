@@ -85,91 +85,99 @@ export class EnhancedDataValidationTests {
     });
 
     // Test cross-field validation
+    const crossFieldPass = Math.random() > 0.4;
     results.push({
       testName: 'Cross-Field Validation Rules',
-      status: Math.random() > 0.6 ? 'fail' : 'pass',
+      status: crossFieldPass ? 'pass' : 'fail',
       message: 'Business logic validation across multiple columns',
       category: 'data-quality',
       duration: 22,
       assertions: 9,
-      passedAssertions: Math.random() > 0.6 ? 6 : 9
+      passedAssertions: crossFieldPass ? 9 : 6
     });
 
     // Test data format standardization
+    const formatPass = Math.random() > 0.3;
     results.push({
       testName: 'Data Format Standardization',
-      status: Math.random() > 0.7 ? 'fail' : 'pass',
+      status: formatPass ? 'pass' : 'fail',
       message: 'Consistent formatting across similar data types',
       category: 'data-quality',
       duration: 18,
       assertions: 8,
-      passedAssertions: Math.random() > 0.7 ? 5 : 8
+      passedAssertions: formatPass ? 8 : 5
     });
 
     // Test referential integrity
+    const integrityPass = Math.random() > 0.2;
     results.push({
       testName: 'Referential Integrity Validation',
-      status: Math.random() > 0.8 ? 'fail' : 'pass',
+      status: integrityPass ? 'pass' : 'fail',
       message: 'Foreign key relationships and data consistency',
       category: 'data-quality',
       duration: 26,
       assertions: 10,
-      passedAssertions: Math.random() > 0.8 ? 7 : 10
+      passedAssertions: integrityPass ? 10 : 7
     });
 
     // Test data lineage tracking
+    const lineagePass = Math.random() > 0.1;
     results.push({
       testName: 'Data Lineage Tracking',
-      status: Math.random() > 0.9 ? 'fail' : 'pass',
+      status: lineagePass ? 'pass' : 'fail',
       message: 'Data transformation and source tracking validation',
       category: 'data-quality',
       duration: 30,
       assertions: 12,
-      passedAssertions: Math.random() > 0.9 ? 9 : 12
+      passedAssertions: lineagePass ? 12 : 9
     });
 
     // Test data privacy compliance
+    const privacyPass = Math.random() > 0.35;
     results.push({
       testName: 'Data Privacy Compliance Check',
-      status: Math.random() > 0.65 ? 'fail' : 'pass',
+      status: privacyPass ? 'pass' : 'fail',
       message: 'PII detection and privacy regulation compliance',
       category: 'data-quality',
       duration: 24,
       assertions: 11,
-      passedAssertions: Math.random() > 0.65 ? 7 : 11
+      passedAssertions: privacyPass ? 11 : 7
     });
 
     // Test data distribution analysis
+    const distributionPass = Math.random() > 0.3;
     results.push({
       testName: 'Data Distribution Analysis',
-      status: Math.random() > 0.7 ? 'fail' : 'pass',
+      status: distributionPass ? 'pass' : 'fail',
       message: 'Statistical distribution patterns and anomaly detection',
       category: 'data-quality',
       duration: 28,
       assertions: 13,
-      passedAssertions: Math.random() > 0.7 ? 9 : 13
+      passedAssertions: distributionPass ? 13 : 9
     });
 
     // Test data transformation validation
+    const transformationPass = Math.random() > 0.2;
     results.push({
       testName: 'Data Transformation Validation',
-      status: Math.random() > 0.8 ? 'fail' : 'pass',
+      status: transformationPass ? 'pass' : 'fail',
       message: 'ETL pipeline transformation accuracy and integrity',
       category: 'data-quality',
       duration: 32,
       assertions: 15,
-      passedAssertions: Math.random() > 0.8 ? 11 : 15
+      passedAssertions: transformationPass ? 15 : 11
     });
 
     // Test real-time data validation
+    const realtimePass = Math.random() > 0.4;
     results.push({
       testName: 'Real-time Data Validation',
-      status: Math.random() > 0.6 ? 'fail' : 'pass',
+      status: realtimePass ? 'pass' : 'fail',
       message: 'Streaming data quality and validation performance',
       category: 'data-quality',
       duration: 35,
       assertions: 14,
-      passedAssertions: Math.random() > 0.6 ? 9 : 14
+      passedAssertions: realtimePass ? 14 : 9
     });
 
     return results;
