@@ -496,6 +496,44 @@ const E2ETestRunner: React.FC = () => {
                   </div>
                 )}
                 
+                {/* Show optimization recommendations */}
+                {result.optimizations && result.optimizations.length > 0 && (
+                  <div className="mt-4 border-t pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-orange-500" />
+                        Automatic Optimization Recommendations
+                      </h4>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => console.log('Implementing optimizations:', result.optimizations)}
+                        className="text-xs"
+                      >
+                        Implement All
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      {result.optimizations.map((optimization, optIndex) => (
+                        <div key={optIndex} className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                            <span className="text-sm">{optimization}</span>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => console.log('Implementing:', optimization)}
+                            className="text-xs h-6 px-2"
+                          >
+                            Apply
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 {/* Show QA test details if this is the QA Analysis card */}
                 {result.name === 'QA Analysis' && qaResults.length > 0 && (
                   <div className="mt-4 border-t pt-4">
