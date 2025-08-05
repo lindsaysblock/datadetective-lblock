@@ -196,12 +196,22 @@ const E2ETestRunner: React.FC = () => {
 
   const runQAAnalysis = async (): Promise<TestResultCard> => {
     try {
-      const testRunner = new TestRunner();
-      const qaTestSuites = new QATestSuites(testRunner);
+      console.log('Running QA tests...');
+      const qaTestSuites = new QATestSuites(new TestRunner());
       
-      // Run core QA tests
+      // Run all QA test suites to reach 131 tests
       await qaTestSuites.testDataValidation();
       await qaTestSuites.testColumnIdentification();
+      await qaTestSuites.testComponents();
+      await qaTestSuites.testDataFlow();
+      await qaTestSuites.testAnalytics();
+      await qaTestSuites.testAnalyticsLoad();
+      await qaTestSuites.testAnalyticsPerformance();
+      await qaTestSuites.testUserExperience();
+      await qaTestSuites.testDataIntegrity();
+      await qaTestSuites.testAuthentication();
+      await qaTestSuites.testRouting();
+      await qaTestSuites.testSystemHealth();
       
       const results = qaTestSuites.getResults();
       
@@ -210,7 +220,7 @@ const E2ETestRunner: React.FC = () => {
       const passed = results.filter(r => r.status === 'pass').length;
       const failed = results.filter(r => r.status === 'fail').length;
       const warnings = results.filter(r => r.status === 'warning').length;
-      const total = Math.max(results.length, 131); // Use 131 as shown in screenshot
+      const total = results.length;
       
       const passRate = (passed / total) * 100;
       const status = failed > 0 || passRate < 50 ? 'error' : passRate < 80 ? 'warning' : 'success';
@@ -222,6 +232,13 @@ const E2ETestRunner: React.FC = () => {
         timestamp: new Date().toLocaleTimeString(),
         failedTests: failed,
         warningTests: warnings,
+        optimizations: [
+          'Implement automated performance monitoring',
+          'Add comprehensive error boundary systems',
+          'Optimize data processing algorithms',
+          'Enhance security validation layers',
+          'Implement progressive web app features'
+        ],
         metrics: {
           testsRun: total,
           passed: passed,
@@ -234,14 +251,8 @@ const E2ETestRunner: React.FC = () => {
       return {
         name: 'QA Analysis',
         status: 'error',
-        details: '87/131 tests passed',
-        timestamp: new Date().toLocaleTimeString(),
-        metrics: {
-          testsRun: 131,
-          passed: 87,
-          failed: 44,
-          coverage: 66
-        }
+        details: `QA analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: new Date().toLocaleTimeString()
       };
     }
   };
