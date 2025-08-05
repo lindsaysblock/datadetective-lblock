@@ -92,6 +92,7 @@ export class QATestSuites {
 
   async testComponents(): Promise<void> {
     console.log('🧩 Running component tests...');
+    console.log('🧩 Components test method called successfully');
     
     const componentTests = [
       { name: 'Form validation components', pass: true },
@@ -118,6 +119,7 @@ export class QATestSuites {
 
   async testDataFlow(): Promise<void> {
     console.log('🌊 Running data flow tests...');
+    console.log('🌊 Data flow test method called successfully');
     
     const dataFlowTests = [
       { name: 'CSV file processing pipeline', pass: true },

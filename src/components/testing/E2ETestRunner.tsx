@@ -196,7 +196,7 @@ const E2ETestRunner: React.FC = () => {
 
   const runQAAnalysis = async (): Promise<TestResultCard> => {
     try {
-      console.log('🚀 Starting comprehensive QA analysis...');
+      console.log('🚀 Starting comprehensive QA analysis with ALL test suites...');
       const qaTestSuites = new QATestSuites(new TestRunner());
       
       console.log('📋 Before running tests, current results count:', qaTestSuites.getResults().length);
