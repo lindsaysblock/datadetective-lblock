@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Play, Activity, BarChart3, Zap, CheckCircle, AlertTriangle, Clock, Settings, TestTube, Bug } from 'lucide-react';
+import { Play, Activity, BarChart3, Zap, CheckCircle, AlertTriangle, Clock, Settings, TestTube, Bug, ChevronDown, ChevronRight } from 'lucide-react';
 import { UnitTestingSystem } from '@/utils/testing/unitTestingSystem';
 import createEnhancedDataPipelineTestSuite from '@/utils/testing/enhancedDataPipelineTestSuite';
 import { QATestSuites } from '@/utils/qa/qaTestSuites';
@@ -39,6 +39,7 @@ const E2ETestRunner: React.FC = () => {
   const [currentTest, setCurrentTest] = useState('');
   const [testResults, setTestResults] = useState<TestResultCard[]>([]);
   const [qaResults, setQaResults] = useState<any[]>([]);
+  const [expandedQA, setExpandedQA] = useState(false);
 
   const handleRunTests = async () => {
     setIsRunning(true);
@@ -537,32 +538,99 @@ const E2ETestRunner: React.FC = () => {
                 {/* Show QA test details if this is the QA Analysis card */}
                 {result.name === 'QA Analysis' && qaResults.length > 0 && (
                   <div className="mt-4 border-t pt-4">
-                    <h4 className="text-sm font-medium mb-3">Detailed QA Test Results:</h4>
-                    <div className="space-y-2">
-                      {qaResults.map((qaResult, qaIndex) => (
-                        <div key={qaIndex} className="flex items-start justify-between p-2 bg-gray-50 rounded">
-                          <div className="flex-1">
-                            <div className="flex items-center">
-                              <Badge 
-                                variant={qaResult.status === 'pass' ? 'default' : qaResult.status === 'warning' ? 'secondary' : 'destructive'}
-                                className="text-xs mr-2"
-                              >
-                                {qaResult.status}
-                              </Badge>
-                              <span className="text-sm font-medium">{qaResult.testName}</span>
-                            </div>
-                            <p className="text-xs text-gray-600 mt-1">{qaResult.message}</p>
-                            {qaResult.suggestions && qaResult.suggestions.length > 0 && (
-                              <ul className="text-xs text-gray-500 mt-2 ml-4">
-                                {qaResult.suggestions.map((suggestion, suggIndex) => (
-                                  <li key={suggIndex} className="list-disc">{suggestion}</li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium">Detailed QA Test Results:</h4>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setExpandedQA(!expandedQA)}
+                        className="h-6 px-2"
+                      >
+                        {expandedQA ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                        {expandedQA ? 'Collapse' : 'Expand All'}
+                      </Button>
                     </div>
+                    
+                    {expandedQA && (
+                      <div className="space-y-4">
+                        {/* Failed Tests */}
+                        {qaResults.filter(r => r.status === 'fail').length > 0 && (
+                          <div>
+                            <h5 className="text-xs font-medium text-red-600 mb-2 flex items-center gap-2">
+                              <AlertTriangle className="w-3 h-3" />
+                              Failed Tests ({qaResults.filter(r => r.status === 'fail').length})
+                            </h5>
+                            <div className="space-y-2">
+                              {qaResults.filter(r => r.status === 'fail').map((qaResult, qaIndex) => (
+                                <div key={qaIndex} className="p-2 bg-red-50 border border-red-200 rounded">
+                                  <div className="flex items-center">
+                                    <Badge variant="destructive" className="text-xs mr-2">FAIL</Badge>
+                                    <span className="text-sm font-medium">{qaResult.testName}</span>
+                                  </div>
+                                  <p className="text-xs text-red-700 mt-1">{qaResult.message}</p>
+                                  {qaResult.suggestions && qaResult.suggestions.length > 0 && (
+                                    <ul className="text-xs text-red-600 mt-2 ml-4">
+                                      {qaResult.suggestions.map((suggestion, suggIndex) => (
+                                        <li key={suggIndex} className="list-disc">{suggestion}</li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Warning Tests */}
+                        {qaResults.filter(r => r.status === 'warning').length > 0 && (
+                          <div>
+                            <h5 className="text-xs font-medium text-yellow-600 mb-2 flex items-center gap-2">
+                              <AlertTriangle className="w-3 h-3" />
+                              Warning Tests ({qaResults.filter(r => r.status === 'warning').length})
+                            </h5>
+                            <div className="space-y-2">
+                              {qaResults.filter(r => r.status === 'warning').map((qaResult, qaIndex) => (
+                                <div key={qaIndex} className="p-2 bg-yellow-50 border border-yellow-200 rounded">
+                                  <div className="flex items-center">
+                                    <Badge variant="secondary" className="text-xs mr-2">WARN</Badge>
+                                    <span className="text-sm font-medium">{qaResult.testName}</span>
+                                  </div>
+                                  <p className="text-xs text-yellow-700 mt-1">{qaResult.message}</p>
+                                  {qaResult.suggestions && qaResult.suggestions.length > 0 && (
+                                    <ul className="text-xs text-yellow-600 mt-2 ml-4">
+                                      {qaResult.suggestions.map((suggestion, suggIndex) => (
+                                        <li key={suggIndex} className="list-disc">{suggestion}</li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Passed Tests */}
+                        {qaResults.filter(r => r.status === 'pass').length > 0 && (
+                          <div>
+                            <h5 className="text-xs font-medium text-green-600 mb-2 flex items-center gap-2">
+                              <CheckCircle className="w-3 h-3" />
+                              Passed Tests ({qaResults.filter(r => r.status === 'pass').length})
+                            </h5>
+                            <div className="space-y-1">
+                              {qaResults.filter(r => r.status === 'pass').map((qaResult, qaIndex) => (
+                                <div key={qaIndex} className="p-2 bg-green-50 border border-green-200 rounded">
+                                  <div className="flex items-center">
+                                    <Badge variant="default" className="text-xs mr-2 bg-green-100 text-green-800">PASS</Badge>
+                                    <span className="text-sm font-medium">{qaResult.testName}</span>
+                                  </div>
+                                  <p className="text-xs text-green-700 mt-1">{qaResult.message}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
                 
