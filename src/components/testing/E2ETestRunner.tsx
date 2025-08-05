@@ -212,10 +212,13 @@ const E2ETestRunner: React.FC = () => {
       const warnings = results.filter(r => r.status === 'warning').length;
       const total = Math.max(results.length, 131); // Use 131 as shown in screenshot
       
+      const passRate = (passed / total) * 100;
+      const status = failed > 0 || passRate < 50 ? 'error' : passRate < 80 ? 'warning' : 'success';
+      
       return {
         name: 'QA Analysis',
-        status: failed > 0 ? 'error' : warnings > 0 ? 'warning' : 'success',
-        details: `${passed}/${total} tests passed${failed > 0 ? `, ${failed} failed` : ''}${warnings > 0 ? `, ${warnings} warnings` : ''}`,
+        status,
+        details: `${passed}/${total} tests passed (${Math.round(passRate)}%)${failed > 0 ? `, ${failed} failed` : ''}${warnings > 0 ? `, ${warnings} warnings` : ''}`,
         timestamp: new Date().toLocaleTimeString(),
         failedTests: failed,
         warningTests: warnings,
