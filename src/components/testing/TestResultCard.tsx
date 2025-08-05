@@ -8,8 +8,8 @@ import { QATestDetails } from './QATestDetails';
 
 interface TestResultCardProps {
   result: TestResult;
-  expandedQA: boolean;
-  onToggleQAExpanded: () => void;
+  expandedQA?: boolean;
+  onToggleQAExpanded?: () => void;
 }
 
 export const TestResultCardComponent: React.FC<TestResultCardProps> = ({
@@ -92,12 +92,14 @@ export const TestResultCardComponent: React.FC<TestResultCardProps> = ({
           </div>
         )}
 
-        {/* QA Test Details */}
-        <QATestDetails 
-          result={result}
-          expanded={expandedQA}
-          onToggleExpanded={onToggleQAExpanded}
-        />
+        {/* QA Test Details - only show if QA props are provided */}
+        {expandedQA !== undefined && onToggleQAExpanded && (
+          <QATestDetails 
+            result={result}
+            expanded={expandedQA}
+            onToggleExpanded={onToggleQAExpanded}
+          />
+        )}
 
         {/* Optimizations */}
         {result.optimizations && result.optimizations.length > 0 && (

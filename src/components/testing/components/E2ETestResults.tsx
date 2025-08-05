@@ -59,19 +59,29 @@ const E2ETestResults: React.FC<E2ETestResultsProps> = ({
             {overallStatus === 'error' && <AlertTriangle className="w-5 h-5 text-red-600" />}
           </div>
           <div className="grid gap-3">
-            {testResults.map((result, index) => (
-              <div key={index}>
-                <TestResultCard result={result} />
-                {result.optimizations && result.optimizations.length > 0 && (
-                  <div className="mt-2 ml-4 p-2 bg-blue-50 border-l-2 border-blue-200 rounded-r">
-                    <p className="text-xs font-medium text-blue-800 mb-1">Optimizations Identified:</p>
-                    {result.optimizations.map((opt, optIndex) => (
-                      <p key={optIndex} className="text-xs text-blue-700">• {opt}</p>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+            {testResults.map((result, index) => {
+              // Convert TestResult to TestResultCard format
+              const testResultCard = {
+                name: result.step,
+                status: result.status,
+                details: result.details,
+                timestamp: result.timestamp.toLocaleTimeString(),
+                optimizations: result.optimizations
+              };
+              return (
+                <div key={index}>
+                  <TestResultCard result={testResultCard} />
+                  {result.optimizations && result.optimizations.length > 0 && (
+                    <div className="mt-2 ml-4 p-2 bg-blue-50 border-l-2 border-blue-200 rounded-r">
+                      <p className="text-xs font-medium text-blue-800 mb-1">Optimizations Identified:</p>
+                      {result.optimizations.map((opt, optIndex) => (
+                        <p key={optIndex} className="text-xs text-blue-700">• {opt}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
