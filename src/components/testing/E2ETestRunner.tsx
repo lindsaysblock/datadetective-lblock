@@ -196,24 +196,67 @@ const E2ETestRunner: React.FC = () => {
 
   const runQAAnalysis = async (): Promise<TestResultCard> => {
     try {
-      console.log('Running QA tests...');
+      console.log('🚀 Starting comprehensive QA analysis...');
       const qaTestSuites = new QATestSuites(new TestRunner());
       
+      console.log('📋 Before running tests, current results count:', qaTestSuites.getResults().length);
+      
       // Run all QA test suites to reach 131 tests
+      console.log('🧪 Running data validation tests...');
       await qaTestSuites.testDataValidation();
+      console.log('📋 After data validation, results count:', qaTestSuites.getResults().length);
+      
+      console.log('🧪 Running column identification tests...');
       await qaTestSuites.testColumnIdentification();
+      console.log('📋 After column identification, results count:', qaTestSuites.getResults().length);
+      
+      console.log('🧪 Running component tests...');
       await qaTestSuites.testComponents();
+      console.log('📋 After components, results count:', qaTestSuites.getResults().length);
+      
+      console.log('🧪 Running data flow tests...');
       await qaTestSuites.testDataFlow();
+      console.log('📋 After data flow, results count:', qaTestSuites.getResults().length);
+      
+      console.log('🧪 Running analytics tests...');
       await qaTestSuites.testAnalytics();
+      console.log('📋 After analytics, results count:', qaTestSuites.getResults().length);
+      
+      console.log('🧪 Running analytics load tests...');
       await qaTestSuites.testAnalyticsLoad();
+      console.log('📋 After analytics load, results count:', qaTestSuites.getResults().length);
+      
+      console.log('🧪 Running analytics performance tests...');
       await qaTestSuites.testAnalyticsPerformance();
+      console.log('📋 After analytics performance, results count:', qaTestSuites.getResults().length);
+      
+      console.log('🧪 Running user experience tests...');
       await qaTestSuites.testUserExperience();
+      console.log('📋 After UX, results count:', qaTestSuites.getResults().length);
+      
+      console.log('🧪 Running data integrity tests...');
       await qaTestSuites.testDataIntegrity();
+      console.log('📋 After data integrity, results count:', qaTestSuites.getResults().length);
+      
+      console.log('🧪 Running authentication tests...');
       await qaTestSuites.testAuthentication();
+      console.log('📋 After authentication, results count:', qaTestSuites.getResults().length);
+      
+      console.log('🧪 Running routing tests...');
       await qaTestSuites.testRouting();
+      console.log('📋 After routing, results count:', qaTestSuites.getResults().length);
+      
+      console.log('🧪 Running system health tests...');
       await qaTestSuites.testSystemHealth();
+      console.log('📋 After system health, results count:', qaTestSuites.getResults().length);
       
       const results = qaTestSuites.getResults();
+      console.log('🎯 Final QA results summary:', {
+        totalTests: results.length,
+        passed: results.filter(r => r.status === 'pass').length,
+        failed: results.filter(r => r.status === 'fail').length,
+        warnings: results.filter(r => r.status === 'warning').length
+      });
       
       // Store QA results for detailed display
       setQaResults(results);
@@ -248,6 +291,7 @@ const E2ETestRunner: React.FC = () => {
         }
       };
     } catch (error) {
+      console.error('❌ QA Analysis failed:', error);
       return {
         name: 'QA Analysis',
         status: 'error',
