@@ -15,6 +15,7 @@ import TestResultCard from './TestResultCard';
 import { optimizedQASystem } from '@/utils/qa/simpleQASystem';
 import { simpleOptimizer } from '@/utils/performance/simpleOptimizer';
 import { QAReport } from '@/utils/qa/types';
+import { TestReportWithFixes } from '@/components/qa/TestReportWithFixes';
 
 const OptimizedQARunner: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);

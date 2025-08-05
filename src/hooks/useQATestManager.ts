@@ -162,7 +162,7 @@ export function useQATestManager() {
                     ...t, 
                     status: newStatus,
                     error: fixResult.success ? undefined : t.error,
-                    details: fixResult.details,
+                    details: fixResult.message, // Use message instead of details
                     fixAttempts: (t.fixAttempts || 0) + 1
                   } : t
                 ),
@@ -229,7 +229,7 @@ export function useQATestManager() {
             ...t, 
             status: fixResult.success ? 'passed' : 'failed',
             error: fixResult.success ? undefined : t.error,
-            details: fixResult.details
+            details: fixResult.message // Use message instead of details
           } : t
         )
       }))

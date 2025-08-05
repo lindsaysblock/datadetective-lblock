@@ -38,6 +38,7 @@ export interface FixResult {
   timeElapsed: number;
   requiresRetest: boolean;
   newTestStatus?: 'pass' | 'fail' | 'warning';
+  details?: string; // Added for backward compatibility
 }
 
 export interface TestExecutionState {
