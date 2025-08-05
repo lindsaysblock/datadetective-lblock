@@ -19,6 +19,11 @@ interface TestResultCard {
   optimizations?: string[];
   failedTests?: number;
   warningTests?: number;
+  expandedData?: {
+    testResults?: any[];
+    testSuites?: string[];
+    coverage?: number;
+  };
   metrics?: {
     testsRun?: number;
     passed?: number;
@@ -38,7 +43,6 @@ const E2ETestRunner: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [currentTest, setCurrentTest] = useState('');
   const [testResults, setTestResults] = useState<TestResultCard[]>([]);
-  const [qaResults, setQaResults] = useState<any[]>([]);
   const [expandedQA, setExpandedQA] = useState(false);
 
   const handleRunTests = async () => {
@@ -199,6 +203,8 @@ const E2ETestRunner: React.FC = () => {
       console.log('🚀 Starting comprehensive QA analysis with ALL test suites...');
       const qaTestSuites = new QATestSuites(new TestRunner());
       
+      // Clear any existing results to ensure fresh start
+      qaTestSuites.clearResults();
       console.log('📋 Before running tests, current results count:', qaTestSuites.getResults().length);
       
       // Run all QA test suites to reach 131 tests
@@ -258,8 +264,6 @@ const E2ETestRunner: React.FC = () => {
         warnings: results.filter(r => r.status === 'warning').length
       });
       
-      // Store QA results for detailed display
-      setQaResults(results);
       const passed = results.filter(r => r.status === 'pass').length;
       const failed = results.filter(r => r.status === 'fail').length;
       const warnings = results.filter(r => r.status === 'warning').length;
@@ -282,6 +286,24 @@ const E2ETestRunner: React.FC = () => {
           'Enhance security validation layers',
           'Implement progressive web app features'
         ],
+        expandedData: {
+          testResults: results,
+          testSuites: [
+            'Data Validation Tests',
+            'Column Identification Tests',
+            'Component Tests',
+            'Data Flow Tests',
+            'Analytics Tests',
+            'Analytics Load Tests',
+            'Analytics Performance Tests',
+            'User Experience Tests',
+            'Data Integrity Tests',
+            'Authentication Tests',
+            'Routing Tests',
+            'System Health Tests'
+          ],
+          coverage: Math.round((passed / total) * 100)
+        },
         metrics: {
           testsRun: total,
           passed: passed,
@@ -594,10 +616,10 @@ const E2ETestRunner: React.FC = () => {
                 )}
                 
                 {/* Show QA test details if this is the QA Analysis card */}
-                {result.name === 'QA Analysis' && qaResults.length > 0 && (
+                {result.name === 'QA Analysis' && result.expandedData && (
                   <div className="mt-4 border-t pt-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-medium">Detailed QA Test Results:</h4>
+                      <h4 className="text-sm font-medium">Detailed QA Test Results ({result.expandedData.testResults?.length || 0} tests across {result.expandedData.testSuites?.length || 0} suites):</h4>
                       <Button 
                         variant="ghost" 
                         size="sm"
@@ -609,17 +631,30 @@ const E2ETestRunner: React.FC = () => {
                       </Button>
                     </div>
                     
-                    {expandedQA && (
+                    {/* Show Test Suites Overview */}
+                    <div className="mb-4 p-3 bg-blue-50 rounded border border-blue-200">
+                      <h5 className="text-xs font-medium text-blue-800 mb-2">Test Suites Executed:</h5>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {result.expandedData.testSuites?.map((suite, i) => (
+                          <div key={i} className="text-xs text-blue-700 flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3" />
+                            {suite}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {expandedQA && result.expandedData?.testResults && (
                       <div className="space-y-4">
                         {/* Failed Tests */}
-                        {qaResults.filter(r => r.status === 'fail').length > 0 && (
+                        {result.expandedData.testResults.filter(r => r.status === 'fail').length > 0 && (
                           <div>
                             <h5 className="text-xs font-medium text-red-600 mb-2 flex items-center gap-2">
                               <AlertTriangle className="w-3 h-3" />
-                              Failed Tests ({qaResults.filter(r => r.status === 'fail').length})
+                              Failed Tests ({result.expandedData.testResults.filter(r => r.status === 'fail').length})
                             </h5>
                             <div className="space-y-2">
-                              {qaResults.filter(r => r.status === 'fail').map((qaResult, qaIndex) => (
+                              {result.expandedData.testResults.filter(r => r.status === 'fail').map((qaResult, qaIndex) => (
                                 <div key={qaIndex} className="p-2 bg-red-50 border border-red-200 rounded">
                                   <div className="flex items-center">
                                     <Badge variant="destructive" className="text-xs mr-2">FAIL</Badge>
@@ -640,14 +675,14 @@ const E2ETestRunner: React.FC = () => {
                         )}
                         
                         {/* Warning Tests */}
-                        {qaResults.filter(r => r.status === 'warning').length > 0 && (
+                        {result.expandedData.testResults.filter(r => r.status === 'warning').length > 0 && (
                           <div>
                             <h5 className="text-xs font-medium text-yellow-600 mb-2 flex items-center gap-2">
                               <AlertTriangle className="w-3 h-3" />
-                              Warning Tests ({qaResults.filter(r => r.status === 'warning').length})
+                              Warning Tests ({result.expandedData.testResults.filter(r => r.status === 'warning').length})
                             </h5>
                             <div className="space-y-2">
-                              {qaResults.filter(r => r.status === 'warning').map((qaResult, qaIndex) => (
+                              {result.expandedData.testResults.filter(r => r.status === 'warning').map((qaResult, qaIndex) => (
                                 <div key={qaIndex} className="p-2 bg-yellow-50 border border-yellow-200 rounded">
                                   <div className="flex items-center">
                                     <Badge variant="secondary" className="text-xs mr-2">WARN</Badge>
@@ -668,14 +703,14 @@ const E2ETestRunner: React.FC = () => {
                         )}
                         
                         {/* Passed Tests */}
-                        {qaResults.filter(r => r.status === 'pass').length > 0 && (
+                        {result.expandedData.testResults.filter(r => r.status === 'pass').length > 0 && (
                           <div>
                             <h5 className="text-xs font-medium text-green-600 mb-2 flex items-center gap-2">
                               <CheckCircle className="w-3 h-3" />
-                              Passed Tests ({qaResults.filter(r => r.status === 'pass').length})
+                              Passed Tests ({result.expandedData.testResults.filter(r => r.status === 'pass').length})
                             </h5>
                             <div className="space-y-1">
-                              {qaResults.filter(r => r.status === 'pass').map((qaResult, qaIndex) => (
+                              {result.expandedData.testResults.filter(r => r.status === 'pass').map((qaResult, qaIndex) => (
                                 <div key={qaIndex} className="p-2 bg-green-50 border border-green-200 rounded">
                                   <div className="flex items-center">
                                     <Badge variant="default" className="text-xs mr-2 bg-green-100 text-green-800">PASS</Badge>
