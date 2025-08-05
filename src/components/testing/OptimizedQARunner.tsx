@@ -248,18 +248,10 @@ const OptimizedQARunner: React.FC = () => {
               </TabsList>
               
               <TabsContent value="results" className="space-y-3">
-                {qaReport.results.map((result, index) => {
-                  // Convert QATestResult to TestResultCard format
-                  const testResultCard = {
-                    name: result.testName,
-                    status: result.status === 'pass' ? 'success' as const : 
-                           result.status === 'fail' ? 'error' as const : 'warning' as const,
-                    details: result.message,
-                    timestamp: new Date().toLocaleTimeString(),
-                    optimizations: result.suggestions || result.optimizations
-                  };
-                  return <TestResultCard key={index} result={testResultCard} />;
-                })}
+                <TestReportWithFixes
+                  qaReport={qaReport}
+                  onReportUpdated={(updatedReport) => setQaReport(updatedReport)}
+                />
               </TabsContent>
               
               <TabsContent value="performance">

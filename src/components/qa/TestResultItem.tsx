@@ -11,11 +11,15 @@ import type { QATestResult } from './QATestResultsDashboard';
 interface TestResultItemProps {
   test: QATestResult;
   onRetry?: (testId: string) => void;
+  onTestFixed?: (testName: string, newResult: QATestResult) => void;
+  onRetryTest?: (testName: string) => Promise<QATestResult>;
 }
 
 export const TestResultItem: React.FC<TestResultItemProps> = ({
   test,
-  onRetry
+  onRetry,
+  onTestFixed,
+  onRetryTest
 }) => {
   const getStatusIcon = (status: QATestResult['status']) => {
     switch (status) {

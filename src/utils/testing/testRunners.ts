@@ -124,6 +124,10 @@ export class TestRunners {
       await qaTestSuites.testSystemHealth();
       console.log('📋 After system health, results count:', qaTestSuites.getResults().length);
       
+      console.log('🧪 Running API integration tests...');
+      await qaTestSuites.testAPIIntegration();
+      console.log('📋 After API integration, results count:', qaTestSuites.getResults().length);
+      
       const results = qaTestSuites.getResults();
       console.log('🎯 Final QA results summary:', {
         totalTests: results.length,

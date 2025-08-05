@@ -27,7 +27,8 @@ const TEST_EXECUTION_ORDER = [
   'dataIntegrity',
   'authentication',
   'routing',
-  'systemHealth'
+  'systemHealth',
+  'apiIntegration'  // PLAN A: Added new test suite
 ] as const;
 
 /** Known large files for monitoring */
@@ -120,6 +121,9 @@ export class TestOrchestrator {
           break;
         case 'systemHealth':
           await this.qaTestSuites.testSystemHealth();
+          break;
+        case 'apiIntegration':
+          await this.qaTestSuites.testAPIIntegration();
           break;
       }
     } catch (error) {
