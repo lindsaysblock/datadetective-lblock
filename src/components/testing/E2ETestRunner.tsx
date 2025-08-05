@@ -29,47 +29,77 @@ export const E2ETestRunner: React.FC = () => {
     const results: TestResultCard[] = [];
     
     try {
-      // 1. System Health Check (15%)
-      setCurrentTest('System Health Check');
-      setProgress(15);
-      const healthResult = await TestRunners.runSystemHealthCheck();
-      results.push(healthResult);
-      setTestResults([...results]);
-      
-      // 2. Performance Analysis (30%)
-      setCurrentTest('Performance Analysis');
-      setProgress(30);
-      const performanceResult = await TestRunners.runPerformanceAnalysis();
-      results.push(performanceResult);
-      setTestResults([...results]);
-      
-      // 3. QA Analysis (50%)
-      setCurrentTest('QA Analysis');
-      setProgress(50);
-      const qaResult = await TestRunners.runQAAnalysis();
-      results.push(qaResult);
-      setTestResults([...results]);
-      
-      // 4. Load Testing (70%)
-      setCurrentTest('Load Testing');
-      setProgress(70);
-      const loadResult = await TestRunners.runLoadTesting();
-      results.push(loadResult);
-      setTestResults([...results]);
-      
-      // 5. Data Pipeline Testing (85%)
-      setCurrentTest('Data Pipeline Testing');
-      setProgress(85);
-      const pipelineResult = await TestRunners.runDataPipelineTesting();
-      results.push(pipelineResult);
-      setTestResults([...results]);
-      
-      // 6. Final Verification (100%)
-      setCurrentTest('Final Verification');
-      setProgress(100);
-      const finalResult = await TestRunners.runFinalVerification();
-      results.push(finalResult);
-      setTestResults([...results]);
+      // Run each QA test suite individually as separate test suites
+      const qaTestSuites = new (await import('../../utils/qa/qaTestSuites')).QATestSuites();
+      const testRunner = new (await import('../../utils/qa/testRunner')).TestRunner(qaTestSuites);
+      qaTestSuites.clearResults();
+
+      const individualTestSuites = [
+        { name: 'Component Tests', method: 'testComponents', progress: 8 },
+        { name: 'Data Flow Tests', method: 'testDataFlow', progress: 16 },
+        { name: 'Data Validation Tests', method: 'testDataValidation', progress: 24 },
+        { name: 'Column Identification Tests', method: 'testColumnIdentification', progress: 32 },
+        { name: 'Analytics Tests', method: 'testAnalytics', progress: 40 },
+        { name: 'Analytics Load Tests', method: 'testAnalyticsLoad', progress: 48 },
+        { name: 'Analytics Performance Tests', method: 'testAnalyticsPerformance', progress: 56 },
+        { name: 'User Experience Tests', method: 'testUserExperience', progress: 64 },
+        { name: 'Data Integrity Tests', method: 'testDataIntegrity', progress: 72 },
+        { name: 'Authentication Tests', method: 'testAuthentication', progress: 80 },
+        { name: 'Routing Tests', method: 'testRouting', progress: 88 },
+        { name: 'System Health Tests', method: 'testSystemHealth', progress: 96 },
+        { name: 'API Integration Tests', method: 'testAPIIntegration', progress: 100 }
+      ];
+
+      // Run each test suite individually
+      for (const suite of individualTestSuites) {
+        setCurrentTest(suite.name);
+        setProgress(suite.progress);
+        
+        const startCount = qaTestSuites.getResults().length;
+        
+        try {
+          // @ts-ignore - Dynamic method call
+          await qaTestSuites[suite.method]();
+          
+          const endCount = qaTestSuites.getResults().length;
+          const suiteTests = qaTestSuites.getResults().slice(startCount);
+          
+          const passed = suiteTests.filter(t => t.status === 'pass').length;
+          const failed = suiteTests.filter(t => t.status === 'fail').length;
+          const warnings = suiteTests.filter(t => t.status === 'warning').length;
+          
+          const status = failed > 0 ? 'error' : warnings > 0 ? 'warning' : 'success';
+          
+          const result: TestResultCard = {
+            name: suite.name,
+            status,
+            details: `${passed}/${suiteTests.length} tests passed${failed > 0 ? `, ${failed} failed` : ''}${warnings > 0 ? `, ${warnings} warnings` : ''}`,
+            timestamp: new Date().toLocaleTimeString(),
+            failedTests: failed,
+            warningTests: warnings,
+            metrics: {
+              testsRun: suiteTests.length,
+              passed,
+              failed,
+              warnings,
+              coverage: Math.round((passed / suiteTests.length) * 100)
+            }
+          };
+          
+          results.push(result);
+          setTestResults([...results]);
+          
+        } catch (error) {
+          const result: TestResultCard = {
+            name: suite.name,
+            status: 'error',
+            details: `Test suite failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            timestamp: new Date().toLocaleTimeString()
+          };
+          results.push(result);
+          setTestResults([...results]);
+        }
+      }
       
       const failed = results.filter(r => r.status === 'error').length;
       const warnings = results.filter(r => r.status === 'warning').length;
