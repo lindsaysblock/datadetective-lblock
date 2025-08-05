@@ -17,6 +17,8 @@ interface TestResultCard {
   details: string;
   timestamp: string;
   optimizations?: string[];
+  failedTests?: number;
+  warningTests?: number;
   metrics?: {
     testsRun?: number;
     passed?: number;
@@ -36,6 +38,7 @@ const E2ETestRunner: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [currentTest, setCurrentTest] = useState('');
   const [testResults, setTestResults] = useState<TestResultCard[]>([]);
+  const [qaResults, setQaResults] = useState<any[]>([]);
 
   const handleRunTests = async () => {
     setIsRunning(true);
@@ -200,18 +203,26 @@ const E2ETestRunner: React.FC = () => {
       await qaTestSuites.testColumnIdentification();
       
       const results = qaTestSuites.getResults();
+      
+      // Store QA results for detailed display
+      setQaResults(results);
       const passed = results.filter(r => r.status === 'pass').length;
+      const failed = results.filter(r => r.status === 'fail').length;
+      const warnings = results.filter(r => r.status === 'warning').length;
       const total = Math.max(results.length, 131); // Use 131 as shown in screenshot
       
       return {
         name: 'QA Analysis',
-        status: passed / total > 0.9 ? 'success' : passed / total > 0.7 ? 'warning' : 'error',
-        details: `${passed}/${total} tests passed`,
+        status: failed > 0 ? 'error' : warnings > 0 ? 'warning' : 'success',
+        details: `${passed}/${total} tests passed${failed > 0 ? `, ${failed} failed` : ''}${warnings > 0 ? `, ${warnings} warnings` : ''}`,
         timestamp: new Date().toLocaleTimeString(),
+        failedTests: failed,
+        warningTests: warnings,
         metrics: {
           testsRun: total,
           passed: passed,
-          failed: total - passed,
+          failed: failed,
+          warnings: warnings,
           coverage: Math.round((passed / total) * 100)
         }
       };
@@ -482,6 +493,52 @@ const E2ETestRunner: React.FC = () => {
                         <span className="font-medium ml-1">{result.metrics.duration}ms</span>
                       </div>
                     )}
+                  </div>
+                )}
+                
+                {/* Show QA test details if this is the QA Analysis card */}
+                {result.name === 'QA Analysis' && qaResults.length > 0 && (
+                  <div className="mt-4 border-t pt-4">
+                    <h4 className="text-sm font-medium mb-3">Detailed QA Test Results:</h4>
+                    <div className="space-y-2">
+                      {qaResults.map((qaResult, qaIndex) => (
+                        <div key={qaIndex} className="flex items-start justify-between p-2 bg-gray-50 rounded">
+                          <div className="flex-1">
+                            <div className="flex items-center">
+                              <Badge 
+                                variant={qaResult.status === 'pass' ? 'default' : qaResult.status === 'warning' ? 'secondary' : 'destructive'}
+                                className="text-xs mr-2"
+                              >
+                                {qaResult.status}
+                              </Badge>
+                              <span className="text-sm font-medium">{qaResult.testName}</span>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-1">{qaResult.message}</p>
+                            {qaResult.suggestions && qaResult.suggestions.length > 0 && (
+                              <ul className="text-xs text-gray-500 mt-2 ml-4">
+                                {qaResult.suggestions.map((suggestion, suggIndex) => (
+                                  <li key={suggIndex} className="list-disc">{suggestion}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Show failed/warning test counts */}
+                {(result.failedTests > 0 || result.warningTests > 0) && (
+                  <div className="mt-4 p-3 bg-yellow-50 rounded border border-yellow-200">
+                    <div className="flex items-center text-sm">
+                      <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />
+                      <span className="font-medium">
+                        {result.failedTests > 0 && `${result.failedTests} failed tests`}
+                        {result.failedTests > 0 && result.warningTests > 0 && ', '}
+                        {result.warningTests > 0 && `${result.warningTests} warnings`}
+                      </span>
+                    </div>
                   </div>
                 )}
               </CardContent>
