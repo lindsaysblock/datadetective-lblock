@@ -162,7 +162,7 @@ export class TestRunners {
           testResults: results,
           testSuites: [
             'Data Validation Tests',
-            'Column Identification Tests',
+            'Column Identification Tests', 
             'Component Tests',
             'Data Flow Tests',
             'Analytics Tests',
@@ -172,7 +172,8 @@ export class TestRunners {
             'Data Integrity Tests',
             'Authentication Tests',
             'Routing Tests',
-            'System Health Tests'
+            'System Health Tests',
+            'API Integration Tests'  // Added the missing test suite
           ],
           coverage: Math.round((passed / total) * 100)
         },
