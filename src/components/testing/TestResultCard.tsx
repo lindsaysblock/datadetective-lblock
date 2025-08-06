@@ -48,16 +48,36 @@ export const TestResultCardComponent: React.FC<TestResultCardProps> = ({
     try {
       const { success, results } = await testFixService.applyAllFixes(result.fixes);
       
+      const successCount = results.filter(r => r.success).length;
+      const failureCount = results.filter(r => !r.success).length;
+      
       toast({
-        title: success ? "✅ Fixes Applied" : "⚠️ Some Fixes Failed",
-        description: `${results.filter(r => r.success).length}/${results.length} fixes applied successfully`,
-        variant: success ? "default" : "destructive"
+        title: success ? "🎉 All Fixes Applied Successfully" : `⚠️ ${successCount}/${results.length} Fixes Applied`,
+        description: success 
+          ? `All ${results.length} fixes have been successfully applied. System performance should be improved.`
+          : `${successCount} fixes applied successfully, ${failureCount} require manual attention.`,
+        variant: success ? "default" : "destructive",
+        duration: 5000
       });
+      
+      // Show individual fix results
+      results.forEach((fixResult, index) => {
+        setTimeout(() => {
+          toast({
+            title: fixResult.success ? "✅ Fix Applied" : "❌ Fix Failed",
+            description: fixResult.message,
+            variant: fixResult.success ? "default" : "destructive",
+            duration: 3000
+          });
+        }, index * 500);
+      });
+      
     } catch (error) {
       toast({
         title: "❌ Fix Application Failed",
-        description: "Failed to apply fixes",
-        variant: "destructive"
+        description: "Critical error during fix application. Check console for details.",
+        variant: "destructive",
+        duration: 5000
       });
     } finally {
       setIsApplyingFixes(false);
@@ -70,20 +90,46 @@ export const TestResultCardComponent: React.FC<TestResultCardProps> = ({
     setIsApplyingOptimizations(true);
     try {
       let successCount = 0;
-      for (const optimization of result.availableOptimizations) {
-        const { success } = await testFixService.applyOptimization(optimization.id);
-        if (success) successCount++;
+      let totalGain = '';
+      
+      for (let i = 0; i < result.availableOptimizations.length; i++) {
+        const optimization = result.availableOptimizations[i];
+        const optimizationResult = await testFixService.applyOptimization(optimization.id);
+        
+        if (optimizationResult.success) {
+          successCount++;
+          if (optimizationResult.performanceGain) {
+            totalGain += ` +${optimizationResult.performanceGain}`;
+          }
+        }
+        
+        // Show individual optimization results
+        toast({
+          title: optimizationResult.success ? "🚀 Optimization Applied" : "❌ Optimization Failed",
+          description: optimizationResult.message,
+          variant: optimizationResult.success ? "default" : "destructive",
+          duration: 3000
+        });
+        
+        // Small delay between optimizations
+        if (i < result.availableOptimizations.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
       
+      // Final summary
       toast({
-        title: "🚀 Optimizations Applied",
-        description: `${successCount}/${result.availableOptimizations.length} optimizations applied successfully`
+        title: `🎯 Optimization Summary`,
+        description: `${successCount}/${result.availableOptimizations.length} optimizations applied successfully.${totalGain ? ` Performance improvements: ${totalGain}` : ''}`,
+        duration: 5000
       });
+      
     } catch (error) {
       toast({
         title: "❌ Optimization Failed",
-        description: "Failed to apply optimizations",
-        variant: "destructive"
+        description: "Error applying optimizations. Check system logs.",
+        variant: "destructive",
+        duration: 5000
       });
     } finally {
       setIsApplyingOptimizations(false);
@@ -156,35 +202,68 @@ export const TestResultCardComponent: React.FC<TestResultCardProps> = ({
           />
         )}
 
-        {/* Fixes */}
+        {/* Enhanced Fixes Section */}
         {result.fixes && result.fixes.length > 0 && (
           <div className="border-t pt-4">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-medium flex items-center gap-2">
                 <Wrench className="w-4 h-4" />
-                Available Fixes:
+                Critical Issues Detected ({result.fixes.length}):
               </h4>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleApplyFixes}
-                disabled={isApplyingFixes}
-                className="h-6 px-2"
-              >
-                {isApplyingFixes ? 'Applying...' : 'Fix All'}
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleApplyFixes}
+                  disabled={isApplyingFixes}
+                  className="h-8 px-3"
+                >
+                  {isApplyingFixes ? (
+                    <>
+                      <Clock className="w-3 h-3 mr-1 animate-spin" />
+                      Fixing...
+                    </>
+                  ) : (
+                    <>
+                      <Wrench className="w-3 h-3 mr-1" />
+                      Auto-Fix All
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {result.fixes.map((fix) => (
-                <div key={fix.id} className="flex items-start gap-2 text-xs p-2 bg-red-50 rounded border border-red-200">
-                  <XCircle className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="font-medium text-red-800">{fix.title}</div>
-                    <div className="text-red-600">{fix.description}</div>
-                    <div className="flex gap-2 mt-1">
-                      <Badge className="bg-red-100 text-red-700 text-xs">{fix.severity}</Badge>
-                      <Badge className="bg-gray-100 text-gray-700 text-xs">{fix.category}</Badge>
-                      {fix.autoFixable && <Badge className="bg-green-100 text-green-700 text-xs">Auto-fixable</Badge>}
+                <div key={fix.id} className="border rounded-lg p-3 bg-gradient-to-r from-red-50 to-orange-50 border-red-200">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <XCircle className="w-4 h-4 text-red-500" />
+                        <span className="font-medium text-red-800">{fix.title}</span>
+                        <div className="flex gap-1">
+                          <Badge className={`text-xs ${
+                            fix.severity === 'critical' ? 'bg-red-200 text-red-800' :
+                            fix.severity === 'high' ? 'bg-orange-200 text-orange-800' :
+                            fix.severity === 'medium' ? 'bg-yellow-200 text-yellow-800' :
+                            'bg-blue-200 text-blue-800'
+                          }`}>
+                            {fix.severity}
+                          </Badge>
+                          <Badge className="bg-gray-200 text-gray-700 text-xs">{fix.category}</Badge>
+                          {fix.autoFixable && (
+                            <Badge className="bg-green-200 text-green-700 text-xs">Auto-fixable</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-sm text-red-700 mb-2">{fix.description}</p>
+                      {fix.affectedFiles && (
+                        <div className="text-xs text-red-600">
+                          <strong>Affected files:</strong> {fix.affectedFiles.join(', ')}
+                        </div>
+                      )}
+                      <div className="text-xs text-red-600 mt-1">
+                        <strong>Est. fix time:</strong> {fix.estimatedTime} | <strong>Impact:</strong> {fix.impact}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -193,34 +272,67 @@ export const TestResultCardComponent: React.FC<TestResultCardProps> = ({
           </div>
         )}
 
-        {/* Optimizations */}
+        {/* Enhanced Optimizations Section */}
         {result.availableOptimizations && result.availableOptimizations.length > 0 && (
           <div className="border-t pt-4">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-medium flex items-center gap-2">
                 <Zap className="w-4 h-4" />
-                Available Optimizations:
+                Performance Optimizations ({result.availableOptimizations.length}):
               </h4>
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={handleApplyOptimizations}
                 disabled={isApplyingOptimizations}
-                className="h-6 px-2"
+                className="h-8 px-3"
               >
-                {isApplyingOptimizations ? 'Applying...' : 'Apply All'}
+                {isApplyingOptimizations ? (
+                  <>
+                    <Clock className="w-3 h-3 mr-1 animate-spin" />
+                    Optimizing...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-3 h-3 mr-1" />
+                    Apply All
+                  </>
+                )}
               </Button>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {result.availableOptimizations.map((optimization) => (
-                <div key={optimization.id} className="flex items-start gap-2 text-xs p-2 bg-blue-50 rounded border border-blue-200">
-                  <Zap className="w-3 h-3 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="font-medium text-blue-800">{optimization.title}</div>
-                    <div className="text-blue-600">{optimization.description}</div>
-                    <div className="flex gap-2 mt-1">
-                      <Badge className="bg-blue-100 text-blue-700 text-xs">{optimization.impact} impact</Badge>
-                      <Badge className="bg-gray-100 text-gray-700 text-xs">{optimization.category}</Badge>
+                <div key={optimization.id} className="border rounded-lg p-3 bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Zap className="w-4 h-4 text-blue-500" />
+                        <span className="font-medium text-blue-800">{optimization.title}</span>
+                        <div className="flex gap-1">
+                          <Badge className={`text-xs ${
+                            optimization.impact === 'high' ? 'bg-green-200 text-green-800' :
+                            optimization.impact === 'medium' ? 'bg-yellow-200 text-yellow-800' :
+                            'bg-blue-200 text-blue-800'
+                          }`}>
+                            {optimization.impact} impact
+                          </Badge>
+                          <Badge className="bg-gray-200 text-gray-700 text-xs">{optimization.category}</Badge>
+                        </div>
+                      </div>
+                      <p className="text-sm text-blue-700 mb-2">{optimization.description}</p>
+                      <div className="text-xs text-blue-600">
+                        <strong>Implementation:</strong> {optimization.implementation}
+                      </div>
+                      {optimization.estimatedGain && (
+                        <div className="text-xs text-blue-600 mt-1">
+                          <strong>Expected gain:</strong> {optimization.estimatedGain}
+                        </div>
+                      )}
+                      {optimization.prerequisites && (
+                        <div className="text-xs text-blue-600 mt-1">
+                          <strong>Prerequisites:</strong> {optimization.prerequisites.join(', ')}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

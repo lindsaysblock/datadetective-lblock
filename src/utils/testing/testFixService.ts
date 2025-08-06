@@ -1,11 +1,18 @@
+import { SmartFailureDetector, DetectedIssue } from './smartFailureDetector';
+import { AutoFixEngine, FixResult, OptimizationResult } from './autoFixEngine';
+
 export interface TestFix {
   id: string;
   title: string;
   description: string;
-  category: 'performance' | 'security' | 'data' | 'ui' | 'api';
+  category: 'performance' | 'security' | 'data' | 'ui' | 'api' | 'memory' | 'build';
   severity: 'low' | 'medium' | 'high' | 'critical';
   autoFixable: boolean;
   estimatedTime: string;
+  impact: 'low' | 'medium' | 'high';
+  codeExample?: string;
+  affectedFiles?: string[];
+  fixPreview?: string;
 }
 
 export interface TestOptimization {
@@ -13,12 +20,24 @@ export interface TestOptimization {
   title: string;
   description: string;
   impact: 'low' | 'medium' | 'high';
-  category: 'performance' | 'memory' | 'load' | 'user_experience';
+  category: 'performance' | 'memory' | 'load' | 'user_experience' | 'build' | 'database';
   implementation: string;
+  estimatedGain: string;
+  prerequisites?: string[];
+}
+
+export interface FixApplicationResult {
+  success: boolean;
+  message: string;
+  filesModified?: string[];
+  performanceGain?: string;
+  rollbackAvailable?: boolean;
+  nextSteps?: string[];
 }
 
 export class TestFixService {
   private static instance: TestFixService;
+  private autoFixEngine: AutoFixEngine;
   
   public static getInstance(): TestFixService {
     if (!TestFixService.instance) {
@@ -27,138 +46,198 @@ export class TestFixService {
     return TestFixService.instance;
   }
 
-  async getAvailableFixes(testName: string, failureDetails?: string): Promise<TestFix[]> {
-    // Mock fixes based on test name and failure type
+  constructor() {
+    this.autoFixEngine = AutoFixEngine.getInstance();
+  }
+
+  async getAvailableFixes(testName: string, failureDetails?: string, testResults?: any[]): Promise<TestFix[]> {
+    // Use smart detection to identify issues
+    const detectedIssues = SmartFailureDetector.detectIssues(testName, failureDetails, testResults);
+    
     const fixes: TestFix[] = [];
     
-    if (testName.includes('Component') || testName.includes('UI')) {
+    for (const issue of detectedIssues) {
+      const fixPreview = await this.autoFixEngine.getFixPreview(issue);
+      
       fixes.push({
-        id: 'ui-1',
-        title: 'Fix Component Rendering',
-        description: 'Resolve component rendering issues and prop validation',
-        category: 'ui',
-        severity: 'medium',
-        autoFixable: true,
-        estimatedTime: '2 minutes'
+        id: issue.id,
+        title: issue.title,
+        description: issue.description,
+        category: issue.category,
+        severity: issue.severity,
+        autoFixable: issue.autoFixable,
+        estimatedTime: `${issue.estimatedFixTime} minutes`,
+        impact: issue.impact,
+        codeExample: issue.codeExample,
+        affectedFiles: issue.affectedFiles,
+        fixPreview
       });
     }
     
-    if (testName.includes('Performance') || testName.includes('Load')) {
-      fixes.push({
-        id: 'perf-1',
-        title: 'Optimize Performance',
-        description: 'Implement memoization and reduce re-renders',
-        category: 'performance',
-        severity: 'high',
-        autoFixable: true,
-        estimatedTime: '5 minutes'
-      });
-    }
-    
-    if (testName.includes('Data') || testName.includes('API')) {
-      fixes.push({
-        id: 'data-1',
-        title: 'Fix Data Validation',
-        description: 'Add proper error handling and data validation',
-        category: 'data',
-        severity: 'high',
-        autoFixable: true,
-        estimatedTime: '3 minutes'
-      });
-    }
-    
-    if (testName.includes('Authentication') || testName.includes('Security')) {
-      fixes.push({
-        id: 'auth-1',
-        title: 'Strengthen Security',
-        description: 'Update authentication flows and security policies',
-        category: 'security',
-        severity: 'critical',
-        autoFixable: false,
-        estimatedTime: '15 minutes'
-      });
-    }
-
     return fixes;
   }
 
   async getOptimizations(testName: string): Promise<TestOptimization[]> {
     const optimizations: TestOptimization[] = [];
     
+    // Context-based optimizations
     if (testName.includes('Performance') || testName.includes('Load')) {
-      optimizations.push({
-        id: 'opt-perf-1',
-        title: 'Implement Virtual Scrolling',
-        description: 'Add virtual scrolling for large data sets',
-        impact: 'high',
-        category: 'performance',
-        implementation: 'Add react-window for data tables'
-      });
-      
-      optimizations.push({
-        id: 'opt-perf-2',
-        title: 'Enable Code Splitting',
-        description: 'Split bundles to reduce initial load time',
-        impact: 'medium',
-        category: 'load',
-        implementation: 'Use dynamic imports for routes'
-      });
+      optimizations.push(
+        {
+          id: 'virtual-scrolling',
+          title: 'Implement Virtual Scrolling',
+          description: 'Add virtual scrolling for large data sets to improve rendering performance',
+          impact: 'high',
+          category: 'performance',
+          implementation: 'Replace standard lists with react-window virtual scrolling',
+          estimatedGain: '65% faster rendering',
+          prerequisites: ['Large dataset components identified', 'React 18+ compatibility']
+        },
+        {
+          id: 'code-splitting',
+          title: 'Enable Advanced Code Splitting',
+          description: 'Implement route-based and component-based code splitting',
+          impact: 'high',
+          category: 'load',
+          implementation: 'Dynamic imports with React.lazy and Suspense boundaries',
+          estimatedGain: '35% smaller initial bundle',
+          prerequisites: ['Route structure analysis', 'Bundle analyzer results']
+        },
+        {
+          id: 'worker-threading',
+          title: 'Web Worker Implementation',
+          description: 'Move heavy computations to web workers',
+          impact: 'high',
+          category: 'performance',
+          implementation: 'Create web workers for data processing and analysis',
+          estimatedGain: '40% UI responsiveness improvement'
+        }
+      );
     }
     
     if (testName.includes('Memory') || testName.includes('Analytics')) {
-      optimizations.push({
-        id: 'opt-mem-1',
-        title: 'Optimize Memory Usage',
-        description: 'Clean up event listeners and subscriptions',
-        impact: 'medium',
-        category: 'memory',
-        implementation: 'Add cleanup in useEffect hooks'
-      });
+      optimizations.push(
+        {
+          id: 'memory-pooling',
+          title: 'Memory Pooling Strategy',
+          description: 'Implement object pooling for frequently created/destroyed objects',
+          impact: 'medium',
+          category: 'memory',
+          implementation: 'Create object pools for chart data and analysis results',
+          estimatedGain: '30% memory usage reduction'
+        },
+        {
+          id: 'data-streaming',
+          title: 'Data Streaming Architecture',
+          description: 'Implement streaming for large dataset processing',
+          impact: 'high',
+          category: 'performance',
+          implementation: 'Replace batch processing with streaming data architecture',
+          estimatedGain: '50% faster data processing'
+        }
+      );
     }
     
-    if (testName.includes('User') || testName.includes('Experience')) {
-      optimizations.push({
-        id: 'opt-ux-1',
-        title: 'Add Loading States',
-        description: 'Improve user feedback with loading indicators',
+    if (testName.includes('Database') || testName.includes('API')) {
+      optimizations.push(
+        {
+          id: 'query-optimization',
+          title: 'Database Query Optimization',
+          description: 'Optimize database queries with indexing and connection pooling',
+          impact: 'high',
+          category: 'database',
+          implementation: 'Add database indexes and implement connection pooling',
+          estimatedGain: '55% faster query performance',
+          prerequisites: ['Database analysis', 'Query performance profiling']
+        },
+        {
+          id: 'caching-layer',
+          title: 'Multi-Level Caching',
+          description: 'Implement browser, memory, and database caching layers',
+          impact: 'high',
+          category: 'performance',
+          implementation: 'Redis for server-side, IndexedDB for client-side caching',
+          estimatedGain: '45% faster data access'
+        }
+      );
+    }
+    
+    // Always include some general optimizations
+    optimizations.push(
+      {
+        id: 'image-optimization',
+        title: 'Image Optimization Pipeline',
+        description: 'Implement automatic image compression and WebP conversion',
+        impact: 'medium',
+        category: 'load',
+        implementation: 'Add image compression middleware and WebP support',
+        estimatedGain: '25% faster page loads'
+      },
+      {
+        id: 'service-worker',
+        title: 'Service Worker Cache Strategy',
+        description: 'Implement intelligent service worker caching',
         impact: 'medium',
         category: 'user_experience',
-        implementation: 'Add skeleton loaders and spinners'
-      });
-    }
+        implementation: 'Add service worker with cache-first strategy for static assets',
+        estimatedGain: '60% faster repeat visits'
+      }
+    );
 
-    return optimizations;
+    return optimizations.slice(0, 4); // Return top 4 relevant optimizations
   }
 
-  async applyFix(fixId: string): Promise<{ success: boolean; message: string }> {
-    // Simulate fix application
-    console.log(`Applying fix: ${fixId}`);
+  async applyFix(fixId: string): Promise<FixApplicationResult> {
+    console.log(`🔧 Applying fix: ${fixId}`);
     
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+    // Find the detected issue that matches this fix
+    const issue: DetectedIssue = {
+      id: fixId,
+      title: 'Auto-detected Issue',
+      description: 'Issue detected by smart failure analysis',
+      category: 'performance',
+      severity: 'medium',
+      autoFixable: true,
+      fixStrategy: this.getFixStrategyFromId(fixId),
+      estimatedFixTime: 15,
+      impact: 'medium'
+    };
     
-    const success = Math.random() > 0.1; // 90% success rate
+    const result = await this.autoFixEngine.applyFix(issue);
     
     return {
-      success,
-      message: success 
-        ? `Fix ${fixId} applied successfully`
-        : `Failed to apply fix ${fixId}. Manual intervention required.`
+      success: result.success,
+      message: result.message,
+      filesModified: result.filesModified,
+      rollbackAvailable: result.rollbackAvailable,
+      nextSteps: result.success ? [
+        'Run tests to verify fix effectiveness',
+        'Monitor application performance',
+        'Review modified files for any conflicts'
+      ] : [
+        'Check console for detailed error information',
+        'Verify file permissions and dependencies',
+        'Consider manual intervention'
+      ]
     };
   }
 
-  async applyOptimization(optimizationId: string): Promise<{ success: boolean; message: string }> {
-    // Simulate optimization application
-    console.log(`Applying optimization: ${optimizationId}`);
-    
-    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
-    
-    const success = Math.random() > 0.05; // 95% success rate
+  async applyOptimization(optimizationId: string): Promise<FixApplicationResult> {
+    const result = await this.autoFixEngine.implementOptimization(optimizationId, 'performance');
     
     return {
-      success,
-      message: success 
-        ? `Optimization ${optimizationId} applied successfully`
-        : `Failed to apply optimization ${optimizationId}. Check configuration.`
+      success: result.success,
+      message: result.message,
+      performanceGain: result.performanceGain,
+      nextSteps: result.success ? [
+        'Measure performance improvements',
+        'Update documentation',
+        'Deploy optimizations to staging'
+      ] : [
+        'Review optimization requirements',
+        'Check system compatibility',
+        'Consider alternative approaches'
+      ]
     };
   }
 
@@ -167,11 +246,49 @@ export class TestFixService {
     let overallSuccess = true;
     
     for (const fix of fixes) {
-      const result = await this.applyFix(fix.id);
-      results.push({ fixId: fix.id, ...result });
-      if (!result.success) overallSuccess = false;
+      try {
+        const result = await this.applyFix(fix.id);
+        results.push({ 
+          fixId: fix.id, 
+          success: result.success, 
+          message: result.message 
+        });
+        if (!result.success) overallSuccess = false;
+      } catch (error) {
+        results.push({ 
+          fixId: fix.id, 
+          success: false, 
+          message: `Failed to apply fix: ${error instanceof Error ? error.message : 'Unknown error'}` 
+        });
+        overallSuccess = false;
+      }
     }
     
     return { success: overallSuccess, results };
+  }
+
+  async rollbackFix(fixId: string): Promise<FixApplicationResult> {
+    const result = await this.autoFixEngine.rollbackFix(fixId);
+    
+    return {
+      success: result.success,
+      message: result.message,
+      rollbackAvailable: false
+    };
+  }
+
+  private getFixStrategyFromId(fixId: string): string {
+    const strategyMap: Record<string, string> = {
+      'memory-optimization': 'cleanup-memory-leaks',
+      'performance-optimization': 'optimize-renders',
+      'auth-security': 'security-hardening',
+      'data-validation': 'data-validation',
+      'ui-standardization': 'ui-standardization',
+      'api-resilience': 'api-resilience',
+      'build-optimization': 'build-optimization',
+      'systemic-failure': 'architecture-review'
+    };
+    
+    return strategyMap[fixId] || 'data-validation';
   }
 }
