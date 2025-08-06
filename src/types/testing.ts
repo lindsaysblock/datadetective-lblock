@@ -1,9 +1,13 @@
+import { TestFix, TestOptimization } from '../utils/testing/testFixService';
+
 export interface TestResultCard {
   name: string;
   status: 'success' | 'warning' | 'error' | 'running';
   details: string;
   timestamp: string;
   optimizations?: string[];
+  fixes?: TestFix[];
+  availableOptimizations?: TestOptimization[];
   failedTests?: number;
   warningTests?: number;
   expandedData?: {

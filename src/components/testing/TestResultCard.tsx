@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import { CheckCircle, AlertTriangle, Clock, XCircle } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Clock, XCircle, Wrench, Zap } from 'lucide-react';
 import { TestResultCard as TestResult } from '../../types/testing';
 import { QATestDetails } from './QATestDetails';
+import { TestFixService } from '../../utils/testing/testFixService';
+import { useToast } from '../ui/use-toast';
 
 interface TestResultCardProps {
   result: TestResult;
@@ -17,6 +19,10 @@ export const TestResultCardComponent: React.FC<TestResultCardProps> = ({
   expandedQA,
   onToggleQAExpanded
 }) => {
+  const [isApplyingFixes, setIsApplyingFixes] = useState(false);
+  const [isApplyingOptimizations, setIsApplyingOptimizations] = useState(false);
+  const { toast } = useToast();
+  const testFixService = TestFixService.getInstance();
   const getStatusIcon = (status: TestResult['status']) => {
     switch (status) {
       case 'success': return <CheckCircle className="w-4 h-4 text-green-600" />;
@@ -32,6 +38,55 @@ export const TestResultCardComponent: React.FC<TestResultCardProps> = ({
       case 'warning': return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">WARNING</Badge>;
       case 'error': return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">ERROR</Badge>;
       case 'running': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">RUNNING</Badge>;
+    }
+  };
+
+  const handleApplyFixes = async () => {
+    if (!result.fixes || result.fixes.length === 0) return;
+    
+    setIsApplyingFixes(true);
+    try {
+      const { success, results } = await testFixService.applyAllFixes(result.fixes);
+      
+      toast({
+        title: success ? "✅ Fixes Applied" : "⚠️ Some Fixes Failed",
+        description: `${results.filter(r => r.success).length}/${results.length} fixes applied successfully`,
+        variant: success ? "default" : "destructive"
+      });
+    } catch (error) {
+      toast({
+        title: "❌ Fix Application Failed",
+        description: "Failed to apply fixes",
+        variant: "destructive"
+      });
+    } finally {
+      setIsApplyingFixes(false);
+    }
+  };
+
+  const handleApplyOptimizations = async () => {
+    if (!result.availableOptimizations || result.availableOptimizations.length === 0) return;
+    
+    setIsApplyingOptimizations(true);
+    try {
+      let successCount = 0;
+      for (const optimization of result.availableOptimizations) {
+        const { success } = await testFixService.applyOptimization(optimization.id);
+        if (success) successCount++;
+      }
+      
+      toast({
+        title: "🚀 Optimizations Applied",
+        description: `${successCount}/${result.availableOptimizations.length} optimizations applied successfully`
+      });
+    } catch (error) {
+      toast({
+        title: "❌ Optimization Failed",
+        description: "Failed to apply optimizations",
+        variant: "destructive"
+      });
+    } finally {
+      setIsApplyingOptimizations(false);
     }
   };
 
@@ -101,8 +156,81 @@ export const TestResultCardComponent: React.FC<TestResultCardProps> = ({
           />
         )}
 
+        {/* Fixes */}
+        {result.fixes && result.fixes.length > 0 && (
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Wrench className="w-4 h-4" />
+                Available Fixes:
+              </h4>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleApplyFixes}
+                disabled={isApplyingFixes}
+                className="h-6 px-2"
+              >
+                {isApplyingFixes ? 'Applying...' : 'Fix All'}
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {result.fixes.map((fix) => (
+                <div key={fix.id} className="flex items-start gap-2 text-xs p-2 bg-red-50 rounded border border-red-200">
+                  <XCircle className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-medium text-red-800">{fix.title}</div>
+                    <div className="text-red-600">{fix.description}</div>
+                    <div className="flex gap-2 mt-1">
+                      <Badge className="bg-red-100 text-red-700 text-xs">{fix.severity}</Badge>
+                      <Badge className="bg-gray-100 text-gray-700 text-xs">{fix.category}</Badge>
+                      {fix.autoFixable && <Badge className="bg-green-100 text-green-700 text-xs">Auto-fixable</Badge>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Optimizations */}
-        {result.optimizations && result.optimizations.length > 0 && (
+        {result.availableOptimizations && result.availableOptimizations.length > 0 && (
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Zap className="w-4 h-4" />
+                Available Optimizations:
+              </h4>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleApplyOptimizations}
+                disabled={isApplyingOptimizations}
+                className="h-6 px-2"
+              >
+                {isApplyingOptimizations ? 'Applying...' : 'Apply All'}
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {result.availableOptimizations.map((optimization) => (
+                <div key={optimization.id} className="flex items-start gap-2 text-xs p-2 bg-blue-50 rounded border border-blue-200">
+                  <Zap className="w-3 h-3 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-medium text-blue-800">{optimization.title}</div>
+                    <div className="text-blue-600">{optimization.description}</div>
+                    <div className="flex gap-2 mt-1">
+                      <Badge className="bg-blue-100 text-blue-700 text-xs">{optimization.impact} impact</Badge>
+                      <Badge className="bg-gray-100 text-gray-700 text-xs">{optimization.category}</Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Legacy Optimizations (fallback) */}
+        {result.optimizations && result.optimizations.length > 0 && !result.availableOptimizations && (
           <div className="border-t pt-4">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-medium">Recommended Optimizations:</h4>

@@ -3,6 +3,7 @@ import { UnitTestingSystem } from './unitTestingSystem';
 import { QATestSuites } from '../qa/qaTestSuites';
 import { TestRunner } from '../qa/testRunner';
 import { createOptimizedE2ETestRunner } from './optimizedE2ETestRunner';
+import { TestFixService } from './testFixService';
 
 export class TestRunners {
   static async runSystemHealthCheck(): Promise<TestResultCard> {
@@ -144,6 +145,16 @@ export class TestRunners {
       const passRate = (passed / total) * 100;
       const status = failed > 0 || passRate < 50 ? 'error' : passRate < 80 ? 'warning' : 'success';
       
+      // Get fixes and optimizations if there are failures
+      const testFixService = TestFixService.getInstance();
+      let fixes = undefined;
+      let availableOptimizations = undefined;
+      
+      if (status === 'error' || status === 'warning') {
+        fixes = await testFixService.getAvailableFixes('QA Analysis', `${failed} test failures detected`);
+        availableOptimizations = await testFixService.getOptimizations('QA Analysis');
+      }
+      
       return {
         name: 'QA Analysis',
         status,
@@ -151,6 +162,8 @@ export class TestRunners {
         timestamp: new Date().toLocaleTimeString(),
         failedTests: failed,
         warningTests: warnings,
+        fixes,
+        availableOptimizations,
         optimizations: [
           'Implement automated performance monitoring',
           'Add comprehensive error boundary systems',
@@ -231,11 +244,23 @@ export class TestRunners {
       const failed = results.filter(r => !r.success).length;
       const total = results.length;
       
+      const status = failed === 0 ? 'success' : failed <= 2 ? 'warning' : 'error';
+      const testFixService = TestFixService.getInstance();
+      let fixes = undefined;
+      let availableOptimizations = undefined;
+      
+      if (status === 'error' || status === 'warning') {
+        fixes = await testFixService.getAvailableFixes('Data Pipeline Testing', `${failed} pipeline failures`);
+        availableOptimizations = await testFixService.getOptimizations('Data Pipeline Testing');
+      }
+
       return {
         name: 'Data Pipeline Testing',
-        status: failed === 0 ? 'success' : failed <= 2 ? 'warning' : 'error',
+        status,
         details: `${passed}/${total} pipeline tests passed, comprehensive data flow validated`,
         timestamp: new Date().toLocaleTimeString(),
+        fixes,
+        availableOptimizations,
         optimizations: ['Stream processing optimization', 'Batch size tuning', 'Error recovery enhancement'],
         metrics: {
           testsRun: total,
