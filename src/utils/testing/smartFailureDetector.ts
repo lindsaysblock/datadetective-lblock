@@ -10,8 +10,8 @@ export interface DetectedIssue {
   id: string;
   title: string;
   description: string;
-  category: FailureSignature['category'];
-  severity: FailureSignature['severity'];
+  category: 'memory' | 'performance' | 'security' | 'data' | 'ui' | 'api' | 'build';
+  severity: 'low' | 'medium' | 'high' | 'critical';
   autoFixable: boolean;
   fixStrategy: string;
   affectedFiles?: string[];
