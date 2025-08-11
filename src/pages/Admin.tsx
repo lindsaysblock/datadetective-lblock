@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import LegalFooter from '@/components/LegalFooter';
 import E2ETestRunner from '@/components/testing/E2ETestRunner';
+import RealAnalysisE2E from '@/components/testing/RealAnalysisE2E';
 import createEnhancedDataPipelineTestSuite from '@/utils/testing/enhancedDataPipelineTestSuite';
 
 const Admin = () => {
@@ -200,6 +201,21 @@ const Admin = () => {
                 </CardHeader>
                 <CardContent>
                   <E2ETestRunner />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TestTube className="w-5 h-5" />
+                    Real Analysis E2E (Dataset-backed)
+                  </CardTitle>
+                  <CardDescription>
+                    Runs a real CSV through the actual analysis engine, measures I/O, memory, performance, and shows recommendations with an optimization toggle.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RealAnalysisE2E />
                 </CardContent>
               </Card>
             </TabsContent>
