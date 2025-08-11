@@ -1,4 +1,5 @@
 import RefactoredE2ERunner from '@/components/testing/RefactoredE2ERunner';
+import RealAnalysisE2E from '@/components/testing/RealAnalysisE2E';
 
 export default function RefactoredTesting() {
   return (
@@ -13,6 +14,9 @@ export default function RefactoredTesting() {
           </p>
         </div>
         <RefactoredE2ERunner />
+
+        {/* Real analysis E2E probe */}
+        <RealAnalysisE2E />
       </div>
     </div>
   );
