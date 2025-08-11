@@ -2,21 +2,15 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
-import { useToast } from '@/hooks/use-toast';
-import { Activity, Play, Clock } from 'lucide-react';
-import { TestResultCard } from '../../types/testing';
-import { QATestSuites } from '../../utils/qa/qaTestSuites';
-import { TestRunner } from '../../utils/qa/testRunner';
+import { Activity, Play, Clock, Wrench } from 'lucide-react';
+import { useE2ETestRunner } from './hooks/useE2ETestRunner';
+import { useAutoFixAll } from './hooks/useAutoFixAll';
 import TestResultCardComponent from './TestResultCard';
-import { TestFixService } from '../../utils/testing/testFixService';
 
 export const E2ETestRunner: React.FC = () => {
-  const [isRunning, setIsRunning] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [currentTest, setCurrentTest] = useState('');
-  const [testResults, setTestResults] = useState<TestResultCard[]>([]);
   const [expandedQA, setExpandedQA] = useState(false);
-  const { toast } = useToast();
+  const { isRunning, progress, currentTest, testResults, runAllTests } = useE2ETestRunner();
+  const { autoFixAll, isFixing } = useAutoFixAll();
 
   const runAllTests = async () => {
     setIsRunning(true);
