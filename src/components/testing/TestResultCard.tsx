@@ -6,7 +6,7 @@ import { CheckCircle, AlertTriangle, Clock, XCircle, Wrench, Zap } from 'lucide-
 import { TestResultCard as TestResult } from '../../types/testing';
 import { QATestDetails } from './QATestDetails';
 import { TestFixService } from '../../utils/testing/testFixService';
-import { useToast } from '../ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface TestResultCardProps {
   result: TestResult;

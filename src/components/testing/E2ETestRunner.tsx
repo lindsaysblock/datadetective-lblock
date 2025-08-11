@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
-import { useToast } from '../ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Activity, Play, Clock } from 'lucide-react';
 import { TestResultCard } from '../../types/testing';
 import { QATestSuites } from '../../utils/qa/qaTestSuites';
 import { TestRunner } from '../../utils/qa/testRunner';
 import TestResultCardComponent from './TestResultCard';
+import { TestFixService } from '../../utils/testing/testFixService';
 
 export const E2ETestRunner: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
@@ -114,6 +115,17 @@ export const E2ETestRunner: React.FC = () => {
           const warnings = suiteTests.filter(t => t.status === 'warning').length;
           
           const status = failed > 0 ? 'error' : warnings > 0 ? 'warning' : 'success';
+
+          // Build failure details and attach fixes/optimizations
+          const failureDetails = suiteTests
+            .filter((t: any) => t.status === 'fail')
+            .map((t: any) => `${t.testName}: ${t.message}`)
+            .join('\n');
+          const fixService = TestFixService.getInstance();
+          const [fixes, availableOptimizations] = await Promise.all([
+            failed > 0 ? fixService.getAvailableFixes(suite.name, failureDetails, suiteTests as any[]) : Promise.resolve([]),
+            fixService.getOptimizations(suite.name)
+          ]);
           
           const result: TestResultCard = {
             name: suite.name,
@@ -122,6 +134,13 @@ export const E2ETestRunner: React.FC = () => {
             timestamp: new Date().toLocaleTimeString(),
             failedTests: failed,
             warningTests: warnings,
+            fixes,
+            availableOptimizations,
+            expandedData: {
+              testResults: suiteTests as any[],
+              testSuites: [suite.name],
+              coverage: Math.round((passed / suiteTests.length) * 100)
+            },
             metrics: {
               testsRun: suiteTests.length,
               passed,

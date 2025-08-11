@@ -14,7 +14,7 @@ export const QATestDetails: React.FC<QATestDetailsProps> = ({
   expanded,
   onToggleExpanded
 }) => {
-  if (result.name !== 'QA Analysis' || !result.expandedData) {
+  if (!result.expandedData) {
     return null;
   }
 
